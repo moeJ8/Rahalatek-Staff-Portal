@@ -277,27 +277,27 @@ export default function AdminPanel() {
     return (
         <div className="max-w-lg mx-auto p-4">
             {/* Custom Tab Implementation */}
-            <div className="flex border-b mb-4">
+            <div className="flex flex-wrap justify-center border-b mb-4 gap-1">
                 <button
-                    className={`py-2 px-4 ${activeTab === 'hotels' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'hotels' ? 'border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                     onClick={() => setActiveTab('hotels')}
                 >
                     Hotels
                 </button>
                 <button
-                    className={`py-2 px-4 ${activeTab === 'tours' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'tours' ? 'border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                     onClick={() => setActiveTab('tours')}
                 >
                     Tours
                 </button>
                 <button
-                    className={`py-2 px-4 ${activeTab === 'airports' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'airports' ? 'border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                     onClick={() => setActiveTab('airports')}
                 >
                     Airports
                 </button>
                 <button
-                    className={`py-2 px-4 ${activeTab === 'users' ? 'border-b-2 border-blue-500 font-medium text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-blue-500 font-medium text-blue-600 dark:text-blue-400 dark:border-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                     onClick={() => setActiveTab('users')}
                 >
                     Users
@@ -307,7 +307,7 @@ export default function AdminPanel() {
             {/* Tab Content */}
             {activeTab === 'hotels' && (
                 <Card>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white">Add New Hotel</h2>
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Hotel</h2>
                     
                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                     {success && <Alert color="success" className="mb-4">{success}</Alert>}
@@ -451,7 +451,7 @@ export default function AdminPanel() {
                             />
                         </div>
                         
-                        <Button type="submit" gradientDuoTone="purpleToBlue">
+                        <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Hotel
                         </Button>
                     </form>
@@ -460,7 +460,7 @@ export default function AdminPanel() {
 
             {activeTab === 'tours' && (
                 <Card>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white">Add New Tour</h2>
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
                     
                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                     {success && <Alert color="success" className="mb-4">{success}</Alert>}
@@ -584,7 +584,7 @@ export default function AdminPanel() {
                             )}
                         </div>
                         
-                        <Button type="submit" gradientDuoTone="purpleToBlue">
+                        <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Tour
                         </Button>
                     </form>
@@ -593,7 +593,7 @@ export default function AdminPanel() {
 
             {activeTab === 'airports' && (
                 <Card>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white">Add New Airport</h2>
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Airport</h2>
                     
                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                     {success && <Alert color="success" className="mb-4">{success}</Alert>}
@@ -625,7 +625,7 @@ export default function AdminPanel() {
                             />
                         </div>
                         
-                        <Button type="submit" gradientDuoTone="purpleToBlue">
+                        <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Airport
                         </Button>
                     </form>
@@ -633,18 +633,19 @@ export default function AdminPanel() {
                     <div className="mt-8">
                         <h3 className="text-xl font-bold mb-4 dark:text-white">Existing Airports</h3>
                         {airports.length > 0 ? (
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {airports.map(airport => (
-                                    <Card key={airport._id} className="flex justify-between items-center">
-                                        <div className="flex justify-between w-full items-center">
+                                    <Card key={airport._id} className="overflow-hidden">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                             <div>
-                                                <p className="font-medium">{airport.name}</p>
-                                                <p className="text-gray-600">{airport.arabicName}</p>
+                                                <p className="font-medium text-lg dark:text-white">{airport.name}</p>
+                                                <p className="text-gray-600 dark:text-gray-400">{airport.arabicName}</p>
                                             </div>
                                             <Button 
-                                                color="failure" 
+                                                color='failure'
                                                 size="xs"
                                                 onClick={() => handleDeleteAirport(airport._id)}
+                                                className="mt-2 sm:mt-0"
                                             >
                                                 Delete
                                             </Button>
@@ -661,7 +662,7 @@ export default function AdminPanel() {
 
             {activeTab === 'users' && (
                 <Card>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white">User Management</h2>
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">User Management</h2>
                     
                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                     {success && <Alert color="success" className="mb-4">{success}</Alert>}
@@ -709,7 +710,7 @@ export default function AdminPanel() {
                                             </Table.Cell>
                                             <Table.Cell>
                                                 <Button 
-                                                    color="failure"
+                                                    gradientDuoTone="pinkToOrange"
                                                     size="xs"
                                                     onClick={() => handleDeleteUser(user._id)}
                                                 >

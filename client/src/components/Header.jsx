@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from 'flowbite-react';
+import DarkModeToggle from './DarkModeToggle';
 
 
 export default function Header() {
@@ -64,6 +65,7 @@ export default function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-6 items-center">
+            
             <Link 
               to="/" 
               className={`font-medium ${isActive('/') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
@@ -88,6 +90,7 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
+                <DarkModeToggle />
                 
                 <Button
                   gradientDuoTone="pinkToOrange"
@@ -110,8 +113,7 @@ export default function Header() {
           
           {/* Mobile Burger Menu Button */}
           <div className="md:hidden flex items-center gap-2">
-            
-          
+            <DarkModeToggle />
             <button 
               onClick={toggleMobileMenu}
               className="text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 focus:outline-none"
