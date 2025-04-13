@@ -10,6 +10,8 @@ const hotelSchema = new mongoose.Schema({
     transportationPrice: { type: Number, required: true, default: 0 },
     airport: { type: String },
     description: { type: String }
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model('Hotel', hotelSchema);

@@ -3,7 +3,8 @@ const Hotel = require('../models/Hotel');
 // Get all hotels
 exports.getAllHotels = async (req, res) => {
     try {
-        const hotels = await Hotel.find();
+        // Sort by updatedAt in descending order (newest first)
+        const hotels = await Hotel.find().sort({ updatedAt: -1 });
         res.json(hotels);
     } catch (err) {
         res.status(500).json({ message: err.message });
