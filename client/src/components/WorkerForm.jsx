@@ -207,7 +207,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
 
     return (
         <div>
-          <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">نموذج الحجز</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Booking Form</h2>
           
           {loading ? (
             <div className="flex justify-center items-center h-40">
@@ -224,7 +224,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <div className="mb-2 block">
-                    <Label htmlFor="startDate" value="تاريخ البداية" className="dark:text-white" />
+                    <Label htmlFor="startDate" value="Start Date" className="dark:text-white" />
                   </div>
                   <TextInput
                     id="startDate"
@@ -236,7 +236,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                 </div>
                 <div>
                   <div className="mb-2 block">
-                    <Label htmlFor="endDate" value="تاريخ النهاية" className="dark:text-white" />
+                    <Label htmlFor="endDate" value="End Date" className="dark:text-white" />
                   </div>
                   <TextInput
                     id="endDate"
@@ -248,37 +248,23 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="mb-2 block">
-                    <Label htmlFor="numGuests" value="عدد الضيوف" className="dark:text-white" />
-                  </div>
-                  <TextInput
-                    id="numGuests"
-                    type="number"
-                    value={numGuests}
-                    onChange={(e) => setNumGuests(e.target.value)}
-                    min={1}
-                    required
-                  />
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="numGuests" value="Number of Guests" className="dark:text-white" />
                 </div>
-                <div>
-                  <div className="mb-2 block">
-                    <Label htmlFor="tripPrice" value="سعر الرحلة ($)" className="dark:text-white" />
-                  </div>
-                  <TextInput
-                    id="tripPrice"
-                    type="text"
-                    value={tripPrice}
-                    onChange={(e) => setTripPrice(e.target.value)}
-                    placeholder="سيتم حسابه تلقائيًا إذا تركت فارغًا"
-                  />
-                </div>
+                <TextInput
+                  id="numGuests"
+                  type="number"
+                  value={numGuests}
+                  onChange={(e) => setNumGuests(e.target.value)}
+                  min={1}
+                  required
+                />
               </div>
               
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="citySelect" value="اختر المدينة" className="dark:text-white" />
+                  <Label htmlFor="citySelect" value="Select City" className="dark:text-white" />
                 </div>
                 <Select
                   id="citySelect"
@@ -286,16 +272,16 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                   onChange={handleCityChange}
                   required
                 >
-                  <option value="">اختر المدينة</option>
-                  <option value="Istanbul">اسطنبول</option>
-                  <option value="Trabzon">طرابزون</option>
-                  <option value="Uzungol">أوزنجول</option>
+                  <option value="">Select City</option>
+                  <option value="Istanbul">Istanbul</option>
+                  <option value="Trabzon">Trabzon</option>
+                  <option value="Uzungol">Uzungol</option>
                 </Select>
               </div>
               
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="hotelSelect" value="اختر الفندق" className="dark:text-white" />
+                  <Label htmlFor="hotelSelect" value="Select Hotel" className="dark:text-white" />
                 </div>
                 <Select
                   id="hotelSelect"
@@ -303,12 +289,12 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                   onChange={handleHotelChange}
                   required
                 >
-                  <option value="">اختر الفندق</option>
+                  <option value="">Select Hotel</option>
                   {hotels
                     .filter(hotel => !selectedCity || hotel.city === selectedCity)
                     .map((hotel) => (
                       <option key={hotel._id} value={hotel._id}>
-                        {hotel.name} ({hotel.stars} نجوم) - ${hotel.pricePerNightPerPerson}/ليلة
+                        {hotel.name} ({hotel.stars} stars) - ${hotel.pricePerNightPerPerson}/night
                       </option>
                     ))}
                 </Select>
@@ -317,16 +303,16 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               {selectedHotelData && (
                 <Card className="mb-4 dark:bg-gray-800">
                   <h5 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    معلومات الفندق
+                    Hotel Information
                   </h5>
                   <div className="space-y-1">
-                    <p className="font-normal text-gray-700 dark:text-gray-400">النوع: {selectedHotelData.stars} نجوم</p>
-                    <p className="font-normal text-gray-700 dark:text-gray-400">السعر: ${selectedHotelData.pricePerNightPerPerson} للشخص في الليلة</p>
-                    <p className="font-normal text-gray-700 dark:text-gray-400">الإفطار: {selectedHotelData.breakfastIncluded ? 'مشمول' : 'غير مشمول'}</p>
+                    <p className="font-normal text-gray-700 dark:text-gray-400">Type: {selectedHotelData.stars} stars</p>
+                    <p className="font-normal text-gray-700 dark:text-gray-400">Price: ${selectedHotelData.pricePerNightPerPerson} per person per night</p>
+                    <p className="font-normal text-gray-700 dark:text-gray-400">Breakfast: {selectedHotelData.breakfastIncluded ? 'Included' : 'Not included'}</p>
                     {selectedHotelData.airport && (
-                      <p className="font-normal text-gray-700 dark:text-gray-400">المطار: {getAirportArabicName(selectedHotelData.airport)}</p>
+                      <p className="font-normal text-gray-700 dark:text-gray-400">Airport: {selectedHotelData.airport}</p>
                     )}
-                    <p className="font-normal text-gray-700 dark:text-gray-400">النقل من المطار: ${selectedHotelData.transportationPrice} للشخص</p>
+                    <p className="font-normal text-gray-700 dark:text-gray-400">Airport Transfer: ${selectedHotelData.transportationPrice} per person</p>
                   </div>
                 </Card>
               )}
@@ -334,7 +320,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               {availableTours.length > 0 && (
                 <div>
                   <div className="mb-2 block">
-                    <Label value="اختر الجولات" className="dark:text-white" />
+                    <Label value="Select Tours" className="dark:text-white" />
                   </div>
                   <Card className="dark:bg-gray-800">
                     {availableTours.map(tour => (
@@ -343,12 +329,12 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                           id={tour._id}
                           checked={selectedTours.includes(tour._id)}
                           onChange={() => handleTourSelection(tour._id)}
-                          className="ml-2"
+                          className="mr-2"
                         />
                         <Label htmlFor={tour._id} className="flex-1">
                           <div className="font-medium dark:text-white">{tour.name}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">{tour.description}</div>
-                          <div className="text-sm text-blue-600 dark:text-blue-400">${tour.price} للشخص • {tour.duration} ساعة</div>
+                          <div className="text-sm text-blue-600 dark:text-blue-400">${tour.price} per person • {tour.duration} hours</div>
                         </Label>
                       </div>
                     ))}
@@ -356,33 +342,46 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                 </div>
               )}
               
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="includeTransfer"
                   checked={includeTransfer}
                   onChange={(e) => setIncludeTransfer(e.target.checked)}
                 />
                 <Label htmlFor="includeTransfer" className="dark:text-white">
-                  تضمين خدمة النقل من وإلى المطار
+                  Include airport transfer
                 </Label>
               </div>
               
-              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="includeBreakfast"
                   checked={includeBreakfast}
                   onChange={(e) => setIncludeBreakfast(e.target.checked)}
                 />
                 <Label htmlFor="includeBreakfast" className="dark:text-white">
-                  تضمين وجبة الإفطار (إذا كان متاحًا)
+                  Include breakfast (if available)
                 </Label>
+              </div>
+              
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="tripPrice" value="Trip Price ($)" className="dark:text-white" />
+                </div>
+                <TextInput
+                  id="tripPrice"
+                  type="text"
+                  value={tripPrice}
+                  onChange={(e) => setTripPrice(e.target.value)}
+                  placeholder="Will be calculated automatically if left empty"
+                />
               </div>
               
               {startDate && endDate && selectedHotelData && (
                 <Alert color="success">
                   <div className="text-center">
-                    <h6 className="text-base font-medium">السعر الإجمالي المحسوب: ${calculateTotalPrice()}</h6>
-                    <p className="text-sm">لمدة {calculateDuration()} ليالي لـ {numGuests} أشخاص</p>
+                    <h6 className="text-base font-medium">Total Calculated Price: ${calculateTotalPrice()}</h6>
+                    <p className="text-sm">For {calculateDuration()} nights and {numGuests} people</p>
                   </div>
                 </Alert>
               )}
@@ -393,7 +392,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                 size="lg"
                 className="w-full mt-6"
               >
-                إنشاء رسالة الحجز
+                Generate Booking Message
               </Button>
               
               
