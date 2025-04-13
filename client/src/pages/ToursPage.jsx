@@ -30,11 +30,17 @@ export default function ToursPage() {
       try {
         const response = await axios.get('/api/tours');
         const toursData = response.data;
-        setTours(toursData);
-        setFilteredTours(toursData);
+        
+        // Sort tours by updatedAt timestamp (newest first)
+        const sortedTours = toursData.sort((a, b) => {
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+        
+        setTours(sortedTours);
+        setFilteredTours(sortedTours);
         
         // Extract unique cities for city filter
-        const cities = [...new Set(toursData.map(tour => tour.city))].sort();
+        const cities = [...new Set(sortedTours.map(tour => tour.city))].sort();
         setAvailableCities(cities);
         
         setError('');
@@ -121,6 +127,11 @@ export default function ToursPage() {
     setDeleteLoading(true);
     try {
       await axios.delete(`/api/tours/${tourToDelete._id}`);
+      // Remove the deleted tour from the tours array
+      const updatedTours = tours.filter(tour => tour._id !== tourToDelete._id);
+      setTours(updatedTours);
+      setFilteredTours(updatedTours);
+      
       setDeleteSuccess(`Tour "${tourToDelete.name}" has been deleted successfully.`);
       // Hide success message after 3 seconds
       setTimeout(() => {

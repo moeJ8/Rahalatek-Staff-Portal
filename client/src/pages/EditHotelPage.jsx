@@ -95,16 +95,13 @@ export default function EditHotelPage() {
             <Card>
                 <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Hotel</h2>
                 
-                {error && <Alert color="failure" className="mb-4">{error}</Alert>}
-                {success && <Alert color="success" className="mb-4">{success}</Alert>}
-                
                 <form onSubmit={handleHotelSubmit} className="space-y-4">
                     <div>
                         <div className="mb-2 block">
-                            <Label htmlFor="hotelName" value="Hotel Name" /> 
+                            <Label htmlFor="name" value="Hotel Name" /> 
                         </div>
                         <TextInput
-                            id="hotelName"
+                            id="name"
                             name="name"
                             value={hotelData.name}
                             onChange={handleHotelChange}
@@ -124,7 +121,16 @@ export default function EditHotelPage() {
                             required
                         >
                             <option value="">Select City</option>
+                            <option value="Antalya">Antalya</option>
+                            <option value="Bodrum">Bodrum</option>
+                            <option value="Bursa">Bursa</option>
+                            <option value="Cappadocia">Cappadocia</option>
+                            <option value="Fethiye">Fethiye</option>
                             <option value="Istanbul">Istanbul</option>
+                            <option value="Izmir">Izmir</option>
+                            <option value="Konya">Konya</option>
+                            <option value="Marmaris">Marmaris</option>
+                            <option value="Pamukkale">Pamukkale</option>
                             <option value="Trabzon">Trabzon</option>
                             <option value="Uzungol">Uzungol</option>
                         </Select>
@@ -237,6 +243,9 @@ export default function EditHotelPage() {
                     <Button type="submit" gradientDuoTone="purpleToPink">
                         Update Hotel
                     </Button>
+                    
+                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                    {success && <Alert color="success" className="mt-4">{success}</Alert>}
                 </form>
             </Card>
         </div>

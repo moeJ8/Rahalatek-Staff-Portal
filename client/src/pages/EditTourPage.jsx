@@ -98,9 +98,6 @@ export default function EditTourPage() {
       <Card>
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Tour</h2>
                     
-                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
-                    {success && <Alert color="success" className="mb-4">{success}</Alert>}
-                    
                     <form onSubmit={handleTourSubmit} className="space-y-4">
                         <div>
                             <div className="mb-2 block">
@@ -127,7 +124,16 @@ export default function EditTourPage() {
                                 required
                             >
                                 <option value="">Select City</option>
+                                <option value="Antalya">Antalya</option>
+                                <option value="Bodrum">Bodrum</option>
+                                <option value="Bursa">Bursa</option>
+                                <option value="Cappadocia">Cappadocia</option>
+                                <option value="Fethiye">Fethiye</option>
                                 <option value="Istanbul">Istanbul</option>
+                                <option value="Izmir">Izmir</option>
+                                <option value="Konya">Konya</option>
+                                <option value="Marmaris">Marmaris</option>
+                                <option value="Pamukkale">Pamukkale</option>
                                 <option value="Trabzon">Trabzon</option>
                                 <option value="Uzungol">Uzungol</option>
                             </Select>
@@ -223,6 +229,9 @@ export default function EditTourPage() {
                         <Button type="submit" gradientDuoTone="purpleToPink">
                             Update Tour
                         </Button>
+                        
+                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                        {success && <Alert color="success" className="mt-4">{success}</Alert>}
                     </form>
                 </Card>
     </div>

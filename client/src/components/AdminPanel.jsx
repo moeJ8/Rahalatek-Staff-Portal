@@ -338,7 +338,16 @@ export default function AdminPanel() {
                                 required
                             >
                                 <option value="">Select City</option>
+                                <option value="Antalya">Antalya</option>
+                                <option value="Bodrum">Bodrum</option>
+                                <option value="Bursa">Bursa</option>
+                                <option value="Cappadocia">Cappadocia</option>
+                                <option value="Fethiye">Fethiye</option>
                                 <option value="Istanbul">Istanbul</option>
+                                <option value="Izmir">Izmir</option>
+                                <option value="Konya">Konya</option>
+                                <option value="Marmaris">Marmaris</option>
+                                <option value="Pamukkale">Pamukkale</option>
                                 <option value="Trabzon">Trabzon</option>
                                 <option value="Uzungol">Uzungol</option>
                             </Select>
@@ -491,7 +500,16 @@ export default function AdminPanel() {
                                 required
                             >
                                 <option value="">Select City</option>
+                                <option value="Antalya">Antalya</option>
+                                <option value="Bodrum">Bodrum</option>
+                                <option value="Bursa">Bursa</option>
+                                <option value="Cappadocia">Cappadocia</option>
+                                <option value="Fethiye">Fethiye</option>
                                 <option value="Istanbul">Istanbul</option>
+                                <option value="Izmir">Izmir</option>
+                                <option value="Konya">Konya</option>
+                                <option value="Marmaris">Marmaris</option>
+                                <option value="Pamukkale">Pamukkale</option>
                                 <option value="Trabzon">Trabzon</option>
                                 <option value="Uzungol">Uzungol</option>
                             </Select>

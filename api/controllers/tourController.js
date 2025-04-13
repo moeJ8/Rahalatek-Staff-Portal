@@ -3,7 +3,8 @@ const Tour = require('../models/Tour');
 // Get all tours
 exports.getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
+    // Sort by updatedAt in descending order (newest first)
+    const tours = await Tour.find().sort({ updatedAt: -1 });
     res.status(200).json(tours);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -111,6 +111,11 @@ export default function HotelsPage() {
     setDeleteLoading(true);
     try {
       await axios.delete(`/api/hotels/${hotelToDelete._id}`);
+      // Remove the deleted hotel from the hotels array
+      const updatedHotels = hotels.filter(hotel => hotel._id !== hotelToDelete._id);
+      setHotels(updatedHotels);
+      setFilteredHotels(updatedHotels);
+      
       setDeleteSuccess(`Hotel "${hotelToDelete.name}" has been deleted successfully.`);
       // Hide success message after 3 seconds
       setTimeout(() => {

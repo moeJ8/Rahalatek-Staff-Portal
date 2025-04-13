@@ -27,18 +27,12 @@ const tourSchema = new mongoose.Schema({
         required: [true, 'A tour must have a duration'],
         default: 1 // Duration in hours
     },
-    maxGroupSize: {
-        type: Number,
-        
-    },
+    
     highlights: [{ 
         type: String 
     }],
-    imageCover: {
-        type: String,
-        required: [true, 'A tour must have a cover image']
-    },
-    images: [String],
+    
+    
     startDates: [Date],
     createdAt: {
         type: Date,
