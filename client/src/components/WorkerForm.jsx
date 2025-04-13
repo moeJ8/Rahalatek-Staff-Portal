@@ -15,7 +15,7 @@ export default function WorkerForm() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
-    // Enhanced trip details
+
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [numGuests, setNumGuests] = useState(2);
@@ -47,13 +47,23 @@ export default function WorkerForm() {
       fetchData();
     }, []);
     
-    // Get Arabic name for an airport
+
     const getAirportArabicName = (airportName) => {
+      if (!airportName || !airports || airports.length === 0) {
+        return 'المطار';
+      }
+      
       const airport = airports.find(a => a.name === airportName);
-      return airport ? airport.arabicName : airportName;
+
+      if (!airport || !airport.arabicName) {
+        console.log(`No Arabic name found for airport: ${airportName}`);
+        return 'المطار';
+      }
+      
+      return airport.arabicName;
     };
     
-    // Update available tours when city changes
+
     useEffect(() => {
       if (selectedCity) {
         const filteredTours = tours.filter(tour => tour.city === selectedCity);
@@ -63,8 +73,7 @@ export default function WorkerForm() {
         setAvailableTours([]);
       }
     }, [selectedCity, tours]);
-    
-    // Update selected hotel data when hotel changes
+
     useEffect(() => {
       if (selectedHotel) {
         const hotelData = hotels.find(hotel => hotel._id === selectedHotel);
@@ -112,6 +121,30 @@ export default function WorkerForm() {
     });
   };
   
+  const moveTourUp = (tourId) => {
+    setSelectedTours(prevSelected => {
+      const index = prevSelected.indexOf(tourId);
+      if (index <= 0) return prevSelected;
+      
+      const newSelected = [...prevSelected];
+      // Swap current tour with the one above it
+      [newSelected[index], newSelected[index - 1]] = [newSelected[index - 1], newSelected[index]];
+      return newSelected;
+    });
+  };
+  
+  const moveTourDown = (tourId) => {
+    setSelectedTours(prevSelected => {
+      const index = prevSelected.indexOf(tourId);
+      if (index < 0 || index >= prevSelected.length - 1) return prevSelected;
+      
+      const newSelected = [...prevSelected];
+      // Swap current tour with the one below it
+      [newSelected[index], newSelected[index + 1]] = [newSelected[index + 1], newSelected[index]];
+      return newSelected;
+    });
+  };
+  
   // Calculate total price including hotel, tours and transportation
   const calculateTotalPrice = () => {
     if (!selectedHotelData) return 0;
@@ -139,54 +172,52 @@ export default function WorkerForm() {
     if (selectedHotelData && selectedCity && startDate && endDate) {
       const nights = calculateDuration();
       const calculatedPrice = calculateTotalPrice();
-      
-      // Use user-entered price if provided, otherwise use calculated price
+
       const finalPrice = tripPrice || calculatedPrice;
-      
-      // Get selected tour data
-      const selectedTourData = tours.filter(tour => selectedTours.includes(tour._id));
-      const toursText = selectedTourData.map(tour => `- ${tour.name}`).join('\n');
+      const orderedTourData = selectedTours.map(tourId => 
+        tours.find(tour => tour._id === tourId)
+      ).filter(Boolean);
       
       // Format dates in DD/MM format
       const formattedStartDate = new Date(startDate).toLocaleDateString('ar-EG', {day: 'numeric', month: 'numeric'});
       const formattedEndDate = new Date(endDate).toLocaleDateString('ar-EG', {day: 'numeric', month: 'numeric'});
-      
-      // Get Arabic airport name from our airports API
-      const airportName = selectedHotelData.airport ? 
-                          getAirportArabicName(selectedHotelData.airport) : 
-                          'المطار';
-      
-      // Build the message in the requested format
-      const itinerary = `📆التاريخ ${formattedStartDate} لغاية ${formattedEndDate}
-⏰المدة ${nights} ليالي 
-👬${numGuests} شخص 
-💵سعر البكج ${finalPrice}$
 
+      let airportName = 'المطار'; 
+      
+      if (selectedHotelData.airport && selectedHotelData.airport.trim() !== '') {
+        airportName = getAirportArabicName(selectedHotelData.airport);
+        console.log(`Using airport: ${selectedHotelData.airport}, Arabic name: ${airportName}`);
+      }
 
-${getCityNameInArabic(selectedCity)} 📍
+      const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+
+      const itinerary = `🇹🇷 بكج ${getCityNameInArabic(selectedCity)} 🇹🇷
+تاريخ من ${formattedStartDate} لغاية ${formattedEndDate} 🗓
+المدة ${nights} ليالي ⏰
+${numGuests} شخص 👥
+سعر البكج ${finalPrice}$ 💵
 
 ${includeTransfer && selectedHotelData.transportationPrice > 0 ? 
-  `🚘 الاستقبال و التوديع من ${airportName} بسيارة خاصة (${selectedHotelData.transportationPrice}$ للشخص)` : ''}
+  `الاستقبال والتوديع من ${airportName} بسيارة خاصة 🚘` : ''}
 
-🏢الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.stars} نجوم ${selectedHotelData.name} ضمن غرفة ${selectedHotelData.roomType} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'} لمدة ${nights} ليالي 
+الفندق 🏢
+الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ضمن ${selectedHotelData.roomType} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
 ${selectedHotelData.description ? `\n${selectedHotelData.description}` : ''}
 
-${selectedTourData.length > 0 ? '🚘القيام بجولات بسيارة خاصة:' : ''}
+${orderedTourData.length > 0 ? 'تفاصيل الجولات 📋' : ''}
+${orderedTourData.map((tour, index) => {
+  const dayNumber = index < 10 ? numberEmojis[index] : `${index + 1}`;
+  return `اليوم ${dayNumber}
+${tour.name}
+${tour.description}
 
-${toursText}
-
-----------------------------------------
-
-${selectedTourData.length > 0 ? 'تفاصيل الجولات:' : ''}
-
-${selectedTourData.map(tour => (`⿡${tour.name}:
-${tour.detailedDescription || tour.description}
-${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight => `- ${highlight}`).join('\n') : ''}
-`)).join('\n')}`;
+${tour.detailedDescription || ''}
+${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight => `${highlight} ◀`).join('\n') : ''}`;
+}).join('\n\n')}`;
 
       setMessage(itinerary);
       
-      // Auto-update the price field if it's empty
+     
       if (!tripPrice) {
         setTripPrice(calculatedPrice.toString());
       }
@@ -194,13 +225,21 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
       setError('الرجاء ملء جميع الحقول المطلوبة.');
     }
   };
-  
-  // Helper function to translate city names to Arabic
+
   const getCityNameInArabic = (cityName) => {
     const cityMap = {
       'Istanbul': 'اسطنبول',
       'Trabzon': 'طرابزون',
-      'Uzungol': 'أوزنجول'
+      'Uzungol': 'أوزنجول',
+      'Antalya': 'أنطاليا',
+      'Bodrum': 'بودروم',
+      'Bursa': 'بورصة',
+      'Cappadocia': 'كابادوكيا',
+      'Fethiye': 'فتحية',
+      'Izmir': 'إزمير',
+      'Konya': 'قونيا',
+      'Marmaris': 'مرمريس',
+      'Pamukkale': 'باموكالي'
     };
     return cityMap[cityName] || cityName;
   };
@@ -273,7 +312,16 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                   required
                 >
                   <option value="">Select City</option>
+                  <option value="Antalya">Antalya</option>
+                  <option value="Bodrum">Bodrum</option>
+                  <option value="Bursa">Bursa</option>
+                  <option value="Cappadocia">Cappadocia</option>
+                  <option value="Fethiye">Fethiye</option>
                   <option value="Istanbul">Istanbul</option>
+                  <option value="Izmir">Izmir</option>
+                  <option value="Konya">Konya</option>
+                  <option value="Marmaris">Marmaris</option>
+                  <option value="Pamukkale">Pamukkale</option>
                   <option value="Trabzon">Trabzon</option>
                   <option value="Uzungol">Uzungol</option>
                 </Select>
@@ -320,24 +368,54 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               {availableTours.length > 0 && (
                 <div>
                   <div className="mb-2 block">
-                    <Label value="Select Tours" className="dark:text-white" />
+                    <Label value="Select Tours (Order determines day assignment)" className="dark:text-white" />
                   </div>
                   <Card className="dark:bg-gray-800">
-                    {availableTours.map(tour => (
-                      <div key={tour._id} className="flex items-center pb-4 border-b dark:border-gray-700 last:border-b-0 last:pb-0 mb-2">
-                        <Checkbox
-                          id={tour._id}
-                          checked={selectedTours.includes(tour._id)}
-                          onChange={() => handleTourSelection(tour._id)}
-                          className="mr-2"
-                        />
-                        <Label htmlFor={tour._id} className="flex-1">
-                          <div className="font-medium dark:text-white">{tour.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{tour.description}</div>
-                          <div className="text-sm text-blue-600 dark:text-blue-400">${tour.price} per person • {tour.duration} hours</div>
-                        </Label>
-                      </div>
-                    ))}
+                    {availableTours.map(tour => {
+                      const isSelected = selectedTours.includes(tour._id);
+                      const dayNumber = isSelected ? selectedTours.indexOf(tour._id) + 1 : null;
+                      
+                      return (
+                        <div key={tour._id} className="flex items-center pb-4 border-b dark:border-gray-700 last:border-b-0 last:pb-0 mb-2">
+                          <Checkbox
+                            id={tour._id}
+                            checked={isSelected}
+                            onChange={() => handleTourSelection(tour._id)}
+                            className="mr-2"
+                          />
+                          {isSelected && (
+                            <div className="flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-6 h-6 mr-2 text-xs font-bold">
+                              {dayNumber}
+                            </div>
+                          )}
+                          <Label htmlFor={tour._id} className="flex-1">
+                            <div className="font-medium dark:text-white">{tour.name}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">{tour.description}</div>
+                            <div className="text-sm text-blue-600 dark:text-blue-400">${tour.price} per person • {tour.duration} hours</div>
+                          </Label>
+                          {isSelected && (
+                            <div className="flex space-x-1 ml-2">
+                              <Button 
+                                size="xs" 
+                                color="gray" 
+                                onClick={() => moveTourUp(tour._id)}
+                                disabled={selectedTours.indexOf(tour._id) === 0}
+                              >
+                                ▲
+                              </Button>
+                              <Button 
+                                size="xs" 
+                                color="gray" 
+                                onClick={() => moveTourDown(tour._id)}
+                                disabled={selectedTours.indexOf(tour._id) === selectedTours.length - 1}
+                              >
+                                ▼
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </Card>
                 </div>
               )}

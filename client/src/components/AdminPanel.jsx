@@ -36,7 +36,6 @@ export default function AdminPanel() {
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState('');
 
-    // Fetch airports and users on component mount
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -44,7 +43,6 @@ export default function AdminPanel() {
                 const airportsResponse = await axios.get('/api/airports');
                 setAirports(airportsResponse.data);
                 
-                // Only fetch users if on users tab
                 if (activeTab === 'users') {
                     await fetchUsers();
                 }
@@ -309,9 +307,6 @@ export default function AdminPanel() {
                 <Card>
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Hotel</h2>
                     
-                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
-                    {success && <Alert color="success" className="mb-4">{success}</Alert>}
-                    
                     <form onSubmit={handleHotelSubmit} className="space-y-4">
                         <div>
                             <div className="mb-2 block">
@@ -463,6 +458,9 @@ export default function AdminPanel() {
                         <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Hotel
                         </Button>
+                        
+                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                        {success && <Alert color="success" className="mt-4">{success}</Alert>}
                     </form>
                 </Card>
             )}
@@ -470,9 +468,6 @@ export default function AdminPanel() {
             {activeTab === 'tours' && (
                 <Card>
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
-                    
-                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
-                    {success && <Alert color="success" className="mb-4">{success}</Alert>}
                     
                     <form onSubmit={handleTourSubmit} className="space-y-4">
                         <div>
@@ -605,6 +600,9 @@ export default function AdminPanel() {
                         <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Tour
                         </Button>
+                        
+                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                        {success && <Alert color="success" className="mt-4">{success}</Alert>}
                     </form>
                 </Card>
             )}
@@ -612,9 +610,6 @@ export default function AdminPanel() {
             {activeTab === 'airports' && (
                 <Card>
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Airport</h2>
-                    
-                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
-                    {success && <Alert color="success" className="mb-4">{success}</Alert>}
                     
                     <form onSubmit={handleAirportSubmit} className="space-y-4">
                         <div>
@@ -646,6 +641,9 @@ export default function AdminPanel() {
                         <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Airport
                         </Button>
+                        
+                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                        {success && <Alert color="success" className="mt-4">{success}</Alert>}
                     </form>
                     
                     <div className="mt-8">
