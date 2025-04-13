@@ -8,6 +8,7 @@ import HotelsPage from './pages/HotelsPage'
 import EditHotelPage from './pages/EditHotelPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
+import Footer from './components/Footer'
 import { useState, useEffect } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
 
@@ -65,6 +66,8 @@ function App() {
               </Route>
             </Routes>
           </main>
+          
+          <Footer />
         </BrowserRouter>
       </div>
     </ThemeProvider>

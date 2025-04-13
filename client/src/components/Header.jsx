@@ -54,7 +54,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-md mb-6 transition-colors duration-300">
+    <header className="bg-white dark:bg-gray-800 shadow-md mb-6 transition-colors duration-300 sticky top-0 z-10">
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div>
