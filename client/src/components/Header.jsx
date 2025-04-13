@@ -113,11 +113,15 @@ export default function Header() {
                 </Button>
               </>
             ) : (
-              <Link to="/signin">
-                <Button gradientDuoTone="purpleToPink" size="sm" outline>
-                  Sign In
-                </Button>
-              </Link>
+              <>
+                <DarkModeToggle />
+                <Link to="/signin">
+                  <Button gradientDuoTone="purpleToPink" size="sm" outline>
+                    Sign In
+                  </Button>
+                </Link>
+                
+              </>
             )}
             
            
