@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import WorkerPage from './pages/WorkerPage'
 import SignInPage from './pages/SignInPage'
+import ToursPage from './pages/ToursPage'
+import EditTourPage from './pages/EditTourPage'
+import HotelsPage from './pages/HotelsPage'
+import EditHotelPage from './pages/EditHotelPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import { useState, useEffect } from 'react'
@@ -45,10 +49,15 @@ function App() {
                 </div>
               } />
               <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
+
+              <Route path="/tours" element={<ToursPage />} />
+              <Route path="/hotels" element={<HotelsPage />} />
               
               {/* Protected Routes */}
               <Route element={<ProtectedRoute requireAdmin={true} />}>
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/edit-tour/:id" element={<EditTourPage />} />
+                <Route path="/admin/edit-hotel/:id" element={<EditHotelPage />} />
               </Route>
               
               <Route element={<ProtectedRoute requireAdmin={false} />}>
