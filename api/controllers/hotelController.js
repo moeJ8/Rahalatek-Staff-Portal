@@ -18,7 +18,7 @@ exports.addHotel = async (req, res) => {
         const hotelData = {
             ...req.body,
             stars: Number(req.body.stars),
-            pricePerNightPerPerson: Number(req.body.pricePerNightPerPerson),
+            roomTypes: req.body.roomTypes || [],
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
             airport: req.body.airport || null
@@ -65,7 +65,7 @@ exports.updateHotel = async (req, res) => {
         const hotelData = {
             ...req.body,
             stars: Number(req.body.stars),
-            pricePerNightPerPerson: Number(req.body.pricePerNightPerPerson),
+            roomTypes: req.body.roomTypes || [],
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
             airport: req.body.airport || null

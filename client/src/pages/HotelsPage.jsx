@@ -253,10 +253,20 @@ export default function HotelsPage() {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
-                      <Badge color="success" className="text-xs sm:text-sm">${hotel.pricePerNightPerPerson} per night</Badge>
-                      <Badge color="purple" className="text-xs sm:text-sm">
-                        <FaBed className="inline mr-1" />{hotel.roomType}
-                      </Badge>
+                      {hotel.roomTypes && hotel.roomTypes.length > 0 ? (
+                        hotel.roomTypes.map((roomType, index) => (
+                          <Badge key={index} color="success" className="text-xs sm:text-sm">
+                            <FaBed className="inline mr-1" />{roomType.type}: ${roomType.pricePerNight}
+                          </Badge>
+                        ))
+                      ) : (
+                        <>
+                          <Badge color="success" className="text-xs sm:text-sm">${hotel.pricePerNightPerPerson} per night</Badge>
+                          <Badge color="purple" className="text-xs sm:text-sm">
+                            <FaBed className="inline mr-1" />{hotel.roomType}
+                          </Badge>
+                        </>
+                      )}
                       {hotel.breakfastIncluded && (
                         <Badge color="indigo" className="text-xs sm:text-sm">
                           <FaCoffee className="inline mr-1" />Breakfast included

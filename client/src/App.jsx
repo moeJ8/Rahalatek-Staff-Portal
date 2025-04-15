@@ -11,6 +11,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import { useState, useEffect } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { Toaster } from 'react-hot-toast'
 
 
 // Flowbite theme customization
@@ -36,6 +37,7 @@ function App() {
   return (
     <ThemeProvider>
       <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
+        <Toaster position="bottom-center" />
         <BrowserRouter>
           <Header />
           

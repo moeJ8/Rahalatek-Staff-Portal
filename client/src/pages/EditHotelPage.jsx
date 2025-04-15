@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner, Checkbox } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { HiPlus, HiX, HiTrash } from 'react-icons/hi';
 
 
 export default function EditHotelPage() {
@@ -13,13 +14,38 @@ export default function EditHotelPage() {
         name: '',
         city: '',
         stars: 3,
-        pricePerNightPerPerson: '',
+        roomTypes: [],
         breakfastIncluded: false,
-        roomType: '',
         transportationPrice: 0,
         airport: '',
         description: ''
     });
+    
+    // Standard room types for hotels
+    const standardRoomTypes = [
+        "SINGLE ROOM",
+        "DOUBLE ROOM",
+        "TRIPLE ROOM",
+        "FAMILY SUITE"
+    ];
+
+    const [selectedRoomTypes, setSelectedRoomTypes] = useState({
+        "SINGLE ROOM": false,
+        "DOUBLE ROOM": false,
+        "TRIPLE ROOM": false,
+        "FAMILY SUITE": false,
+        "CUSTOM": false
+    });
+    
+    const [roomTypePrices, setRoomTypePrices] = useState({
+        "SINGLE ROOM": "",
+        "DOUBLE ROOM": "",
+        "TRIPLE ROOM": "",
+        "FAMILY SUITE": "",
+        "CUSTOM": ""
+    });
+    
+    const [customRoomType, setCustomRoomType] = useState("");
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState('');
@@ -29,7 +55,56 @@ export default function EditHotelPage() {
         const fetchData = async () => {
             try {
                 const hotelResponse = await axios.get(`/api/hotels/${id}`);
-                setHotelData(hotelResponse.data);
+                // Handle potential difference in data structure for older hotels
+                const fetchedHotel = hotelResponse.data;
+                if (!fetchedHotel.roomTypes || fetchedHotel.roomTypes.length === 0) {
+                    // Convert old format to new format
+                    fetchedHotel.roomTypes = fetchedHotel.roomType ? 
+                        [{ 
+                            type: fetchedHotel.roomType, 
+                            pricePerNight: fetchedHotel.pricePerNightPerPerson || 0 
+                        }] : [];
+                }
+                setHotelData(fetchedHotel);
+                
+                // Initialize room type selection and prices from existing data
+                const newSelectedRoomTypes = {
+                    "SINGLE ROOM": false,
+                    "DOUBLE ROOM": false,
+                    "TRIPLE ROOM": false,
+                    "FAMILY SUITE": false,
+                    "CUSTOM": false
+                };
+                
+                const newRoomTypePrices = {
+                    "SINGLE ROOM": "",
+                    "DOUBLE ROOM": "",
+                    "TRIPLE ROOM": "",
+                    "FAMILY SUITE": "",
+                    "CUSTOM": ""
+                };
+                
+                let hasCustom = false;
+                let customTypeName = "";
+                
+                // Set the selected states and prices based on existing room types
+                fetchedHotel.roomTypes.forEach(roomType => {
+                    if (standardRoomTypes.includes(roomType.type)) {
+                        newSelectedRoomTypes[roomType.type] = true;
+                        newRoomTypePrices[roomType.type] = roomType.pricePerNight.toString();
+                    } else {
+                        hasCustom = true;
+                        customTypeName = roomType.type;
+                        newSelectedRoomTypes["CUSTOM"] = true;
+                        newRoomTypePrices["CUSTOM"] = roomType.pricePerNight.toString();
+                    }
+                });
+                
+                setSelectedRoomTypes(newSelectedRoomTypes);
+                setRoomTypePrices(newRoomTypePrices);
+                if (hasCustom) {
+                    setCustomRoomType(customTypeName);
+                }
                 
                 const airportsResponse = await axios.get('/api/airports');
                 setAirports(airportsResponse.data);
@@ -62,6 +137,56 @@ export default function EditHotelPage() {
         }
     };
 
+    const handleRoomTypeCheckboxChange = (roomType) => {
+        setSelectedRoomTypes({
+            ...selectedRoomTypes,
+            [roomType]: !selectedRoomTypes[roomType]
+        });
+        
+        // If unchecking, reset price
+        if (selectedRoomTypes[roomType]) {
+            setRoomTypePrices({
+                ...roomTypePrices,
+                [roomType]: ""
+            });
+        }
+    };
+
+    const handleRoomPriceChange = (roomType, price) => {
+        setRoomTypePrices({
+            ...roomTypePrices,
+            [roomType]: price
+        });
+    };
+
+    const handleCustomRoomTypeChange = (value) => {
+        setCustomRoomType(value);
+    };
+
+    const addRoomTypesToHotelData = () => {
+        const roomTypes = [];
+        
+        // Add standard room types
+        standardRoomTypes.forEach(roomType => {
+            if (selectedRoomTypes[roomType] && roomTypePrices[roomType]) {
+                roomTypes.push({
+                    type: roomType,
+                    pricePerNight: Number(roomTypePrices[roomType])
+                });
+            }
+        });
+        
+        // Add custom room type if selected
+        if (selectedRoomTypes["CUSTOM"] && customRoomType && roomTypePrices["CUSTOM"]) {
+            roomTypes.push({
+                type: customRoomType,
+                pricePerNight: Number(roomTypePrices["CUSTOM"])
+            });
+        }
+        
+        return roomTypes;
+    };
+
     const showSuccessMessage = (message) => {
         setSuccess(message);
         setTimeout(() => setSuccess(''), 3000);
@@ -70,8 +195,21 @@ export default function EditHotelPage() {
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        
+        const roomTypes = addRoomTypesToHotelData();
+        
+        if (roomTypes.length === 0) {
+            setError('Please add at least one room type with price');
+            return;
+        }
+        
         try {
-            await axios.put(`/api/hotels/${id}`, hotelData);
+            const hotelDataToSubmit = {
+                ...hotelData,
+                roomTypes
+            };
+            
+            await axios.put(`/api/hotels/${id}`, hotelDataToSubmit);
             showSuccessMessage('Hotel updated successfully!');
             setTimeout(() => {
                 navigate('/hotels');
@@ -157,30 +295,57 @@ export default function EditHotelPage() {
                     
                     <div>
                         <div className="mb-2 block">
-                            <Label htmlFor="hotelPrice" value="Price per Night per Person ($)" />
+                            <Label htmlFor="hotelRoomTypes" value="Room Types" />
                         </div>
-                        <TextInput
-                            id="hotelPrice"
-                            type="number"
-                            name="pricePerNightPerPerson"
-                            value={hotelData.pricePerNightPerPerson}
-                            onChange={handleHotelChange}
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="roomType" value="Room Type" />
+                        <div className="space-y-2 mb-4">
+                            {standardRoomTypes.map((roomType) => (
+                                <div key={roomType} className="flex items-center gap-3">
+                                    <Checkbox
+                                        id={`roomType-${roomType}`}
+                                        checked={selectedRoomTypes[roomType]}
+                                        onChange={() => handleRoomTypeCheckboxChange(roomType)}
+                                    />
+                                    <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
+                                    {selectedRoomTypes[roomType] && (
+                                        <TextInput
+                                            type="number"
+                                            placeholder="Price per night"
+                                            value={roomTypePrices[roomType]}
+                                            onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
+                                            required
+                                            className="ml-auto"
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                            
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    id="roomType-CUSTOM"
+                                    checked={selectedRoomTypes["CUSTOM"]}
+                                    onChange={() => handleRoomTypeCheckboxChange("CUSTOM")}
+                                />
+                                <Label htmlFor="roomType-CUSTOM">Custom Room Type</Label>
+                            </div>
+                            
+                            {selectedRoomTypes["CUSTOM"] && (
+                                <div className="flex flex-col gap-2 ml-8 mt-2">
+                                    <TextInput
+                                        placeholder="Enter custom room type name"
+                                        value={customRoomType}
+                                        onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
+                                        required
+                                    />
+                                    <TextInput
+                                        type="number"
+                                        placeholder="Price per night"
+                                        value={roomTypePrices["CUSTOM"]}
+                                        onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            )}
                         </div>
-                        <TextInput
-                            id="roomType"
-                            name="roomType"
-                            value={hotelData.roomType}
-                            onChange={handleHotelChange}
-                            placeholder="e.g. Single, Double, Suite, Family Room"
-                            required
-                        />
                     </div>
 
                     <div>
@@ -228,19 +393,17 @@ export default function EditHotelPage() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 my-4">
                         <Checkbox
                             id="breakfastIncluded"
                             name="breakfastIncluded"
                             checked={hotelData.breakfastIncluded}
                             onChange={handleHotelChange}
                         />
-                        <Label htmlFor="breakfastIncluded">
-                            Breakfast Included
-                        </Label>
+                        <Label htmlFor="breakfastIncluded">Breakfast Included</Label>
                     </div>
                     
-                    <Button type="submit" gradientDuoTone="purpleToPink">
+                    <Button type="submit" gradientDuoTone="pinkToOrange">
                         Update Hotel
                     </Button>
                     
@@ -249,5 +412,5 @@ export default function EditHotelPage() {
                 </form>
             </Card>
         </div>
-    )
+    );
 } 
