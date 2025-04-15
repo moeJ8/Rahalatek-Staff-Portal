@@ -35,7 +35,7 @@ export default function AdminPanel() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState('');
-    const [customRoomType, setCustomRoomType] = useState("");
+    const [customRoomTypes, setCustomRoomTypes] = useState([]);
 
     // Standard room types for hotels
     const standardRoomTypes = [
@@ -157,8 +157,70 @@ export default function AdminPanel() {
         });
     };
 
-    const handleCustomRoomTypeChange = (value) => {
-        setCustomRoomType(value);
+    const handleAddCustomRoomType = () => {
+        const newId = `CUSTOM-${customRoomTypes.length}`;
+        setCustomRoomTypes([
+            ...customRoomTypes,
+            { id: newId, name: '', price: '', childrenPrice: '' }
+        ]);
+
+        setRoomTypePrices({
+            ...roomTypePrices,
+            [newId]: ''
+        });
+
+        setRoomTypeChildrenPrices({
+            ...roomTypeChildrenPrices,
+            [newId]: ''
+        });
+    };
+
+    const handleRemoveCustomRoomType = (index) => {
+        const updatedRoomTypes = [...customRoomTypes];
+        const removedType = updatedRoomTypes[index];
+        updatedRoomTypes.splice(index, 1);
+        setCustomRoomTypes(updatedRoomTypes);
+        
+        // Clean up the prices for the removed type
+        const updatedPrices = { ...roomTypePrices };
+        delete updatedPrices[removedType.id];
+        setRoomTypePrices(updatedPrices);
+        
+        const updatedChildrenPrices = { ...roomTypeChildrenPrices };
+        delete updatedChildrenPrices[removedType.id];
+        setRoomTypeChildrenPrices(updatedChildrenPrices);
+    };
+
+    const handleCustomRoomTypeNameChange = (index, value) => {
+        const updatedRoomTypes = [...customRoomTypes];
+        updatedRoomTypes[index].name = value;
+        setCustomRoomTypes(updatedRoomTypes);
+    };
+
+    const handleCustomRoomTypePriceChange = (index, value) => {
+        const roomTypeId = customRoomTypes[index].id;
+        setRoomTypePrices({
+            ...roomTypePrices,
+            [roomTypeId]: value
+        });
+        
+        // Also update the price in the custom room types array for easy access
+        const updatedRoomTypes = [...customRoomTypes];
+        updatedRoomTypes[index].price = value;
+        setCustomRoomTypes(updatedRoomTypes);
+    };
+
+    const handleCustomRoomTypeChildrenPriceChange = (index, value) => {
+        const roomTypeId = customRoomTypes[index].id;
+        setRoomTypeChildrenPrices({
+            ...roomTypeChildrenPrices,
+            [roomTypeId]: value
+        });
+        
+        // Also update the children price in the custom room types array
+        const updatedRoomTypes = [...customRoomTypes];
+        updatedRoomTypes[index].childrenPrice = value;
+        setCustomRoomTypes(updatedRoomTypes);
     };
 
     const addRoomTypesToHotelData = () => {
@@ -175,12 +237,16 @@ export default function AdminPanel() {
             }
         });
         
-        // Add custom room type if selected
-        if (selectedRoomTypes["CUSTOM"] && customRoomType && roomTypePrices["CUSTOM"]) {
-            roomTypes.push({
-                type: customRoomType,
-                pricePerNight: Number(roomTypePrices["CUSTOM"]),
-                childrenPricePerNight: Number(roomTypeChildrenPrices["CUSTOM"] || 0)
+        // Add custom room types if any
+        if (selectedRoomTypes["CUSTOM"] && customRoomTypes.length > 0) {
+            customRoomTypes.forEach(roomType => {
+                if (roomType.name && roomTypePrices[roomType.id]) {
+                    roomTypes.push({
+                        type: roomType.name,
+                        pricePerNight: Number(roomTypePrices[roomType.id]),
+                        childrenPricePerNight: Number(roomTypeChildrenPrices[roomType.id] || 0)
+                    });
+                }
             });
         }
         
@@ -241,7 +307,8 @@ export default function AdminPanel() {
                 "CUSTOM": ""
             });
             
-            setCustomRoomType("");
+            // Reset custom room types
+            setCustomRoomTypes([]);
             
             showSuccessMessage('Hotel added successfully!');
         } catch (err) {
@@ -413,7 +480,7 @@ export default function AdminPanel() {
     }
 
     return (
-        <div className="max-w-lg mx-auto p-4">
+        <div className="max-w-md mx-auto p-3 flex flex-col items-center">
             {/* Custom Tab Implementation */}
             <div className="flex flex-wrap justify-center border-b mb-4 gap-1">
                 <button
@@ -444,8 +511,8 @@ export default function AdminPanel() {
 
             {/* Tab Content */}
             {activeTab === 'hotels' && (
-                <Card>
-                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Hotel</h2>
+                <Card className="w-full">
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Hotel</h2>
                     
                     <form onSubmit={handleHotelSubmit} className="space-y-4">
                         <div>
@@ -561,90 +628,159 @@ export default function AdminPanel() {
                         </div>
                         
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="hotelRoomTypes" value="Room Types" />
+                            <div className="mb-3 block">
+                                <Label htmlFor="hotelRoomTypes" value="Room Types" className="text-lg font-semibold" />
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Select the room types available at this hotel</p>
                             </div>
-                            <div className="space-y-2 mb-4">
-                                {standardRoomTypes.map((roomType) => (
-                                    <div key={roomType} className="flex items-center gap-3">
-                                        <Checkbox
-                                            id={`roomType-${roomType}`}
-                                            checked={selectedRoomTypes[roomType]}
-                                            onChange={() => handleRoomTypeCheckboxChange(roomType)}
-                                        />
-                                        <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
-                                        {selectedRoomTypes[roomType] && (
-                                            <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                                    <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
-                                                    <TextInput
-                                                        type="number"
-                                                        className="flex-grow"
-                                                        placeholder="Price per night"
-                                                        value={roomTypePrices[roomType]}
-                                                        onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                                    <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
-                                                    <TextInput
-                                                        type="number"
-                                                        className="flex-grow"
-                                                        placeholder="Additional fee"
-                                                        value={roomTypeChildrenPrices[roomType]}
-                                                        onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                            <div className="space-y-4 mb-4">
                                 
-                                <div className="flex items-center gap-3">
-                                    <Checkbox
-                                        id="roomType-CUSTOM"
-                                        checked={selectedRoomTypes["CUSTOM"]}
-                                        onChange={() => handleRoomTypeCheckboxChange("CUSTOM")}
-                                    />
-                                    <Label htmlFor="roomType-CUSTOM">Custom Room Type</Label>
+                                <div className="border-b pb-4 mb-2">
+                                    <h3 className="text-md font-medium mb-3 text-purple-600 dark:text-purple-400">Standard Room Types</h3>
+                                    {standardRoomTypes.map((roomType) => (
+                                        <div key={roomType} className="flex items-center gap-2 mb-2">
+                                            <Checkbox
+                                                id={`roomType-${roomType}`}
+                                                checked={selectedRoomTypes[roomType]}
+                                                onChange={() => handleRoomTypeCheckboxChange(roomType)}
+                                            />
+                                            <Label htmlFor={`roomType-${roomType}`} className="font-medium text-sm">{roomType}</Label>
+                                            {selectedRoomTypes[roomType] && (
+                                                <div className="flex flex-col w-full gap-2 mt-1 p-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                        <Label className="text-xs font-medium w-32 m-0">Adult Price:</Label>
+                                                        <TextInput
+                                                            type="number"
+                                                            size="sm"
+                                                            className="flex-grow shadow-sm text-sm"
+                                                            placeholder="Price per night"
+                                                            value={roomTypePrices[roomType]}
+                                                            onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                        <Label className="text-xs font-medium w-32 m-0">Children Price:</Label>
+                                                        <TextInput
+                                                            type="number"
+                                                            size="sm"
+                                                            className="flex-grow shadow-sm text-sm"
+                                                            placeholder="Additional fee"
+                                                            value={roomTypeChildrenPrices[roomType]}
+                                                            onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
                                 
-                                {selectedRoomTypes["CUSTOM"] && (
-                                    <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-                                            <Label className="text-sm w-40 m-0">Room Type Name:</Label>
-                                            <TextInput
-                                                className="flex-grow"
-                                                placeholder="Enter custom room type name"
-                                                value={customRoomType}
-                                                onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                            <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
-                                            <TextInput
-                                                type="number"
-                                                className="flex-grow"
-                                                placeholder="Price per night"
-                                                value={roomTypePrices["CUSTOM"]}
-                                                onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                            <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
-                                            <TextInput
-                                                type="number"
-                                                className="flex-grow"
-                                                placeholder="Additional fee"
-                                                value={roomTypeChildrenPrices["CUSTOM"]}
-                                                onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
-                                            />
-                                        </div>
+                                <div>
+                                    <h3 className="text-md font-medium mb-2 text-purple-600 dark:text-purple-400">Custom Room Types</h3>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Checkbox
+                                            id="roomType-CUSTOM"
+                                            checked={selectedRoomTypes["CUSTOM"]}
+                                            onChange={() => handleRoomTypeCheckboxChange("CUSTOM")}
+                                        />
+                                        <Label htmlFor="roomType-CUSTOM" className="font-medium text-sm">Add custom room type(s)</Label>
                                     </div>
-                                )}
+                                    
+                                    {selectedRoomTypes["CUSTOM"] && (
+                                        <div className="w-full mt-3">
+                                            {customRoomTypes.length === 0 && (
+                                                <div className="mb-4 p-4 border border-dashed border-purple-300 dark:border-purple-800 rounded-lg bg-purple-50 dark:bg-gray-800 flex flex-col items-center justify-center">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 text-center">No custom room types added yet</p>
+                                                    <Button
+                                                        onClick={handleAddCustomRoomType}
+                                                        size="xs"
+                                                        gradientDuoTone="purpleToPink"
+                                                        className="px-3"
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <HiPlus className="h-3 w-3" />
+                                                            <span className="ml-1">Add Custom Room Type</span>
+                                                        </div>
+                                                    </Button>
+                                                </div>
+                                            )}
+                                            
+                                            {customRoomTypes.map((roomType, index) => (
+                                                <div 
+                                                    key={roomType.id}
+                                                    className="flex flex-col w-full gap-2 mb-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 shadow-sm"
+                                                >
+                                                    <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                                                        <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400">Custom Room Type {index + 1}</h4>
+                                                        <Button
+                                                            onClick={() => handleRemoveCustomRoomType(index)}
+                                                            size="xs"
+                                                            color="failure"
+                                                            pill
+                                                        >
+                                                            <HiX className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-col gap-2 w-full">
+                                                        <div className="flex flex-col gap-1">
+                                                            <Label className="text-xs font-medium">Room Type Name:</Label>
+                                                            <TextInput
+                                                                className="shadow-sm text-sm"
+                                                                size="sm"
+                                                                placeholder="Enter custom room type name"
+                                                                value={roomType.name}
+                                                                onChange={(e) => handleCustomRoomTypeNameChange(index, e.target.value)}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        
+                                                        <div className="flex flex-col gap-1">
+                                                            <Label className="text-xs font-medium">Adult Price per Night:</Label>
+                                                            <TextInput
+                                                                type="number"
+                                                                className="shadow-sm text-sm"
+                                                                size="sm"
+                                                                placeholder="Price per night"
+                                                                value={roomTypePrices[roomType.id] || ''}
+                                                                onChange={(e) => handleCustomRoomTypePriceChange(index, e.target.value)}
+                                                                required
+                                                            />
+                                                        </div>
+                                                        
+                                                        <div className="flex flex-col gap-1">
+                                                            <Label className="text-xs font-medium">Children (6-12) Price:</Label>
+                                                            <TextInput
+                                                                type="number"
+                                                                className="shadow-sm text-sm"
+                                                                size="sm"
+                                                                placeholder="Additional fee"
+                                                                value={roomTypeChildrenPrices[roomType.id] || ''}
+                                                                onChange={(e) => handleCustomRoomTypeChildrenPriceChange(index, e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {customRoomTypes.length > 0 && (
+                                                <div className="flex justify-center mt-2 mb-2">
+                                                    <Button
+                                                        onClick={handleAddCustomRoomType}
+                                                        size="xs"
+                                                        gradientDuoTone="purpleToPink"
+                                                        className="shadow-sm px-2"
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <HiPlus className="h-3 w-3" />
+                                                            <span className="ml-1 text-xs">Add Another</span>
+                                                        </div>
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         

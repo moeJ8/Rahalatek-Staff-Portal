@@ -200,6 +200,9 @@ export default function WorkerForm() {
   };
 
   const handleGenerateMessage = () => {
+    // Clear the tripPrice field every time the button is pressed
+    setTripPrice('');
+    
     if (selectedHotelData && selectedCity && startDate && endDate) {
       if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
         const assignedGuests = roomAllocations.reduce((sum, room) => sum + room.occupants, 0);
