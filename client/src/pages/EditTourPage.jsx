@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { HiPlus, HiX } from 'react-icons/hi';
 
 
 export default function EditTourPage() {
@@ -196,37 +197,48 @@ export default function EditTourPage() {
                         
                         <div>
                             <Label value="Tour Highlights" className="mb-2 block" />
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mb-3">
                                 <TextInput
                                     placeholder="Add a highlight"
                                     value={highlightInput}
                                     onChange={(e) => setHighlightInput(e.target.value)}
                                     className="flex-1"
                                 />
-                                <Button onClick={handleAddHighlight} color="blue">Add</Button>
+                                <Button 
+                                    onClick={handleAddHighlight} 
+                                    gradientDuoTone="purpleToPink"
+                                    size="sm"
+                                >
+                                    <div className="flex items-center">
+                                        <HiPlus className="h-4 w-4" />
+                                        <span className="ml-1">Add</span>
+                                    </div>
+                                </Button>
                             </div>
                             
                             {tourData.highlights && tourData.highlights.length > 0 && (
-                                <Card className="mt-2">
+                                <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Highlights:</h4>
                                     <ul className="space-y-2">
                                         {tourData.highlights.map((highlight, index) => (
-                                            <li key={index} className="flex justify-between items-center">
-                                                <span>• {highlight}</span>
+                                            <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
                                                 <Button 
                                                     color="failure" 
-                                                    size="xs" 
+                                                    size="xs"
+                                                    pill
                                                     onClick={() => handleRemoveHighlight(index)}
                                                 >
-                                                    Remove
+                                                    <HiX className="h-4 w-4" />
                                                 </Button>
                                             </li>
                                         ))}
                                     </ul>
-                                </Card>
+                                </div>
                             )}
                         </div>
                         
-                        <Button type="submit" gradientDuoTone="purpleToPink">
+                        <Button type="submit" gradientDuoTone="pinkToOrange">
                             Update Tour
                         </Button>
                         

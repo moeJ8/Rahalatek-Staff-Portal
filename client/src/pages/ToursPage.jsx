@@ -163,16 +163,14 @@ export default function ToursPage() {
         {/* Search and Filters */}
         <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
           {/* Search Bar */}
-          <div className="relative mb-4">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FaSearch className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </div>
+          <div className="mb-4">
             <TextInput
               type="text"
               placeholder="Search by name, city, description, or highlights..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-10 w-full"
+              icon={FaSearch}
+              className="w-full"
             />
           </div>
           

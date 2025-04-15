@@ -661,18 +661,6 @@ export default function AdminPanel() {
                             />
                         </div>
                         
-                        <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg my-4">
-                            <h3 className="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-200">Children Pricing Policy</h3>
-                            <ul className="list-disc pl-5 text-blue-700 dark:text-blue-300 text-sm">
-                                <li>Children under 6 years: <strong>Free accommodation</strong></li>
-                                <li>Children 6-12 years: <strong>Additional fee</strong> as specified per room type</li>
-                                <li>Children above 12 years: <strong>Adult price</strong></li>
-                            </ul>
-                            <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                                The additional fee for children 6-12 years is a per night charge added to the room price.
-                            </p>
-                        </div>
-                        
                         <Button type="submit" gradientDuoTone="pinkToOrange">
                             Add Hotel
                         </Button>
@@ -781,17 +769,6 @@ export default function AdminPanel() {
                                 min={1}
                                 required
                             />
-                        </div>
-                        
-                        <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg my-4">
-                            <h3 className="text-lg font-semibold mb-2 text-green-800 dark:text-green-200">Children Pricing Policy</h3>
-                            <ul className="list-disc pl-5 text-green-700 dark:text-green-300 text-sm">
-                                <li>Children under 3 years: <strong>Free on tours</strong></li>
-                                <li>Children 3+ years: <strong>Full price</strong> (same as adults)</li>
-                            </ul>
-                            <p className="mt-2 text-sm text-green-700 dark:text-green-300">
-                                This policy will be automatically applied when calculating tour prices.
-                            </p>
                         </div>
                         
                         <div>

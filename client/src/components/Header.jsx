@@ -67,8 +67,12 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div>
-            <Link to="/" className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              Logo
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/last-logo-3.png" 
+                alt="Logo" 
+                className="h-10 object-contain"
+              />
             </Link>
           </div>
           
