@@ -45,6 +45,14 @@ export default function EditHotelPage() {
         "CUSTOM": ""
     });
     
+    const [roomTypeChildrenPrices, setRoomTypeChildrenPrices] = useState({
+        "SINGLE ROOM": "",
+        "DOUBLE ROOM": "",
+        "TRIPLE ROOM": "",
+        "FAMILY SUITE": "",
+        "CUSTOM": ""
+    });
+    
     const [customRoomType, setCustomRoomType] = useState("");
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
@@ -84,6 +92,14 @@ export default function EditHotelPage() {
                     "CUSTOM": ""
                 };
                 
+                const newRoomTypeChildrenPrices = {
+                    "SINGLE ROOM": "",
+                    "DOUBLE ROOM": "",
+                    "TRIPLE ROOM": "",
+                    "FAMILY SUITE": "",
+                    "CUSTOM": ""
+                };
+                
                 let hasCustom = false;
                 let customTypeName = "";
                 
@@ -92,16 +108,20 @@ export default function EditHotelPage() {
                     if (standardRoomTypes.includes(roomType.type)) {
                         newSelectedRoomTypes[roomType.type] = true;
                         newRoomTypePrices[roomType.type] = roomType.pricePerNight.toString();
+                        newRoomTypeChildrenPrices[roomType.type] = roomType.childrenPricePerNight?.toString() || "0";
                     } else {
                         hasCustom = true;
                         customTypeName = roomType.type;
                         newSelectedRoomTypes["CUSTOM"] = true;
                         newRoomTypePrices["CUSTOM"] = roomType.pricePerNight.toString();
+                        newRoomTypeChildrenPrices["CUSTOM"] = roomType.childrenPricePerNight?.toString() || "0";
                     }
                 });
                 
                 setSelectedRoomTypes(newSelectedRoomTypes);
                 setRoomTypePrices(newRoomTypePrices);
+                setRoomTypeChildrenPrices(newRoomTypeChildrenPrices);
+                
                 if (hasCustom) {
                     setCustomRoomType(customTypeName);
                 }
@@ -158,6 +178,13 @@ export default function EditHotelPage() {
             [roomType]: price
         });
     };
+    
+    const handleChildrenRoomPriceChange = (roomType, price) => {
+        setRoomTypeChildrenPrices({
+            ...roomTypeChildrenPrices,
+            [roomType]: price
+        });
+    };
 
     const handleCustomRoomTypeChange = (value) => {
         setCustomRoomType(value);
@@ -171,7 +198,8 @@ export default function EditHotelPage() {
             if (selectedRoomTypes[roomType] && roomTypePrices[roomType]) {
                 roomTypes.push({
                     type: roomType,
-                    pricePerNight: Number(roomTypePrices[roomType])
+                    pricePerNight: Number(roomTypePrices[roomType]),
+                    childrenPricePerNight: Number(roomTypeChildrenPrices[roomType] || 0)
                 });
             }
         });
@@ -180,7 +208,8 @@ export default function EditHotelPage() {
         if (selectedRoomTypes["CUSTOM"] && customRoomType && roomTypePrices["CUSTOM"]) {
             roomTypes.push({
                 type: customRoomType,
-                pricePerNight: Number(roomTypePrices["CUSTOM"])
+                pricePerNight: Number(roomTypePrices["CUSTOM"]),
+                childrenPricePerNight: Number(roomTypeChildrenPrices["CUSTOM"] || 0)
             });
         }
         
@@ -307,14 +336,27 @@ export default function EditHotelPage() {
                                     />
                                     <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
                                     {selectedRoomTypes[roomType] && (
-                                        <TextInput
-                                            type="number"
-                                            placeholder="Price per night"
-                                            value={roomTypePrices[roomType]}
-                                            onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
-                                            required
-                                            className="ml-auto"
-                                        />
+                                        <div className="flex flex-col gap-2 ml-auto">
+                                            <div className="flex items-center">
+                                                <span className="text-sm mr-2">Adult Price:</span>
+                                                <TextInput
+                                                    type="number"
+                                                    placeholder="Price per night"
+                                                    value={roomTypePrices[roomType]}
+                                                    onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="flex items-center">
+                                                <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                                <TextInput
+                                                    type="number"
+                                                    placeholder="Additional fee"
+                                                    value={roomTypeChildrenPrices[roomType]}
+                                                    onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             ))}
@@ -336,13 +378,25 @@ export default function EditHotelPage() {
                                         onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
                                         required
                                     />
-                                    <TextInput
-                                        type="number"
-                                        placeholder="Price per night"
-                                        value={roomTypePrices["CUSTOM"]}
-                                        onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
-                                        required
-                                    />
+                                    <div className="flex items-center mt-2">
+                                        <span className="text-sm mr-2">Adult Price:</span>
+                                        <TextInput
+                                            type="number"
+                                            placeholder="Price per night"
+                                            value={roomTypePrices["CUSTOM"]}
+                                            onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex items-center mt-2">
+                                        <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                        <TextInput
+                                            type="number"
+                                            placeholder="Additional fee"
+                                            value={roomTypeChildrenPrices["CUSTOM"]}
+                                            onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -401,6 +455,18 @@ export default function EditHotelPage() {
                             onChange={handleHotelChange}
                         />
                         <Label htmlFor="breakfastIncluded">Breakfast Included</Label>
+                    </div>
+                    
+                    <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg my-4">
+                        <h3 className="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-200">Children Pricing Policy</h3>
+                        <ul className="list-disc pl-5 text-blue-700 dark:text-blue-300 text-sm">
+                            <li>Children under 6 years: <strong>Free accommodation</strong></li>
+                            <li>Children 6-12 years: <strong>Additional fee</strong> as specified per room type</li>
+                            <li>Children above 12 years: <strong>Adult price</strong></li>
+                        </ul>
+                        <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                            The additional fee for children 6-12 years is a per night charge added to the room price.
+                        </p>
                     </div>
                     
                     <Button type="submit" gradientDuoTone="pinkToOrange">

@@ -32,6 +32,10 @@ const tourSchema = new mongoose.Schema({
         type: String 
     }],
     
+    childrenPolicies: {
+        under3: { type: String, default: 'Free' },
+        above3: { type: String, default: 'Adult price' }
+    },
     
     startDates: [Date],
     createdAt: {

@@ -21,9 +21,15 @@ export default function WorkerForm() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [numGuests, setNumGuests] = useState(2);
+    const [includeChildren, setIncludeChildren] = useState(false);
+    const [childrenUnder3, setChildrenUnder3] = useState(0); // For tours: 0-3 free
+    const [children3to6, setChildren3to6] = useState(0); // For hotels: 0-6 free, Tours: pay full price
+    const [children6to12, setChildren6to12] = useState(0); // For hotels: 6-12 special price, Tours: pay full price
     const [tripPrice, setTripPrice] = useState('');
     const [includeTransfer, setIncludeTransfer] = useState(true);
     const [includeBreakfast, setIncludeBreakfast] = useState(true);
+    const [includeVIP, setIncludeVIP] = useState(false);
+    const [vipCarPrice, setVipCarPrice] = useState('');
 
     useEffect(() => {
       const fetchData = async () => {
@@ -175,41 +181,105 @@ export default function WorkerForm() {
     setRoomAllocations([]);
   };
   
+  // Helper function to safely parse integers
+  const safeParseInt = (value) => {
+    const parsed = parseInt(value, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const calculateTotalPrice = () => {
-    if (!selectedHotelData) return 0;
-    
-    const nights = calculateDuration();
-    const peopleCount = parseInt(numGuests);
-    
-    let totalHotelCost = 0;
-    
-    if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
-        if (roomAllocations.length > 0) {
+    try {
+      let total = 0;
+      const nights = calculateDuration();
+      
+      // Parse all inputs to ensure we're working with numbers
+      const adultCount = safeParseInt(numGuests);
+      const children3to6Count = safeParseInt(children3to6);
+      const children6to12Count = safeParseInt(children6to12);
+      const infantsCount = safeParseInt(childrenUnder3);
+      
+      const totalChildrenCount = includeChildren ? (children3to6Count + children6to12Count + infantsCount) : 0;
+      const totalPeopleCount = adultCount + totalChildrenCount;
+
+      // Hotel costs
+      if (selectedHotelData) {
+        if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
+          if (roomAllocations.length > 0) {
             roomAllocations.forEach(room => {
-                if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
-                    selectedHotelData.roomTypes[room.roomTypeIndex]) {
-                    totalHotelCost += selectedHotelData.roomTypes[room.roomTypeIndex].pricePerNight * nights;
-                }
+              if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
+                  selectedHotelData.roomTypes[room.roomTypeIndex]) {
+                  const roomType = selectedHotelData.roomTypes[room.roomTypeIndex];
+                  // Base price for the room
+                  let roomCost = roomType.pricePerNight * nights;
+                  
+                  // Add children 6-12 price if applicable
+                  if (includeChildren && children6to12Count > 0 && roomType.childrenPricePerNight) {
+                      roomCost += roomType.childrenPricePerNight * nights * children6to12Count;
+                  }
+                  
+                  total += roomCost;
+              }
             });
-        } else {
-            totalHotelCost = selectedHotelData.roomTypes[0].pricePerNight * nights * 
-                             Math.ceil(peopleCount / 2); 
+          } else {
+            // If no room allocations, estimate based on first room type
+            const baseRoomCount = Math.ceil(adultCount / 2); // Estimate 2 adults per room
+            total += selectedHotelData.roomTypes[0].pricePerNight * nights * baseRoomCount;
+            
+            // Add children 6-12 price if applicable
+            if (includeChildren && children6to12Count > 0 && selectedHotelData.roomTypes[0].childrenPricePerNight) {
+                total += selectedHotelData.roomTypes[0].childrenPricePerNight * nights * children6to12Count;
+            }
+          }
+        } else if (selectedHotelData.pricePerNightPerPerson) {
+          // Legacy pricing model
+          total += selectedHotelData.pricePerNightPerPerson * nights * adultCount;
+          
+          // Children 6-12 pay with a special rate (if defined) or half price by default
+          if (includeChildren && children6to12Count > 0) {
+              const childRate = selectedHotelData.childrenPrice || (selectedHotelData.pricePerNightPerPerson * 0.5);
+              total += childRate * nights * children6to12Count;
+          }
+          
+          // Children under 6 (childrenUnder3 and children3to6) are free for accommodation
         }
-    } else if (selectedHotelData.pricePerNightPerPerson) {
-        totalHotelCost = selectedHotelData.pricePerNightPerPerson * nights * peopleCount;
+      }
+
+      // Transportation costs
+      if (includeTransfer && selectedHotelData.transportationPrice) {
+        total += selectedHotelData.transportationPrice * totalPeopleCount;
+      }
+
+      // Tour costs
+      if (selectedTours.length > 0 && tours.length > 0) {
+        selectedTours.forEach(tourId => {
+          const tourData = tours.find(tour => tour._id === tourId);
+          if (tourData) {
+            // Adults pay full price
+            const adultTourCost = tourData.price * adultCount;
+            
+            // Children 3-12 pay full price for tours
+            const children3to12Count = children3to6Count + children6to12Count;
+            const children3to12Cost = includeChildren ? tourData.price * children3to12Count : 0;
+            
+            // Children under 3 are free for tours
+            total += adultTourCost + children3to12Cost;
+          }
+        });
+      }
+      
+      // Add VIP luxury car price if option is selected
+      if (includeVIP && vipCarPrice) {
+        const vipPrice = parseFloat(vipCarPrice);
+        if (!isNaN(vipPrice)) {
+          total += vipPrice;
+        }
+      }
+
+      return total;
+    } catch (err) {
+      console.error('Error calculating total price:', err);
+      return 0;
     }
-    
-    let totalPrice = totalHotelCost;
-    
-    if (includeTransfer && selectedHotelData.transportationPrice) {
-        totalPrice += selectedHotelData.transportationPrice * peopleCount;
-    }
-    
-    const selectedTourData = tours.filter(tour => selectedTours.includes(tour._id));
-    const toursCost = selectedTourData.reduce((sum, tour) => sum + (tour.price * peopleCount), 0);
-    totalPrice += toursCost;
-    
-    return totalPrice;
   };
 
   const getRoomTypeInArabic = (roomType) => {
@@ -277,30 +347,71 @@ export default function WorkerForm() {
           roomTypeInfo = `${numGuests} ${getRoomTypeInArabic(selectedHotelData.roomType)}`;
       }
 
-      const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+      // RTL mark to ensure proper right-to-left display
+      const RLM = '\u200F';
 
-      const itinerary = `🇹🇷 بكج ${getCityNameInArabic(selectedCity)} 🇹🇷
-تاريخ من ${formattedStartDate} لغاية ${formattedEndDate} 🗓
-المدة ${nights} ليالي ⏰
-${numGuests} شخص 👥
-سعر البكج ${finalPrice}$ 💵
+      // Define Arabic ordinal numbers for days
+      const arabicDayOrdinals = [
+        'الاول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 
+        'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر',
+        'الحادي عشر', 'الثاني عشر', 'الثالث عشر', 'الرابع عشر', 'الخامس عشر'
+      ];
+      
+      // Generate guests information with children details
+      let guestsInfo = `${RLM}${numGuests} بالغ`;
+      
+      // Calculate total people for the hotel section
+      const infantsCount = parseInt(childrenUnder3) || 0;
+      const children3to6Count = parseInt(children3to6) || 0;
+      const children6to12Count = parseInt(children6to12) || 0;
+      const totalChildren = includeChildren ? (infantsCount + children3to6Count + children6to12Count) : 0;
+      const totalPeople = numGuests + totalChildren;
+      
+      if (includeChildren) {
+        if (totalChildren > 0) {
+          guestsInfo += ` و ${totalChildren} ${totalChildren === 1 ? 'طفل' : 'أطفال'}`;
+          
+          // Add details about each age group
+          let childrenDetails = [];
+          if (infantsCount > 0) {
+            childrenDetails.push(`${RLM}${infantsCount} ${infantsCount === 1 ? 'طفل' : 'أطفال'} تحت 3 سنوات (مجاناً للجولات)`);
+          }
+          if (children3to6Count > 0) {
+            childrenDetails.push(`${RLM}${children3to6Count} ${children3to6Count === 1 ? 'طفل' : 'أطفال'} 3-6 سنوات (مجاناً للفندق)`);
+          }
+          if (children6to12Count > 0) {
+            childrenDetails.push(`${RLM}${children6to12Count} ${children6to12Count === 1 ? 'طفل' : 'أطفال'} 6-12 سنة (سعر خاص)`);
+          }
+          
+          if (childrenDetails.length > 0) {
+            guestsInfo += `\n${childrenDetails.join('\n')}`;
+          }
+        }
+      }
+
+      const itinerary = `${RLM}🇹🇷 بكج ${getCityNameInArabic(selectedCity)} 🇹🇷
+${RLM}تاريخ من ${formattedStartDate} لغاية ${formattedEndDate} 🗓
+${RLM}المدة ${nights} ليالي ⏰
+${guestsInfo}
+${RLM}سعر البكج ${finalPrice}$ 💵
 
 ${includeTransfer && selectedHotelData.transportationPrice > 0 ? 
-  `الاستقبال والتوديع من ${airportName} بسيارة خاصة 🚘` : ''}
+  `${RLM}الاستقبال والتوديع من ${airportName} بسيارة خاصة ` : ''}
+${includeVIP && vipCarPrice ? 
+  `${RLM}خدمة VIP: سيارة فاخرة للتنقلات السياحية` : ''}
 
-الفندق 🏢
-الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${numGuests} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
-${selectedHotelData.description ? `\n${selectedHotelData.description}` : ''}
+${RLM}الفندق 🏢
+${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${totalPeople} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
+${selectedHotelData.description ? `\n${RLM}${selectedHotelData.description}` : ''}
 
-${orderedTourData.length > 0 ? 'تفاصيل الجولات 📋' : ''}
+${orderedTourData.length > 0 ? `${RLM}تفاصيل الجولات 📋` : ''}
 ${orderedTourData.map((tour, index) => {
-  const dayNumber = index < 10 ? numberEmojis[index] : `${index + 1}`;
-  return `اليوم ${dayNumber}
-${tour.name}
-${tour.description}
+  return `${RLM}اليوم ${arabicDayOrdinals[index]}:
+${RLM}${tour.name}
+${RLM}${tour.description}
 
-${tour.detailedDescription || ''}
-${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight => `${highlight} ◀`).join('\n') : ''}`;
+${tour.detailedDescription ? `${RLM}${tour.detailedDescription}` : ''}
+${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight => `${RLM}• ${highlight}`).join('\n') : ''}`;
 }).join('\n\n')}`;
 
       setMessage(itinerary);
@@ -521,7 +632,7 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="numGuests" value="Number of Guests" className="dark:text-white" />
+                  <Label htmlFor="numGuests" value="Number of Adults" className="dark:text-white" />
                 </div>
                 <TextInput
                   id="numGuests"
@@ -531,6 +642,65 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                   min={1}
                   required
                 />
+              </div>
+              
+              <div className="mt-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Checkbox
+                    id="includeChildren"
+                    checked={includeChildren}
+                    onChange={(e) => setIncludeChildren(e.target.checked)}
+                  />
+                  <Label htmlFor="includeChildren" className="dark:text-white">
+                    Include children
+                  </Label>
+                </div>
+
+                {includeChildren && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div>
+                      <div className="mb-2 block">
+                        <Label htmlFor="childrenUnder3" value="Children (0-3 years)" className="dark:text-white" />
+                      </div>
+                      <TextInput
+                        id="childrenUnder3"
+                        type="number"
+                        value={childrenUnder3}
+                        onChange={(e) => setChildrenUnder3(parseInt(e.target.value) || 0)}
+                        min={0}
+                      />
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free on tours</p>
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2 block">
+                        <Label htmlFor="children3to6" value="Children (3-6 years)" className="dark:text-white" />
+                      </div>
+                      <TextInput
+                        id="children3to6"
+                        type="number"
+                        value={children3to6}
+                        onChange={(e) => setChildren3to6(parseInt(e.target.value) || 0)}
+                        min={0}
+                      />
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free accommodation</p>
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2 block">
+                        <Label htmlFor="children6to12" value="Children (6-12 years)" className="dark:text-white" />
+                      </div>
+                      <TextInput
+                        id="children6to12"
+                        type="number"
+                        value={children6to12}
+                        onChange={(e) => setChildren6to12(parseInt(e.target.value) || 0)}
+                        min={0}
+                      />
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Special hotel rate</p>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {selectedHotelData && (
@@ -656,6 +826,35 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
                 </Label>
               </div>
               
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="includeVIP"
+                    checked={includeVIP}
+                    onChange={(e) => setIncludeVIP(e.target.checked)}
+                  />
+                  <Label htmlFor="includeVIP" className="dark:text-white">
+                    VIP Transportation (Luxury Car)
+                  </Label>
+                </div>
+                
+                {includeVIP && (
+                  <div className="ml-6">
+                    <div className="mb-2 block">
+                      <Label htmlFor="vipCarPrice" value="Luxury Car Price ($)" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="vipCarPrice"
+                      type="number"
+                      value={vipCarPrice}
+                      onChange={(e) => setVipCarPrice(e.target.value)}
+                      placeholder="Enter price for luxury car service"
+                      required={includeVIP}
+                    />
+                  </div>
+                )}
+              </div>
+              
               <div>
                 <div className="mb-2 block">
                   <Label htmlFor="tripPrice" value="Trip Price ($)" className="dark:text-white" />
@@ -670,54 +869,171 @@ ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight 
               </div>
               
               {startDate && endDate && selectedHotelData && (
-                <Alert color="success">
-                  <div className="p-4 text-center">
-                    <h6 className="text-base font-medium">Total Calculated Price: ${calculateTotalPrice()}</h6>
-                    <p className="text-sm">For {calculateDuration()} nights and {numGuests} people</p>
+                <Alert color="info" className="border-0 shadow-md p-0 bg-transparent">
+                  <div className="p-4 bg-gradient-to-br from-gray-800 to-gray-900 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-lg text-white">
+                    <div className="text-center">
+                      <h6 className="text-xl font-bold text-green-400 mb-1">Total Price: ${calculateTotalPrice()}</h6>
+                      <p className="text-sm text-green-300">For {calculateDuration()} nights and {numGuests} people</p>
+                    </div>
                     
-                    {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0 && (
-                      <div className="mt-2 text-left">
-                        <p className="text-sm font-semibold">Room breakdown:</p>
-                        <ul className="text-xs list-disc pl-5">
-                          {(() => {
-                            const roomTypeCounts = {};
-                            roomAllocations.forEach(room => {
-                              if (room.roomTypeIndex !== "" && selectedHotelData.roomTypes[room.roomTypeIndex]) {
-                                const roomType = selectedHotelData.roomTypes[room.roomTypeIndex].type;
-                                const price = selectedHotelData.roomTypes[room.roomTypeIndex].pricePerNight;
-                                roomTypeCounts[roomType] = roomTypeCounts[roomType] || { rooms: 0, people: 0, price };
-                                roomTypeCounts[roomType].rooms += 1;
-                                roomTypeCounts[roomType].people += room.occupants;
-                              }
-                            });
-                            
-                            return Object.entries(roomTypeCounts).map(([type, info], index) => (
-                              <li key={index}>
-                                {info.rooms}x {type}: ${info.price * calculateDuration() * info.rooms}
-                                (${info.price}/night × {calculateDuration()} nights × {info.rooms} rooms, {info.people} people)
-                              </li>
-                            ));
-                          })()}
+                    <div className="mt-4 border-t border-gray-700 dark:border-gray-700 pt-3">
+                      <h6 className="text-sm font-bold text-white mb-2">Detailed Price Breakdown:</h6>
+                      
+                      {/* Hotel Cost Breakdown */}
+                      <div className="mb-3 p-2 bg-gray-800 dark:bg-gray-800 rounded-md shadow-sm">
+                        <p className="text-sm font-semibold text-blue-400 dark:text-blue-400 border-b border-gray-700 dark:border-gray-700 pb-1 mb-1">1. Hotel Accommodation:</p>
+                        {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0 ? (
+                          <div className="ml-2">
+                            {(() => {
+                              const roomTypeCounts = {};
+                              const totalNights = calculateDuration();
+                              roomAllocations.forEach(room => {
+                                if (room.roomTypeIndex !== "" && selectedHotelData.roomTypes[room.roomTypeIndex]) {
+                                  const roomType = selectedHotelData.roomTypes[room.roomTypeIndex].type;
+                                  const price = selectedHotelData.roomTypes[room.roomTypeIndex].pricePerNight;
+                                  const childrenPrice = selectedHotelData.roomTypes[room.roomTypeIndex].childrenPricePerNight || 0;
+                                  roomTypeCounts[roomType] = roomTypeCounts[roomType] || { 
+                                    rooms: 0, 
+                                    people: 0, 
+                                    price, 
+                                    childrenPrice,
+                                    totalPrice: 0
+                                  };
+                                  roomTypeCounts[roomType].rooms += 1;
+                                  roomTypeCounts[roomType].people += room.occupants;
+                                  roomTypeCounts[roomType].totalPrice = price * totalNights * roomTypeCounts[roomType].rooms;
+                                }
+                              });
+                              
+                              return Object.entries(roomTypeCounts).map(([type, info], index) => (
+                                <div key={index} className="text-xs mb-1">
+                                  <p>
+                                    <span className="font-medium text-gray-200 dark:text-gray-200">{info.rooms}x {type}:</span> <span className="text-green-400 dark:text-green-400 font-medium">${info.totalPrice}</span> 
+                                    <span className="text-gray-400 dark:text-gray-400">
+                                      (${info.price}/night × {totalNights} nights × {info.rooms} rooms)
+                                    </span>
+                                  </p>
+                                  {includeChildren && children6to12 > 0 && info.childrenPrice > 0 && (
+                                    <p className="ml-4 text-xs text-gray-400 dark:text-gray-400">
+                                      + Children 6-12 years: <span className="text-green-400 dark:text-green-400">${info.childrenPrice * totalNights * parseInt(children6to12)}</span>
+                                      (${info.childrenPrice}/night × {totalNights} nights × {parseInt(children6to12)} children)
+                                    </p>
+                                  )}
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        ) : (
+                          <p className="text-xs ml-2 text-gray-400 dark:text-gray-400">
+                            Standard room rate calculation based on {numGuests} guests for {calculateDuration()} nights
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Tour Cost Breakdown */}
+                      {selectedTours.length > 0 && (
+                        <div className="mb-3 p-2 bg-gray-800 dark:bg-gray-800 rounded-md shadow-sm">
+                          <p className="text-sm font-semibold text-purple-400 dark:text-purple-400 border-b border-gray-700 dark:border-gray-700 pb-1 mb-1">2. Tours:</p>
+                          <div className="ml-2">
+                            {selectedTours.map((tourId, index) => {
+                              const tour = tours.find(t => t._id === tourId);
+                              if (!tour) return null;
+                              
+                              const adultCost = tour.price * numGuests;
+                              const childrenCount = includeChildren ? (parseInt(children3to6) + parseInt(children6to12)) : 0;
+                              const childrenCost = childrenCount > 0 ? tour.price * childrenCount : 0;
+                              const totalTourCost = adultCost + childrenCost;
+                              
+                              return (
+                                <div key={index} className="text-xs mb-1">
+                                  <p>
+                                    <span className="font-medium text-gray-200 dark:text-gray-200">{tour.name}:</span> <span className="text-green-400 dark:text-green-400 font-medium">${totalTourCost}</span>
+                                  </p>
+                                  <div className="ml-4 text-gray-400 dark:text-gray-400">
+                                    <p>• Adults: <span className="text-green-400 dark:text-green-400">${adultCost}</span> ({numGuests} × ${tour.price})</p>
+                                    {childrenCount > 0 && (
+                                      <p>• Children 3+ years: <span className="text-green-400 dark:text-green-400">${childrenCost}</span> ({childrenCount} × ${tour.price})</p>
+                                    )}
+                                    {includeChildren && childrenUnder3 > 0 && (
+                                      <p>• Children 0-3 years: <span className="text-green-400 dark:text-green-400">$0</span> (free)</p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Transportation Costs */}
+                      <div className="mb-3 p-2 bg-gray-800 dark:bg-gray-800 rounded-md shadow-sm">
+                        <p className="text-sm font-semibold text-orange-400 dark:text-orange-400 border-b border-gray-700 dark:border-gray-700 pb-1 mb-1">3. Transportation:</p>
+                        <div className="ml-2">
+                          {includeTransfer && selectedHotelData.transportationPrice > 0 ? (
+                            <div className="text-xs">
+                              <p>
+                                <span className="font-medium text-gray-200 dark:text-gray-200">Airport Transfers:</span> <span className="text-green-400 dark:text-green-400 font-medium">${selectedHotelData.transportationPrice * (
+                                  parseInt(numGuests) + (
+                                    includeChildren ? 
+                                    parseInt(childrenUnder3) + parseInt(children3to6) + parseInt(children6to12) 
+                                    : 0
+                                  )
+                                )}</span>
+                              </p>
+                              <p className="ml-4 text-gray-400 dark:text-gray-400">
+                                ${selectedHotelData.transportationPrice}/person × {
+                                  parseInt(numGuests) + (
+                                    includeChildren ? 
+                                    parseInt(childrenUnder3) + parseInt(children3to6) + parseInt(children6to12) 
+                                    : 0
+                                  )
+                                } people
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-400 dark:text-gray-400">No airport transfers included</p>
+                          )}
+                          
+                          {includeVIP && vipCarPrice ? (
+                            <div className="text-xs mt-2">
+                              <p>
+                                <span className="font-medium text-gray-200 dark:text-gray-200">VIP Luxury Car:</span> <span className="text-green-400 dark:text-green-400 font-medium">${vipCarPrice}</span>
+                              </p>
+                              <p className="ml-4 text-gray-400 dark:text-gray-400">
+                                Premium transportation service for all tours
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      
+                      {/* Guest Breakdown */}
+                      <div className="mb-3 p-2 bg-gray-800 dark:bg-gray-800 rounded-md shadow-sm">
+                        <p className="text-sm font-semibold text-teal-400 dark:text-teal-400 border-b border-gray-700 dark:border-gray-700 pb-1 mb-1">4. Guest Details:</p>
+                        <ul className="text-xs list-disc ml-6 text-gray-300 dark:text-gray-300">
+                          <li>{numGuests} Adults (full price)</li>
+                          {includeChildren && childrenUnder3 > 0 && (
+                            <li>{childrenUnder3} {childrenUnder3 === 1 ? 'Child' : 'Children'} 0-3 years (free on tours)</li>
+                          )}
+                          {includeChildren && children3to6 > 0 && (
+                            <li>{children3to6} {children3to6 === 1 ? 'Child' : 'Children'} 3-6 years (free hotel accommodation)</li>
+                          )}
+                          {includeChildren && children6to12 > 0 && (
+                            <li>{children6to12} {children6to12 === 1 ? 'Child' : 'Children'} 6-12 years (special hotel rate)</li>
+                          )}
                         </ul>
                       </div>
-                    )}
-                    
-                    {selectedTours.length > 0 && (
-                      <div className="mt-2 text-left">
-                        <p className="text-sm font-semibold">Tour costs: ${tours.filter(tour => selectedTours.includes(tour._id)).reduce((sum, tour) => sum + (tour.price * numGuests), 0)}</p>
-                      </div>
-                    )}
-                    
-                    {includeTransfer && selectedHotelData.transportationPrice > 0 && (
-                      <div className="mt-1 text-left">
-                        <p className="text-sm font-semibold">Transportation: ${selectedHotelData.transportationPrice * numGuests} (${selectedHotelData.transportationPrice} × {numGuests} people)</p>
-                      </div>
-                    )}
+                    </div>
 
-                    <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        ✓ Price verified: The total amount of ${calculateTotalPrice()} has been accurately calculated based on room rates, tour costs, and additional services for {numGuests} guests over {calculateDuration()} nights.
-                      </p>
+                    <div className="mt-3 pt-2 border-t border-gray-700 dark:border-gray-700">
+                      <div className="text-xs text-gray-300 dark:text-gray-300 flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-green-400 dark:text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                        </svg>
+                        <span>
+                          Price verified: The total amount of <span className="font-bold text-green-400">${calculateTotalPrice()}</span> has been accurately calculated based on room rates, tour costs, and additional services.
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Alert>
