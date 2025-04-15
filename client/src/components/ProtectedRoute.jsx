@@ -16,8 +16,8 @@ export default function ProtectedRoute({ requireAdmin }) {
   }
   
   if (requireAdmin && !hasRequiredRole) {
-    // Redirect to worker page if not admin but trying to access admin page
-    return <Navigate to="/worker" replace />;
+    // Redirect to home page if not admin but trying to access admin page
+    return <Navigate to="/home" replace />;
   }
 
   // Render the protected component

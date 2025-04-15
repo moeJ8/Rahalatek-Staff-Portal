@@ -574,21 +574,23 @@ export default function AdminPanel() {
                                         />
                                         <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
                                         {selectedRoomTypes[roomType] && (
-                                            <div className="flex flex-col gap-2 ml-auto">
-                                                <div className="flex items-center">
-                                                    <span className="text-sm mr-2">Adult Price:</span>
+                                            <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                    <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
                                                     <TextInput
                                                         type="number"
+                                                        className="flex-grow"
                                                         placeholder="Price per night"
                                                         value={roomTypePrices[roomType]}
                                                         onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
                                                         required
                                                     />
                                                 </div>
-                                                <div className="flex items-center">
-                                                    <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                    <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
                                                     <TextInput
                                                         type="number"
+                                                        className="flex-grow"
                                                         placeholder="Additional fee"
                                                         value={roomTypeChildrenPrices[roomType]}
                                                         onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
@@ -609,27 +611,33 @@ export default function AdminPanel() {
                                 </div>
                                 
                                 {selectedRoomTypes["CUSTOM"] && (
-                                    <div className="flex flex-col gap-2 ml-8 mt-2">
-                                        <TextInput
-                                            placeholder="Enter custom room type name"
-                                            value={customRoomType}
-                                            onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
-                                            required
-                                        />
-                                        <div className="flex items-center mt-2">
-                                            <span className="text-sm mr-2">Adult Price:</span>
+                                    <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                                            <Label className="text-sm w-40 m-0">Room Type Name:</Label>
+                                            <TextInput
+                                                className="flex-grow"
+                                                placeholder="Enter custom room type name"
+                                                value={customRoomType}
+                                                onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                            <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
                                             <TextInput
                                                 type="number"
+                                                className="flex-grow"
                                                 placeholder="Price per night"
                                                 value={roomTypePrices["CUSTOM"]}
                                                 onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
                                                 required
                                             />
                                         </div>
-                                        <div className="flex items-center mt-2">
-                                            <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                            <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
                                             <TextInput
                                                 type="number"
+                                                className="flex-grow"
                                                 placeholder="Additional fee"
                                                 value={roomTypeChildrenPrices["CUSTOM"]}
                                                 onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
@@ -788,33 +796,44 @@ export default function AdminPanel() {
                         
                         <div>
                             <Label value="Tour Highlights" className="mb-2 block" />
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mb-3">
                                 <TextInput
                                     placeholder="Add a highlight"
                                     value={highlightInput}
                                     onChange={(e) => setHighlightInput(e.target.value)}
                                     className="flex-1"
                                 />
-                                <Button onClick={handleAddHighlight} color="blue">Add</Button>
+                                <Button 
+                                    onClick={handleAddHighlight} 
+                                    gradientDuoTone="purpleToPink"
+                                    size="sm"
+                                >
+                                    <div className="flex items-center">
+                                        <HiPlus className="h-4 w-4" />
+                                        <span className="ml-1">Add</span>
+                                    </div>
+                                </Button>
                             </div>
                             
                             {tourData.highlights.length > 0 && (
-                                <Card className="mt-2">
+                                <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Highlights:</h4>
                                     <ul className="space-y-2">
                                         {tourData.highlights.map((highlight, index) => (
-                                            <li key={index} className="flex justify-between items-center">
-                                                <span>• {highlight}</span>
+                                            <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
                                                 <Button 
                                                     color="failure" 
-                                                    size="xs" 
+                                                    size="xs"
+                                                    pill
                                                     onClick={() => handleRemoveHighlight(index)}
                                                 >
-                                                    Remove
+                                                    <HiX className="h-4 w-4" />
                                                 </Button>
                                             </li>
                                         ))}
                                     </ul>
-                                </Card>
+                                </div>
                             )}
                         </div>
                         

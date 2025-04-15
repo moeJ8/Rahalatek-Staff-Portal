@@ -33,11 +33,20 @@ export default function Header() {
   }, [location]); // Re-check auth when location changes (like after login)
 
   const handleLogout = () => {
+    // First set user to null to update UI
+    setUser(null);
+    
+    // Then clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
-    navigate('/signin');
+    
+    // Close mobile menu if open
     setMobileMenuOpen(false);
+    
+    // Delay navigation slightly to ensure state updates have processed
+    setTimeout(() => {
+      navigate('/signin', { replace: true });
+    }, 10);
   };
 
   // Function to determine if a link is active
@@ -66,27 +75,26 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-6 items-center">
             
-            <Link 
-              to="/" 
-              className={`font-medium ${isActive('/') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/tours" 
-              className={`font-medium ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-            >
-              Tours
-            </Link>
-            <Link 
-              to="/hotels" 
-              className={`font-medium ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-            >
-              Hotels
-            </Link>
-            
             {user ? (
               <>
+                <Link 
+                  to="/home" 
+                  className={`font-medium ${isActive('/home') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/hotels" 
+                  className={`font-medium ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Hotels
+                </Link>
+                <Link 
+                  to="/tours" 
+                  className={`font-medium ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Tours
+                </Link>
                 {user.isAdmin && (
                   <Link 
                     to="/admin" 
@@ -95,13 +103,6 @@ export default function Header() {
                     Admin Dashboard
                   </Link>
                 )}
-                
-                <Link 
-                  to="/worker" 
-                  className={`font-medium ${isActive('/worker') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-                >
-                  Dashboard
-                </Link>
                 <DarkModeToggle />
                 
                 <Button
@@ -114,13 +115,24 @@ export default function Header() {
               </>
             ) : (
               <>
+                <Link 
+                  to="/hotels" 
+                  className={`font-medium ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Hotels
+                </Link>
+                <Link 
+                  to="/tours" 
+                  className={`font-medium ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Tours
+                </Link>
                 <DarkModeToggle />
                 <Link to="/signin">
                   <Button gradientDuoTone="purpleToPink" size="sm" outline>
                     Sign In
                   </Button>
                 </Link>
-                
               </>
             )}
             
@@ -164,32 +176,32 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-2 border-t dark:border-gray-700">
             <div className="flex flex-col space-y-3">
-              <Link 
-                to="/"
-                onClick={closeMobileMenu}
-                className={`py-2 px-1 ${isActive('/') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                Home
-              </Link>
-              
-              <Link 
-                to="/tours"
-                onClick={closeMobileMenu}
-                className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                Tours
-              </Link>
-              
-              <Link 
-                to="/hotels"
-                onClick={closeMobileMenu}
-                className={`py-2 px-1 ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                Hotels
-              </Link>
-              
               {user ? (
                 <>
+                  <Link 
+                    to="/home"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/home') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Home
+                  </Link>
+                  
+                  <Link 
+                    to="/hotels"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Hotels
+                  </Link>
+                  
+                  <Link 
+                    to="/tours"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Tours
+                  </Link>
+                  
                   {user.isAdmin && (
                     <Link 
                       to="/admin"
@@ -200,14 +212,6 @@ export default function Header() {
                     </Link>
                   )}
                   
-                  <Link 
-                    to="/worker"
-                    onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/worker') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-                  >
-                    Dashboard
-                  </Link>
-                  
                   <button
                     onClick={handleLogout}
                     className="py-2 px-1 text-red-500 dark:text-red-400 text-left"
@@ -216,13 +220,31 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                <Link 
-                  to="/signin"
-                  onClick={closeMobileMenu}
-                  className="py-2 px-1 text-blue-500 dark:text-blue-400"
-                >
-                  Sign In
-                </Link>
+                <>
+                  <Link 
+                    to="/hotels"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Hotels
+                  </Link>
+                  
+                  <Link 
+                    to="/tours"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Tours
+                  </Link>
+                
+                  <Link 
+                    to="/signin"
+                    onClick={closeMobileMenu}
+                    className="py-2 px-1 text-blue-500 dark:text-blue-400"
+                  >
+                    Sign In
+                  </Link>
+                </>
               )}
             </div>
           </div>

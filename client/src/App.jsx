@@ -44,12 +44,7 @@ function App() {
           <main className="flex-grow">
             <Routes>
               <Route path="/" element={
-                <div className="bg-gray-50 dark:bg-gray-900 text-center py-8">
-                  <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Welcome to Rahelatek</h1>
-                  <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                    Rahelatek
-                  </p>
-                </div>
+                user ? <Navigate to="/home" /> : <Navigate to="/signin" />
               } />
               <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
 
@@ -64,8 +59,11 @@ function App() {
               </Route>
               
               <Route element={<ProtectedRoute requireAdmin={false} />}>
-                <Route path="/worker" element={<WorkerPage />} />
+                <Route path="/home" element={<WorkerPage />} />
               </Route>
+              
+              {/* Catch-all route - redirect any undefined path to home */}
+              <Route path="*" element={user ? <Navigate to="/home" /> : <Navigate to="/signin" />} />
             </Routes>
           </main>
           

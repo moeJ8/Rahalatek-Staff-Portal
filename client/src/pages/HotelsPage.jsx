@@ -154,16 +154,14 @@ export default function HotelsPage() {
         {/* Search and Filters */}
         <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
           {/* Search Bar */}
-          <div className="relative mb-4">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FaSearch className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </div>
+          <div className="mb-4">
             <TextInput
               type="text"
               placeholder="Search by name, city, or description..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-10 w-full"
+              icon={FaSearch}
+              className="w-full"
             />
           </div>
           
@@ -255,21 +253,23 @@ export default function HotelsPage() {
                     <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
                       {hotel.roomTypes && hotel.roomTypes.length > 0 ? (
                         hotel.roomTypes.map((roomType, index) => (
-                          <Badge key={index} color="success" className="text-xs sm:text-sm">
-                            <FaBed className="inline mr-1" />{roomType.type}: ${roomType.pricePerNight}
+                          <Badge key={index} color="purple" className="text-xs">
+                            <FaBed className="inline mr-0.5" />
+                            {roomType.type.replace("ROOM", "").replace("SINGLE", "SGL").replace("DOUBLE", "DBL").replace("TRIPLE", "TPL").replace("FAMILY SUITE", "FAM")}
+                            : ${roomType.pricePerNight}
                           </Badge>
                         ))
                       ) : (
                         <>
-                          <Badge color="success" className="text-xs sm:text-sm">${hotel.pricePerNightPerPerson} per night</Badge>
-                          <Badge color="purple" className="text-xs sm:text-sm">
-                            <FaBed className="inline mr-1" />{hotel.roomType}
+                          <Badge color="blue" className="text-xs">${hotel.pricePerNightPerPerson}/night</Badge>
+                          <Badge color="purple" className="text-xs">
+                            <FaBed className="inline mr-0.5" />{hotel.roomType}
                           </Badge>
                         </>
                       )}
                       {hotel.breakfastIncluded && (
-                        <Badge color="indigo" className="text-xs sm:text-sm">
-                          <FaCoffee className="inline mr-1" />Breakfast included
+                        <Badge color="indigo" className="text-xs">
+                          <FaCoffee className="inline mr-0.5" />Breakfast
                         </Badge>
                       )}
                     </div>

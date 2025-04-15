@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { TextInput, Label, Button, Card, Alert } from 'flowbite-react';
@@ -9,6 +9,13 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Clear form state when component mounts or remounts
+  useEffect(() => {
+    setUsername('');
+    setPassword('');
+    setError('');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,9 +29,9 @@ export default function SignInPage() {
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
       if (response.data.user.isAdmin) {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate('/worker');
+        navigate('/home', { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');

@@ -336,21 +336,23 @@ export default function EditHotelPage() {
                                     />
                                     <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
                                     {selectedRoomTypes[roomType] && (
-                                        <div className="flex flex-col gap-2 ml-auto">
-                                            <div className="flex items-center">
-                                                <span className="text-sm mr-2">Adult Price:</span>
+                                        <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
                                                 <TextInput
                                                     type="number"
+                                                    className="flex-grow"
                                                     placeholder="Price per night"
                                                     value={roomTypePrices[roomType]}
                                                     onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
                                                     required
                                                 />
                                             </div>
-                                            <div className="flex items-center">
-                                                <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                                <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
                                                 <TextInput
                                                     type="number"
+                                                    className="flex-grow"
                                                     placeholder="Additional fee"
                                                     value={roomTypeChildrenPrices[roomType]}
                                                     onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
@@ -371,27 +373,33 @@ export default function EditHotelPage() {
                             </div>
                             
                             {selectedRoomTypes["CUSTOM"] && (
-                                <div className="flex flex-col gap-2 ml-8 mt-2">
-                                    <TextInput
-                                        placeholder="Enter custom room type name"
-                                        value={customRoomType}
-                                        onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
-                                        required
-                                    />
-                                    <div className="flex items-center mt-2">
-                                        <span className="text-sm mr-2">Adult Price:</span>
+                                <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                                        <Label className="text-sm w-40 m-0">Room Type Name:</Label>
+                                        <TextInput
+                                            className="flex-grow"
+                                            placeholder="Enter custom room type name"
+                                            value={customRoomType}
+                                            onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
                                         <TextInput
                                             type="number"
+                                            className="flex-grow"
                                             placeholder="Price per night"
                                             value={roomTypePrices["CUSTOM"]}
                                             onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
                                             required
                                         />
                                     </div>
-                                    <div className="flex items-center mt-2">
-                                        <span className="text-sm mr-2">Children (6-12) Price:</span>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                        <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
                                         <TextInput
                                             type="number"
+                                            className="flex-grow"
                                             placeholder="Additional fee"
                                             value={roomTypeChildrenPrices["CUSTOM"]}
                                             onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
