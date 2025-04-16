@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from 'flowbite-react';
-import DarkModeToggle from './DarkModeToggle';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { useSelector } from 'react-redux';
+import CustomDarkModeToggle from './CustomDarkModeToggle';
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { darkMode } = useContext(ThemeContext);
+  const darkMode = useSelector((state) => state.theme.darkMode);
 
   useEffect(() => {
     const checkAuthStatus = () => {
@@ -31,15 +31,15 @@ export default function Header() {
   }, [location]);
 
   const handleLogout = () => {
-    setUser(null);
- 
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
     setMobileMenuOpen(false);
-    setTimeout(() => {
-      navigate('/signin', { replace: true });
-    }, 10);
+    // Only remove authentication-related items, preserve darkMode setting
+    localStorage.removeItem('token');
+    localStorage.removeItem('user'); 
+    setUser(null);
+    
+    // Dispatch custom event to notify App component about auth change
+    window.dispatchEvent(new Event('auth-change'));
+    navigate('/signin', { replace: true });
   };
 
   const isActive = (path) => {
@@ -99,10 +99,11 @@ export default function Header() {
                     Admin Dashboard
                   </Link>
                 )}
-                <DarkModeToggle />
+                <CustomDarkModeToggle />
                 
                 <Button
-                  gradientDuoTone="pinkToOrange"
+                  gradientDuoTone="purpleToPink"
+                  outline
                   size="sm"
                   onClick={handleLogout}
                 >
@@ -123,7 +124,7 @@ export default function Header() {
                 >
                   Tours
                 </Link>
-                <DarkModeToggle />
+                <CustomDarkModeToggle />
                 <Link to="/signin">
                   <Button gradientDuoTone="purpleToPink" size="sm" outline>
                     Sign In
@@ -137,7 +138,7 @@ export default function Header() {
           
           {/* Mobile Burger Menu Button */}
           <div className="md:hidden flex items-center gap-2">
-            <DarkModeToggle />
+            <CustomDarkModeToggle />
             <button 
               onClick={toggleMobileMenu}
               className="text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 focus:outline-none"

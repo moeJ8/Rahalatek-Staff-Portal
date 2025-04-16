@@ -50,21 +50,17 @@ export default function HotelsPage() {
     fetchHotels();
   }, []);
 
-  // Filter hotels based on search term and filters
   useEffect(() => {
     let filtered = hotels;
-    
-    // Apply star filter
+
     if (starFilter) {
       filtered = filtered.filter(hotel => hotel.stars === parseInt(starFilter));
     }
-    
-    // Apply city filter
+
     if (cityFilter) {
       filtered = filtered.filter(hotel => hotel.city === cityFilter);
     }
-    
-    // Apply search term
+
     if (searchTerm.trim()) {
       const searchTermLower = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -112,12 +108,9 @@ export default function HotelsPage() {
     setDeleteLoading(true);
     try {
       await axios.delete(`/api/hotels/${hotelToDelete._id}`);
-      // Remove the deleted hotel from the hotels array
       const updatedHotels = hotels.filter(hotel => hotel._id !== hotelToDelete._id);
       setHotels(updatedHotels);
       setFilteredHotels(updatedHotels);
-      
-      // Show success toast notification
       toast.success(`Hotel "${hotelToDelete.name}" has been deleted successfully.`, {
         duration: 3000,
         style: {

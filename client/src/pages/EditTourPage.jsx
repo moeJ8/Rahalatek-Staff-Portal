@@ -30,7 +30,6 @@ export default function EditTourPage() {
     const [success, setSuccess] = useState('');
     const [highlightInput, setHighlightInput] = useState('');
 
-    // Fetch tour data when component mounts
     useEffect(() => {
         const fetchTour = async () => {
             try {
