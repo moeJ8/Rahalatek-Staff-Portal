@@ -59,7 +59,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div>
-            <Link to="/" className="flex items-center">
+            <Link to="/home" className="flex items-center">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"} 
                 alt="Logo" 

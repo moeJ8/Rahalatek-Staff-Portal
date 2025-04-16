@@ -14,30 +14,89 @@ import {
 import { generateBookingMessage } from '../utils/messageGenerator'
 
 export default function WorkerForm() {
+    // Initial state from localStorage or defaults
+    const getSavedState = () => {
+      try {
+        const savedData = localStorage.getItem('workerFormData');
+        if (savedData) {
+          return JSON.parse(savedData);
+        }
+      } catch (err) {
+        console.error('Failed to load saved form data:', err);
+        localStorage.removeItem('workerFormData');
+      }
+      return null;
+    };
+    const savedState = getSavedState();
     const [hotels, setHotels] = useState([]);
     const [tours, setTours] = useState([]);
     const [airports, setAirports] = useState([]);
-    const [selectedHotel, setSelectedHotel] = useState('');
+    const [selectedHotel, setSelectedHotel] = useState(savedState?.selectedHotel || '');
     const [selectedHotelData, setSelectedHotelData] = useState(null);
-    const [selectedCity, setSelectedCity] = useState('');
+    const [selectedCity, setSelectedCity] = useState(savedState?.selectedCity || '');
     const [message, setMessage] = useState('');
     const [availableTours, setAvailableTours] = useState([]);
-    const [selectedTours, setSelectedTours] = useState([]);
+    const [selectedTours, setSelectedTours] = useState(savedState?.selectedTours || []);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
-    const [roomAllocations, setRoomAllocations] = useState([]);
+    const [roomAllocations, setRoomAllocations] = useState(savedState?.roomAllocations || []);
 
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [numGuests, setNumGuests] = useState(2);
-    const [includeChildren, setIncludeChildren] = useState(false);
-    const [childrenUnder3, setChildrenUnder3] = useState(0); // For tours: 0-3 free
-    const [children3to6, setChildren3to6] = useState(0); // For hotels: 0-6 free, Tours: pay full price
-    const [children6to12, setChildren6to12] = useState(0); // For hotels: 6-12 special price, Tours: pay full price
-    const [tripPrice, setTripPrice] = useState('');
-    const [includeTransfer, setIncludeTransfer] = useState(true);
-    const [includeBreakfast, setIncludeBreakfast] = useState(true);
+    const [startDate, setStartDate] = useState(savedState?.startDate || '');
+    const [endDate, setEndDate] = useState(savedState?.endDate || '');
+    const [numGuests, setNumGuests] = useState(savedState?.numGuests || 2);
+    const [includeChildren, setIncludeChildren] = useState(savedState?.includeChildren || false);
+    const [childrenUnder3, setChildrenUnder3] = useState(savedState?.childrenUnder3 || 0);
+    const [children3to6, setChildren3to6] = useState(savedState?.children3to6 || 0);
+    const [children6to12, setChildren6to12] = useState(savedState?.children6to12 || 0);
+    const [tripPrice, setTripPrice] = useState(savedState?.tripPrice || '');
+    const [includeTransfer, setIncludeTransfer] = useState(savedState?.includeTransfer !== undefined ? savedState.includeTransfer : true);
+    const [includeBreakfast, setIncludeBreakfast] = useState(savedState?.includeBreakfast !== undefined ? savedState.includeBreakfast : true);
+
+    // Save form data to localStorage whenever relevant state changes
+    useEffect(() => {
+      const saveFormData = () => {
+        try {
+          const formData = {
+            selectedCity,
+            selectedHotel,
+            startDate,
+            endDate,
+            numGuests,
+            includeChildren,
+            childrenUnder3,
+            children3to6,
+            children6to12,
+            selectedTours,
+            roomAllocations,
+            includeTransfer,
+            includeBreakfast,
+            tripPrice
+          };
+          
+          localStorage.setItem('workerFormData', JSON.stringify(formData));
+        } catch (err) {
+          console.error('Failed to save form data:', err);
+        }
+      };
+      
+      saveFormData();
+    }, [
+      selectedCity, 
+      selectedHotel, 
+      startDate, 
+      endDate, 
+      numGuests, 
+      includeChildren, 
+      childrenUnder3, 
+      children3to6, 
+      children6to12, 
+      selectedTours, 
+      roomAllocations, 
+      includeTransfer, 
+      includeBreakfast, 
+      tripPrice
+    ]);
 
     useEffect(() => {
       const fetchData = async () => {
@@ -227,8 +286,6 @@ export default function WorkerForm() {
   };
 
   const handleGenerateMessage = () => {
-    // Don't clear the tripPrice field if it was explicitly set by the user
-    // Only use calculated price if no manual override exists
     let finalPrice;
     if (tripPrice && parseFloat(tripPrice) > 0) {
       finalPrice = parseFloat(tripPrice);
@@ -296,6 +353,9 @@ export default function WorkerForm() {
       });
 
       setMessage(message);
+      
+      // Clear the saved form data after successfully generating the message
+      localStorage.removeItem('workerFormData');
     } else {
       setError('Please fill in all required fields.');
     }
@@ -326,7 +386,11 @@ export default function WorkerForm() {
       
       {loading ? (
         <div className="flex justify-center items-center h-40">
-          <Spinner size="xl" />
+          <div className="relative w-16 h-16">
+            <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
+            <span className="sr-only">Loading...</span>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

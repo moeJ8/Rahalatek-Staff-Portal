@@ -114,8 +114,12 @@ export default function EditTourPage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-40">
-                <Spinner size="xl" />
+            <div className="flex justify-center items-center h-56">
+                <div className="relative w-16 h-16">
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
+                    <span className="sr-only">Loading...</span>
+                </div>
             </div>
         );
     }
