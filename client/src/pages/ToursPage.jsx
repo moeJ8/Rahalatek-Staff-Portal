@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
-import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
 
 export default function ToursPage() {
   const [tours, setTours] = useState([]);
@@ -252,10 +252,35 @@ export default function ToursPage() {
                       {tour.description}
                     </p>
                     <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
-                      <Badge color="success" className="text-xs sm:text-sm">${tour.price} per person</Badge>
+                      <Badge color="success" className="text-xs sm:text-sm">
+                        ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'}
+                      </Badge>
                       <Badge color="purple" className="text-xs sm:text-sm">
                         <FaClock className="inline mr-1" />{tour.duration} hours
                       </Badge>
+                      {tour.tourType === 'Group' ? (
+                        <Badge color="blue" className="text-xs sm:text-sm">
+                          <FaUsers className="inline mr-1" />Group Tour
+                        </Badge>
+                      ) : (
+                        <Badge 
+                          color="warning" 
+                          className="text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
+                          style={{ 
+                            color: '#7B5804', 
+                            fontWeight: 'bold',
+                            textShadow: '0 0 2px rgba(255,255,255,0.5)'
+                          }}
+                        >
+                          <FaCrown className="inline mr-1" />VIP Tour
+                        </Badge>
+                      )}
+                      {tour.tourType === 'VIP' && (
+                        <Badge color="gray" className="text-xs sm:text-sm">
+                          <FaCar className="inline mr-1" />
+                          {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'})
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   

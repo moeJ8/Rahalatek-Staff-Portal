@@ -18,9 +18,49 @@ const tourSchema = new mongoose.Schema({
         trim: true
     },
     detailedDescription: { type: String },
+    tourType: {
+        type: String,
+        required: [true, 'A tour must have a type'],
+        enum: {
+            values: ['Group', 'VIP'],
+            message: 'Tour type must be either Group or VIP'
+        }
+    },
     price: {
         type: Number,
         required: [true, 'A tour must have a price']
+    },
+    vipCarType: {
+        type: String,
+        enum: {
+            values: ['Vito', 'Sprinter'],
+            message: 'VIP car type must be either Vito or Sprinter'
+        },
+        required: function() {
+            return this.tourType === 'VIP';
+        }
+    },
+    carCapacity: {
+        type: {
+            min: Number,
+            max: Number
+        },
+        validate: {
+            validator: function() {
+                if (this.tourType !== 'VIP') return true;
+                
+                if (this.vipCarType === 'Vito') {
+                    return this.carCapacity.min === 2 && this.carCapacity.max === 8;
+                } else if (this.vipCarType === 'Sprinter') {
+                    return this.carCapacity.min === 9 && this.carCapacity.max === 16;
+                }
+                return false;
+            },
+            message: 'Vito can accommodate 2-8 persons and Sprinter can accommodate 9-16 persons'
+        },
+        required: function() {
+            return this.tourType === 'VIP';
+        }
     },
     duration: {
         type: Number,

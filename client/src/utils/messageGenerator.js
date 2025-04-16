@@ -23,8 +23,6 @@ export const generateBookingMessage = ({
   calculatedPrice,
   includeTransfer,
   includeBreakfast,
-  includeVIP,
-  vipCarPrice,
   roomAllocations,
   selectedTours,
   tours,
@@ -51,25 +49,68 @@ export const generateBookingMessage = ({
   let roomTypeInfo = "";
   
   if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
-    const roomTypeCounts = {};
+    const roomDetailsList = [];
     
     if (roomAllocations.length > 0) {
+      // Group similar room types together
+      const roomTypeCounts = {};
+      
       roomAllocations.forEach(room => {
         if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
             selectedHotelData.roomTypes[room.roomTypeIndex]) {
             const roomType = selectedHotelData.roomTypes[room.roomTypeIndex].type;
-            roomTypeCounts[roomType] = (roomTypeCounts[roomType] || 0) + 1; 
+            
+            if (!roomTypeCounts[roomType]) {
+              roomTypeCounts[roomType] = {
+                count: 0,
+                adults: 0,
+                childrenUnder3: 0,
+                children3to6: 0,
+                children6to12: 0
+              };
+            }
+            
+            roomTypeCounts[roomType].count += 1;
+            roomTypeCounts[roomType].adults += room.occupants;
+            roomTypeCounts[roomType].childrenUnder3 += (room.childrenUnder3 || 0);
+            roomTypeCounts[roomType].children3to6 += (room.children3to6 || 0);
+            roomTypeCounts[roomType].children6to12 += (room.children6to12 || 0);
         }
       });
+      
+      // Format room type information with occupant details
+      Object.entries(roomTypeCounts).forEach(([type, details]) => {
+        let detailString = `${details.count} ${getRoomTypeInArabic(type)}`;
+        
+        const occupantDetails = [];
+        if (details.adults > 0) {
+          occupantDetails.push(`${details.adults} بالغ`);
+        }
+        
+        if (includeChildren) {
+          if (details.childrenUnder3 > 0) {
+            occupantDetails.push(`${details.childrenUnder3} طفل تحت 3 سنوات`);
+          }
+          if (details.children3to6 > 0) {
+            occupantDetails.push(`${details.children3to6} طفل 3-6 سنوات`);
+          }
+          if (details.children6to12 > 0) {
+            occupantDetails.push(`${details.children6to12} طفل 6-12 سنة`);
+          }
+        }
+        
+        if (occupantDetails.length > 0) {
+          detailString += ` (${occupantDetails.join(' + ')})`;
+        }
+        
+        roomDetailsList.push(detailString);
+      });
+      
+      roomTypeInfo = roomDetailsList.join(' و ');
     } else {
       const defaultRoomType = selectedHotelData.roomTypes[0].type;
-      roomTypeCounts[defaultRoomType] = Math.ceil(numGuests / 2);
+      roomTypeInfo = `${Math.ceil(numGuests / 2)} ${getRoomTypeInArabic(defaultRoomType)}`;
     }
-    
-    // Format the room type information
-    roomTypeInfo = Object.entries(roomTypeCounts)
-        .map(([type, count]) => `${count} ${getRoomTypeInArabic(type)}`)
-        .join(' و ');
   } else if (selectedHotelData.roomType) {
     // Fallback for old data structure
     roomTypeInfo = `${numGuests} ${getRoomTypeInArabic(selectedHotelData.roomType)}`;
@@ -119,8 +160,6 @@ ${RLM}سعر البكج ${finalPrice}$ 💵
 
 ${includeTransfer && selectedHotelData.transportationPrice > 0 ? 
   `${RLM}الاستقبال والتوديع من ${airportName} بسيارة خاصة ` : ''}
-${includeVIP && vipCarPrice ? 
-  `${RLM}خدمة VIP: سيارة فاخرة للتنقلات السياحية` : ''}
 
 ${RLM}الفندق 🏢
 ${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${totalPeople} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
@@ -128,9 +167,18 @@ ${selectedHotelData.description ? `\n${RLM}${selectedHotelData.description}` : '
 
 ${orderedTourData.length > 0 ? `${RLM}تفاصيل الجولات 📋` : ''}
 ${orderedTourData.map((tour, index) => {
+  // Create VIP car capacity text with null checks
+  let vipCarInfo = '';
+  if (tour.tourType === 'VIP') {
+    const minCapacity = tour.carCapacity?.min || '?';
+    const maxCapacity = tour.carCapacity?.max || '?';
+    vipCarInfo = `${RLM}جولة VIP خاصة مع سيارة ${tour.vipCarType} (${minCapacity}-${maxCapacity} أشخاص)`;
+  }
+
   return `${RLM}اليوم ${arabicDayOrdinals[index]}:
 ${RLM}${tour.name}
 ${RLM}${tour.description}
+${vipCarInfo}
 
 ${tour.detailedDescription ? `${RLM}${tour.detailedDescription}` : ''}
 ${tour.highlights && tour.highlights.length > 0 ? tour.highlights.map(highlight => `${RLM}• ${highlight}`).join('\n') : ''}`;

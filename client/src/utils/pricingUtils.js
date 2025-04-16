@@ -28,11 +28,13 @@ export const calculateTotalPrice = ({
   includeTransfer,
   selectedTours,
   tours,
-  includeVIP,
-  vipCarPrice
 }) => {
   try {
     let total = 0;
+    let hotelCost = 0;
+    let transportationCost = 0;
+    let tourCost = 0;
+    
     const nights = calculateDuration(startDate, endDate);
     
     // Parse all inputs to ensure we're working with numbers
@@ -56,40 +58,61 @@ export const calculateTotalPrice = ({
                 let roomCost = roomType.pricePerNight * nights;
                 
                 // Add children 6-12 price if applicable
-                if (includeChildren && children6to12Count > 0 && roomType.childrenPricePerNight) {
-                    roomCost += roomType.childrenPricePerNight * nights * children6to12Count;
+                if (includeChildren && roomType.childrenPricePerNight) {
+                    // Use the specific count of children 6-12 in this room
+                    const roomChildren6to12Count = room.children6to12 || 0;
+                    if (roomChildren6to12Count > 0) {
+                        roomCost += roomType.childrenPricePerNight * nights * roomChildren6to12Count;
+                    }
                 }
                 
-                total += roomCost;
+                hotelCost += roomCost;
             }
           });
         } else {
           // If no room allocations, estimate based on first room type
           const baseRoomCount = Math.ceil(adultCount / 2); // Estimate 2 adults per room
-          total += selectedHotelData.roomTypes[0].pricePerNight * nights * baseRoomCount;
+          hotelCost += selectedHotelData.roomTypes[0].pricePerNight * nights * baseRoomCount;
           
           // Add children 6-12 price if applicable
           if (includeChildren && children6to12Count > 0 && selectedHotelData.roomTypes[0].childrenPricePerNight) {
-              total += selectedHotelData.roomTypes[0].childrenPricePerNight * nights * children6to12Count;
+              hotelCost += selectedHotelData.roomTypes[0].childrenPricePerNight * nights * children6to12Count;
           }
         }
       } else if (selectedHotelData.pricePerNightPerPerson) {
-        // Legacy pricing model
-        total += selectedHotelData.pricePerNightPerPerson * nights * adultCount;
+        // Legacy pricing model - use per-person rates for older hotel data
+        hotelCost += selectedHotelData.pricePerNightPerPerson * nights * adultCount;
         
         // Children 6-12 pay with a special rate (if defined) or half price by default
         if (includeChildren && children6to12Count > 0) {
             const childRate = selectedHotelData.childrenPrice || (selectedHotelData.pricePerNightPerPerson * 0.5);
-            total += childRate * nights * children6to12Count;
+            hotelCost += childRate * nights * children6to12Count;
         }
-        
-        // Children under 6 (childrenUnder3 and children3to6) are free for accommodation
       }
     }
+    
+    total += hotelCost;
 
     // Transportation costs
-    if (includeTransfer && selectedHotelData.transportationPrice) {
-      total += selectedHotelData.transportationPrice * totalPeopleCount;
+    if (includeTransfer && selectedHotelData && selectedHotelData.transportationPrice) {
+      // Fixed bug: Need to correctly count children in transportation cost
+      // For children, we're checking if they're actually included before adding them to the count
+      const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);
+      transportationCost = selectedHotelData.transportationPrice * transportPeopleCount;
+      
+      console.log('Transportation cost calculation:', {
+        transportationPrice: selectedHotelData.transportationPrice,
+        adultCount,
+        infantsCount,
+        children3to6Count,
+        children6to12Count, 
+        totalChildrenCount,
+        includeChildren,
+        transportPeopleCount,
+        transportationCost
+      });
+      
+      total += transportationCost;
     }
 
     // Tour costs
@@ -97,30 +120,45 @@ export const calculateTotalPrice = ({
       selectedTours.forEach(tourId => {
         const tourData = tours.find(tour => tour._id === tourId);
         if (tourData) {
-          // Adults pay full price
-          const adultTourCost = tourData.price * adultCount;
-          
-          // Children 3-12 pay full price for tours
-          const children3to12Count = children3to6Count + children6to12Count;
-          const children3to12Cost = includeChildren ? tourData.price * children3to12Count : 0;
-          
-          // Children under 3 are free for tours
-          total += adultTourCost + children3to12Cost;
+          // For Group tours: Adults and children 3-12 pay per person
+          // For VIP tours: One price per car regardless of the number of people
+          if (tourData.tourType === 'Group') {
+            // Adults pay full price
+            const adultTourCost = tourData.price * adultCount;
+            
+            // Children 3-12 pay full price for tours
+            const children3to12Count = children3to6Count + children6to12Count;
+            const children3to12Cost = includeChildren ? tourData.price * children3to12Count : 0;
+            
+            // Children under 3 are free for tours
+            tourCost += adultTourCost + children3to12Cost;
+          } else if (tourData.tourType === 'VIP') {
+            // VIP tours have a single price per car
+            tourCost += parseFloat(tourData.price);
+          }
         }
       });
-    }
-    
-    // Add VIP luxury car price if option is selected
-    if (includeVIP && vipCarPrice) {
-      const vipPrice = parseFloat(vipCarPrice);
-      if (!isNaN(vipPrice)) {
-        total += vipPrice;
-      }
+      
+      total += tourCost;
     }
 
+    // Log the breakdown for debugging
+    console.log('Price breakdown:', {
+      hotelCost,
+      transportationCost,
+      tourCost,
+      total,
+      nights,
+      adultCount,
+      children3to6Count,
+      children6to12Count,
+      infantsCount,
+      totalPeopleCount
+    });
+
     return total;
-  } catch (err) {
-    console.error('Error calculating total price:', err);
+  } catch (error) {
+    console.error('Error calculating price:', error);
     return 0;
   }
 };

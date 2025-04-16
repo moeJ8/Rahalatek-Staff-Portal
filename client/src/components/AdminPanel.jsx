@@ -21,7 +21,13 @@ export default function AdminPanel() {
         city: '',
         description: '',
         detailedDescription: '',
+        tourType: 'Group',
         price: '',
+        vipCarType: 'Vito',
+        carCapacity: {
+            min: 2,
+            max: 8
+        },
         duration: 1,
         highlights: []
     });
@@ -325,6 +331,26 @@ export default function AdminPanel() {
         });
     };
 
+    const handleVipCarTypeChange = (e) => {
+        const carType = e.target.value;
+        let minCapacity = 2;
+        let maxCapacity = 8;
+        
+        if (carType === 'Sprinter') {
+            minCapacity = 9;
+            maxCapacity = 16;
+        }
+        
+        setTourData({
+            ...tourData,
+            vipCarType: carType,
+            carCapacity: {
+                min: minCapacity,
+                max: maxCapacity
+            }
+        });
+    };
+
     const handleAirportChange = (e) => {
         const { name, value } = e.target;
         setAirportData({
@@ -375,7 +401,13 @@ export default function AdminPanel() {
                 city: '',
                 description: '',
                 detailedDescription: '',
+                tourType: 'Group',
                 price: '',
+                vipCarType: 'Vito',
+                carCapacity: {
+                    min: 2,
+                    max: 8
+                },
                 duration: 1,
                 highlights: []
             });
@@ -880,7 +912,46 @@ export default function AdminPanel() {
                         
                         <div>
                             <div className="mb-2 block">
-                                <Label htmlFor="tourPrice" value="Price per Person ($)" />
+                                <Label htmlFor="tourType" value="Tour Type" />
+                            </div>
+                            <Select
+                                id="tourType"
+                                name="tourType"
+                                value={tourData.tourType}
+                                onChange={handleTourChange}
+                                required
+                            >
+                                <option value="Group">Group Tour (per person)</option>
+                                <option value="VIP">VIP Tour (per car)</option>
+                            </Select>
+                        </div>
+                        
+                        {tourData.tourType === 'VIP' && (
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="vipCarType" value="VIP Car Type" />
+                                </div>
+                                <Select
+                                    id="vipCarType"
+                                    name="vipCarType"
+                                    value={tourData.vipCarType}
+                                    onChange={handleVipCarTypeChange}
+                                    required
+                                >
+                                    <option value="Vito">Vito (2-8 persons)</option>
+                                    <option value="Sprinter">Sprinter (9-16 persons)</option>
+                                </Select>
+                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                    {tourData.vipCarType === 'Vito' 
+                                        ? 'Capacity: 2-8 persons' 
+                                        : 'Capacity: 9-16 persons'}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($)' : 'Price per Car ($)'} />
                             </div>
                             <TextInput
                                 id="tourPrice"

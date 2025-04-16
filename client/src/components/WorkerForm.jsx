@@ -38,8 +38,6 @@ export default function WorkerForm() {
     const [tripPrice, setTripPrice] = useState('');
     const [includeTransfer, setIncludeTransfer] = useState(true);
     const [includeBreakfast, setIncludeBreakfast] = useState(true);
-    const [includeVIP, setIncludeVIP] = useState(false);
-    const [vipCarPrice, setVipCarPrice] = useState('');
 
     useEffect(() => {
       const fetchData = async () => {
@@ -151,7 +149,13 @@ export default function WorkerForm() {
   const handleAddRoom = () => {
     setRoomAllocations([
       ...roomAllocations,
-      { roomTypeIndex: "", occupants: 1 }
+      { 
+        roomTypeIndex: "", 
+        occupants: 1,
+        childrenUnder3: 0,
+        children3to6: 0,
+        children6to12: 0
+      }
     ]);
   };
 
@@ -173,6 +177,24 @@ export default function WorkerForm() {
     setRoomAllocations(newAllocations);
   };
 
+  const handleChildrenUnder3Change = (roomIndex, count) => {
+    const newAllocations = [...roomAllocations];
+    newAllocations[roomIndex].childrenUnder3 = count;
+    setRoomAllocations(newAllocations);
+  };
+
+  const handleChildren3to6Change = (roomIndex, count) => {
+    const newAllocations = [...roomAllocations];
+    newAllocations[roomIndex].children3to6 = count;
+    setRoomAllocations(newAllocations);
+  };
+
+  const handleChildren6to12Change = (roomIndex, count) => {
+    const newAllocations = [...roomAllocations];
+    newAllocations[roomIndex].children6to12 = count;
+    setRoomAllocations(newAllocations);
+  };
+
   const handleNumGuestsChange = (e) => {
     const newGuestCount = parseInt(e.target.value);
     setNumGuests(newGuestCount);
@@ -181,6 +203,12 @@ export default function WorkerForm() {
   };
 
   const getTotalPrice = () => {
+    // If the user has entered a trip price manually, we should respect it
+    if (tripPrice && parseFloat(tripPrice) > 0) {
+      return parseFloat(tripPrice);
+    }
+    
+    // Otherwise, calculate the price
     return calculateTotalPrice({
       startDate,
       endDate,
@@ -194,14 +222,35 @@ export default function WorkerForm() {
       includeTransfer,
       selectedTours,
       tours,
-      includeVIP,
-      vipCarPrice
+      includeBreakfast
     });
   };
 
   const handleGenerateMessage = () => {
-    // Clear the tripPrice field every time the button is pressed
-    setTripPrice('');
+    // Don't clear the tripPrice field if it was explicitly set by the user
+    // Only use calculated price if no manual override exists
+    let finalPrice;
+    if (tripPrice && parseFloat(tripPrice) > 0) {
+      finalPrice = parseFloat(tripPrice);
+    } else {
+      finalPrice = calculateTotalPrice({
+        startDate,
+        endDate,
+        numGuests,
+        includeChildren,
+        childrenUnder3,
+        children3to6,
+        children6to12,
+        selectedHotelData,
+        roomAllocations,
+        includeTransfer,
+        selectedTours,
+        tours,
+        includeBreakfast
+      });
+      // Update the trip price field with the calculated value
+      setTripPrice(finalPrice.toString());
+    }
     
     if (selectedHotelData && selectedCity && startDate && endDate) {
       if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
@@ -210,10 +259,22 @@ export default function WorkerForm() {
           setError(`Please assign room types for all ${numGuests} guests.`);
           return;
         }
+        
+        if (includeChildren) {
+          const childrenUnder3Allocated = roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0);
+          const children3to6Allocated = roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0);
+          const children6to12Allocated = roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0);
+          
+          if (childrenUnder3Allocated !== childrenUnder3 || 
+              children3to6Allocated !== children3to6 || 
+              children6to12Allocated !== children6to12) {
+            setError('Please assign all children to rooms.');
+            return;
+          }
+        }
       }
       
-      const calculatedPrice = getTotalPrice();
-      
+      // Use the finalized price for the message
       const message = generateBookingMessage({
         selectedHotelData,
         selectedCity,
@@ -224,12 +285,10 @@ export default function WorkerForm() {
         childrenUnder3,
         children3to6,
         children6to12,
-        tripPrice,
-        calculatedPrice,
+        tripPrice: finalPrice.toString(),
+        calculatedPrice: finalPrice,
         includeTransfer,
         includeBreakfast,
-        includeVIP,
-        vipCarPrice,
         roomAllocations,
         selectedTours,
         tours,
@@ -237,10 +296,6 @@ export default function WorkerForm() {
       });
 
       setMessage(message);
-      
-      if (!tripPrice) {
-        setTripPrice(calculatedPrice.toString());
-      }
     } else {
       setError('Please fill in all required fields.');
     }
@@ -251,7 +306,18 @@ export default function WorkerForm() {
       return true;
     }
     
-    return roomAllocations.reduce((sum, room) => sum + room.occupants, 0) === numGuests;
+    const adultsAllocated = roomAllocations.reduce((sum, room) => sum + room.occupants, 0) === numGuests;
+    
+    if (!includeChildren) {
+      return adultsAllocated;
+    }
+    
+    // Check if all children are allocated to rooms
+    const childrenUnder3Allocated = roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0) === childrenUnder3;
+    const children3to6Allocated = roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0) === children3to6;
+    const children6to12Allocated = roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0) === children6to12;
+    
+    return adultsAllocated && childrenUnder3Allocated && children3to6Allocated && children6to12Allocated;
   };
 
   return (
@@ -366,22 +432,40 @@ export default function WorkerForm() {
           />
           
           {selectedHotelData && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-              <HotelInfo hotelData={selectedHotelData} />
+            <div className="mt-8 mb-6">
+              <h3 className="text-xl font-bold mb-4 text-center dark:text-white border-b pb-2">Hotel & Room Selection</h3>
               
-              {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && (
-                <Card className="dark:bg-gray-800">
-                  <RoomAllocator
-                    selectedHotelData={selectedHotelData}
-                    numGuests={numGuests}
-                    roomAllocations={roomAllocations}
-                    onAddRoom={handleAddRoom}
-                    onRemoveRoom={handleRemoveRoom}
-                    onRoomTypeSelect={handleRoomTypeSelect}
-                    onOccupantsChange={handleOccupantsChange}
-                  />
+              <div className="space-y-6">
+                {/* Hotel Information Card */}
+                <Card className="dark:bg-gray-800 overflow-hidden">
+                  <HotelInfo hotelData={selectedHotelData} />
                 </Card>
-              )}
+                
+                {/* Room Allocation Card */}
+                {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && (
+                  <Card className="dark:bg-gray-800 overflow-hidden">
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <h4 className="text-lg font-semibold mb-4 text-center dark:text-white">Room Allocation</h4>
+                      <RoomAllocator
+                        selectedHotelData={selectedHotelData}
+                        numGuests={numGuests}
+                        roomAllocations={roomAllocations}
+                        onAddRoom={handleAddRoom}
+                        onRemoveRoom={handleRemoveRoom}
+                        onRoomTypeSelect={handleRoomTypeSelect}
+                        onOccupantsChange={handleOccupantsChange}
+                        includeChildren={includeChildren}
+                        childrenUnder3={childrenUnder3}
+                        children3to6={children3to6}
+                        children6to12={children6to12}
+                        onChildrenUnder3Change={handleChildrenUnder3Change}
+                        onChildren3to6Change={handleChildren3to6Change}
+                        onChildren6to12Change={handleChildren6to12Change}
+                      />
+                    </div>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
           
@@ -415,35 +499,6 @@ export default function WorkerForm() {
             </Label>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="includeVIP"
-                checked={includeVIP}
-                onChange={(e) => setIncludeVIP(e.target.checked)}
-              />
-              <Label htmlFor="includeVIP" className="dark:text-white">
-                VIP Transportation (Luxury Car)
-              </Label>
-            </div>
-            
-            {includeVIP && (
-              <div className="ml-6">
-                <div className="mb-2 block">
-                  <Label htmlFor="vipCarPrice" value="Luxury Car Price ($)" className="dark:text-white" />
-                </div>
-                <TextInput
-                  id="vipCarPrice"
-                  type="number"
-                  value={vipCarPrice}
-                  onChange={(e) => setVipCarPrice(e.target.value)}
-                  placeholder="Enter price for luxury car service"
-                  required={includeVIP}
-                />
-              </div>
-            )}
-          </div>
-          
           <div>
             <div className="mb-2 block">
               <Label htmlFor="tripPrice" value="Trip Price ($)" className="dark:text-white" />
@@ -471,8 +526,7 @@ export default function WorkerForm() {
               children3to6={children3to6}
               children6to12={children6to12}
               includeTransfer={includeTransfer}
-              includeVIP={includeVIP}
-              vipCarPrice={vipCarPrice}
+              includeBreakfast={includeBreakfast}
             />
           )}
           
