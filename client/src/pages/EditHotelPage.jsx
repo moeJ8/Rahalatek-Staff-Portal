@@ -16,6 +16,7 @@ export default function EditHotelPage() {
         stars: 3,
         roomTypes: [],
         breakfastIncluded: false,
+        breakfastPrice: 0,
         transportationPrice: 0,
         airport: '',
         description: ''
@@ -464,6 +465,22 @@ export default function EditHotelPage() {
                         />
                         <Label htmlFor="breakfastIncluded">Breakfast Included</Label>
                     </div>
+                    
+                    {hotelData.breakfastIncluded && (
+                        <div className="mb-4 ml-6">
+                            <Label htmlFor="breakfastPrice" className="text-sm mb-1 block">Breakfast Price ($ per person)</Label>
+                            <TextInput
+                                id="breakfastPrice"
+                                type="number"
+                                name="breakfastPrice"
+                                value={hotelData.breakfastPrice}
+                                onChange={handleHotelChange}
+                                placeholder="Price per person"
+                                className="w-full max-w-xs"
+                                required={hotelData.breakfastIncluded}
+                            />
+                        </div>
+                    )}
                     
                     <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg my-4">
                         <h3 className="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-200">Children Pricing Policy</h3>

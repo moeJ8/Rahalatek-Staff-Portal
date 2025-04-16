@@ -28,12 +28,14 @@ export const calculateTotalPrice = ({
   includeTransfer,
   selectedTours,
   tours,
+  includeBreakfast,
 }) => {
   try {
     let total = 0;
     let hotelCost = 0;
     let transportationCost = 0;
     let tourCost = 0;
+    let breakfastCost = 0;
     
     const nights = calculateDuration(startDate, endDate);
     
@@ -93,6 +95,26 @@ export const calculateTotalPrice = ({
     
     total += hotelCost;
 
+    // Breakfast costs
+    if (includeBreakfast && selectedHotelData && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice) {
+      // Children under 3 and children 3-6 typically don't pay for breakfast
+      // Only adults and children 6-12 pay for breakfast
+      const breakfastPeopleCount = adultCount + (includeChildren ? (children6to12Count) : 0);
+      breakfastCost = selectedHotelData.breakfastPrice * breakfastPeopleCount * nights;
+      
+      console.log('Breakfast cost calculation:', {
+        breakfastPrice: selectedHotelData.breakfastPrice,
+        adultCount,
+        children3to6Count,
+        children6to12Count,
+        breakfastPeopleCount,
+        nights,
+        breakfastCost
+      });
+      
+      total += breakfastCost;
+    }
+
     // Transportation costs
     if (includeTransfer && selectedHotelData && selectedHotelData.transportationPrice) {
       // Fixed bug: Need to correctly count children in transportation cost
@@ -145,6 +167,7 @@ export const calculateTotalPrice = ({
     // Log the breakdown for debugging
     console.log('Price breakdown:', {
       hotelCost,
+      breakfastCost,
       transportationCost,
       tourCost,
       total,

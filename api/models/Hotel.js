@@ -12,6 +12,7 @@ const hotelSchema = new mongoose.Schema({
     stars: { type: Number, required: true },
     roomTypes: [roomTypeSchema],
     breakfastIncluded: { type: Boolean, required: true },
+    breakfastPrice: { type: Number, default: 0 },
     transportationPrice: { type: Number, required: true, default: 0 },
     airport: { type: String },
     description: { type: String },

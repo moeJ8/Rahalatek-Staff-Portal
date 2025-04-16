@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Alert } from 'flowbite-react';
 import { safeParseInt } from '../utils/pricingUtils';
-import { FaCrown, FaUsers, FaCar, FaRegCheckCircle } from 'react-icons/fa';
+import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaDownload } from 'react-icons/fa';
+import html2canvas from 'html2canvas';
 
 const PriceBreakdown = ({ 
   totalPrice, 
@@ -16,13 +17,17 @@ const PriceBreakdown = ({
   children3to6,
   children6to12,
   includeTransfer,
+  includeBreakfast,
 }) => {
+  const breakdownRef = useRef(null);
+
   if (!selectedHotelData || !nights) return null;
 
   // Calculate the individual parts to verify the total
   let hotelTotal = 0;
   let tourTotal = 0;
   let transportTotal = 0;
+  let breakfastTotal = 0;
   
   // Calculate hotel cost
   if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0) {
@@ -68,23 +73,173 @@ const PriceBreakdown = ({
     transportTotal = selectedHotelData.transportationPrice * totalPeople;
   }
   
+  // Calculate breakfast cost if included
+  if (includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice) {
+    const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
+      safeParseInt(children6to12) : 0);
+    // Children under 3 and children 3-6 don't pay for breakfast
+    breakfastTotal = selectedHotelData.breakfastPrice * totalPeople * nights;
+  }
+  
   // Calculate direct sum for comparison
-  const directSum = hotelTotal + tourTotal + transportTotal;
+  const directSum = hotelTotal + tourTotal + transportTotal + breakfastTotal;
   
   console.log("Price validation:", {
     providedTotal: totalPrice,
     calculatedTotal: directSum,
     hotelTotal,
     tourTotal,
-    transportTotal
+    transportTotal,
+    breakfastTotal
   });
 
-  // Use the directly calculated price if it differs significantly from the provided totalPrice
   const displayPrice = Math.abs(directSum - totalPrice) > 0.01 ? directSum : totalPrice;
 
+  const handleDownload = async () => {
+    if (!breakdownRef.current) return;
+    
+    try {
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.background = 'white';
+      container.style.width = breakdownRef.current.offsetWidth + 'px';
+      
+      const clone = breakdownRef.current.cloneNode(true);
+      
+      const thankYouDiv = document.createElement('div');
+      thankYouDiv.style.padding = '15px 16px';
+      thankYouDiv.style.textAlign = 'center';
+      thankYouDiv.style.fontStyle = 'italic';
+      thankYouDiv.style.backgroundColor = 'rgba(20, 83, 45, 0.3)'; 
+      thankYouDiv.style.borderTop = '1px solid #166534'; 
+      thankYouDiv.style.color = '#ecfdf5'; 
+      thankYouDiv.style.fontSize = '14px';
+      thankYouDiv.style.fontWeight = '500';
+      thankYouDiv.textContent = 'Thank you for choosing our service';
+      
+      clone.appendChild(thankYouDiv);
+      container.appendChild(clone);
+      document.body.appendChild(container);
+      
+      
+      const numberIcons = clone.querySelectorAll('.rounded-full');
+      numberIcons.forEach(icon => {
+
+        const number = icon.textContent.trim();
+        const parent = icon.parentNode;
+
+        const numberSpan = document.createElement('span');
+        numberSpan.textContent = number + ". "; 
+        numberSpan.style.display = 'inline-block';
+        numberSpan.style.marginRight = '8px';
+        numberSpan.style.fontWeight = 'bold';
+        numberSpan.style.fontSize = '14px';
+
+        parent.replaceChild(numberSpan, icon);
+      });
+      
+
+      const priceElements = clone.querySelectorAll('.text-green-400');
+      priceElements.forEach(priceEl => {
+        if (priceEl.parentNode && priceEl.parentNode.classList.contains('flex')) {
+          // Get the parent flex container
+          const flexContainer = priceEl.parentNode;
+
+          flexContainer.style.display = 'flex';
+          flexContainer.style.justifyContent = 'space-between';
+          flexContainer.style.width = '100%';
+
+          priceEl.style.marginLeft = 'auto';
+          priceEl.style.textAlign = 'right';
+        }
+      });
+
+      const vipBadges = clone.querySelectorAll('[class*="from-amber-500"]');
+      vipBadges.forEach(badge => {
+        const parent = badge.parentNode;
+        const textNode = document.createTextNode(" [VIP]");
+        parent.replaceChild(textNode, badge);
+      });
+      
+      const groupBadges = clone.querySelectorAll('[class*="bg-blue-600"]');
+      groupBadges.forEach(badge => {
+        const parent = badge.parentNode;
+        const textNode = document.createTextNode(" [Group]");
+        parent.replaceChild(textNode, badge);
+      });
+
+      const replaceIconsWithText = (element) => {
+        const iconContainers = element.querySelectorAll('[class*="react-icons"]');
+        iconContainers.forEach(icon => {
+          let iconText = "";
+          
+          if (icon.classList.contains('fa-crown')) {
+            iconText = "👑 ";
+          } else if (icon.classList.contains('fa-users')) {
+            iconText = "👥 ";
+          } else if (icon.classList.contains('fa-car')) {
+            iconText = "🚗 ";
+          } else if (icon.classList.contains('fa-check-circle')) {
+            iconText = "✓ ";
+          } else {
+            iconText = "• ";
+          }
+          
+          const textSpan = document.createElement('span');
+          textSpan.textContent = iconText;
+          textSpan.style.marginRight = '4px';
+          icon.parentNode.replaceChild(textSpan, icon);
+        });
+      };
+      
+      replaceIconsWithText(clone);
+
+      const allElements = clone.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el.classList.contains('flex') && 
+            el.classList.contains('justify-between')) {
+          el.style.display = 'flex';
+          el.style.justifyContent = 'space-between';
+          el.style.width = '100%';
+        }
+        else if (el.classList.contains('flex') || 
+                 el.classList.contains('inline-flex')) {
+          el.style.display = 'inline-block';
+        }
+      });
+
+      const priceValues = clone.querySelectorAll('.text-green-400');
+      priceValues.forEach(price => {
+        price.style.color = '#34D399';
+      });
+
+      const canvas = await html2canvas(clone, {
+        scale: 2, 
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false
+      });
+
+      canvas.toBlob((blob) => {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `price_breakdown_${new Date().toISOString().split('T')[0]}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+
+        document.body.removeChild(downloadLink);
+        document.body.removeChild(container);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error generating image:', error);
+    }
+  };
+
   return (
-    <div className="rounded-lg overflow-hidden shadow-md">
-      <div className="bg-gradient-to-br from-blue-900 to-slate-900 text-white">
+    <div className="rounded-lg overflow-hidden shadow-md relative">
+      <div ref={breakdownRef} className="bg-gradient-to-br from-blue-900 to-slate-900 text-white">
         <div className="p-4 text-center">
           <h3 className="text-xl font-bold mb-1 text-green-400">Total Price: ${displayPrice}</h3>
           <p className="text-sm text-blue-200">{nights} nights • {numGuests} {numGuests === 1 ? 'person' : 'people'}</p>
@@ -120,6 +275,8 @@ const PriceBreakdown = ({
                         children6to12: 0,
                         price, 
                         childrenPrice,
+                        adultPrice: 0,
+                        childrenTotalPrice: 0,
                         totalPrice: 0
                       };
                       
@@ -128,34 +285,51 @@ const PriceBreakdown = ({
                       roomTypeCounts[roomType].childrenUnder3 += (room.childrenUnder3 || 0);
                       roomTypeCounts[roomType].children3to6 += (room.children3to6 || 0);
                       roomTypeCounts[roomType].children6to12 += (room.children6to12 || 0);
-                      roomTypeCounts[roomType].totalPrice = price * totalNights * roomTypeCounts[roomType].rooms;
+                      
+                      // Calculate adult cost (basic room cost)
+                      roomTypeCounts[roomType].adultPrice = price * totalNights * roomTypeCounts[roomType].rooms;
+                      
+                      // Calculate children 6-12 cost if applicable
+                      roomTypeCounts[roomType].childrenTotalPrice = 0;
+                      if (includeChildren && childrenPrice > 0 && roomTypeCounts[roomType].children6to12 > 0) {
+                        roomTypeCounts[roomType].childrenTotalPrice = childrenPrice * totalNights * roomTypeCounts[roomType].children6to12;
+                      }
+                      
+                      // Calculate total price for this room type
+                      roomTypeCounts[roomType].totalPrice = roomTypeCounts[roomType].adultPrice + roomTypeCounts[roomType].childrenTotalPrice;
                     }
                   });
                   
                   return Object.entries(roomTypeCounts).map(([type, info], index) => (
-                    <div key={index} className="text-xs">
+                    <div key={index} className="text-xs mb-3">
                       <div className="flex justify-between">
                         <span className="font-medium text-white">{info.rooms}x {type}</span>
                         <span className="text-green-400 font-medium">${info.totalPrice}</span>
                       </div>
-                      <div className="text-blue-300 text-xs">
-                        ${info.price}/night × {totalNights} nights × {info.rooms} rooms
-                      </div>
                       
-                      {/* Room occupancy breakdown */}
                       <div className="ml-2 mt-1 text-blue-200">
-                        <p>• Adults: {info.people}</p>
+                        {/* Basic room cost */}
+                        <div className="flex justify-between">
+                          <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
+                          <span className="text-green-400">${info.adultPrice}</span>
+                        </div>
+                        
+                        {/* Children 6-12 cost if applicable */}
+                        {includeChildren && info.children6to12 > 0 && info.childrenPrice > 0 && (
+                          <div className="flex justify-between">
+                            <span>• Children 6-12: <span className="text-blue-300">${info.childrenPrice}/night × {totalNights} nights × {info.children6to12}</span></span>
+                            <span className="text-green-400">${info.childrenTotalPrice}</span>
+                          </div>
+                        )}
+                        
+                        {/* Room occupancy breakdown */}
+                        <p className="mt-1">• Adults: {info.people}</p>
                         {includeChildren && (
                           <>
                             {info.childrenUnder3 > 0 && <p>• Children 0-3: {info.childrenUnder3} <span className="text-green-400">(free)</span></p>}
                             {info.children3to6 > 0 && <p>• Children 3-6: {info.children3to6} <span className="text-green-400">(free accommodation)</span></p>}
-                            {info.children6to12 > 0 && (
-                              <p>
-                                • Children 6-12: {info.children6to12} 
-                                {info.childrenPrice > 0 && 
-                                  <span className="text-blue-300"> - ${info.childrenPrice}/night × {totalNights} nights × {info.children6to12} = <span className="text-green-400">${info.childrenPrice * totalNights * info.children6to12}</span></span>
-                                }
-                              </p>
+                            {info.children6to12 > 0 && info.childrenPrice === 0 && (
+                              <p>• Children 6-12: {info.children6to12} <span className="text-green-400">(no additional charge)</span></p>
                             )}
                           </>
                         )}
@@ -171,11 +345,48 @@ const PriceBreakdown = ({
             )}
           </div>
           
+          {/* Breakfast Cost */}
+          {includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 && (
+            <div className="mb-3 p-3 bg-green-950/60 rounded-lg">
+              <h5 className="text-sm font-semibold text-green-300 mb-2 flex items-center">
+                <span className="w-6 h-6 rounded-full bg-green-800 flex items-center justify-center mr-2 text-white text-xs">2</span>
+                Breakfast
+              </h5>
+              
+              <div className="space-y-2 pl-8">
+                <div className="text-xs">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-white">Daily Breakfast</span>
+                    <span className="text-green-400 font-medium">${breakfastTotal}</span>
+                  </div>
+                  
+                  <div className="ml-2 mt-1 text-green-200">
+                    <div className="flex justify-between">
+                      <span>• ${selectedHotelData.breakfastPrice}/person × {nights} nights</span>
+                      <span className="text-green-400"></span>
+                    </div>
+                    
+                    <div className="mt-1">
+                      <p>• Adults: {numGuests}</p>
+                      {includeChildren && (
+                        <>
+                          {safeParseInt(childrenUnder3) > 0 && <p>• Children 0-3: {childrenUnder3} <span className="text-green-400">(free)</span></p>}
+                          {safeParseInt(children3to6) > 0 && <p>• Children 3-6: {children3to6} <span className="text-green-400">(free)</span></p>}
+                          {safeParseInt(children6to12) > 0 && <p>• Children 6-12: {children6to12}</p>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Tour Costs */}
           {selectedTours.length > 0 && (
             <div className="mb-3 p-3 bg-purple-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-purple-300 mb-2 flex items-center">
-                <span className="w-6 h-6 rounded-full bg-purple-800 flex items-center justify-center mr-2 text-white text-xs">2</span>
+                <span className="w-6 h-6 rounded-full bg-purple-800 flex items-center justify-center mr-2 text-white text-xs">{includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '3' : '2'}</span>
                 Tour Prices
               </h5>
               
@@ -242,7 +453,7 @@ const PriceBreakdown = ({
           {/* Transportation Costs */}
           <div className="mb-3 p-3 bg-amber-950/60 rounded-lg">
             <h5 className="text-sm font-semibold text-amber-300 mb-2 flex items-center">
-              <span className="w-6 h-6 rounded-full bg-amber-800 flex items-center justify-center mr-2 text-white text-xs">3</span>
+              <span className="w-6 h-6 rounded-full bg-amber-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '4' : '3')}</span>
               Transportation
             </h5>
             
@@ -280,7 +491,7 @@ const PriceBreakdown = ({
           {/* Guest Breakdown */}
           <div className="mb-3 p-3 bg-teal-950/60 rounded-lg">
             <h5 className="text-sm font-semibold text-teal-300 mb-2 flex items-center">
-              <span className="w-6 h-6 rounded-full bg-teal-800 flex items-center justify-center mr-2 text-white text-xs">4</span>
+              <span className="w-6 h-6 rounded-full bg-teal-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '5' : '4')}</span>
               Guest Details
             </h5>
             
@@ -306,6 +517,15 @@ const PriceBreakdown = ({
           </p>
         </div>
       </div>
+      
+      {/* Circular Download Button */}
+      <button 
+        onClick={handleDownload}
+        className="absolute top-3 right-3 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center shadow-lg transition-colors duration-200"
+        title="Download Price Breakdown"
+      >
+        <FaDownload className="text-white" size={16} />
+      </button>
     </div>
   );
 };

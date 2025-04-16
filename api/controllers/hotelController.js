@@ -21,6 +21,7 @@ exports.addHotel = async (req, res) => {
             roomTypes: req.body.roomTypes || [],
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
+            breakfastPrice: req.body.breakfastPrice ? Number(req.body.breakfastPrice) : 0,
             airport: req.body.airport || null
         };
         
@@ -68,6 +69,7 @@ exports.updateHotel = async (req, res) => {
             roomTypes: req.body.roomTypes || [],
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
+            breakfastPrice: req.body.breakfastPrice ? Number(req.body.breakfastPrice) : 0,
             airport: req.body.airport || null
         };
         

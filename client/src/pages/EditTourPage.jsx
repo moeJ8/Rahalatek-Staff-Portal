@@ -215,7 +215,6 @@ export default function EditTourPage() {
                                 name="description"
                                 value={tourData.description}
                                 onChange={handleTourChange}
-                                required
                             />
                         </div>
                         

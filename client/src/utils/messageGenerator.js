@@ -162,7 +162,7 @@ ${includeTransfer && selectedHotelData.transportationPrice > 0 ?
   `${RLM}الاستقبال والتوديع من ${airportName} بسيارة خاصة ` : ''}
 
 ${RLM}الفندق 🏢
-${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${totalPeople} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
+${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${totalPeople} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? `شامل الافطار ${selectedHotelData.breakfastPrice ? `(${selectedHotelData.breakfastPrice}$ للشخص، الأطفال 0-6 سنوات مجاناً)` : ''}` : 'بدون افطار'}
 ${selectedHotelData.description ? `\n${RLM}${selectedHotelData.description}` : ''}
 
 ${orderedTourData.length > 0 ? `${RLM}تفاصيل الجولات 📋` : ''}

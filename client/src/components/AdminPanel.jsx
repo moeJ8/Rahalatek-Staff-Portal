@@ -12,6 +12,7 @@ export default function AdminPanel() {
         stars: '',
         roomTypes: [],
         breakfastIncluded: false,
+        breakfastPrice: '',
         transportationPrice: '',
         airport: '',
         description: ''
@@ -283,6 +284,7 @@ export default function AdminPanel() {
                 stars: '',
                 roomTypes: [],
                 breakfastIncluded: false,
+                breakfastPrice: '',
                 transportationPrice: '',
                 airport: '',
                 description: ''
@@ -646,7 +648,7 @@ export default function AdminPanel() {
                         
                         <div>
                             <div className="mb-2 block">
-                                <Label htmlFor="hotelBreakfast" value="Breakfast Included" />
+                                <Label htmlFor="hotelBreakfast" value="Breakfast" />
                             </div>
                             <div className="flex items-center gap-2">
                                 <Checkbox
@@ -657,6 +659,22 @@ export default function AdminPanel() {
                                 />
                                 <Label htmlFor="hotelBreakfast">Breakfast Included</Label>
                             </div>
+                            
+                            {hotelData.breakfastIncluded && (
+                                <div className="mt-2 ml-6">
+                                    <Label htmlFor="breakfastPrice" className="text-sm mb-1 block">Breakfast Price ($ per person)</Label>
+                                    <TextInput
+                                        id="breakfastPrice"
+                                        type="number"
+                                        name="breakfastPrice"
+                                        value={hotelData.breakfastPrice}
+                                        onChange={handleHotelChange}
+                                        placeholder="Price per person"
+                                        className="w-full max-w-xs"
+                                        required={hotelData.breakfastIncluded}
+                                    />
+                                </div>
+                            )}
                         </div>
                         
                         <div>
@@ -893,7 +911,6 @@ export default function AdminPanel() {
                                 name="description"
                                 value={tourData.description}
                                 onChange={handleTourChange}
-                                required
                             />
                         </div>
                         
