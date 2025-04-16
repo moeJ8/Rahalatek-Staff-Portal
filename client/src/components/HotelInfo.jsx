@@ -13,13 +13,17 @@ const HotelInfo = ({ hotelData }) => {
 
   return (
     <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
-      <h5 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white flex items-center justify-between">
-        <span>{hotelData.name}</span>
-        <span className="flex items-center text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
-          {renderStars(hotelData.stars)}
-          <span className="ml-1 text-gray-700 dark:text-gray-300">{hotelData.stars}-star</span>
-        </span>
-      </h5>
+      <div className="flex flex-col mb-3">
+        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate">
+          {hotelData.name}
+        </h5>
+        <div className="flex justify-center">
+          <span className="flex items-center text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded whitespace-nowrap">
+            {renderStars(hotelData.stars)}
+            <span className="ml-1 text-gray-700 dark:text-gray-300">{hotelData.stars}-star</span>
+          </span>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
         <div className="space-y-3">
@@ -30,8 +34,8 @@ const HotelInfo = ({ hotelData }) => {
               {hotelData.roomTypes && hotelData.roomTypes.length > 0 ? (
                 <ul className="mt-1 space-y-1">
                   {hotelData.roomTypes.map((roomType, index) => (
-                    <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex justify-between">
-                      <span>{roomType.type}</span> 
+                    <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex justify-between gap-2">
+                      <span>{roomType.type.replace(" ROOM", "").replace(" SUITE", "")}</span> 
                       <span className="font-medium text-green-600 dark:text-green-400">${roomType.pricePerNight}/night</span>
                     </li>
                   ))}
@@ -80,11 +84,13 @@ const HotelInfo = ({ hotelData }) => {
         </div>
       </div>
       
-      {hotelData.description && (
-        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-          <p className="text-sm text-gray-700 dark:text-gray-300">{hotelData.description}</p>
-        </div>
-      )}
+      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600 min-h-[4.5rem]">
+        {hotelData.description ? (
+          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">{hotelData.description}</p>
+        ) : (
+          <p className="text-sm text-gray-700 dark:text-gray-300 opacity-0">.</p>
+        )}
+      </div>
     </div>
   );
 };

@@ -21,15 +21,12 @@ const RoomAllocator = ({
     return null;
   }
   
-  // Calculate total guests allocated to rooms
   const totalAllocated = roomAllocations.reduce((sum, room) => sum + room.occupants, 0);
   
-  // Calculate total children by each age group allocated to rooms
   const totalChildrenUnder3Allocated = roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0);
   const totalChildren3to6Allocated = roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0);
   const totalChildren6to12Allocated = roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0);
   
-  // Check if all children are allocated properly
   const allChildrenAllocated = 
     totalChildrenUnder3Allocated === childrenUnder3 &&
     totalChildren3to6Allocated === children3to6 &&
@@ -181,12 +178,15 @@ const RoomAllocator = ({
       
       <div className="flex justify-center mt-4">
         <Button 
-          size="sm"
+          size="xs"
           color="light"
           onClick={onAddRoom}
-          className="px-5 py-2.5 flex items-center"
+          className="px-3 py-1.5 flex items-center"
         >
-          <span className="mr-2 font-bold text-lg">+</span> Add Room
+          <span className="text-sm font-medium flex items-center">
+            <span className="mr-1 inline-flex items-center">+</span>
+            Add Room
+          </span>
         </Button>
       </div>
     </div>

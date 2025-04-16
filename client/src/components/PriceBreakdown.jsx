@@ -37,7 +37,6 @@ const PriceBreakdown = ({
         const roomPrice = roomTypeObj.pricePerNight * nights;
         hotelTotal += roomPrice;
         
-        // Add children 6-12 cost
         if (includeChildren && roomTypeObj.childrenPricePerNight && room.children6to12) {
           hotelTotal += roomTypeObj.childrenPricePerNight * nights * room.children6to12;
         }
@@ -116,9 +115,24 @@ const PriceBreakdown = ({
       thankYouDiv.style.color = '#ecfdf5'; 
       thankYouDiv.style.fontSize = '14px';
       thankYouDiv.style.fontWeight = '500';
-      thankYouDiv.textContent = 'Thank you for choosing our service';
+      thankYouDiv.textContent = 'Thank you for choosing our service!';
       
       clone.appendChild(thankYouDiv);
+      
+      // Add logo below the thank you text
+      const logoDiv = document.createElement('div');
+      logoDiv.style.padding = '10px 16px 15px';
+      logoDiv.style.textAlign = 'center';
+      logoDiv.style.backgroundColor = 'rgba(20, 83, 45, 0.3)';
+      
+      const logo = document.createElement('img');
+      logo.src = "/logodark.png";
+      logo.style.height = '40px';
+      logo.style.margin = '0 auto';
+      
+      logoDiv.appendChild(logo);
+      clone.appendChild(logoDiv);
+      
       container.appendChild(clone);
       document.body.appendChild(container);
       
@@ -212,6 +226,11 @@ const PriceBreakdown = ({
       const priceValues = clone.querySelectorAll('.text-green-400');
       priceValues.forEach(price => {
         price.style.color = '#34D399';
+      });
+      
+      const individualPrices = clone.querySelectorAll('.text-teal-300');
+      individualPrices.forEach(price => {
+        price.style.color = '#5EEAD4';
       });
 
       const canvas = await html2canvas(clone, {
@@ -311,14 +330,14 @@ const PriceBreakdown = ({
                         {/* Basic room cost */}
                         <div className="flex justify-between">
                           <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
-                          <span className="text-green-400">${info.adultPrice}</span>
+                          <span className="text-teal-300">${info.adultPrice}</span>
                         </div>
                         
                         {/* Children 6-12 cost if applicable */}
                         {includeChildren && info.children6to12 > 0 && info.childrenPrice > 0 && (
                           <div className="flex justify-between">
                             <span>• Children 6-12: <span className="text-blue-300">${info.childrenPrice}/night × {totalNights} nights × {info.children6to12}</span></span>
-                            <span className="text-green-400">${info.childrenTotalPrice}</span>
+                            <span className="text-teal-300">${info.childrenTotalPrice}</span>
                           </div>
                         )}
                         
@@ -435,9 +454,9 @@ const PriceBreakdown = ({
                       </div>
                       
                       <div className="ml-2 mt-1 text-purple-200">
-                        <p>• Adults: <span className="text-green-400">${adultCost}</span> ({numGuests} × ${tour.price})</p>
+                        <p>• Adults: <span className="text-teal-300">${adultCost}</span> ({numGuests} × ${tour.price})</p>
                         {childrenCount > 0 && (
-                          <p>• Children 3+ years: <span className="text-green-400">${childrenCost}</span> ({childrenCount} × ${tour.price})</p>
+                          <p>• Children 3+ years: <span className="text-teal-300">${childrenCost}</span> ({childrenCount} × ${tour.price})</p>
                         )}
                         {includeChildren && safeParseInt(childrenUnder3) > 0 && (
                           <p>• Children 0-3 years: <span className="text-green-400">$0</span> (free)</p>

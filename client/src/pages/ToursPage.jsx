@@ -3,6 +3,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
+import TourInfo from '../components/TourInfo';
+import toast from 'react-hot-toast';
 
 export default function ToursPage() {
   const [tours, setTours] = useState([]);
@@ -17,7 +19,6 @@ export default function ToursPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [tourToDelete, setTourToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   useEffect(() => {
     const userInfo = localStorage.getItem('user');
@@ -53,7 +54,7 @@ export default function ToursPage() {
     };
 
     fetchTours();
-  }, [deleteSuccess]);
+  }, []);
 
   // Filter tours based on search term and filters
   useEffect(() => {
@@ -127,16 +128,25 @@ export default function ToursPage() {
     setDeleteLoading(true);
     try {
       await axios.delete(`/api/tours/${tourToDelete._id}`);
-      // Remove the deleted tour from the tours array
       const updatedTours = tours.filter(tour => tour._id !== tourToDelete._id);
       setTours(updatedTours);
       setFilteredTours(updatedTours);
       
-      setDeleteSuccess(`Tour "${tourToDelete.name}" has been deleted successfully.`);
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setDeleteSuccess('');
-      }, 3000);
+      toast.success(`Tour "${tourToDelete.name}" has been deleted successfully.`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
       closeDeleteModal();
     } catch (err) {
       console.error('Failed to delete tour:', err);
@@ -153,10 +163,9 @@ export default function ToursPage() {
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-gray-900 dark:text-white">Available Tours</h1>
         
-        {/* Delete Success Message */}
-        {deleteSuccess && (
-          <Alert color="success" className="mb-4">
-            <span>{deleteSuccess}</span>
+        {error && (
+          <Alert color="failure" className="mb-4">
+            <span>{error}</span>
           </Alert>
         )}
         
@@ -227,12 +236,6 @@ export default function ToursPage() {
           </div>
         </div>
         
-        {error && (
-          <Alert color="failure" className="mb-4">
-            <span>{error}</span>
-          </Alert>
-        )}
-        
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <Spinner size="xl" />
@@ -240,91 +243,38 @@ export default function ToursPage() {
         ) : filteredTours.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-2 sm:px-4">
             {filteredTours.map((tour) => (
-              <Card key={tour._id} className="dark:bg-gray-800 h-full overflow-hidden">
+              <Card key={tour._id} className="overflow-hidden h-full min-h-[26rem] p-0">
                 <div className="flex flex-col h-full">
-                  <div>
-                    <h5 className="text-lg sm:text-xl font-bold tracking-tight text-gray-800 dark:text-white mb-1 line-clamp-2">
-                      {tour.name}
-                    </h5>
-                    <Badge color="info" className="mb-2 dark:text-cyan-500 text-xs sm:text-sm">
-                    <FaMapMarkerAlt className="inline mr-1 mb-0.5" />{tour.city}</Badge>
-                    <p className="font-normal text-gray-700 dark:text-white mb-2 text-sm line-clamp-3 sm:line-clamp-4 overflow-hidden">
-                      {tour.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
-                      <Badge color="success" className="text-xs sm:text-sm">
-                        ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'}
-                      </Badge>
-                      <Badge color="purple" className="text-xs sm:text-sm">
-                        <FaClock className="inline mr-1" />{tour.duration} hours
-                      </Badge>
-                      {tour.tourType === 'Group' ? (
-                        <Badge color="blue" className="text-xs sm:text-sm">
-                          <FaUsers className="inline mr-1" />Group Tour
-                        </Badge>
-                      ) : (
-                        <Badge 
-                          color="warning" 
-                          className="text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
-                          style={{ 
-                            color: '#7B5804', 
-                            fontWeight: 'bold',
-                            textShadow: '0 0 2px rgba(255,255,255,0.5)'
-                          }}
-                        >
-                          <FaCrown className="inline mr-1" />VIP Tour
-                        </Badge>
-                      )}
-                      {tour.tourType === 'VIP' && (
-                        <Badge color="gray" className="text-xs sm:text-sm">
-                          <FaCar className="inline mr-1" />
-                          {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'})
-                        </Badge>
-                      )}
-                    </div>
+                  <div className="flex-grow">
+                    <TourInfo tourData={tour} />
                   </div>
                   
-                  <div className="mt-auto pt-3 sm:pt-4">
-                    {tour.highlights && tour.highlights.length > 0 && (
-                      <div className="mb-3 sm:mb-4">
-                        <h6 className="font-medium text-gray-900 dark:text-white mb-1 sm:mb-2 text-sm sm:text-base">Highlights:</h6>
-                        <ul className="list-disc list-inside text-gray-700 dark:text-gray-400 text-xs sm:text-sm">
-                          {tour.highlights.slice(0, 3).map((highlight, index) => (
-                            <li key={index} className="line-clamp-1">{highlight}</li>
-                          ))}
-                          {tour.highlights.length > 3 && <li>...and more</li>}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {isAdmin && (
-                      <div className="flex gap-2">
-                        <Button 
-                          as={Link} 
-                          to={`/admin/edit-tour/${tour._id}`}
-                          gradientDuoTone="purpleToPink"
-                          size="sm"
-                          className="flex-1 text-xs sm:text-sm"
-                        >
-                          <div className="flex items-center justify-center w-full">
-                            <FaPen className="mr-1.5" />
-                            <span>Edit</span>
-                          </div>
-                        </Button>
-                        <Button 
-                          color="failure"
-                          size="sm"
-                          className="text-xs sm:text-sm"
-                          onClick={() => openDeleteModal(tour)}
-                        >
-                          <div className="flex items-center justify-center w-full">
-                            <FaTrash className="mr-1.5" />
-                            <span>Delete</span>
-                          </div>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  {isAdmin && (
+                    <div className="mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
+                      <Button 
+                        as={Link} 
+                        to={`/admin/edit-tour/${tour._id}`}
+                        gradientDuoTone="purpleToPink"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <div className="flex items-center justify-center w-full">
+                          <FaPen className="mr-1.5" />
+                          <span>Edit</span>
+                        </div>
+                      </Button>
+                      <Button 
+                        color="failure"
+                        size="sm"
+                        onClick={() => openDeleteModal(tour)}
+                      >
+                        <div className="flex items-center justify-center w-full">
+                          <FaTrash className="mr-1.5" />
+                          <span>Delete</span>
+                        </div>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -342,6 +292,19 @@ export default function ToursPage() {
         onClose={closeDeleteModal}
         popup
         size="md"
+        theme={{
+          root: {
+            base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+            show: {
+              on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
+              off: "hidden"
+            }
+          },
+          content: {
+            base: "relative h-full w-full p-4 h-auto",
+            inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
+          }
+        }}
       >
         <Modal.Header />
         <Modal.Body>

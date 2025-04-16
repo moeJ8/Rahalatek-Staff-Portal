@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from 'flowbite-react';
 import DarkModeToggle from './DarkModeToggle';
-
+import { ThemeContext } from '../contexts/ThemeContext';
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { darkMode } = useContext(ThemeContext);
 
-  // Check auth state whenever location changes or component mounts
   useEffect(() => {
-    // Check if user is logged in
     const checkAuthStatus = () => {
       const userInfo = localStorage.getItem('user');
       if (userInfo) {
@@ -23,33 +22,26 @@ export default function Header() {
     };
     
     checkAuthStatus();
-    
-    // Set up an event listener for storage changes
+
     window.addEventListener('storage', checkAuthStatus);
     
     return () => {
       window.removeEventListener('storage', checkAuthStatus);
     };
-  }, [location]); // Re-check auth when location changes (like after login)
+  }, [location]);
 
   const handleLogout = () => {
-    // First set user to null to update UI
     setUser(null);
-    
-    // Then clear localStorage
+ 
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     
-    // Close mobile menu if open
     setMobileMenuOpen(false);
-    
-    // Delay navigation slightly to ensure state updates have processed
     setTimeout(() => {
       navigate('/signin', { replace: true });
     }, 10);
   };
 
-  // Function to determine if a link is active
   const isActive = (path) => {
     return location.pathname === path;
   };
@@ -69,9 +61,9 @@ export default function Header() {
           <div>
             <Link to="/" className="flex items-center">
               <img 
-                src="/last-logo-3.png" 
+                src={darkMode ? "/logodark.png" : "/Logolight.png"} 
                 alt="Logo" 
-                className="h-10 object-contain"
+                className="h-11 object-contain"
               />
             </Link>
           </div>

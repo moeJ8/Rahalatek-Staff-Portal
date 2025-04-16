@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
-import { FaMapMarkerAlt, FaStar, FaCoffee, FaBed, FaSearch, FaFilter, FaTrash, FaPen } from 'react-icons/fa';
+import { Card, Button, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
+import { FaSearch, FaFilter, FaTrash, FaPen } from 'react-icons/fa';
+import HotelInfo from '../components/HotelInfo';
+import toast from 'react-hot-toast';
 
 export default function HotelsPage() {
   const [hotels, setHotels] = useState([]);
@@ -17,7 +19,6 @@ export default function HotelsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [hotelToDelete, setHotelToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   useEffect(() => {
     const userInfo = localStorage.getItem('user');
@@ -47,7 +48,7 @@ export default function HotelsPage() {
     };
 
     fetchHotels();
-  }, [deleteSuccess]);
+  }, []);
 
   // Filter hotels based on search term and filters
   useEffect(() => {
@@ -116,11 +117,22 @@ export default function HotelsPage() {
       setHotels(updatedHotels);
       setFilteredHotels(updatedHotels);
       
-      setDeleteSuccess(`Hotel "${hotelToDelete.name}" has been deleted successfully.`);
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setDeleteSuccess('');
-      }, 3000);
+      // Show success toast notification
+      toast.success(`Hotel "${hotelToDelete.name}" has been deleted successfully.`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
       closeDeleteModal();
     } catch (err) {
       console.error('Failed to delete hotel:', err);
@@ -132,22 +144,14 @@ export default function HotelsPage() {
 
   const isAdmin = user && user.isAdmin;
 
-  // Render stars based on hotel rating
-  const renderStars = (count) => {
-    return Array(count).fill(0).map((_, index) => (
-      <FaStar key={index} className="inline text-yellow-400" />
-    ));
-  };
-
   return (
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-8 sm:pb-12 md:pb-20">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-gray-900 dark:text-white">Available Hotels</h1>
         
-        {/* Delete Success Message */}
-        {deleteSuccess && (
-          <Alert color="success" className="mb-4">
-            <span>{deleteSuccess}</span>
+        {error && (
+          <Alert color="failure" className="mb-4">
+            <span>{error}</span>
           </Alert>
         )}
         
@@ -220,95 +224,43 @@ export default function HotelsPage() {
           </div>
         </div>
         
-        {error && (
-          <Alert color="failure" className="mb-4">
-            <span>{error}</span>
-          </Alert>
-        )}
-        
         {loading ? (
           <div className="flex justify-center items-center h-40">
             <Spinner size="xl" />
           </div>
         ) : filteredHotels.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-2 sm:px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 px-2 sm:px-4">
             {filteredHotels.map((hotel) => (
-              <Card key={hotel._id} className="dark:bg-gray-800 h-full overflow-hidden">
+              <Card key={hotel._id} className="dark:bg-gray-800 overflow-hidden p-0">
                 <div className="flex flex-col h-full">
-                  <div>
-                    <h5 className="text-lg sm:text-xl font-bold tracking-tight text-gray-800 dark:text-white mb-1 line-clamp-2">
-                      {hotel.name}
-                    </h5>
-                    <div className="mb-1">
-                      {renderStars(hotel.stars)}
-                    </div>
-                    <Badge color="info" className="mb-2 dark:text-cyan-500 text-xs sm:text-sm">
-                      <FaMapMarkerAlt className="inline mr-1 mb-0.5" />{hotel.city}
-                    </Badge>
-                    {hotel.description && (
-                      <p className="font-normal text-gray-700 dark:text-white mb-3 text-sm line-clamp-3 sm:line-clamp-4 md:line-clamp-5 overflow-hidden">
-                        {hotel.description}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
-                      {hotel.roomTypes && hotel.roomTypes.length > 0 ? (
-                        hotel.roomTypes.map((roomType, index) => (
-                          <Badge key={index} color="purple" className="text-xs">
-                            <FaBed className="inline mr-0.5" />
-                            {roomType.type.replace("ROOM", "").replace("SINGLE", "SGL").replace("DOUBLE", "DBL").replace("TRIPLE", "TPL").replace("FAMILY SUITE", "FAM")}
-                            : ${roomType.pricePerNight}
-                          </Badge>
-                        ))
-                      ) : (
-                        <>
-                          <Badge color="blue" className="text-xs">${hotel.pricePerNightPerPerson}/night</Badge>
-                          <Badge color="purple" className="text-xs">
-                            <FaBed className="inline mr-0.5" />{hotel.roomType}
-                          </Badge>
-                        </>
-                      )}
-                      {hotel.breakfastIncluded && (
-                        <Badge color="indigo" className="text-xs">
-                          <FaCoffee className="inline mr-0.5" />Breakfast
-                        </Badge>
-                      )}
-                    </div>
-                    {hotel.transportationPrice > 0 && (
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        Airport transfer: ${hotel.transportationPrice} per person
-                      </p>
-                    )}
-                  </div>
+                  <HotelInfo hotelData={hotel} />
                   
-                  <div className="mt-auto pt-3 sm:pt-4">
-                    {isAdmin && (
-                      <div className="flex gap-2">
-                        <Button 
-                          as={Link} 
-                          to={`/admin/edit-hotel/${hotel._id}`}
-                          gradientDuoTone="purpleToPink"
-                          size="sm"
-                          className="flex-1 text-xs sm:text-sm"
-                        >
-                          <div className="flex items-center justify-center w-full">
-                            <FaPen className="mr-1.5" />
-                            <span>Edit</span>
-                          </div>
-                        </Button>
-                        <Button 
-                          color="failure"
-                          size="sm"
-                          className="text-xs sm:text-sm"
-                          onClick={() => openDeleteModal(hotel)}
-                        >
-                          <div className="flex items-center justify-center w-full">
-                            <FaTrash className="mr-1.5" />
-                            <span>Delete</span>
-                          </div>
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                  {isAdmin && (
+                    <div className=" mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
+                      <Button 
+                        as={Link} 
+                        to={`/admin/edit-hotel/${hotel._id}`}
+                        gradientDuoTone="purpleToPink"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <div className="flex items-center justify-center w-full">
+                          <FaPen className="mr-1.5" />
+                          <span>Edit</span>
+                        </div>
+                      </Button>
+                      <Button 
+                        color="failure"
+                        size="sm"
+                        onClick={() => openDeleteModal(hotel)}
+                      >
+                        <div className="flex items-center justify-center w-full">
+                          <FaTrash className="mr-1.5" />
+                          <span>Delete</span>
+                        </div>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -326,6 +278,19 @@ export default function HotelsPage() {
         onClose={closeDeleteModal}
         popup
         size="md"
+        theme={{
+          root: {
+            base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+            show: {
+              on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
+              off: "hidden"
+            }
+          },
+          content: {
+            base: "relative h-full w-full p-4 h-auto",
+            inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
+          }
+        }}
       >
         <Modal.Header />
         <Modal.Body>

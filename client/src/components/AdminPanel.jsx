@@ -5,7 +5,33 @@ import { Button, TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Spin
 import { HiPlus, HiX, HiTrash } from 'react-icons/hi'
 
 export default function AdminPanel() {
-    const [activeTab, setActiveTab] = useState('hotels');
+    const getInitialTab = () => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            if (['hotels', 'tours', 'airports', 'users'].includes(tabParam)) {
+                return tabParam;
+            }
+        }
+        return 'hotels';
+    };
+
+    const [activeTab, setActiveTab] = useState(getInitialTab);
+
+    const handleTabChange = (tabName) => {
+        setActiveTab(tabName);
+        
+        // Update URL without page reload
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.pushState({}, '', url);
+        
+        // Fetch users data only when switching to users tab and data not loaded yet
+        if (tabName === 'users' && users.length === 0 && dataLoaded) {
+            fetchUsers();
+        }
+    };
+
     const [hotelData, setHotelData] = useState({
         name: '',
         city: '',
@@ -40,9 +66,11 @@ export default function AdminPanel() {
     const [users, setUsers] = useState([]);
     const [highlightInput, setHighlightInput] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [customRoomTypes, setCustomRoomTypes] = useState([]);
+    // Add a new state to track if initial data has been loaded
+    const [dataLoaded, setDataLoaded] = useState(false);
 
     // Standard room types for hotels
     const standardRoomTypes = [
@@ -77,33 +105,47 @@ export default function AdminPanel() {
     });
     
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const airportsResponse = await axios.get('/api/airports');
-                setAirports(airportsResponse.data);
-                
-                if (activeTab === 'users') {
-                    await fetchUsers();
+        // Only fetch data on first load or when explicitly needed
+        if (!dataLoaded) {
+            const fetchInitialData = async () => {
+                setLoading(true);
+                try {
+                    const airportsResponse = await axios.get('/api/airports');
+                    setAirports(airportsResponse.data);
+                    
+                    // Only fetch users if starting on users tab
+                    if (activeTab === 'users') {
+                        await fetchUsers();
+                    }
+                    
+                    setError('');
+                    setDataLoaded(true);
+                } catch (err) {
+                    console.error('Failed to fetch data:', err);
+                    setError('Failed to fetch data. Please try again.');
+                } finally {
+                    setLoading(false);
                 }
-                
-                setError('');
-            } catch (err) {
-                console.error('Failed to fetch data:', err);
-                setError('Failed to fetch data. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchData();
+            };
+            
+            fetchInitialData();
+        }
+    }, []);
+    
+    // Only fetch users data when switching to users tab and haven't loaded it yet
+    useEffect(() => {
+        if (activeTab === 'users' && dataLoaded && users.length === 0) {
+            fetchUsers();
+        }
     }, [activeTab]);
 
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('token');
             if (!token) {
                 setError('You must be logged in to view users');
+                setLoading(false);
                 return;
             }
             
@@ -113,9 +155,12 @@ export default function AdminPanel() {
                 }
             });
             setUsers(response.data);
+            setError('');
         } catch (err) {
             console.error('Failed to fetch users:', err);
             setError(err.response?.data?.message || 'Failed to fetch users');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -505,6 +550,35 @@ export default function AdminPanel() {
         }
     };
 
+    // Inside the component, handle keyboard navigation with tab changing
+    const handleTabKeyDown = (e, tabName) => {
+        // Navigate with arrow keys
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const tabs = ['hotels', 'tours', 'airports', 'users'];
+            const currentIndex = tabs.indexOf(activeTab);
+            
+            let newIndex;
+            if (e.key === 'ArrowRight') {
+                newIndex = (currentIndex + 1) % tabs.length;
+            } else {
+                newIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            }
+            
+            handleTabChange(tabs[newIndex]);
+            
+            // Focus the newly active tab button
+            setTimeout(() => {
+                document.getElementById(`tab-${tabs[newIndex]}`).focus();
+            }, 10);
+        }
+        // Activate tab with Enter or Space
+        else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleTabChange(tabName);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-56">
@@ -514,30 +588,54 @@ export default function AdminPanel() {
     }
 
     return (
-        <div className="max-w-md mx-auto p-3 flex flex-col items-center">
+        <div className="max-w-2xl mx-auto p-3 flex flex-col items-center">
             {/* Custom Tab Implementation */}
-            <div className="flex flex-wrap justify-center border-b mb-4 gap-1">
+            <div className="flex flex-wrap justify-center border-b mb-4 gap-1" role="tablist" aria-label="Admin Sections">
                 <button
+                    id="tab-hotels"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'hotels' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => setActiveTab('hotels')}
+                    onClick={() => handleTabChange('hotels')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
+                    tabIndex={0}
+                    role="tab"
+                    aria-selected={activeTab === 'hotels'}
+                    aria-controls="hotels-panel"
                 >
                     Hotels
                 </button>
                 <button
+                    id="tab-tours"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'tours' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => setActiveTab('tours')}
+                    onClick={() => handleTabChange('tours')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
+                    tabIndex={0}
+                    role="tab"
+                    aria-selected={activeTab === 'tours'}
+                    aria-controls="tours-panel"
                 >
                     Tours
                 </button>
                 <button
+                    id="tab-airports"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'airports' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => setActiveTab('airports')}
+                    onClick={() => handleTabChange('airports')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
+                    tabIndex={0}
+                    role="tab"
+                    aria-selected={activeTab === 'airports'}
+                    aria-controls="airports-panel"
                 >
                     Airports
                 </button>
                 <button
+                    id="tab-users"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => setActiveTab('users')}
+                    onClick={() => handleTabChange('users')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
+                    tabIndex={0}
+                    role="tab"
+                    aria-selected={activeTab === 'users'}
+                    aria-controls="users-panel"
                 >
                     Users
                 </button>
@@ -545,7 +643,7 @@ export default function AdminPanel() {
 
             {/* Tab Content */}
             {activeTab === 'hotels' && (
-                <Card className="w-full">
+                <Card className="w-full" id="hotels-panel" role="tabpanel" aria-labelledby="tab-hotels">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Hotel</h2>
                     
                     <form onSubmit={handleHotelSubmit} className="space-y-4">
@@ -858,7 +956,7 @@ export default function AdminPanel() {
             )}
 
             {activeTab === 'tours' && (
-                <Card>
+                <Card className="w-full" id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
                     
                     <form onSubmit={handleTourSubmit} className="space-y-4">
@@ -1049,7 +1147,7 @@ export default function AdminPanel() {
             )}
 
             {activeTab === 'airports' && (
-                <Card>
+                <Card className="w-full" id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Airport</h2>
                     
                     <form onSubmit={handleAirportSubmit} className="space-y-4">
@@ -1118,7 +1216,7 @@ export default function AdminPanel() {
             )}
 
             {activeTab === 'users' && (
-                <Card>
+                <Card className="w-full" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">User Management</h2>
                     
                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
@@ -1139,8 +1237,8 @@ export default function AdminPanel() {
                                             <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                                                 {user.username}
                                             </Table.Cell>
-                                            <Table.Cell>
-                                                <Badge color={user.isAdmin ? "success" : "gray"}>
+                                            <Table.Cell className="flex items-center justify-center">
+                                                <Badge color={user.isAdmin ? "success" : "gray"} size="xs" className="text-center w-16 flex items-center justify-center px-0">
                                                     {user.isAdmin ? "Admin" : "User"}
                                                 </Badge>
                                             </Table.Cell>
