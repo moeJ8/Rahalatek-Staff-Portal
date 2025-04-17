@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner, Checkbox, Tabs, Accordion } from 'flowbite-react';
+import { Card, Button, Label, TextInput, Textarea, Select, Spinner, Checkbox, Tabs, Accordion } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiPlus, HiX, HiTrash, HiCalendar } from 'react-icons/hi';
-
+import toast from 'react-hot-toast';
 
 export default function EditHotelPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-
     const [hotelData, setHotelData] = useState({
         name: '',
         city: '',
@@ -24,27 +23,23 @@ export default function EditHotelPage() {
             sprinterFarewellPrice: 0
         },
         airport: '',
+        airportTransportation: [],
         description: ''
     });
-    
-    // Standard room types for hotels
     const standardRoomTypes = [
         "SINGLE ROOM",
         "DOUBLE ROOM",
         "TRIPLE ROOM",
         "FAMILY SUITE"
     ];
-
     const months = [
         "january", "february", "march", "april", "may", "june",
         "july", "august", "september", "october", "november", "december"
     ];
-
     const monthLabels = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
-
     const [selectedRoomTypes, setSelectedRoomTypes] = useState({
         "SINGLE ROOM": false,
         "DOUBLE ROOM": false,
@@ -69,7 +64,6 @@ export default function EditHotelPage() {
         "CUSTOM": ""
     });
 
-    // Initialize monthly prices for each room type
     const [monthlyPrices, setMonthlyPrices] = useState({
         "SINGLE ROOM": {},
         "DOUBLE ROOM": {},
@@ -79,9 +73,7 @@ export default function EditHotelPage() {
     });
     
     const [customRoomType, setCustomRoomType] = useState("");
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
-    const [success, setSuccess] = useState('');
     const [airports, setAirports] = useState([]);
 
     useEffect(() => {
@@ -98,9 +90,19 @@ export default function EditHotelPage() {
                             pricePerNight: fetchedHotel.pricePerNightPerPerson || 0 
                         }] : [];
                 }
-                setHotelData(fetchedHotel);
+
+                if (!fetchedHotel.airportTransportation || fetchedHotel.airportTransportation.length === 0) {
+                    if (fetchedHotel.airport && Object.values(fetchedHotel.transportation).some(price => price > 0)) {
+                        fetchedHotel.airportTransportation = [{
+                            airport: fetchedHotel.airport,
+                            transportation: fetchedHotel.transportation
+                        }];
+                    } else {
+                        fetchedHotel.airportTransportation = [];
+                    }
+                }
                 
-                // Initialize room type selection and prices from existing data
+                setHotelData(fetchedHotel);
                 const newSelectedRoomTypes = {
                     "SINGLE ROOM": false,
                     "DOUBLE ROOM": false,
@@ -177,11 +179,9 @@ export default function EditHotelPage() {
                 
                 const airportsResponse = await axios.get('/api/airports');
                 setAirports(airportsResponse.data);
-                
-                setError('');
             } catch (err) {
                 console.error('Failed to fetch data:', err);
-                setError('Failed to load data. Please try again later.');
+                toast.error('Failed to load data. Please try again later.');
             } finally {
                 setLoading(false);
             }
@@ -213,6 +213,60 @@ export default function EditHotelPage() {
                 ...hotelData.transportation,
                 [field]: value
             }
+        });
+    };
+
+    const handleAddAirportTransportation = () => {
+        setHotelData({
+            ...hotelData,
+            airportTransportation: [
+                ...hotelData.airportTransportation,
+                {
+                    airport: '',
+                    transportation: {
+                        vitoReceptionPrice: 0,
+                        vitoFarewellPrice: 0,
+                        sprinterReceptionPrice: 0,
+                        sprinterFarewellPrice: 0
+                    }
+                }
+            ]
+        });
+    };
+    
+    const handleRemoveAirportTransportation = (index) => {
+        const updatedAirportTransportation = [...hotelData.airportTransportation];
+        updatedAirportTransportation.splice(index, 1);
+        setHotelData({
+            ...hotelData,
+            airportTransportation: updatedAirportTransportation
+        });
+    };
+    
+    const handleAirportTransportationChange = (index, field, value) => {
+        const updatedAirportTransportation = [...hotelData.airportTransportation];
+        updatedAirportTransportation[index] = {
+            ...updatedAirportTransportation[index],
+            [field]: value
+        };
+        setHotelData({
+            ...hotelData,
+            airportTransportation: updatedAirportTransportation
+        });
+    };
+    
+    const handleTransportationPriceChange = (index, field, value) => {
+        const updatedAirportTransportation = [...hotelData.airportTransportation];
+        updatedAirportTransportation[index] = {
+            ...updatedAirportTransportation[index],
+            transportation: {
+                ...updatedAirportTransportation[index].transportation,
+                [field]: value
+            }
+        };
+        setHotelData({
+            ...hotelData,
+            airportTransportation: updatedAirportTransportation
         });
     };
 
@@ -313,19 +367,42 @@ export default function EditHotelPage() {
     };
 
     const showSuccessMessage = (message) => {
-        setSuccess(message);
-        setTimeout(() => setSuccess(''), 3000);
+        toast.success(message, {
+            duration: 3000,
+            style: {
+                background: '#22c55e',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                padding: '16px',
+            },
+            iconTheme: {
+                primary: '#fff',
+                secondary: '#22c55e',
+            },
+        });
     };
 
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         
         const roomTypes = addRoomTypesToHotelData();
         
         if (roomTypes.roomTypes.length === 0) {
-            setError('Please add at least one room type with price');
+            toast.error('Please add at least one room type with price');
             return;
+        }
+        
+        if (roomTypes.airportTransportation.length === 0) {
+            if (roomTypes.airport && Object.values(roomTypes.transportation).some(price => price > 0)) {
+                roomTypes.airportTransportation.push({
+                    airport: roomTypes.airport,
+                    transportation: roomTypes.transportation
+                });
+            }
+        } else {
+            roomTypes.airport = roomTypes.airportTransportation[0].airport;
+            roomTypes.transportation = roomTypes.airportTransportation[0].transportation;
         }
         
         try {
@@ -335,7 +412,7 @@ export default function EditHotelPage() {
                 navigate('/hotels');
             }, 2000);
         } catch (err) {
-            setError('Failed to update hotel');
+            toast.error('Failed to update hotel');
             console.log(err);
         }
     };
@@ -358,44 +435,47 @@ export default function EditHotelPage() {
                 <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Hotel</h2>
                 
                 <form onSubmit={handleHotelSubmit} className="space-y-4">
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="name" value="Hotel Name" /> 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="name" value="Hotel Name" /> 
+                            </div>
+                            <TextInput
+                                id="name"
+                                name="name"
+                                value={hotelData.name}
+                                onChange={handleHotelChange}
+                                required
+                            />
                         </div>
-                        <TextInput
-                            id="name"
-                            name="name"
-                            value={hotelData.name}
-                            onChange={handleHotelChange}
-                            required
-                        />
-                    </div>
-                    
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="hotelCity" value="City" />
+                        
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="hotelCity" value="City" />
+                            </div>
+                            <Select
+                                id="hotelCity"
+                                name="city"
+                                value={hotelData.city}
+                                onChange={handleHotelChange}
+                                required
+                                size="md"
+                            >
+                                <option value="">Select City</option>
+                                <option value="Antalya">Antalya</option>
+                                <option value="Bodrum">Bodrum</option>
+                                <option value="Bursa">Bursa</option>
+                                <option value="Cappadocia">Cappadocia</option>
+                                <option value="Fethiye">Fethiye</option>
+                                <option value="Istanbul">Istanbul</option>
+                                <option value="Izmir">Izmir</option>
+                                <option value="Konya">Konya</option>
+                                <option value="Marmaris">Marmaris</option>
+                                <option value="Pamukkale">Pamukkale</option>
+                                <option value="Trabzon">Trabzon</option>
+                                <option value="Uzungol">Uzungol</option>
+                            </Select>
                         </div>
-                        <Select
-                            id="hotelCity"
-                            name="city"
-                            value={hotelData.city}
-                            onChange={handleHotelChange}
-                            required
-                        >
-                            <option value="">Select City</option>
-                            <option value="Antalya">Antalya</option>
-                            <option value="Bodrum">Bodrum</option>
-                            <option value="Bursa">Bursa</option>
-                            <option value="Cappadocia">Cappadocia</option>
-                            <option value="Fethiye">Fethiye</option>
-                            <option value="Istanbul">Istanbul</option>
-                            <option value="Izmir">Izmir</option>
-                            <option value="Konya">Konya</option>
-                            <option value="Marmaris">Marmaris</option>
-                            <option value="Pamukkale">Pamukkale</option>
-                            <option value="Trabzon">Trabzon</option>
-                            <option value="Uzungol">Uzungol</option>
-                        </Select>
                     </div>
 
                     <div>
@@ -415,6 +495,19 @@ export default function EditHotelPage() {
                             <option value={4}>4 Stars</option>
                             <option value={5}>5 Stars</option>
                         </Select>
+                    </div>
+                    
+                    <div>
+                        <div className="mb-2 block">
+                            <Label htmlFor="hotelDesc" value="Description" />
+                        </div>
+                        <Textarea
+                            id="hotelDesc"
+                            name="description"
+                            rows={4}
+                            value={hotelData.description || ''}
+                            onChange={handleHotelChange}
+                        />
                     </div>
                     
                     <div>
@@ -648,69 +741,169 @@ export default function EditHotelPage() {
 
                     <div>
                         <div className="mb-2 block">
-                            <Label htmlFor="airport" value="Nearest Airport" />
+                            <Label value="Airport Transportation" className="text-lg font-semibold" />
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Add transportation prices for airports serving this hotel</p>
                         </div>
-                        <Select
-                            id="airport"
-                            name="airport"
-                            value={hotelData.airport || ''}
-                            onChange={handleHotelChange}
-                        >
-                            <option value="">Select Airport</option>
-                            {airports.map(airport => (
-                                <option key={airport._id} value={airport.name}>
-                                    {airport.name}
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-                    
-                    <div className="col-span-2">
-                        <h3 className="font-medium text-gray-900 dark:text-white mb-2">Airport Transportation Pricing (per vehicle)</h3>
-                        <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="vitoReceptionPrice" value="Vito Reception Price ($)" />
+                        
+                        {/* For backwards compatibility */}
+                        <div className="hidden">
+                            <Select
+                                id="airport"
+                                name="airport"
+                                value={hotelData.airport || ''}
+                                onChange={handleHotelChange}
+                            >
+                                <option value="">Select Airport</option>
+                                {airports.map(airport => (
+                                    <option key={airport._id} value={airport.name}>
+                                        {airport.name}
+                                    </option>
+                                ))}
+                            </Select>
+                        </div>
+                        
+                        {/* Multiple airport transportation options */}
+                        <div className="mb-4">
+                            {hotelData.airportTransportation.length === 0 ? (
+                                <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 mb-4">
+                                    <p className="text-gray-500 dark:text-gray-400 mb-4">No airport transportation options added</p>
+                                    <Button size="sm" onClick={handleAddAirportTransportation} className="mr-2">
+                                        <HiPlus className="mr-1" /> Add Airport Transportation
+                                    </Button>
                                 </div>
-                                <TextInput
-                                    id="vitoReceptionPrice"
-                                    type="number"
-                                    value={hotelData.transportation.vitoReceptionPrice}
-                                    onChange={(e) => handleTransportationChange('vitoReceptionPrice', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="vitoFarewellPrice" value="Vito Farewell Price ($)" />
+                            ) : (
+                                <>
+                                    {hotelData.airportTransportation.map((item, index) => (
+                                        <div key={index} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="font-medium text-gray-900 dark:text-white">Airport #{index + 1}</h4>
+                                                <Button color="failure" size="xs" onClick={() => handleRemoveAirportTransportation(index)}>
+                                                    <HiTrash className="mr-1" size={16} /> Remove
+                                                </Button>
+                                            </div>
+                                            
+                                            <div className="mb-4">
+                                                <Label htmlFor={`airport-${index}`} value="Select Airport" className="mb-2" />
+                                                <Select
+                                                    id={`airport-${index}`}
+                                                    value={item.airport}
+                                                    onChange={(e) => handleAirportTransportationChange(index, 'airport', e.target.value)}
+                                                    required
+                                                >
+                                                    <option value="">Select Airport</option>
+                                                    {airports.map((airport, idx) => (
+                                                        <option key={idx} value={airport.name}>
+                                                            {airport.name}
+                                                        </option>
+                                                    ))}
+                                                </Select>
+                                            </div>
+                                            
+                                            <div>
+                                                <h5 className="font-medium text-gray-900 dark:text-white mb-2">Transportation Pricing (per vehicle)</h5>
+                                                <div className="grid grid-cols-2 gap-4 p-3 bg-white dark:bg-gray-700 rounded-lg">
+                                                    <div>
+                                                        <Label htmlFor={`vito-reception-${index}`} value="Vito Reception Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`vito-reception-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.vitoReceptionPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'vitoReceptionPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor={`vito-farewell-${index}`} value="Vito Farewell Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`vito-farewell-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.vitoFarewellPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'vitoFarewellPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor={`sprinter-reception-${index}`} value="Sprinter Reception Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`sprinter-reception-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.sprinterReceptionPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'sprinterReceptionPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor={`sprinter-farewell-${index}`} value="Sprinter Farewell Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`sprinter-farewell-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.sprinterFarewellPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'sprinterFarewellPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    <div className="text-center mt-3">
+                                        <Button size="sm" onClick={handleAddAirportTransportation}>
+                                            <HiPlus className="mr-1" /> Add Another Airport
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        
+                        {/* For backwards compatibility - keep the old transportation form */}
+                        <div className="hidden">
+                            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Airport Transportation Pricing (per vehicle)</h3>
+                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="vitoReceptionPrice" value="Vito Reception Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="vitoReceptionPrice"
+                                        type="number"
+                                        value={hotelData.transportation.vitoReceptionPrice}
+                                        onChange={(e) => handleTransportationChange('vitoReceptionPrice', e.target.value)}
+                                    />
                                 </div>
-                                <TextInput
-                                    id="vitoFarewellPrice"
-                                    type="number"
-                                    value={hotelData.transportation.vitoFarewellPrice}
-                                    onChange={(e) => handleTransportationChange('vitoFarewellPrice', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="sprinterReceptionPrice" value="Sprinter Reception Price ($)" />
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="vitoFarewellPrice" value="Vito Farewell Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="vitoFarewellPrice"
+                                        type="number"
+                                        value={hotelData.transportation.vitoFarewellPrice}
+                                        onChange={(e) => handleTransportationChange('vitoFarewellPrice', e.target.value)}
+                                    />
                                 </div>
-                                <TextInput
-                                    id="sprinterReceptionPrice"
-                                    type="number"
-                                    value={hotelData.transportation.sprinterReceptionPrice}
-                                    onChange={(e) => handleTransportationChange('sprinterReceptionPrice', e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="sprinterFarewellPrice" value="Sprinter Farewell Price ($)" />
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="sprinterReceptionPrice" value="Sprinter Reception Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="sprinterReceptionPrice"
+                                        type="number"
+                                        value={hotelData.transportation.sprinterReceptionPrice}
+                                        onChange={(e) => handleTransportationChange('sprinterReceptionPrice', e.target.value)}
+                                    />
                                 </div>
-                                <TextInput
-                                    id="sprinterFarewellPrice"
-                                    type="number"
-                                    value={hotelData.transportation.sprinterFarewellPrice}
-                                    onChange={(e) => handleTransportationChange('sprinterFarewellPrice', e.target.value)}
-                                />
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="sprinterFarewellPrice" value="Sprinter Farewell Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="sprinterFarewellPrice"
+                                        type="number"
+                                        value={hotelData.transportation.sprinterFarewellPrice}
+                                        onChange={(e) => handleTransportationChange('sprinterFarewellPrice', e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -718,19 +911,6 @@ export default function EditHotelPage() {
                         </p>
                     </div>
                     
-                    <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="hotelDesc" value="Description" />
-                        </div>
-                        <Textarea
-                            id="hotelDesc"
-                            name="description"
-                            rows={4}
-                            value={hotelData.description || ''}
-                            onChange={handleHotelChange}
-                        />
-                    </div>
-
                     <div className="flex items-center gap-2 my-4">
                         <Checkbox
                             id="breakfastIncluded"
@@ -756,9 +936,6 @@ export default function EditHotelPage() {
                     <Button type="submit" gradientDuoTone="pinkToOrange">
                         Update Hotel
                     </Button>
-                    
-                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
-                    {success && <Alert color="success" className="mt-4">{success}</Alert>}
                 </form>
             </Card>
         </div>

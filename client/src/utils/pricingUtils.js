@@ -1,10 +1,9 @@
-// Helper function to safely parse integers
+
 export const safeParseInt = (value) => {
   const parsed = parseInt(value, 10);
   return isNaN(parsed) ? 0 : parsed;
 };
 
-// Get month name from date
 export const getMonthName = (date) => {
   if (!date) return null;
   
@@ -17,23 +16,18 @@ export const getMonthName = (date) => {
   return months[dateObj.getMonth()];
 };
 
-// Get room price based on month
 export const getRoomPriceForMonth = (roomType, date, isChild = false) => {
   if (!roomType || !date) {
-    // Return default price if month-specific price not available
     return isChild ? roomType.childrenPricePerNight : roomType.pricePerNight;
   }
   
   const monthName = getMonthName(date);
-  
-  // If monthly prices exist and the specific month has a price set
   if (roomType.monthlyPrices && 
       roomType.monthlyPrices[monthName] && 
       roomType.monthlyPrices[monthName][isChild ? 'child' : 'adult'] > 0) {
     return roomType.monthlyPrices[monthName][isChild ? 'child' : 'adult'];
   }
-  
-  // Fall back to default price if monthly price not set
+
   return isChild ? roomType.childrenPricePerNight : roomType.pricePerNight;
 };
 
@@ -64,6 +58,7 @@ export const calculateTotalPrice = ({
   includeReception,
   includeFarewell,
   transportVehicleType,
+  selectedAirport,
 }) => {
   try {
     let total = 0;
@@ -73,8 +68,7 @@ export const calculateTotalPrice = ({
     let breakfastCost = 0;
     
     const nights = calculateDuration(startDate, endDate);
-    
-    // Parse all inputs to ensure we're working with numbers
+
     const adultCount = safeParseInt(numGuests);
     const children3to6Count = safeParseInt(children3to6);
     const children6to12Count = safeParseInt(children6to12);
@@ -91,15 +85,11 @@ export const calculateTotalPrice = ({
             if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
                 selectedHotelData.roomTypes[room.roomTypeIndex]) {
                 const roomType = selectedHotelData.roomTypes[room.roomTypeIndex];
-                
-                // Get the appropriate prices based on the month
                 const adultPricePerNight = getRoomPriceForMonth(roomType, startDate, false);
                 const childPricePerNight = getRoomPriceForMonth(roomType, startDate, true);
-                
-                // Base price for the room
                 let roomCost = adultPricePerNight * nights;
                 
-                // Add children 6-12 price if applicable
+
                 if (includeChildren && childPricePerNight) {
                     // Use the specific count of children 6-12 in this room
                     const roomChildren6to12Count = room.children6to12 || 0;
@@ -161,8 +151,40 @@ export const calculateTotalPrice = ({
       let receptionCost = 0;
       let farewellCost = 0;
       
-      // If hotel has the new transportation structure
-      if (selectedHotelData.transportation) {
+      // If hotel has the new airportTransportation structure
+      if (selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0) {
+        // Find the selected airport's transportation costs based on the airport value set in selectedHotelData
+        const selectedAirportObj = selectedHotelData.airportTransportation.find(
+          item => item.airport === (selectedAirport || selectedHotelData.airport)
+        );
+        
+        // If no specific airport is selected, use the first available airport
+        const airportTransport = selectedAirportObj || selectedHotelData.airportTransportation[0];
+        
+        console.log('Selected airport for transportation:', selectedAirport || selectedHotelData.airport || airportTransport?.airport);
+        
+        if (airportTransport) {
+          if (includeReception) {
+            if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.vitoReceptionPrice);
+            } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+            }
+          }
+          
+          if (includeFarewell) {
+            if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.vitoFarewellPrice);
+            } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+            }
+          }
+        }
+        
+        transportationCost = receptionCost + farewellCost;
+      } 
+      // If hotel has the old transportation structure
+      else if (selectedHotelData.transportation) {
         if (includeReception) {
           if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice) {
             receptionCost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
@@ -181,7 +203,7 @@ export const calculateTotalPrice = ({
         
         transportationCost = receptionCost + farewellCost;
       } 
-      // Backward compatibility with old data structure
+      // Backward compatibility with very old data structure
       else if (selectedHotelData.transportationPrice) {
         // For older hotels with per-person pricing
         const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);

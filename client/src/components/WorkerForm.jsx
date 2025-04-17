@@ -54,6 +54,7 @@ export default function WorkerForm() {
     const [includeFarewell, setIncludeFarewell] = useState(savedState?.includeFarewell !== undefined ? savedState.includeFarewell : true);
     const [transportVehicleType, setTransportVehicleType] = useState(savedState?.transportVehicleType || 'Vito');
     const [includeBreakfast, setIncludeBreakfast] = useState(savedState?.includeBreakfast !== undefined ? savedState.includeBreakfast : true);
+    const [selectedAirport, setSelectedAirport] = useState(savedState?.selectedAirport || '');
 
     // Save form data to localStorage whenever relevant state changes
     useEffect(() => {
@@ -75,7 +76,8 @@ export default function WorkerForm() {
             includeFarewell,
             transportVehicleType,
             includeBreakfast,
-            tripPrice
+            tripPrice,
+            selectedAirport
           };
           
           localStorage.setItem('workerFormData', JSON.stringify(formData));
@@ -101,7 +103,8 @@ export default function WorkerForm() {
       includeFarewell,
       transportVehicleType,
       includeBreakfast, 
-      tripPrice
+      tripPrice,
+      selectedAirport
     ]);
 
     useEffect(() => {
@@ -289,7 +292,8 @@ export default function WorkerForm() {
       transportVehicleType,
       selectedTours,
       tours,
-      includeBreakfast
+      includeBreakfast,
+      selectedAirport
     });
   };
 
@@ -313,7 +317,8 @@ export default function WorkerForm() {
         transportVehicleType,
         selectedTours,
         tours,
-        includeBreakfast
+        includeBreakfast,
+        selectedAirport
       });
       // Update the trip price field with the calculated value
       setTripPrice(finalPrice.toString());
@@ -341,9 +346,17 @@ export default function WorkerForm() {
         }
       }
       
+      // Apply selected airport to the hotelData
+      const hotelDataWithAirport = {
+        ...selectedHotelData,
+        airport: selectedAirport || (selectedHotelData.airportTransportation?.length > 0 
+          ? selectedHotelData.airportTransportation[0]?.airport 
+          : selectedHotelData.airport)
+      };
+      
       // Use the finalized price for the message
       const message = generateBookingMessage({
-        selectedHotelData,
+        selectedHotelData: hotelDataWithAirport,
         selectedCity,
         startDate,
         endDate,
@@ -575,6 +588,38 @@ export default function WorkerForm() {
             </Label>
           </div>
           
+          {selectedHotelData && (selectedHotelData.airportTransportation?.length > 0 || selectedHotelData.airport) && (
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="clientAirport" value="Client's Airport" className="dark:text-white" />
+              </div>
+              <Select
+                id="clientAirport"
+                value={selectedAirport}
+                onChange={(e) => setSelectedAirport(e.target.value)}
+                required={includeReception || includeFarewell}
+              >
+                <option value="">Select Airport</option>
+                {selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0 ? (
+                  selectedHotelData.airportTransportation.map((item, idx) => (
+                    <option key={idx} value={item.airport}>
+                      {item.airport}
+                    </option>
+                  ))
+                ) : (
+                  airports.map((airport, idx) => (
+                    <option key={idx} value={airport.name}>
+                      {airport.name}
+                    </option>
+                  ))
+                )}
+              </Select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Select which airport the clients will be arriving at/departing from
+              </p>
+            </div>
+          )}
+          
           <div>
             <div className="mb-2 block">
               <Label htmlFor="transportVehicleType" value="Transport Vehicle Type" className="dark:text-white" />
@@ -632,6 +677,7 @@ export default function WorkerForm() {
               transportVehicleType={transportVehicleType}
               includeBreakfast={includeBreakfast}
               startDate={startDate}
+              selectedAirport={selectedAirport}
             />
           )}
           

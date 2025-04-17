@@ -21,6 +21,7 @@ const PriceBreakdown = ({
   transportVehicleType,
   includeBreakfast,
   startDate,
+  selectedAirport
 }) => {
   const breakdownRef = useRef(null);
 
@@ -70,7 +71,34 @@ const PriceBreakdown = ({
   }
   
   if (selectedHotelData) {
-    if (selectedHotelData.transportation) {
+    if (selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0) {
+      // Find the selected airport information
+      const selectedAirportObj = selectedHotelData.airportTransportation.find(
+        item => item.airport === (selectedAirport || selectedHotelData.airport)
+      );
+      
+      // If no airport selected, use the first one
+      const airportTransport = selectedAirportObj || selectedHotelData.airportTransportation[0];
+      
+      if (airportTransport) {
+        if (includeReception) {
+          if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoReceptionPrice) {
+            transportTotal += parseFloat(airportTransport.transportation.vitoReceptionPrice);
+          } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice) {
+            transportTotal += parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+          }
+        }
+        
+        if (includeFarewell) {
+          if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoFarewellPrice) {
+            transportTotal += parseFloat(airportTransport.transportation.vitoFarewellPrice);
+          } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice) {
+            transportTotal += parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+          }
+        }
+      }
+    }
+    else if (selectedHotelData.transportation) {
       if (includeReception) {
         if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice) {
           transportTotal += parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
@@ -366,79 +394,126 @@ const PriceBreakdown = ({
               </div>
             )}
             
-            <div className="mb-3 p-3 bg-amber-950/60 rounded-lg">
-              <h5 className="text-sm font-semibold text-amber-300 mb-2 flex items-center">
-                <span className="w-6 h-6 rounded-full bg-amber-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '4' : '3')}</span>
+            <div className="mb-3 p-3 bg-blue-950/60 rounded-lg">
+              <h5 className="text-sm font-semibold text-blue-300 mb-2 flex items-center">
+                <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">3</span>
                 Transportation
               </h5>
-              
-              <div className="pl-8">
-                {includeReception || includeFarewell ? (
-                  <div className="text-xs">
-                    {(() => {
-                      let transportItems = [];
-                      let totalTransportCost = 0;
-                      
-                      if (selectedHotelData.transportation) {
-                        if (includeReception) {
-                          if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice > 0) {
-                            const cost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
-                            transportItems.push(`Reception (Vito): $${cost}`);
-                            totalTransportCost += cost;
-                          } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice > 0) {
-                            const cost = parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
-                            transportItems.push(`Reception (Sprinter): $${cost}`);
-                            totalTransportCost += cost;
-                          }
-                        }
-                        
-                        if (includeFarewell) {
-                          if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoFarewellPrice > 0) {
-                            const cost = parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
-                            transportItems.push(`Farewell (Vito): $${cost}`);
-                            totalTransportCost += cost;
-                          } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice > 0) {
-                            const cost = parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
-                            transportItems.push(`Farewell (Sprinter): $${cost}`);
-                            totalTransportCost += cost;
-                          }
-                        }
-                      } else if (selectedHotelData.transportationPrice) {
-                        const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
-                          safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
-                        
-                        if (includeReception && includeFarewell) {
-                          const cost = selectedHotelData.transportationPrice * totalPeople;
-                          transportItems.push(`Round-trip: $${selectedHotelData.transportationPrice}/person × ${totalPeople} people`);
-                          totalTransportCost = cost;
-                        } else if (includeReception) {
-                          const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
-                          transportItems.push(`Reception only: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
-                          totalTransportCost = cost;
-                        } else if (includeFarewell) {
-                          const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
-                          transportItems.push(`Farewell only: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
-                          totalTransportCost = cost;
-                        }
+              {(() => {
+                const transportItems = [];
+                let totalTransportCost = 0;
+                
+                // Calculate total people for per-person pricing (old data structure)
+                const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
+                  safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
+                
+                // Get airport name
+                let airportName = "Airport"; 
+                
+                // For hotels with the new airport transportation structure
+                if (selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0) {
+                  // Find the selected airport information
+                  const selectedAirportObj = selectedHotelData.airportTransportation.find(
+                    item => item.airport === (selectedAirport || selectedHotelData.airport)
+                  );
+                  
+                  // If no airport selected, use the first one
+                  const airportTransport = selectedAirportObj || selectedHotelData.airportTransportation[0];
+                  
+                  airportName = airportTransport.airport || "Airport";
+                  
+                  if (airportTransport) {
+                    if (includeReception) {
+                      if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoReceptionPrice > 0) {
+                        const cost = parseFloat(airportTransport.transportation.vitoReceptionPrice);
+                        totalTransportCost += cost;
+                        transportItems.push(`Reception from <strong>${airportName}</strong> (Vito): $${cost}`);
+                      } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice > 0) {
+                        const cost = parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+                        totalTransportCost += cost;
+                        transportItems.push(`Reception from <strong>${airportName}</strong> (Sprinter): $${cost}`);
                       }
-                      
-                      return (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="font-medium text-white">Airport Transportation</span>
-                            <span className="text-green-400 font-medium">${totalTransportCost}</span>
-                          </div>
-                          {transportItems.map((item, index) => (
-                            <div className="text-amber-200" key={index}>{item}</div>
-                          ))}
-                        </>
-                      );
-                    })()}
+                    }
+                    
+                    if (includeFarewell) {
+                      if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoFarewellPrice > 0) {
+                        const cost = parseFloat(airportTransport.transportation.vitoFarewellPrice);
+                        totalTransportCost += cost;
+                        transportItems.push(`Farewell to <strong>${airportName}</strong> (Vito): $${cost}`);
+                      } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice > 0) {
+                        const cost = parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+                        totalTransportCost += cost;
+                        transportItems.push(`Farewell to <strong>${airportName}</strong> (Sprinter): $${cost}`);
+                      }
+                    }
+                  }
+                }
+                // For hotels with the old transportation structure
+                else if (selectedHotelData.transportation) {
+                  airportName = selectedAirport || selectedHotelData.airport || "Airport";
+                  
+                  if (includeReception) {
+                    if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice > 0) {
+                      const cost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
+                      totalTransportCost += cost;
+                      transportItems.push(`Reception from <strong>${airportName}</strong> (Vito): $${cost}`);
+                    } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice > 0) {
+                      const cost = parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
+                      totalTransportCost += cost;
+                      transportItems.push(`Reception from <strong>${airportName}</strong> (Sprinter): $${cost}`);
+                    }
+                  }
+                  
+                  if (includeFarewell) {
+                    if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoFarewellPrice > 0) {
+                      const cost = parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
+                      totalTransportCost += cost;
+                      transportItems.push(`Farewell to <strong>${airportName}</strong> (Vito): $${cost}`);
+                    } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice > 0) {
+                      const cost = parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
+                      totalTransportCost += cost;
+                      transportItems.push(`Farewell to <strong>${airportName}</strong> (Sprinter): $${cost}`);
+                    }
+                  }
+                } 
+                // Backward compatibility with very old pricing model
+                else if (selectedHotelData.transportationPrice) {
+                  airportName = selectedAirport || selectedHotelData.airport || "Airport";
+                  
+                  if (includeReception && includeFarewell) {
+                    const cost = selectedHotelData.transportationPrice * totalPeople;
+                    totalTransportCost += cost;
+                    transportItems.push(`Round-trip to/from <strong>${airportName}</strong>: $${selectedHotelData.transportationPrice}/person × ${totalPeople} people`);
+                  } else if (includeReception) {
+                    const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
+                    totalTransportCost += cost;
+                    transportItems.push(`Reception only from <strong>${airportName}</strong>: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
+                  } else if (includeFarewell) {
+                    const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
+                    totalTransportCost += cost;
+                    transportItems.push(`Farewell only to <strong>${airportName}</strong>: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
+                  }
+                }
+                
+                return (
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium text-white">Airport Transportation</span>
+                      <span className="text-green-400 font-medium">${totalTransportCost}</span>
+                    </div>
+                    
+                    {transportItems.length > 0 ? (
+                      <ul className="pl-2">
+                        {transportItems.map((item, index) => (
+                          <li key={index} className="text-xs text-blue-200" dangerouslySetInnerHTML={{ __html: item }}></li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-amber-200">No transportation included</p>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-xs text-amber-200">No transportation included</p>
-                )}
-              </div>
+                );
+              })()}
             </div>
             
             <div className="mb-3 p-3 bg-teal-950/60 rounded-lg">

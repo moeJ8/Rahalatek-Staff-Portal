@@ -44,15 +44,59 @@ export const generateBookingMessage = ({
 
   let airportName = 'المطار'; 
   
-  if (selectedHotelData.airport && selectedHotelData.airport.trim() !== '') {
+  // Set the airport name based on the data structure
+  if (selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0) {
+    const selectedAirportObj = selectedHotelData.airportTransportation.find(
+      item => item.airport === selectedHotelData.airport
+    );
+    
+    // If no airport selected, use the first one
+    const airportObj = selectedAirportObj || selectedHotelData.airportTransportation[0];
+    
+    if (airportObj && airportObj.airport) {
+      airportName = getAirportArabicName(airportObj.airport);
+    }
+  } 
+  else if (selectedHotelData.airport && selectedHotelData.airport.trim() !== '') {
     airportName = getAirportArabicName(selectedHotelData.airport);
   }
 
-  // Generate transportation text based on new data structure
+
   let transportationText = '';
-  
-  // For hotels with the new transportation structure
-  if (selectedHotelData.transportation) {
+
+  if (selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0) {
+    // Find the selected airport information
+    const selectedAirportObj = selectedHotelData.airportTransportation.find(
+      item => item.airport === selectedHotelData.airport
+    );
+    
+    // If no airport selected, use the first one
+    const airportObj = selectedAirportObj || selectedHotelData.airportTransportation[0];
+    
+    if (airportObj) {
+      const hasReception = includeReception && (
+        (transportVehicleType === 'Vito' && airportObj.transportation.vitoReceptionPrice > 0) ||
+        (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterReceptionPrice > 0)
+      );
+      
+      const hasFarewell = includeFarewell && (
+        (transportVehicleType === 'Vito' && airportObj.transportation.vitoFarewellPrice > 0) ||
+        (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterFarewellPrice > 0)
+      );
+      
+      const vehicleCapacityText = transportVehicleType === 'Vito' ? '(2-8 أشخاص)' : '(9-16 شخص)';
+      
+      if (hasReception && hasFarewell) {
+        transportationText = `${RLM}الاستقبال والتوديع من ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
+      } else if (hasReception) {
+        transportationText = `${RLM}الاستقبال من ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
+      } else if (hasFarewell) {
+        transportationText = `${RLM}التوديع إلى ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
+      }
+    }
+  } 
+  // For hotels with the old transportation structure
+  else if (selectedHotelData.transportation) {
     const hasReception = includeReception && (
       (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice > 0) ||
       (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice > 0)
@@ -73,7 +117,7 @@ export const generateBookingMessage = ({
       transportationText = `${RLM}التوديع إلى ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
     }
   } 
-  // Backward compatibility with old data structure
+  // Backward compatibility with very old data structure
   else if (selectedHotelData.transportationPrice > 0) {
     if (includeReception && includeFarewell) {
       transportationText = `${RLM}الاستقبال والتوديع من ${airportName} بسيارة خاصة`;

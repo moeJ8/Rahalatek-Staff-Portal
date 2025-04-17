@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner } from 'flowbite-react';
+import { Card, Button, Label, TextInput, Textarea, Select, Spinner } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiPlus, HiX } from 'react-icons/hi';
+import toast from 'react-hot-toast';
 
 
 export default function EditTourPage() {
@@ -25,9 +26,7 @@ export default function EditTourPage() {
         duration: 1,
         highlights: []
     });
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
-    const [success, setSuccess] = useState('');
     const [highlightInput, setHighlightInput] = useState('');
 
     useEffect(() => {
@@ -35,10 +34,9 @@ export default function EditTourPage() {
             try {
                 const response = await axios.get(`/api/tours/${id}`);
                 setTourData(response.data);
-                setError('');
             } catch (err) {
                 console.error('Failed to fetch tour:', err);
-                setError('Failed to load tour. Please try again later.');
+                toast.error('Failed to load tour. Please try again later.');
             } finally {
                 setLoading(false);
             }
@@ -76,12 +74,24 @@ export default function EditTourPage() {
     };
 
     const showSuccessMessage = (message) => {
-        setSuccess(message);
-        setTimeout(() => setSuccess(''), 3000);
+        toast.success(message, {
+            duration: 3000,
+            style: {
+                background: '#22c55e',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                padding: '16px',
+            },
+            iconTheme: {
+                primary: '#fff',
+                secondary: '#22c55e',
+            },
+        });
     };
+    
     const handleTourSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         try {
             await axios.put(`/api/tours/${id}`, tourData);
             showSuccessMessage('Tour updated successfully!');
@@ -89,10 +99,11 @@ export default function EditTourPage() {
                 navigate('/tours');
             }, 2000);
         } catch (err) {
-            setError('Failed to update tour');
+            toast.error('Failed to update tour');
             console.log(err);
         }
     };
+    
     const handleAddHighlight = () => {
         if (highlightInput.trim()) {
             setTourData({
@@ -130,84 +141,120 @@ export default function EditTourPage() {
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Tour</h2>
                     
                     <form onSubmit={handleTourSubmit} className="space-y-4">
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourName" value="Tour Name" /> 
-                            </div>
-                            <TextInput
-                                id="tourName"
-                                name="name"
-                                value={tourData.name}
-                                onChange={handleTourChange}
-                                required
-                            />
-                        </div>
-                        
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourCity" value="City" />
-                            </div>
-                            <Select
-                                id="tourCity"
-                                name="city"
-                                value={tourData.city}
-                                onChange={handleTourChange}
-                                required
-                            >
-                                <option value="">Select City</option>
-                                <option value="Antalya">Antalya</option>
-                                <option value="Bodrum">Bodrum</option>
-                                <option value="Bursa">Bursa</option>
-                                <option value="Cappadocia">Cappadocia</option>
-                                <option value="Fethiye">Fethiye</option>
-                                <option value="Istanbul">Istanbul</option>
-                                <option value="Izmir">Izmir</option>
-                                <option value="Konya">Konya</option>
-                                <option value="Marmaris">Marmaris</option>
-                                <option value="Pamukkale">Pamukkale</option>
-                                <option value="Trabzon">Trabzon</option>
-                                <option value="Uzungol">Uzungol</option>
-                            </Select>
-                        </div>
-                        
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourType" value="Tour Type" />
-                            </div>
-                            <Select
-                                id="tourType"
-                                name="tourType"
-                                value={tourData.tourType || 'Group'}
-                                onChange={handleTourChange}
-                                required
-                            >
-                                <option value="Group">Group Tour (per person)</option>
-                                <option value="VIP">VIP Tour (per car)</option>
-                            </Select>
-                        </div>
-                        
-                        {tourData.tourType === 'VIP' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <div className="mb-2 block">
-                                    <Label htmlFor="vipCarType" value="VIP Car Type" />
+                                    <Label htmlFor="tourName" value="Tour Name" /> 
+                                </div>
+                                <TextInput
+                                    id="tourName"
+                                    name="name"
+                                    value={tourData.name}
+                                    onChange={handleTourChange}
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="tourCity" value="City" />
                                 </div>
                                 <Select
-                                    id="vipCarType"
-                                    name="vipCarType"
-                                    value={tourData.vipCarType || 'Vito'}
-                                    onChange={handleVipCarTypeChange}
+                                    id="tourCity"
+                                    name="city"
+                                    value={tourData.city}
+                                    onChange={handleTourChange}
+                                    required
+                                    size="md"
+                                >
+                                    <option value="">Select City</option>
+                                    <option value="Antalya">Antalya</option>
+                                    <option value="Bodrum">Bodrum</option>
+                                    <option value="Bursa">Bursa</option>
+                                    <option value="Cappadocia">Cappadocia</option>
+                                    <option value="Fethiye">Fethiye</option>
+                                    <option value="Istanbul">Istanbul</option>
+                                    <option value="Izmir">Izmir</option>
+                                    <option value="Konya">Konya</option>
+                                    <option value="Marmaris">Marmaris</option>
+                                    <option value="Pamukkale">Pamukkale</option>
+                                    <option value="Trabzon">Trabzon</option>
+                                    <option value="Uzungol">Uzungol</option>
+                                </Select>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="tourType" value="Tour Type" />
+                                </div>
+                                <Select
+                                    id="tourType"
+                                    name="tourType"
+                                    value={tourData.tourType || 'Group'}
+                                    onChange={handleTourChange}
                                     required
                                 >
-                                    <option value="Vito">Vito (2-8 persons)</option>
-                                    <option value="Sprinter">Sprinter (9-16 persons)</option>
+                                    <option value="Group">Group Tour (per person)</option>
+                                    <option value="VIP">VIP Tour (per car)</option>
                                 </Select>
-                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                    {tourData.vipCarType === 'Vito' 
-                                        ? 'Capacity: 2-8 persons' 
-                                        : 'Capacity: 9-16 persons'}
-                                </div>
                             </div>
-                        )}
+                            
+                            {tourData.tourType === 'VIP' && (
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="vipCarType" value="VIP Car Type" />
+                                    </div>
+                                    <Select
+                                        id="vipCarType"
+                                        name="vipCarType"
+                                        value={tourData.vipCarType || 'Vito'}
+                                        onChange={handleVipCarTypeChange}
+                                        required
+                                    >
+                                        <option value="Vito">Vito (2-8 persons)</option>
+                                        <option value="Sprinter">Sprinter (9-16 persons)</option>
+                                    </Select>
+                                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                        {tourData.vipCarType === 'Vito' 
+                                            ? 'Capacity: 2-8 persons' 
+                                            : 'Capacity: 9-16 persons'}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($)' : 'Price per Car ($)'} />
+                                </div>
+                                <TextInput
+                                    id="tourPrice"
+                                    type="number"
+                                    name="price"
+                                    value={tourData.price}
+                                    onChange={handleTourChange}
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="tourDuration" value="Duration (hours)" />
+                                </div>
+                                <TextInput
+                                    id="tourDuration"
+                                    type="number"
+                                    name="duration"
+                                    value={tourData.duration}
+                                    onChange={handleTourChange}
+                                    min={1}
+                                    required
+                                />
+                            </div>
+                        </div>
                         
                         <div>
                             <div className="mb-2 block">
@@ -231,35 +278,6 @@ export default function EditTourPage() {
                                 rows={4}
                                 value={tourData.detailedDescription || ''}
                                 onChange={handleTourChange}
-                            />
-                        </div>
-                        
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($)' : 'Price per Car ($)'} />
-                            </div>
-                            <TextInput
-                                id="tourPrice"
-                                type="number"
-                                name="price"
-                                value={tourData.price}
-                                onChange={handleTourChange}
-                                required
-                            />
-                        </div>
-                        
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourDuration" value="Duration (hours)" />
-                            </div>
-                            <TextInput
-                                id="tourDuration"
-                                type="number"
-                                name="duration"
-                                value={tourData.duration}
-                                onChange={handleTourChange}
-                                min={1}
-                                required
                             />
                         </div>
                         
@@ -309,9 +327,6 @@ export default function EditTourPage() {
                         <Button type="submit" gradientDuoTone="pinkToOrange">
                             Update Tour
                         </Button>
-                        
-                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
-                        {success && <Alert color="success" className="mt-4">{success}</Alert>}
                     </form>
                 </Card>
     </div>

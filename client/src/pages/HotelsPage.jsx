@@ -241,18 +241,20 @@ export default function HotelsPage() {
         ) : filteredHotels.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 px-2 sm:px-4">
             {filteredHotels.map((hotel) => (
-              <Card key={hotel._id} className="dark:bg-gray-800 overflow-hidden p-0">
+              <Card key={hotel._id} className="dark:bg-gray-800 overflow-hidden p-0 h-full">
                 <div className="flex flex-col h-full">
-                  <HotelInfo hotelData={hotel} />
+                  <div className="flex-1">
+                    <HotelInfo hotelData={hotel} />
+                  </div>
                   
-                  <div className="border-t border-gray-200 dark:border-gray-600 p-3 mt-3">
+                  <div className="border-t border-gray-200 dark:border-gray-600 p-3 mt-auto">
                     <Button 
                       gradientDuoTone="pinkToOrange"
                       size="sm"
                       onClick={() => openDetailModal(hotel)}
-                      className="w-full"
+                      className="w-full "
                     >
-                      <div className="flex items-center justify-center w-full">
+                      <div className="flex items-center justify-center w-full ">
                         <FaInfoCircle className="mr-1.5" />
                         <span>Show More Details</span>
                       </div>
@@ -260,7 +262,7 @@ export default function HotelsPage() {
                   </div>
                   
                   {isAdmin && (
-                    <div className="mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
+                    <div className="mt-0 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
                       <Button 
                         as={Link} 
                         to={`/admin/edit-hotel/${hotel._id}`}
@@ -277,6 +279,7 @@ export default function HotelsPage() {
                         color="failure"
                         size="sm"
                         onClick={() => openDeleteModal(hotel)}
+                        className="flex-1"
                       >
                         <div className="flex items-center justify-center w-full">
                           <FaTrash className="mr-1.5" />

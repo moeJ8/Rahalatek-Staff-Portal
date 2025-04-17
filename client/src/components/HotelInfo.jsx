@@ -18,9 +18,9 @@ const HotelInfo = ({ hotelData }) => {
   const currentMonthCapitalized = currentMonth ? currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1) : '';
 
   return (
-    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
-      <div className="flex flex-col mb-3">
-        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate">
+    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg h-full">
+      <div className="flex flex-col mb-4">
+        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate text-center">
           {hotelData.name}
         </h5>
         <div className="flex justify-center">
@@ -31,8 +31,8 @@ const HotelInfo = ({ hotelData }) => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div className="space-y-3">
+      <div className="flex flex-col md:flex-row gap-4 mt-4 mb-6">
+        <div className="space-y-3 flex-1">
           <div className="flex items-start">
             <FaBed className="text-blue-500 dark:text-blue-400 mt-1 mr-2 flex-shrink-0" />
             <div className="w-full">
@@ -79,7 +79,7 @@ const HotelInfo = ({ hotelData }) => {
           </div>
         </div>
         
-        <div className="space-y-3">
+        <div className="space-y-2 mt-2 md:mt-0 md:space-y-3 md:pl-4 flex flex-col">
           <div className="flex items-start">
             <FaUtensils className="text-amber-500 dark:text-amber-400 mt-1 mr-2 flex-shrink-0" />
             <div>
