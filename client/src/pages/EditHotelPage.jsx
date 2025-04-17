@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner, Checkbox } from 'flowbite-react';
+import { Card, Button, Alert, Label, TextInput, Textarea, Select, Spinner, Checkbox, Tabs, Accordion } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiPlus, HiX, HiTrash } from 'react-icons/hi';
+import { HiPlus, HiX, HiTrash, HiCalendar } from 'react-icons/hi';
 
 
 export default function EditHotelPage() {
@@ -35,6 +35,16 @@ export default function EditHotelPage() {
         "FAMILY SUITE"
     ];
 
+    const months = [
+        "january", "february", "march", "april", "may", "june",
+        "july", "august", "september", "october", "november", "december"
+    ];
+
+    const monthLabels = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     const [selectedRoomTypes, setSelectedRoomTypes] = useState({
         "SINGLE ROOM": false,
         "DOUBLE ROOM": false,
@@ -57,6 +67,15 @@ export default function EditHotelPage() {
         "TRIPLE ROOM": "",
         "FAMILY SUITE": "",
         "CUSTOM": ""
+    });
+
+    // Initialize monthly prices for each room type
+    const [monthlyPrices, setMonthlyPrices] = useState({
+        "SINGLE ROOM": {},
+        "DOUBLE ROOM": {},
+        "TRIPLE ROOM": {},
+        "FAMILY SUITE": {},
+        "CUSTOM": {}
     });
     
     const [customRoomType, setCustomRoomType] = useState("");
@@ -105,28 +124,52 @@ export default function EditHotelPage() {
                     "FAMILY SUITE": "",
                     "CUSTOM": ""
                 };
+
+                // Initialize monthly prices
+                const newMonthlyPrices = {
+                    "SINGLE ROOM": {},
+                    "DOUBLE ROOM": {},
+                    "TRIPLE ROOM": {},
+                    "FAMILY SUITE": {},
+                    "CUSTOM": {}
+                };
                 
                 let hasCustom = false;
                 let customTypeName = "";
                 
                 // Set the selected states and prices based on existing room types
                 fetchedHotel.roomTypes.forEach(roomType => {
-                    if (standardRoomTypes.includes(roomType.type)) {
-                        newSelectedRoomTypes[roomType.type] = true;
-                        newRoomTypePrices[roomType.type] = roomType.pricePerNight.toString();
-                        newRoomTypeChildrenPrices[roomType.type] = roomType.childrenPricePerNight?.toString() || "0";
+                    const roomTypeName = standardRoomTypes.includes(roomType.type) ? roomType.type : "CUSTOM";
+                    
+                    newSelectedRoomTypes[roomTypeName] = true;
+                    newRoomTypePrices[roomTypeName] = roomType.pricePerNight.toString();
+                    newRoomTypeChildrenPrices[roomTypeName] = roomType.childrenPricePerNight?.toString() || "0";
+
+                    // Initialize monthly prices if they exist in the data
+                    if (roomType.monthlyPrices) {
+                        newMonthlyPrices[roomTypeName] = roomType.monthlyPrices;
                     } else {
+                        // Create empty monthly price structure if it doesn't exist
+                        const emptyMonthlyPrices = {};
+                        months.forEach(month => {
+                            emptyMonthlyPrices[month] = {
+                                adult: 0,
+                                child: 0
+                            };
+                        });
+                        newMonthlyPrices[roomTypeName] = emptyMonthlyPrices;
+                    }
+                    
+                    if (roomTypeName === "CUSTOM") {
                         hasCustom = true;
                         customTypeName = roomType.type;
-                        newSelectedRoomTypes["CUSTOM"] = true;
-                        newRoomTypePrices["CUSTOM"] = roomType.pricePerNight.toString();
-                        newRoomTypeChildrenPrices["CUSTOM"] = roomType.childrenPricePerNight?.toString() || "0";
                     }
                 });
                 
                 setSelectedRoomTypes(newSelectedRoomTypes);
                 setRoomTypePrices(newRoomTypePrices);
                 setRoomTypeChildrenPrices(newRoomTypeChildrenPrices);
+                setMonthlyPrices(newMonthlyPrices);
                 
                 if (hasCustom) {
                     setCustomRoomType(customTypeName);
@@ -179,11 +222,30 @@ export default function EditHotelPage() {
             [roomType]: !selectedRoomTypes[roomType]
         });
         
-        // If unchecking, reset price
+        // If unchecking, reset price and monthly prices
         if (selectedRoomTypes[roomType]) {
             setRoomTypePrices({
                 ...roomTypePrices,
                 [roomType]: ""
+            });
+            
+            setRoomTypeChildrenPrices({
+                ...roomTypeChildrenPrices,
+                [roomType]: ""
+            });
+
+            // Reset monthly prices
+            const resetMonthlyPrices = {};
+            months.forEach(month => {
+                resetMonthlyPrices[month] = {
+                    adult: 0,
+                    child: 0
+                };
+            });
+            
+            setMonthlyPrices({
+                ...monthlyPrices,
+                [roomType]: resetMonthlyPrices
             });
         }
     };
@@ -202,6 +264,19 @@ export default function EditHotelPage() {
         });
     };
 
+    const handleMonthlyPriceChange = (roomType, month, priceType, value) => {
+        setMonthlyPrices({
+            ...monthlyPrices,
+            [roomType]: {
+                ...monthlyPrices[roomType],
+                [month]: {
+                    ...monthlyPrices[roomType][month],
+                    [priceType]: value === '' ? 0 : parseFloat(value)
+                }
+            }
+        });
+    };
+
     const handleCustomRoomTypeChange = (value) => {
         setCustomRoomType(value);
     };
@@ -209,27 +284,32 @@ export default function EditHotelPage() {
     const addRoomTypesToHotelData = () => {
         const roomTypes = [];
         
-        // Add standard room types
-        standardRoomTypes.forEach(roomType => {
-            if (selectedRoomTypes[roomType] && roomTypePrices[roomType]) {
-                roomTypes.push({
-                    type: roomType,
-                    pricePerNight: Number(roomTypePrices[roomType]),
-                    childrenPricePerNight: Number(roomTypeChildrenPrices[roomType] || 0)
-                });
+        // Add all checked room types to the data
+        Object.keys(selectedRoomTypes).forEach(roomType => {
+            if (selectedRoomTypes[roomType]) {
+                const typeName = roomType === "CUSTOM" ? customRoomType : roomType;
+                const pricePerNight = parseFloat(roomTypePrices[roomType]) || 0;
+                const childrenPricePerNight = parseFloat(roomTypeChildrenPrices[roomType]) || 0;
+                
+                const roomTypeData = {
+                    type: typeName,
+                    pricePerNight: pricePerNight,
+                    childrenPricePerNight: childrenPricePerNight
+                };
+
+                // Add monthly prices if they exist
+                if (monthlyPrices[roomType]) {
+                    roomTypeData.monthlyPrices = monthlyPrices[roomType];
+                }
+                
+                roomTypes.push(roomTypeData);
             }
         });
         
-        // Add custom room type if selected
-        if (selectedRoomTypes["CUSTOM"] && customRoomType && roomTypePrices["CUSTOM"]) {
-            roomTypes.push({
-                type: customRoomType,
-                pricePerNight: Number(roomTypePrices["CUSTOM"]),
-                childrenPricePerNight: Number(roomTypeChildrenPrices["CUSTOM"] || 0)
-            });
-        }
-        
-        return roomTypes;
+        return {
+            ...hotelData,
+            roomTypes
+        };
     };
 
     const showSuccessMessage = (message) => {
@@ -243,18 +323,13 @@ export default function EditHotelPage() {
         
         const roomTypes = addRoomTypesToHotelData();
         
-        if (roomTypes.length === 0) {
+        if (roomTypes.roomTypes.length === 0) {
             setError('Please add at least one room type with price');
             return;
         }
         
         try {
-            const hotelDataToSubmit = {
-                ...hotelData,
-                roomTypes
-            };
-            
-            await axios.put(`/api/hotels/${id}`, hotelDataToSubmit);
+            await axios.put(`/api/hotels/${id}`, roomTypes);
             showSuccessMessage('Hotel updated successfully!');
             setTimeout(() => {
                 navigate('/hotels');
@@ -348,35 +423,107 @@ export default function EditHotelPage() {
                         </div>
                         <div className="space-y-2 mb-4">
                             {standardRoomTypes.map((roomType) => (
-                                <div key={roomType} className="flex items-center gap-3">
-                                    <Checkbox
-                                        id={`roomType-${roomType}`}
-                                        checked={selectedRoomTypes[roomType]}
-                                        onChange={() => handleRoomTypeCheckboxChange(roomType)}
-                                    />
-                                    <Label htmlFor={`roomType-${roomType}`}>{roomType}</Label>
+                                <div key={roomType} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center mb-3">
+                                        <Checkbox
+                                            id={`roomtype-${roomType}`}
+                                            className="mr-2"
+                                            checked={selectedRoomTypes[roomType]}
+                                            onChange={() => handleRoomTypeCheckboxChange(roomType)}
+                                        />
+                                        <Label htmlFor={`roomtype-${roomType}`} className="font-medium">
+                                            {roomType === "CUSTOM" ? "Custom Room Type" : roomType}
+                                        </Label>
+                                    </div>
+                                    
                                     {selectedRoomTypes[roomType] && (
-                                        <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                                <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
-                                                <TextInput
-                                                    type="number"
-                                                    className="flex-grow"
-                                                    placeholder="Price per night"
-                                                    value={roomTypePrices[roomType]}
-                                                    onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
-                                                    required
-                                                />
+                                        <div>
+                                            {roomType === "CUSTOM" && (
+                                                <div className="mb-3">
+                                                    <Label htmlFor="custom-room-type" value="Custom Room Type Name" className="mb-1.5" />
+                                                    <TextInput
+                                                        id="custom-room-type"
+                                                        placeholder="Enter room type name"
+                                                        value={customRoomType}
+                                                        onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                                <div>
+                                                    <Label htmlFor={`price-${roomType}`} value="Base Price per Night" className="mb-1.5" />
+                                                    <TextInput
+                                                        id={`price-${roomType}`}
+                                                        type="number"
+                                                        placeholder="Price"
+                                                        value={roomTypePrices[roomType]}
+                                                        onChange={(e) => handleRoomPriceChange(roomType, e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`child-price-${roomType}`} value="Children (6-12) Price per Night" className="mb-1.5" />
+                                                    <TextInput
+                                                        id={`child-price-${roomType}`}
+                                                        type="number"
+                                                        placeholder="Children's Price"
+                                                        value={roomTypeChildrenPrices[roomType]}
+                                                        onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                                <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
-                                                <TextInput
-                                                    type="number"
-                                                    className="flex-grow"
-                                                    placeholder="Additional fee"
-                                                    value={roomTypeChildrenPrices[roomType]}
-                                                    onChange={(e) => handleChildrenRoomPriceChange(roomType, e.target.value)}
-                                                />
+                                            
+                                            {/* Monthly Pricing Accordion */}
+                                            <div className="mt-4">
+                                                <Accordion collapseAll>
+                                                    <Accordion.Panel>
+                                                        <Accordion.Title className="flex items-center">
+                                                            <HiCalendar className="mr-2" /> 
+                                                            Monthly Pricing Options
+                                                        </Accordion.Title>
+                                                        <Accordion.Content>
+                                                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                                                Set specific prices for different months. If a month's price is 0, the base price will be used.
+                                                            </div>
+                                                            
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                {months.map((month, index) => (
+                                                                    <div key={month} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                                                        <div className="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                                                            {monthLabels[index]}
+                                                                        </div>
+                                                                        
+                                                                        <div className="mb-2">
+                                                                            <Label htmlFor={`${roomType}-${month}-adult`} value="Adult Price" size="sm" className="mb-1" />
+                                                                            <TextInput
+                                                                                id={`${roomType}-${month}-adult`}
+                                                                                type="number"
+                                                                                size="sm"
+                                                                                placeholder="Adult price"
+                                                                                value={monthlyPrices[roomType][month]?.adult || ""}
+                                                                                onChange={(e) => handleMonthlyPriceChange(roomType, month, 'adult', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        
+                                                                        <div>
+                                                                            <Label htmlFor={`${roomType}-${month}-child`} value="Child Price (6-12)" size="sm" className="mb-1" />
+                                                                            <TextInput
+                                                                                id={`${roomType}-${month}-child`}
+                                                                                type="number"
+                                                                                size="sm"
+                                                                                placeholder="Child price"
+                                                                                value={monthlyPrices[roomType][month]?.child || ""}
+                                                                                onChange={(e) => handleMonthlyPriceChange(roomType, month, 'child', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </Accordion.Content>
+                                                    </Accordion.Panel>
+                                                </Accordion>
                                             </div>
                                         </div>
                                     )}

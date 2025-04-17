@@ -3,7 +3,57 @@ const mongoose = require('mongoose');
 const roomTypeSchema = new mongoose.Schema({
     type: { type: String, required: true },
     pricePerNight: { type: Number, required: true },
-    childrenPricePerNight: { type: Number, default: 0 }
+    childrenPricePerNight: { type: Number, default: 0 },
+    monthlyPrices: {
+        january: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        february: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        march: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        april: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        may: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        june: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        july: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        august: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        september: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        october: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        november: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        },
+        december: { 
+            adult: { type: Number, default: 0 },
+            child: { type: Number, default: 0 }
+        }
+    }
 });
 
 const hotelSchema = new mongoose.Schema({

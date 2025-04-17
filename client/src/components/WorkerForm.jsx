@@ -631,6 +631,7 @@ export default function WorkerForm() {
               includeFarewell={includeFarewell}
               transportVehicleType={transportVehicleType}
               includeBreakfast={includeBreakfast}
+              startDate={startDate}
             />
           )}
           

@@ -1,0 +1,10 @@
+/* Fix for button styles in case of gradientDuoTone error */
+.flowbite-button.gradientDuoTone-purpleToPink {
+  background-image: linear-gradient(to right, #9333ea, #ec4899) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.flowbite-button {
+  box-shadow: none !important;
+} 
