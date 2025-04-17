@@ -40,12 +40,12 @@ app.get('/api', (req, res) => {
     res.send('Tour Management Helper API');
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '/client/dist')));
+// Serve static files - fix the path for Render deployment
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Catch-all route for client-side routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 app.listen(PORT, () => {
