@@ -39,7 +39,12 @@ export default function AdminPanel() {
         roomTypes: [],
         breakfastIncluded: false,
         breakfastPrice: '',
-        transportationPrice: '',
+        transportation: {
+            vitoReceptionPrice: '',
+            vitoFarewellPrice: '',
+            sprinterReceptionPrice: '',
+            sprinterFarewellPrice: ''
+        },
         airport: '',
         description: ''
     });
@@ -330,7 +335,12 @@ export default function AdminPanel() {
                 roomTypes: [],
                 breakfastIncluded: false,
                 breakfastPrice: '',
-                transportationPrice: '',
+                transportation: {
+                    vitoReceptionPrice: '',
+                    vitoFarewellPrice: '',
+                    sprinterReceptionPrice: '',
+                    sprinterFarewellPrice: ''
+                },
                 airport: '',
                 description: ''
             });
@@ -711,20 +721,6 @@ export default function AdminPanel() {
                         
                         <div>
                             <div className="mb-2 block">
-                                <Label htmlFor="hotelTransport" value="Airport Transportation Price ($)" />
-                            </div>
-                            <TextInput
-                                id="hotelTransport"
-                                type="number"
-                                name="transportationPrice"
-                                value={hotelData.transportationPrice}
-                                onChange={handleHotelChange}
-                                required
-                            />
-                        </div>
-                        
-                        <div>
-                            <div className="mb-2 block">
                                 <Label htmlFor="hotelAirport" value="Airport for Transportation" />
                             </div>
                             <Select
@@ -732,7 +728,7 @@ export default function AdminPanel() {
                                 name="airport"
                                 value={hotelData.airport}
                                 onChange={handleHotelChange}
-                                required={hotelData.transportationPrice > 0}
+                                required={Object.values(hotelData.transportation).some(price => price > 0)}
                             >
                                 <option value="">Select Airport</option>
                                 {airports.length > 0 && 
@@ -746,6 +742,83 @@ export default function AdminPanel() {
                             {airports.length === 0 && (
                                 <p className="text-sm text-gray-500 mt-1">Loading airports...</p>
                             )}
+                        </div>
+                        
+                        <div className="col-span-2">
+                            <h3 className="font-medium text-gray-900 dark:text-white mb-2">Airport Transportation Pricing (per vehicle)</h3>
+                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="vitoReceptionPrice" value="Vito Reception Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="vitoReceptionPrice"
+                                        type="number"
+                                        value={hotelData.transportation.vitoReceptionPrice}
+                                        onChange={(e) => setHotelData({
+                                            ...hotelData,
+                                            transportation: {
+                                                ...hotelData.transportation,
+                                                vitoReceptionPrice: e.target.value
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="vitoFarewellPrice" value="Vito Farewell Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="vitoFarewellPrice"
+                                        type="number"
+                                        value={hotelData.transportation.vitoFarewellPrice}
+                                        onChange={(e) => setHotelData({
+                                            ...hotelData,
+                                            transportation: {
+                                                ...hotelData.transportation,
+                                                vitoFarewellPrice: e.target.value
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="sprinterReceptionPrice" value="Sprinter Reception Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="sprinterReceptionPrice"
+                                        type="number"
+                                        value={hotelData.transportation.sprinterReceptionPrice}
+                                        onChange={(e) => setHotelData({
+                                            ...hotelData,
+                                            transportation: {
+                                                ...hotelData.transportation,
+                                                sprinterReceptionPrice: e.target.value
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="mb-2 block">
+                                        <Label htmlFor="sprinterFarewellPrice" value="Sprinter Farewell Price ($)" />
+                                    </div>
+                                    <TextInput
+                                        id="sprinterFarewellPrice"
+                                        type="number"
+                                        value={hotelData.transportation.sprinterFarewellPrice}
+                                        onChange={(e) => setHotelData({
+                                            ...hotelData,
+                                            transportation: {
+                                                ...hotelData.transportation,
+                                                sprinterFarewellPrice: e.target.value
+                                            }
+                                        })}
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Vito: 2-8 persons, Sprinter: 9-16 persons
+                            </p>
                         </div>
                         
                         <div>
@@ -764,14 +837,14 @@ export default function AdminPanel() {
                             
                             {hotelData.breakfastIncluded && (
                                 <div className="mt-2 ml-6">
-                                    <Label htmlFor="breakfastPrice" className="text-sm mb-1 block">Breakfast Price ($ per person)</Label>
+                                    <Label htmlFor="breakfastPrice" className="text-sm mb-1 block">Breakfast Price ($ per room)</Label>
                                     <TextInput
                                         id="breakfastPrice"
                                         type="number"
                                         name="breakfastPrice"
                                         value={hotelData.breakfastPrice}
                                         onChange={handleHotelChange}
-                                        placeholder="Price per person"
+                                        placeholder="Price per room"
                                         className="w-full max-w-xs"
                                         required={hotelData.breakfastIncluded}
                                     />

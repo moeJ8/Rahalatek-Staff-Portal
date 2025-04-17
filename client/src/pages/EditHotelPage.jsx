@@ -17,7 +17,12 @@ export default function EditHotelPage() {
         roomTypes: [],
         breakfastIncluded: false,
         breakfastPrice: 0,
-        transportationPrice: 0,
+        transportation: {
+            vitoReceptionPrice: 0,
+            vitoFarewellPrice: 0,
+            sprinterReceptionPrice: 0,
+            sprinterFarewellPrice: 0
+        },
         airport: '',
         description: ''
     });
@@ -156,6 +161,16 @@ export default function EditHotelPage() {
                 [name]: value
             });
         }
+    };
+
+    const handleTransportationChange = (field, value) => {
+        setHotelData({
+            ...hotelData,
+            transportation: {
+                ...hotelData.transportation,
+                [field]: value
+            }
+        });
     };
 
     const handleRoomTypeCheckboxChange = (roomType) => {
@@ -416,16 +431,21 @@ export default function EditHotelPage() {
                     </div>
 
                     <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="transportationPrice" value="Transportation Price per Person ($)" />
-                        </div>
-                        <TextInput
-                            id="transportationPrice"
-                            type="number"
-                            name="transportationPrice"
-                            value={hotelData.transportationPrice}
-                            onChange={handleHotelChange}
-                        />
+                        {hotelData.breakfastIncluded && (
+                            <div className="mt-4">
+                                <div className="mb-2 block">
+                                    <Label htmlFor="breakfastPrice" value="Breakfast Price per Room ($)" />
+                                </div>
+                                <TextInput
+                                    id="breakfastPrice"
+                                    type="number"
+                                    name="breakfastPrice"
+                                    value={hotelData.breakfastPrice}
+                                    onChange={handleHotelChange}
+                                    placeholder="Price per room"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -445,6 +465,59 @@ export default function EditHotelPage() {
                                 </option>
                             ))}
                         </Select>
+                    </div>
+                    
+                    <div className="col-span-2">
+                        <h3 className="font-medium text-gray-900 dark:text-white mb-2">Airport Transportation Pricing (per vehicle)</h3>
+                        <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="vitoReceptionPrice" value="Vito Reception Price ($)" />
+                                </div>
+                                <TextInput
+                                    id="vitoReceptionPrice"
+                                    type="number"
+                                    value={hotelData.transportation.vitoReceptionPrice}
+                                    onChange={(e) => handleTransportationChange('vitoReceptionPrice', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="vitoFarewellPrice" value="Vito Farewell Price ($)" />
+                                </div>
+                                <TextInput
+                                    id="vitoFarewellPrice"
+                                    type="number"
+                                    value={hotelData.transportation.vitoFarewellPrice}
+                                    onChange={(e) => handleTransportationChange('vitoFarewellPrice', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="sprinterReceptionPrice" value="Sprinter Reception Price ($)" />
+                                </div>
+                                <TextInput
+                                    id="sprinterReceptionPrice"
+                                    type="number"
+                                    value={hotelData.transportation.sprinterReceptionPrice}
+                                    onChange={(e) => handleTransportationChange('sprinterReceptionPrice', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="sprinterFarewellPrice" value="Sprinter Farewell Price ($)" />
+                                </div>
+                                <TextInput
+                                    id="sprinterFarewellPrice"
+                                    type="number"
+                                    value={hotelData.transportation.sprinterFarewellPrice}
+                                    onChange={(e) => handleTransportationChange('sprinterFarewellPrice', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Vito: 2-8 persons, Sprinter: 9-16 persons
+                        </p>
                     </div>
                     
                     <div>
@@ -469,22 +542,6 @@ export default function EditHotelPage() {
                         />
                         <Label htmlFor="breakfastIncluded">Breakfast Included</Label>
                     </div>
-                    
-                    {hotelData.breakfastIncluded && (
-                        <div className="mb-4 ml-6">
-                            <Label htmlFor="breakfastPrice" className="text-sm mb-1 block">Breakfast Price ($ per person)</Label>
-                            <TextInput
-                                id="breakfastPrice"
-                                type="number"
-                                name="breakfastPrice"
-                                value={hotelData.breakfastPrice}
-                                onChange={handleHotelChange}
-                                placeholder="Price per person"
-                                className="w-full max-w-xs"
-                                required={hotelData.breakfastIncluded}
-                            />
-                        </div>
-                    )}
                     
                     <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg my-4">
                         <h3 className="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-200">Children Pricing Policy</h3>

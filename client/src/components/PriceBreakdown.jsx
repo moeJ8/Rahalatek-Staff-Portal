@@ -16,7 +16,9 @@ const PriceBreakdown = ({
   childrenUnder3,
   children3to6,
   children6to12,
-  includeTransfer,
+  includeReception,
+  includeFarewell,
+  transportVehicleType,
   includeBreakfast,
 }) => {
   const breakdownRef = useRef(null);
@@ -66,33 +68,87 @@ const PriceBreakdown = ({
   }
   
   // Calculate transportation cost
-  if (includeTransfer && selectedHotelData.transportationPrice) {
-    const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
-      safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
-    transportTotal = selectedHotelData.transportationPrice * totalPeople;
+  if (selectedHotelData) {
+    if (selectedHotelData.transportation) {
+      if (includeReception) {
+        if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice) {
+          transportTotal += parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
+        } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice) {
+          transportTotal += parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
+        }
+      }
+      
+      if (includeFarewell) {
+        if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoFarewellPrice) {
+          transportTotal += parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
+        } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice) {
+          transportTotal += parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
+        }
+      }
+    } 
+    // Backward compatibility for old data
+    else if (selectedHotelData.transportationPrice && (includeReception || includeFarewell)) {
+      const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
+        safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
+      
+      if (includeReception && includeFarewell) {
+        transportTotal = selectedHotelData.transportationPrice * totalPeople;
+      } else {
+        // If only one way is included, charge half the price
+        transportTotal = (selectedHotelData.transportationPrice * totalPeople) / 2;
+      }
+    }
   }
   
   // Calculate breakfast cost if included
-  if (includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice) {
-    const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
-      safeParseInt(children6to12) : 0);
-    // Children under 3 and children 3-6 don't pay for breakfast
-    breakfastTotal = selectedHotelData.breakfastPrice * totalPeople * nights;
+  if (includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0) {
+    const totalRooms = roomAllocations.length > 0 ? roomAllocations.length : Math.ceil(safeParseInt(numGuests) / 2);
+    breakfastTotal = selectedHotelData.breakfastPrice * totalRooms * nights;
   }
   
   // Calculate direct sum for comparison
   const directSum = hotelTotal + tourTotal + transportTotal + breakfastTotal;
   
-  console.log("Price validation:", {
-    providedTotal: totalPrice,
-    calculatedTotal: directSum,
+  console.log("Price breakdown detailed calculation:", {
     hotelTotal,
-    tourTotal,
+    breakfastTotal,
     transportTotal,
-    breakfastTotal
+    tourTotal,
+    calculatedTotal: directSum,
+    providedTotal: totalPrice,
+    // Group tour calculations
+    selectedTours: selectedTours.map(tourId => {
+      const tour = tours.find(t => t._id === tourId);
+      if (!tour) return { id: tourId, notFound: true };
+      
+      if (tour.tourType === 'Group') {
+        const participantCount = safeParseInt(numGuests) + 
+          (includeChildren ? (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0);
+        
+        return {
+          id: tourId,
+          name: tour.name,
+          tourType: tour.tourType,
+          price: tour.price,
+          adults: safeParseInt(numGuests),
+          adultsCost: tour.price * safeParseInt(numGuests),
+          children: includeChildren ? (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0,
+          childrenCost: includeChildren ? tour.price * (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0,
+          totalTourCost: tour.price * participantCount
+        };
+      } else {
+        return {
+          id: tourId,
+          name: tour.name,
+          tourType: tour.tourType,
+          flatPrice: tour.price
+        };
+      }
+    })
   });
 
-  const displayPrice = Math.abs(directSum - totalPrice) > 0.01 ? directSum : totalPrice;
+  // Always use the calculated total to ensure accuracy
+  const displayPrice = directSum;
 
   const handleDownload = async () => {
     if (!breakdownRef.current) return;
@@ -261,7 +317,12 @@ const PriceBreakdown = ({
       <div ref={breakdownRef} className="bg-gradient-to-br from-blue-900 to-slate-900 text-white">
         <div className="p-4 text-center">
           <h3 className="text-xl font-bold mb-1 text-green-400">Total Price: ${displayPrice}</h3>
-          <p className="text-sm text-blue-200">{nights} nights • {numGuests} {numGuests === 1 ? 'person' : 'people'}</p>
+          <p className="text-sm text-blue-200">
+            {nights} nights • {numGuests} {numGuests === 1 ? 'person' : 'people'}
+            {includeChildren && (childrenUnder3 > 0 || children3to6 > 0 || children6to12 > 0) && 
+              ` • ${safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)} ${(safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)) === 1 ? 'child' : 'children'}`
+            }
+          </p>
         </div>
         
         <div className="px-4 pb-4">
@@ -381,7 +442,7 @@ const PriceBreakdown = ({
                   
                   <div className="ml-2 mt-1 text-green-200">
                     <div className="flex justify-between">
-                      <span>• ${selectedHotelData.breakfastPrice}/person × {nights} nights</span>
+                      <span>• ${selectedHotelData.breakfastPrice}/room × {nights} nights × {roomAllocations.length || Math.ceil(safeParseInt(numGuests) / 2)} {roomAllocations.length === 1 ? 'room' : 'rooms'}</span>
                       <span className="text-green-400"></span>
                     </div>
                     
@@ -389,8 +450,8 @@ const PriceBreakdown = ({
                       <p>• Adults: {numGuests}</p>
                       {includeChildren && (
                         <>
-                          {safeParseInt(childrenUnder3) > 0 && <p>• Children 0-3: {childrenUnder3} <span className="text-green-400">(free)</span></p>}
-                          {safeParseInt(children3to6) > 0 && <p>• Children 3-6: {children3to6} <span className="text-green-400">(free)</span></p>}
+                          {safeParseInt(childrenUnder3) > 0 && <p>• Children 0-3: {childrenUnder3}</p>}
+                          {safeParseInt(children3to6) > 0 && <p>• Children 3-6: {children3to6}</p>}
                           {safeParseInt(children6to12) > 0 && <p>• Children 6-12: {children6to12}</p>}
                         </>
                       )}
@@ -477,32 +538,72 @@ const PriceBreakdown = ({
             </h5>
             
             <div className="pl-8">
-              {includeTransfer && selectedHotelData.transportationPrice > 0 ? (
+              {includeReception || includeFarewell ? (
                 <div className="text-xs">
                   {(() => {
-                    // Calculate the total people count for transportation
-                    const transportPeopleCount = safeParseInt(numGuests) + (
-                      includeChildren ? 
-                      safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) 
-                      : 0
-                    );
-                    const transportCost = selectedHotelData.transportationPrice * transportPeopleCount;
+                    // Display vehicle-based transportation costs
+                    let transportItems = [];
+                    let totalTransportCost = 0;
+                    
+                    if (selectedHotelData.transportation) {
+                      if (includeReception) {
+                        if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice > 0) {
+                          const cost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
+                          transportItems.push(`Reception (Vito): $${cost}`);
+                          totalTransportCost += cost;
+                        } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice > 0) {
+                          const cost = parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
+                          transportItems.push(`Reception (Sprinter): $${cost}`);
+                          totalTransportCost += cost;
+                        }
+                      }
+                      
+                      if (includeFarewell) {
+                        if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoFarewellPrice > 0) {
+                          const cost = parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
+                          transportItems.push(`Farewell (Vito): $${cost}`);
+                          totalTransportCost += cost;
+                        } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice > 0) {
+                          const cost = parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
+                          transportItems.push(`Farewell (Sprinter): $${cost}`);
+                          totalTransportCost += cost;
+                        }
+                      }
+                    } else if (selectedHotelData.transportationPrice) {
+                      // Legacy transportation pricing
+                      const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
+                        safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
+                      
+                      if (includeReception && includeFarewell) {
+                        const cost = selectedHotelData.transportationPrice * totalPeople;
+                        transportItems.push(`Round-trip: $${selectedHotelData.transportationPrice}/person × ${totalPeople} people`);
+                        totalTransportCost = cost;
+                      } else if (includeReception) {
+                        const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
+                        transportItems.push(`Reception only: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
+                        totalTransportCost = cost;
+                      } else if (includeFarewell) {
+                        const cost = (selectedHotelData.transportationPrice * totalPeople) / 2;
+                        transportItems.push(`Farewell only: $${selectedHotelData.transportationPrice/2}/person × ${totalPeople} people`);
+                        totalTransportCost = cost;
+                      }
+                    }
                     
                     return (
                       <>
                         <div className="flex justify-between">
-                          <span className="font-medium text-white">Airport Transfers</span>
-                          <span className="text-green-400 font-medium">${transportCost}</span>
+                          <span className="font-medium text-white">Airport Transportation</span>
+                          <span className="text-green-400 font-medium">${totalTransportCost}</span>
                         </div>
-                        <div className="text-amber-200">
-                          ${selectedHotelData.transportationPrice}/person × {transportPeopleCount} people
-                        </div>
+                        {transportItems.map((item, index) => (
+                          <div className="text-amber-200" key={index}>{item}</div>
+                        ))}
                       </>
                     );
                   })()}
                 </div>
               ) : (
-                <p className="text-xs text-amber-200">No airport transfers included</p>
+                <p className="text-xs text-amber-200">No transportation included</p>
               )}
             </div>
           </div>

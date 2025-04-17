@@ -13,7 +13,12 @@ const hotelSchema = new mongoose.Schema({
     roomTypes: [roomTypeSchema],
     breakfastIncluded: { type: Boolean, required: true },
     breakfastPrice: { type: Number, default: 0 },
-    transportationPrice: { type: Number, required: true, default: 0 },
+    transportation: {
+        vitoReceptionPrice: { type: Number, default: 0 },
+        vitoFarewellPrice: { type: Number, default: 0 },
+        sprinterReceptionPrice: { type: Number, default: 0 },
+        sprinterFarewellPrice: { type: Number, default: 0 }
+    },
     airport: { type: String },
     description: { type: String },
     childrenPolicies: {

@@ -50,7 +50,9 @@ export default function WorkerForm() {
     const [children3to6, setChildren3to6] = useState(savedState?.children3to6 || 0);
     const [children6to12, setChildren6to12] = useState(savedState?.children6to12 || 0);
     const [tripPrice, setTripPrice] = useState(savedState?.tripPrice || '');
-    const [includeTransfer, setIncludeTransfer] = useState(savedState?.includeTransfer !== undefined ? savedState.includeTransfer : true);
+    const [includeReception, setIncludeReception] = useState(savedState?.includeReception !== undefined ? savedState.includeReception : true);
+    const [includeFarewell, setIncludeFarewell] = useState(savedState?.includeFarewell !== undefined ? savedState.includeFarewell : true);
+    const [transportVehicleType, setTransportVehicleType] = useState(savedState?.transportVehicleType || 'Vito');
     const [includeBreakfast, setIncludeBreakfast] = useState(savedState?.includeBreakfast !== undefined ? savedState.includeBreakfast : true);
 
     // Save form data to localStorage whenever relevant state changes
@@ -69,7 +71,9 @@ export default function WorkerForm() {
             children6to12,
             selectedTours,
             roomAllocations,
-            includeTransfer,
+            includeReception,
+            includeFarewell,
+            transportVehicleType,
             includeBreakfast,
             tripPrice
           };
@@ -93,7 +97,9 @@ export default function WorkerForm() {
       children6to12, 
       selectedTours, 
       roomAllocations, 
-      includeTransfer, 
+      includeReception,
+      includeFarewell,
+      transportVehicleType,
       includeBreakfast, 
       tripPrice
     ]);
@@ -278,7 +284,9 @@ export default function WorkerForm() {
       children6to12,
       selectedHotelData,
       roomAllocations,
-      includeTransfer,
+      includeReception,
+      includeFarewell,
+      transportVehicleType,
       selectedTours,
       tours,
       includeBreakfast
@@ -300,7 +308,9 @@ export default function WorkerForm() {
         children6to12,
         selectedHotelData,
         roomAllocations,
-        includeTransfer,
+        includeReception,
+        includeFarewell,
+        transportVehicleType,
         selectedTours,
         tours,
         includeBreakfast
@@ -344,7 +354,9 @@ export default function WorkerForm() {
         children6to12,
         tripPrice: finalPrice.toString(),
         calculatedPrice: finalPrice,
-        includeTransfer,
+        includeReception,
+        includeFarewell,
+        transportVehicleType,
         includeBreakfast,
         roomAllocations,
         selectedTours,
@@ -543,13 +555,39 @@ export default function WorkerForm() {
           
           <div className="flex items-center space-x-2">
             <Checkbox
-              id="includeTransfer"
-              checked={includeTransfer}
-              onChange={(e) => setIncludeTransfer(e.target.checked)}
+              id="includeReception"
+              checked={includeReception}
+              onChange={(e) => setIncludeReception(e.target.checked)}
             />
-            <Label htmlFor="includeTransfer" className="dark:text-white">
-              Include airport transfer
+            <Label htmlFor="includeReception" className="dark:text-white">
+              Include reception
             </Label>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="includeFarewell"
+              checked={includeFarewell}
+              onChange={(e) => setIncludeFarewell(e.target.checked)}
+            />
+            <Label htmlFor="includeFarewell" className="dark:text-white">
+              Include farewell
+            </Label>
+          </div>
+          
+          <div>
+            <div className="mb-2 block">
+              <Label htmlFor="transportVehicleType" value="Transport Vehicle Type" className="dark:text-white" />
+            </div>
+            <Select
+              id="transportVehicleType"
+              value={transportVehicleType}
+              onChange={(e) => setTransportVehicleType(e.target.value)}
+              required
+            >
+              <option value="Vito">Vito</option>
+              <option value="Sprinter">Sprinter</option>
+            </Select>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -589,7 +627,9 @@ export default function WorkerForm() {
               childrenUnder3={childrenUnder3}
               children3to6={children3to6}
               children6to12={children6to12}
-              includeTransfer={includeTransfer}
+              includeReception={includeReception}
+              includeFarewell={includeFarewell}
+              transportVehicleType={transportVehicleType}
               includeBreakfast={includeBreakfast}
             />
           )}

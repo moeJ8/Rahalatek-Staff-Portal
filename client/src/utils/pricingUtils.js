@@ -25,10 +25,12 @@ export const calculateTotalPrice = ({
   children6to12,
   selectedHotelData,
   roomAllocations,
-  includeTransfer,
   selectedTours,
   tours,
   includeBreakfast,
+  includeReception,
+  includeFarewell,
+  transportVehicleType,
 }) => {
   try {
     let total = 0;
@@ -97,40 +99,65 @@ export const calculateTotalPrice = ({
 
     // Breakfast costs
     if (includeBreakfast && selectedHotelData && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice) {
-      // Children under 3 and children 3-6 typically don't pay for breakfast
-      // Only adults and children 6-12 pay for breakfast
-      const breakfastPeopleCount = adultCount + (includeChildren ? (children6to12Count) : 0);
-      breakfastCost = selectedHotelData.breakfastPrice * breakfastPeopleCount * nights;
+      // Calculate breakfast per room per night instead of per person
+      const totalRooms = roomAllocations.length > 0 ? roomAllocations.length : Math.ceil(adultCount / 2);
+      breakfastCost = selectedHotelData.breakfastPrice * totalRooms * nights;
       
       console.log('Breakfast cost calculation:', {
         breakfastPrice: selectedHotelData.breakfastPrice,
-        adultCount,
-        children3to6Count,
-        children6to12Count,
-        breakfastPeopleCount,
+        totalRooms,
         nights,
-        breakfastCost
+        breakfastCost,
+        roomAllocations: roomAllocations.length
       });
       
       total += breakfastCost;
     }
 
     // Transportation costs
-    if (includeTransfer && selectedHotelData && selectedHotelData.transportationPrice) {
-      // Fixed bug: Need to correctly count children in transportation cost
-      // For children, we're checking if they're actually included before adding them to the count
-      const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);
-      transportationCost = selectedHotelData.transportationPrice * transportPeopleCount;
+    if (selectedHotelData) {
+      let receptionCost = 0;
+      let farewellCost = 0;
+      
+      // If hotel has the new transportation structure
+      if (selectedHotelData.transportation) {
+        if (includeReception) {
+          if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoReceptionPrice) {
+            receptionCost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
+          } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice) {
+            receptionCost = parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
+          }
+        }
+        
+        if (includeFarewell) {
+          if (transportVehicleType === 'Vito' && selectedHotelData.transportation.vitoFarewellPrice) {
+            farewellCost = parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
+          } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice) {
+            farewellCost = parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
+          }
+        }
+        
+        transportationCost = receptionCost + farewellCost;
+      } 
+      // Backward compatibility with old data structure
+      else if (selectedHotelData.transportationPrice) {
+        // For older hotels with per-person pricing
+        const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);
+        
+        if (includeReception && includeFarewell) {
+          transportationCost = selectedHotelData.transportationPrice * transportPeopleCount;
+        } else if (includeReception || includeFarewell) {
+          // Only charge half price for one-way transfers
+          transportationCost = (selectedHotelData.transportationPrice * transportPeopleCount) / 2;
+        }
+      }
       
       console.log('Transportation cost calculation:', {
-        transportationPrice: selectedHotelData.transportationPrice,
-        adultCount,
-        infantsCount,
-        children3to6Count,
-        children6to12Count, 
-        totalChildrenCount,
-        includeChildren,
-        transportPeopleCount,
+        transportVehicleType,
+        receptionCost,
+        farewellCost, 
+        includeReception,
+        includeFarewell,
         transportationCost
       });
       
@@ -153,10 +180,23 @@ export const calculateTotalPrice = ({
             const children3to12Cost = includeChildren ? tourData.price * children3to12Count : 0;
             
             // Children under 3 are free for tours
-            tourCost += adultTourCost + children3to12Cost;
+            const tourSubtotal = adultTourCost + children3to12Cost;
+            
+            console.log(`Group tour cost calculation for "${tourData.name || 'Unnamed Tour'}":`, {
+              adultCount,
+              adultTourCost,
+              children3to12Count,
+              children3to12Cost,
+              tourSubtotal,
+              tourPrice: tourData.price
+            });
+            
+            tourCost += tourSubtotal;
           } else if (tourData.tourType === 'VIP') {
             // VIP tours have a single price per car
-            tourCost += parseFloat(tourData.price);
+            const vipCost = parseFloat(tourData.price);
+            console.log(`VIP tour cost for "${tourData.name || 'Unnamed Tour'}":`, vipCost);
+            tourCost += vipCost;
           }
         }
       });
