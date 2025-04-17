@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Card, Button, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
-import { FaSearch, FaFilter, FaTrash, FaPen } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaTrash, FaPen, FaInfoCircle } from 'react-icons/fa';
 import HotelInfo from '../components/HotelInfo';
+import HotelDetailModal from '../components/HotelDetailModal';
 import toast from 'react-hot-toast';
 
 export default function HotelsPage() {
@@ -19,6 +20,8 @@ export default function HotelsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [hotelToDelete, setHotelToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState(null);
 
   useEffect(() => {
     const userInfo = localStorage.getItem('user');
@@ -100,6 +103,16 @@ export default function HotelsPage() {
   const closeDeleteModal = () => {
     setDeleteModalOpen(false);
     setHotelToDelete(null);
+  };
+  
+  const openDetailModal = (hotel) => {
+    setSelectedHotel(hotel);
+    setDetailModalOpen(true);
+  };
+  
+  const closeDetailModal = () => {
+    setDetailModalOpen(false);
+    setSelectedHotel(null);
   };
 
   const handleDeleteHotel = async () => {
@@ -232,8 +245,22 @@ export default function HotelsPage() {
                 <div className="flex flex-col h-full">
                   <HotelInfo hotelData={hotel} />
                   
+                  <div className="border-t border-gray-200 dark:border-gray-600 p-3 mt-3">
+                    <Button 
+                      gradientDuoTone="pinkToOrange"
+                      size="sm"
+                      onClick={() => openDetailModal(hotel)}
+                      className="w-full"
+                    >
+                      <div className="flex items-center justify-center w-full">
+                        <FaInfoCircle className="mr-1.5" />
+                        <span>Show More Details</span>
+                      </div>
+                    </Button>
+                  </div>
+                  
                   {isAdmin && (
-                    <div className=" mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
+                    <div className="mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
                       <Button 
                         as={Link} 
                         to={`/admin/edit-hotel/${hotel._id}`}
@@ -273,51 +300,38 @@ export default function HotelsPage() {
       <Modal
         show={deleteModalOpen}
         onClose={closeDeleteModal}
-        popup
         size="md"
-        theme={{
-          root: {
-            base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
-            show: {
-              on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
-              off: "hidden"
-            }
-          },
-          content: {
-            base: "relative h-full w-full p-4 h-auto",
-            inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
-          }
-        }}
       >
-        <Modal.Header />
+        <Modal.Header>Confirm Deletion</Modal.Header>
         <Modal.Body>
-          <div className="text-center">
-            <FaTrash className="mx-auto mb-4 h-12 w-12 text-red-500" />
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to delete the hotel
-              <div className="font-bold text-gray-900 dark:text-white mt-1">
-                "{hotelToDelete?.name}"?
-              </div>
-            </h3>
-            <div className="flex justify-center gap-4">
-              <Button
-                color="failure"
-                onClick={handleDeleteHotel}
-                isProcessing={deleteLoading}
-              >
-                Yes, delete hotel
-              </Button>
-              <Button
-                color="gray"
-                onClick={closeDeleteModal}
-                disabled={deleteLoading}
-              >
-                No, cancel
-              </Button>
-            </div>
+          <div className="text-center sm:text-left">
+            <p className="text-gray-700 dark:text-gray-300">
+              Are you sure you want to delete hotel <span className="font-semibold">{hotelToDelete?.name}</span>?
+              This action cannot be undone.
+            </p>
           </div>
         </Modal.Body>
+        <Modal.Footer>
+          <Button color="gray" onClick={closeDeleteModal}>
+            Cancel
+          </Button>
+          <Button 
+            color="failure" 
+            onClick={handleDeleteHotel}
+            isProcessing={deleteLoading}
+          >
+            Delete
+          </Button>
+        </Modal.Footer>
       </Modal>
+      
+      {selectedHotel && (
+        <HotelDetailModal 
+          isOpen={detailModalOpen} 
+          onClose={closeDetailModal} 
+          hotelData={selectedHotel} 
+        />
+      )}
     </div>
   );
 } 

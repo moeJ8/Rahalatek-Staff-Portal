@@ -540,7 +540,7 @@ export default function EditHotelPage() {
                             </div>
                             
                             {selectedRoomTypes["CUSTOM"] && (
-                                <div className="flex flex-col w-full gap-3 mt-2 ml-8 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                <div className="flex flex-col w-full gap-3 mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 mx-auto">
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                                         <Label className="text-sm w-40 m-0">Room Type Name:</Label>
                                         <TextInput
@@ -571,6 +571,57 @@ export default function EditHotelPage() {
                                             value={roomTypeChildrenPrices["CUSTOM"]}
                                             onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
                                         />
+                                    </div>
+                                    
+                                    {/* Monthly Pricing Accordion for Custom Room */}
+                                    <div className="mt-4">
+                                        <Accordion collapseAll>
+                                            <Accordion.Panel>
+                                                <Accordion.Title className="flex items-center">
+                                                    <HiCalendar className="mr-2" /> 
+                                                    Monthly Pricing Options
+                                                </Accordion.Title>
+                                                <Accordion.Content>
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                                        Set specific prices for different months. If a month's price is 0, the base price will be used.
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                        {months.map((month, index) => (
+                                                            <div key={month} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                                                <div className="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                                                    {monthLabels[index]}
+                                                                </div>
+                                                                
+                                                                <div className="mb-2">
+                                                                    <Label htmlFor={`CUSTOM-${month}-adult`} value="Adult Price" size="sm" className="mb-1" />
+                                                                    <TextInput
+                                                                        id={`CUSTOM-${month}-adult`}
+                                                                        type="number"
+                                                                        size="sm"
+                                                                        placeholder="Adult price"
+                                                                        value={monthlyPrices["CUSTOM"][month]?.adult || ""}
+                                                                        onChange={(e) => handleMonthlyPriceChange("CUSTOM", month, 'adult', e.target.value)}
+                                                                    />
+                                                                </div>
+                                                                
+                                                                <div>
+                                                                    <Label htmlFor={`CUSTOM-${month}-child`} value="Child Price (6-12)" size="sm" className="mb-1" />
+                                                                    <TextInput
+                                                                        id={`CUSTOM-${month}-child`}
+                                                                        type="number"
+                                                                        size="sm"
+                                                                        placeholder="Child price"
+                                                                        value={monthlyPrices["CUSTOM"][month]?.child || ""}
+                                                                        onChange={(e) => handleMonthlyPriceChange("CUSTOM", month, 'child', e.target.value)}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </Accordion.Content>
+                                            </Accordion.Panel>
+                                        </Accordion>
                                     </div>
                                 </div>
                             )}
