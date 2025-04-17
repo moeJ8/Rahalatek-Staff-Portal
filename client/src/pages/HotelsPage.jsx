@@ -279,7 +279,6 @@ export default function HotelsPage() {
                         color="failure"
                         size="sm"
                         onClick={() => openDeleteModal(hotel)}
-                        className="flex-1"
                       >
                         <div className="flex items-center justify-center w-full">
                           <FaTrash className="mr-1.5" />
