@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
 import { Alert } from 'flowbite-react';
 import { safeParseInt, getRoomPriceForMonth } from '../utils/pricingUtils';
-import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaDownload, FaCalendarAlt } from 'react-icons/fa';
-import html2canvas from 'html2canvas';
+import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaCalendarAlt } from 'react-icons/fa';
+import PriceBreakdownDownloader from './PriceBreakdownDownloader';
 
 const PriceBreakdown = ({ 
   totalPrice, 
@@ -26,22 +26,18 @@ const PriceBreakdown = ({
 
   if (!selectedHotelData || !nights) return null;
 
-  // Get month for display
   const travelMonth = startDate ? new Date(startDate).toLocaleString('default', { month: 'long' }) : '';
   
-  // Calculate the individual parts to verify the total
   let hotelTotal = 0;
   let tourTotal = 0;
   let transportTotal = 0;
   let breakfastTotal = 0;
   
-  // Calculate hotel cost
   if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0) {
     roomAllocations.forEach(room => {
       if (room.roomTypeIndex !== "" && selectedHotelData.roomTypes[room.roomTypeIndex]) {
         const roomTypeObj = selectedHotelData.roomTypes[room.roomTypeIndex];
         
-        // Get month-specific pricing for display
         const adultPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, false);
         const childPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, true);
         
@@ -55,16 +51,13 @@ const PriceBreakdown = ({
     });
   }
   
-  // Calculate tour cost
   if (selectedTours.length > 0) {
     selectedTours.forEach(tourId => {
       const tour = tours.find(t => t._id === tourId);
       if (tour) {
         if (tour.tourType === 'Group') {
-          // Adult cost
           tourTotal += tour.price * safeParseInt(numGuests);
           
-          // Children 3+ cost (3-6 and 6-12)
           if (includeChildren) {
             const childrenCount = safeParseInt(children3to6) + safeParseInt(children6to12);
             tourTotal += tour.price * childrenCount;
@@ -76,7 +69,6 @@ const PriceBreakdown = ({
     });
   }
   
-  // Calculate transportation cost
   if (selectedHotelData) {
     if (selectedHotelData.transportation) {
       if (includeReception) {
@@ -95,7 +87,6 @@ const PriceBreakdown = ({
         }
       }
     } 
-    // Backward compatibility for old data
     else if (selectedHotelData.transportationPrice && (includeReception || includeFarewell)) {
       const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
         safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
@@ -103,223 +94,19 @@ const PriceBreakdown = ({
       if (includeReception && includeFarewell) {
         transportTotal = selectedHotelData.transportationPrice * totalPeople;
       } else {
-        // If only one way is included, charge half the price
         transportTotal = (selectedHotelData.transportationPrice * totalPeople) / 2;
       }
     }
   }
   
-  // Calculate breakfast cost if included
   if (includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0) {
     const totalRooms = roomAllocations.length > 0 ? roomAllocations.length : Math.ceil(safeParseInt(numGuests) / 2);
     breakfastTotal = selectedHotelData.breakfastPrice * totalRooms * nights;
   }
   
-  // Calculate direct sum for comparison
   const directSum = hotelTotal + tourTotal + transportTotal + breakfastTotal;
   
-  console.log("Price breakdown detailed calculation:", {
-    hotelTotal,
-    breakfastTotal,
-    transportTotal,
-    tourTotal,
-    calculatedTotal: directSum,
-    providedTotal: totalPrice,
-    // Group tour calculations
-    selectedTours: selectedTours.map(tourId => {
-      const tour = tours.find(t => t._id === tourId);
-      if (!tour) return { id: tourId, notFound: true };
-      
-      if (tour.tourType === 'Group') {
-        const participantCount = safeParseInt(numGuests) + 
-          (includeChildren ? (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0);
-        
-        return {
-          id: tourId,
-          name: tour.name,
-          tourType: tour.tourType,
-          price: tour.price,
-          adults: safeParseInt(numGuests),
-          adultsCost: tour.price * safeParseInt(numGuests),
-          children: includeChildren ? (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0,
-          childrenCost: includeChildren ? tour.price * (safeParseInt(children3to6) + safeParseInt(children6to12)) : 0,
-          totalTourCost: tour.price * participantCount
-        };
-      } else {
-        return {
-          id: tourId,
-          name: tour.name,
-          tourType: tour.tourType,
-          flatPrice: tour.price
-        };
-      }
-    })
-  });
-
-  // Always use the calculated total to ensure accuracy
-  const displayPrice = directSum;
-
-  const handleDownload = async () => {
-    if (!breakdownRef.current) return;
-    
-    try {
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.background = 'white';
-      container.style.width = breakdownRef.current.offsetWidth + 'px';
-      
-      const clone = breakdownRef.current.cloneNode(true);
-      
-      const thankYouDiv = document.createElement('div');
-      thankYouDiv.style.padding = '15px 16px';
-      thankYouDiv.style.textAlign = 'center';
-      thankYouDiv.style.fontStyle = 'italic';
-      thankYouDiv.style.backgroundColor = 'rgba(20, 83, 45, 0.3)'; 
-      thankYouDiv.style.borderTop = '1px solid #166534'; 
-      thankYouDiv.style.color = '#ecfdf5'; 
-      thankYouDiv.style.fontSize = '14px';
-      thankYouDiv.style.fontWeight = '500';
-      thankYouDiv.textContent = 'Thank you for choosing our service!';
-      
-      clone.appendChild(thankYouDiv);
-      
-      // Add logo below the thank you text
-      const logoDiv = document.createElement('div');
-      logoDiv.style.padding = '10px 16px 15px';
-      logoDiv.style.textAlign = 'center';
-      logoDiv.style.backgroundColor = 'rgba(20, 83, 45, 0.3)';
-      
-      const logo = document.createElement('img');
-      logo.src = "/logodark.png";
-      logo.style.height = '40px';
-      logo.style.margin = '0 auto';
-      
-      logoDiv.appendChild(logo);
-      clone.appendChild(logoDiv);
-      
-      container.appendChild(clone);
-      document.body.appendChild(container);
-      
-      
-      const numberIcons = clone.querySelectorAll('.rounded-full');
-      numberIcons.forEach(icon => {
-
-        const number = icon.textContent.trim();
-        const parent = icon.parentNode;
-
-        const numberSpan = document.createElement('span');
-        numberSpan.textContent = number + ". "; 
-        numberSpan.style.display = 'inline-block';
-        numberSpan.style.marginRight = '8px';
-        numberSpan.style.fontWeight = 'bold';
-        numberSpan.style.fontSize = '14px';
-
-        parent.replaceChild(numberSpan, icon);
-      });
-      
-
-      const priceElements = clone.querySelectorAll('.text-green-400');
-      priceElements.forEach(priceEl => {
-        if (priceEl.parentNode && priceEl.parentNode.classList.contains('flex')) {
-          // Get the parent flex container
-          const flexContainer = priceEl.parentNode;
-
-          flexContainer.style.display = 'flex';
-          flexContainer.style.justifyContent = 'space-between';
-          flexContainer.style.width = '100%';
-
-          priceEl.style.marginLeft = 'auto';
-          priceEl.style.textAlign = 'right';
-        }
-      });
-
-      const vipBadges = clone.querySelectorAll('[class*="from-amber-500"]');
-      vipBadges.forEach(badge => {
-        const parent = badge.parentNode;
-        const textNode = document.createTextNode(" [VIP]");
-        parent.replaceChild(textNode, badge);
-      });
-      
-      const groupBadges = clone.querySelectorAll('[class*="bg-blue-600"]');
-      groupBadges.forEach(badge => {
-        const parent = badge.parentNode;
-        const textNode = document.createTextNode(" [Group]");
-        parent.replaceChild(textNode, badge);
-      });
-
-      const replaceIconsWithText = (element) => {
-        const iconContainers = element.querySelectorAll('[class*="react-icons"]');
-        iconContainers.forEach(icon => {
-          let iconText = "";
-          
-          if (icon.classList.contains('fa-crown')) {
-            iconText = "👑 ";
-          } else if (icon.classList.contains('fa-users')) {
-            iconText = "👥 ";
-          } else if (icon.classList.contains('fa-car')) {
-            iconText = "🚗 ";
-          } else if (icon.classList.contains('fa-check-circle')) {
-            iconText = "✓ ";
-          } else {
-            iconText = "• ";
-          }
-          
-          const textSpan = document.createElement('span');
-          textSpan.textContent = iconText;
-          textSpan.style.marginRight = '4px';
-          icon.parentNode.replaceChild(textSpan, icon);
-        });
-      };
-      
-      replaceIconsWithText(clone);
-
-      const allElements = clone.querySelectorAll('*');
-      allElements.forEach(el => {
-        if (el.classList.contains('flex') && 
-            el.classList.contains('justify-between')) {
-          el.style.display = 'flex';
-          el.style.justifyContent = 'space-between';
-          el.style.width = '100%';
-        }
-        else if (el.classList.contains('flex') || 
-                 el.classList.contains('inline-flex')) {
-          el.style.display = 'inline-block';
-        }
-      });
-
-      const priceValues = clone.querySelectorAll('.text-green-400');
-      priceValues.forEach(price => {
-        price.style.color = '#34D399';
-      });
-      
-      const individualPrices = clone.querySelectorAll('.text-teal-300');
-      individualPrices.forEach(price => {
-        price.style.color = '#5EEAD4';
-      });
-
-      const canvas = await html2canvas(clone, {
-        scale: 2, 
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false
-      });
-
-      canvas.toBlob((blob) => {
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = `price_breakdown_${new Date().toISOString().split('T')[0]}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-
-        document.body.removeChild(downloadLink);
-        document.body.removeChild(container);
-      }, 'image/png');
-    } catch (error) {
-      console.error('Error generating image:', error);
-    }
-  };
+  const displayPrice = totalPrice || directSum;
 
   return (
     <div 
@@ -330,20 +117,6 @@ const PriceBreakdown = ({
         <h3 className="text-xl font-bold text-gray-900 dark:text-white">
           Price Breakdown
         </h3>
-        
-        {travelMonth && (
-          <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center">
-            <FaCalendarAlt className="mr-1" /> 
-            Travel Month: <span className="font-semibold ml-1">{travelMonth}</span>
-          </div>
-        )}
-        
-        <button 
-          onClick={handleDownload}
-          className="text-sm text-blue-600 dark:text-blue-400 flex items-center"
-        >
-          <FaDownload className="mr-1" /> Save PDF
-        </button>
       </div>
       
       <div className="rounded-lg overflow-hidden shadow-md relative">
@@ -356,18 +129,21 @@ const PriceBreakdown = ({
                 ` • ${safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)} ${(safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)) === 1 ? 'child' : 'children'}`
               }
             </p>
+            {travelMonth && (
+              <p className="text-sm text-blue-200 mt-1 flex items-center justify-center">
+                <FaCalendarAlt className="mr-1" /> 
+                Travel Month: <span className="font-semibold ml-1">{travelMonth}</span>
+              </p>
+            )}
           </div>
-          
           <div className="px-4 pb-4">
             <h4 className="text-sm font-semibold text-white mb-3 border-b border-blue-800 pb-2">Price Breakdown</h4>
             
-            {/* Hotel Cost Breakdown */}
             <div className="mb-3 p-3 bg-blue-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-blue-300 mb-2 flex items-center">
                 <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">1</span>
                 Hotel Accommodation
               </h5>
-              
               {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0 ? (
                 <div className="space-y-2 pl-8">
                   {(() => {
@@ -378,7 +154,6 @@ const PriceBreakdown = ({
                         const roomTypeObj = selectedHotelData.roomTypes[room.roomTypeIndex];
                         const roomType = roomTypeObj.type;
                         
-                        // Get month-specific pricing for display
                         const adultPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, false);
                         const childPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, true);
                         
@@ -388,7 +163,6 @@ const PriceBreakdown = ({
                           childrenUnder3: 0,
                           children3to6: 0,
                           children6to12: 0,
-                          // Use month-specific price instead of default price
                           price: adultPricePerNight, 
                           childrenPrice: childPricePerNight,
                           adultPrice: 0,
@@ -404,22 +178,18 @@ const PriceBreakdown = ({
                         roomTypeCounts[roomType].children3to6 += (room.children3to6 || 0);
                         roomTypeCounts[roomType].children6to12 += (room.children6to12 || 0);
                         
-                        // Calculate adult cost (basic room cost)
                         roomTypeCounts[roomType].adultPrice = roomTypeCounts[roomType].price * totalNights * roomTypeCounts[roomType].rooms;
                         
-                        // Calculate children 6-12 cost if applicable
                         roomTypeCounts[roomType].childrenTotalPrice = 0;
                         if (includeChildren && roomTypeCounts[roomType].children6to12 > 0 && roomTypeCounts[roomType].childrenPrice > 0) {
                           roomTypeCounts[roomType].childrenTotalPrice = roomTypeCounts[roomType].childrenPrice * totalNights * roomTypeCounts[roomType].children6to12;
                         }
                         
-                        // Calculate total price for this room type
                         roomTypeCounts[roomType].totalPrice = roomTypeCounts[roomType].adultPrice + roomTypeCounts[roomType].childrenTotalPrice;
                       }
                     });
                     
                     return Object.entries(roomTypeCounts).map(([type, info], index) => {
-                      // Get the original room type object for comparison
                       const originalRoomTypeObj = selectedHotelData.roomTypes.find(rt => rt.type === type);
                       
                       return (
@@ -430,15 +200,8 @@ const PriceBreakdown = ({
                           </div>
                           
                           <div className="ml-2 mt-1 text-blue-200">
-                            {/* Basic room cost */}
-                            <div className="flex justify-between">
-                              <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
-                              <span className="text-teal-300">${info.adultPrice}</span>
-                            </div>
-                            
-                            {/* Add monthly pricing indicator */}
                             {travelMonth && (
-                              <div className="text-blue-300 text-xs mt-1 ml-4 italic">
+                              <div className="text-blue-300 text-xs mb-2 italic">
                                 Using {travelMonth} pricing rates
                                 {info.isMonthlyPrice && (
                                   <span className="text-yellow-300 ml-1 font-medium">
@@ -448,7 +211,11 @@ const PriceBreakdown = ({
                               </div>
                             )}
                             
-                            {/* Show price comparison when monthly price differs from standard price */}
+                            <div className="flex justify-between">
+                              <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
+                              <span className="text-teal-300">${info.adultPrice}</span>
+                            </div>
+                            
                             {info.isMonthlyPrice && originalRoomTypeObj && (
                               <div className="text-xs mt-1 ml-4 text-blue-200">
                                 <span className="text-gray-400">Standard price: </span>
@@ -467,7 +234,6 @@ const PriceBreakdown = ({
                               </div>
                             )}
                             
-                            {/* Children 6-12 cost if applicable */}
                             {includeChildren && info.children6to12 > 0 && info.childrenPrice > 0 && (
                               <div className="flex justify-between">
                                 <span>• Children 6-12: <span className="text-blue-300">${info.childrenPrice}/night × {totalNights} nights × {info.children6to12}</span></span>
@@ -475,7 +241,6 @@ const PriceBreakdown = ({
                               </div>
                             )}
                             
-                            {/* Room occupancy breakdown */}
                             <p className="mt-1">• Adults: {info.people}</p>
                             {includeChildren && (
                               <>
@@ -499,7 +264,6 @@ const PriceBreakdown = ({
               )}
             </div>
             
-            {/* Breakfast Cost */}
             {includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 && (
               <div className="mb-3 p-3 bg-green-950/60 rounded-lg">
                 <h5 className="text-sm font-semibold text-green-300 mb-2 flex items-center">
@@ -536,7 +300,6 @@ const PriceBreakdown = ({
               </div>
             )}
             
-            {/* Tour Costs */}
             {selectedTours.length > 0 && (
               <div className="mb-3 p-3 bg-purple-950/60 rounded-lg">
                 <h5 className="text-sm font-semibold text-purple-300 mb-2 flex items-center">
@@ -570,7 +333,6 @@ const PriceBreakdown = ({
                       );
                     }
                     
-                    // For Group tours
                     const adultCost = tour.price * numGuests;
                     const childrenCount = includeChildren ? safeParseInt(children3to6) + safeParseInt(children6to12) : 0;
                     const childrenCost = childrenCount * tour.price;
@@ -604,7 +366,6 @@ const PriceBreakdown = ({
               </div>
             )}
             
-            {/* Transportation Costs */}
             <div className="mb-3 p-3 bg-amber-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-amber-300 mb-2 flex items-center">
                 <span className="w-6 h-6 rounded-full bg-amber-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '4' : '3')}</span>
@@ -615,7 +376,6 @@ const PriceBreakdown = ({
                 {includeReception || includeFarewell ? (
                   <div className="text-xs">
                     {(() => {
-                      // Display vehicle-based transportation costs
                       let transportItems = [];
                       let totalTransportCost = 0;
                       
@@ -644,7 +404,6 @@ const PriceBreakdown = ({
                           }
                         }
                       } else if (selectedHotelData.transportationPrice) {
-                        // Legacy transportation pricing
                         const totalPeople = safeParseInt(numGuests) + (includeChildren ? 
                           safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12) : 0);
                         
@@ -682,7 +441,6 @@ const PriceBreakdown = ({
               </div>
             </div>
             
-            {/* Guest Breakdown */}
             <div className="mb-3 p-3 bg-teal-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-teal-300 mb-2 flex items-center">
                 <span className="w-6 h-6 rounded-full bg-teal-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '5' : '4')}</span>
@@ -712,14 +470,7 @@ const PriceBreakdown = ({
           </div>
         </div>
         
-        {/* Circular Download Button */}
-        <button 
-          onClick={handleDownload}
-          className="absolute top-3 right-3 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center shadow-lg transition-colors duration-200"
-          title="Download Price Breakdown"
-        >
-          <FaDownload className="text-white" size={16} />
-        </button>
+        <PriceBreakdownDownloader breakdownRef={breakdownRef} />
       </div>
     </div>
   );
