@@ -9,6 +9,8 @@ import EditHotelPage from './pages/EditHotelPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import StayOnTop from './components/StayOnTop'
+import ScrollToTop from './components/ScrollToTop'
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 
@@ -52,6 +54,8 @@ function App() {
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
       <Toaster position="bottom-center" />
       <BrowserRouter>
+        <StayOnTop />
+        <ScrollToTop />
         <Header />
         
         <main className="flex-grow">
