@@ -520,6 +520,17 @@ export default function WorkerForm() {
             onChildren6to12Change={setChildren6to12}
           />
           
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="includeBreakfast"
+              checked={includeBreakfast}
+              onChange={(e) => setIncludeBreakfast(e.target.checked)}
+            />
+            <Label htmlFor="includeBreakfast" className="dark:text-white">
+              Include breakfast (if available)
+            </Label>
+          </div>
+          
           {selectedHotelData && (
             <div className="mt-8 mb-6">
               <h3 className="text-xl font-bold mb-4 text-center dark:text-white border-b pb-2">Hotel & Room Selection</h3>
@@ -566,28 +577,6 @@ export default function WorkerForm() {
             onMoveTourDown={moveTourDown}
           />
           
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="includeReception"
-              checked={includeReception}
-              onChange={(e) => setIncludeReception(e.target.checked)}
-            />
-            <Label htmlFor="includeReception" className="dark:text-white">
-              Include reception
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="includeFarewell"
-              checked={includeFarewell}
-              onChange={(e) => setIncludeFarewell(e.target.checked)}
-            />
-            <Label htmlFor="includeFarewell" className="dark:text-white">
-              Include farewell
-            </Label>
-          </div>
-          
           {selectedHotelData && (selectedHotelData.airportTransportation?.length > 0 || selectedHotelData.airport) && (
             <div>
               <div className="mb-2 block">
@@ -617,6 +606,28 @@ export default function WorkerForm() {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Select which airport the clients will be arriving at/departing from
               </p>
+              
+              <div className="flex items-center space-x-2 mt-3">
+                <Checkbox
+                  id="includeReception"
+                  checked={includeReception}
+                  onChange={(e) => setIncludeReception(e.target.checked)}
+                />
+                <Label htmlFor="includeReception" className="dark:text-white">
+                  Include reception
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="includeFarewell"
+                  checked={includeFarewell}
+                  onChange={(e) => setIncludeFarewell(e.target.checked)}
+                />
+                <Label htmlFor="includeFarewell" className="dark:text-white">
+                  Include farewell
+                </Label>
+              </div>
             </div>
           )}
           
@@ -633,17 +644,6 @@ export default function WorkerForm() {
               <option value="Vito">Vito</option>
               <option value="Sprinter">Sprinter</option>
             </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="includeBreakfast"
-              checked={includeBreakfast}
-              onChange={(e) => setIncludeBreakfast(e.target.checked)}
-            />
-            <Label htmlFor="includeBreakfast" className="dark:text-white">
-              Include breakfast (if available)
-            </Label>
           </div>
           
           <div>
@@ -677,6 +677,7 @@ export default function WorkerForm() {
               transportVehicleType={transportVehicleType}
               includeBreakfast={includeBreakfast}
               startDate={startDate}
+              endDate={endDate}
               selectedAirport={selectedAirport}
             />
           )}

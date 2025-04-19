@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 // Helper to check and fix database schema
 exports.checkAndFixSchema = async () => {
@@ -27,7 +28,7 @@ exports.checkAndFixSchema = async () => {
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { username, password, isAdmin } = req.body;
+        const { username, password, isAdmin, securityQuestion, securityAnswer } = req.body;
         
         // Check if user already exists
         const existingUser = await User.findOne({ username });
@@ -39,7 +40,9 @@ exports.register = async (req, res) => {
         const user = new User({
             username,
             password,
-            isAdmin: isAdmin || false
+            isAdmin: isAdmin || false,
+            securityQuestion,
+            securityAnswer
         });
         
         await user.save();
@@ -175,5 +178,134 @@ exports.deleteUser = async (req, res) => {
         res.status(200).json({ message: 'User deleted successfully.' });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+// Check if user exists and get security question
+exports.getSecurityQuestion = async (req, res) => {
+    try {
+        const { username } = req.body;
+        
+        // Find user
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Check if user has a security question set
+        if (!user.securityQuestion) {
+            return res.status(400).json({ 
+                message: 'No security question is set for this account. Please contact an administrator.' 
+            });
+        }
+        
+        // Return the security question
+        res.status(200).json({ 
+            username: user.username,
+            securityQuestion: user.securityQuestion 
+        });
+    } catch (err) {
+        console.error('Error fetching security question:', err);
+        res.status(500).json({ message: 'Error retrieving security question' });
+    }
+};
+
+// Verify security answer and create reset token
+exports.verifySecurityAnswer = async (req, res) => {
+    try {
+        const { username, securityAnswer } = req.body;
+        
+        // Find user
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Verify security answer
+        const isMatch = await user.compareSecurityAnswer(securityAnswer);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect security answer' });
+        }
+        
+        // Generate reset token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        
+        // Set token expiration (15 minutes)
+        const resetExpires = Date.now() + 15 * 60 * 1000;
+        
+        // Save to user
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = resetExpires;
+        await user.save();
+        
+        res.status(200).json({
+            message: 'Security answer verified',
+            resetToken: resetToken,
+            expiresIn: '15 minutes'
+        });
+    } catch (err) {
+        console.error('Error verifying security answer:', err);
+        res.status(500).json({ message: 'Error processing security verification' });
+    }
+};
+
+// Reset password with valid token
+exports.resetPassword = async (req, res) => {
+    try {
+        const { username, resetToken, newPassword } = req.body;
+        
+        // Find user with matching username and valid token
+        const user = await User.findOne({
+            username,
+            resetPasswordToken: resetToken,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        
+        if (!user) {
+            return res.status(400).json({ 
+                message: 'Password reset token is invalid or has expired' 
+            });
+        }
+        
+        // Set new password
+        user.password = newPassword;
+        
+        // Clear reset token fields
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        
+        await user.save();
+        
+        res.status(200).json({ message: 'Password reset successfully' });
+    } catch (err) {
+        console.error('Password reset error:', err);
+        res.status(500).json({ message: 'Failed to reset password' });
+    }
+};
+
+// Admin reset password (only available to admins)
+exports.adminResetPassword = async (req, res) => {
+    try {
+        // Verify admin status
+        if (!req.user || !req.user.isAdmin) {
+            return res.status(403).json({ message: 'Admin privileges required' });
+        }
+        
+        const { username, newPassword } = req.body;
+        
+        // Find user
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Update password
+        user.password = newPassword;
+        await user.save();
+        
+        res.status(200).json({ message: 'Password reset successfully by admin' });
+    } catch (err) {
+        console.error('Admin password reset error:', err);
+        res.status(500).json({ message: 'Failed to reset password' });
     }
 }; 

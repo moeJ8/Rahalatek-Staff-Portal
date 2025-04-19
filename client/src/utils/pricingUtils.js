@@ -1,4 +1,3 @@
-
 export const safeParseInt = (value) => {
   const parsed = parseInt(value, 10);
   return isNaN(parsed) ? 0 : parsed;
@@ -42,6 +41,44 @@ export const calculateDuration = (startDate, endDate) => {
   return diffDays;
 };
 
+export const calculateNightsPerMonth = (startDate, endDate) => {
+  if (!startDate || !endDate) return [];
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Ensure start date is before end date
+  if (start > end) return [];
+  
+  const result = [];
+  let currentDate = new Date(start);
+  
+  while (currentDate < end) {
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const monthKey = `${year}-${month}`;
+    
+    const existingEntry = result.find(entry => entry.monthKey === monthKey);
+    
+    if (existingEntry) {
+      existingEntry.nights += 1;
+    } else {
+      result.push({
+        monthKey,
+        month,
+        year,
+        date: new Date(currentDate),
+        nights: 1
+      });
+    }
+    
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  return result;
+};
+
 export const calculateTotalPrice = ({
   startDate,
   endDate,
@@ -68,6 +105,7 @@ export const calculateTotalPrice = ({
     let breakfastCost = 0;
     
     const nights = calculateDuration(startDate, endDate);
+    const nightsPerMonth = calculateNightsPerMonth(startDate, endDate);
 
     const adultCount = safeParseInt(numGuests);
     const children3to6Count = safeParseInt(children3to6);
@@ -85,17 +123,39 @@ export const calculateTotalPrice = ({
             if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
                 selectedHotelData.roomTypes[room.roomTypeIndex]) {
                 const roomType = selectedHotelData.roomTypes[room.roomTypeIndex];
-                const adultPricePerNight = getRoomPriceForMonth(roomType, startDate, false);
-                const childPricePerNight = getRoomPriceForMonth(roomType, startDate, true);
-                let roomCost = adultPricePerNight * nights;
                 
-
-                if (includeChildren && childPricePerNight) {
+                // Calculate cost per month for multi-month stays
+                let roomCost = 0;
+                
+                if (nightsPerMonth.length > 1) {
+                  // If stay spans multiple months, calculate for each month separately
+                  nightsPerMonth.forEach(monthData => {
+                    const adultPricePerNight = getRoomPriceForMonth(roomType, monthData.date, false);
+                    const childPricePerNight = getRoomPriceForMonth(roomType, monthData.date, true);
+                    
+                    roomCost += adultPricePerNight * monthData.nights;
+                    
+                    if (includeChildren && childPricePerNight) {
+                      // Use the specific count of children 6-12 in this room
+                      const roomChildren6to12Count = room.children6to12 || 0;
+                      if (roomChildren6to12Count > 0) {
+                        roomCost += childPricePerNight * monthData.nights * roomChildren6to12Count;
+                      }
+                    }
+                  });
+                } else {
+                  // Single month stay (original calculation)
+                  const adultPricePerNight = getRoomPriceForMonth(roomType, startDate, false);
+                  const childPricePerNight = getRoomPriceForMonth(roomType, startDate, true);
+                  roomCost = adultPricePerNight * nights;
+                  
+                  if (includeChildren && childPricePerNight) {
                     // Use the specific count of children 6-12 in this room
                     const roomChildren6to12Count = room.children6to12 || 0;
                     if (roomChildren6to12Count > 0) {
-                        roomCost += childPricePerNight * nights * roomChildren6to12Count;
+                      roomCost += childPricePerNight * nights * roomChildren6to12Count;
                     }
+                  }
                 }
                 
                 hotelCost += roomCost;
@@ -105,14 +165,32 @@ export const calculateTotalPrice = ({
           // If no room allocations, estimate based on first room type
           const baseRoomCount = Math.ceil(adultCount / 2); // Estimate 2 adults per room
           const firstRoomType = selectedHotelData.roomTypes[0];
-          const adultPricePerNight = getRoomPriceForMonth(firstRoomType, startDate, false);
-          const childPricePerNight = getRoomPriceForMonth(firstRoomType, startDate, true);
           
-          hotelCost += adultPricePerNight * nights * baseRoomCount;
-          
-          // Add children 6-12 price if applicable
-          if (includeChildren && children6to12Count > 0 && childPricePerNight) {
+          // Calculate cost per month for multi-month stays
+          if (nightsPerMonth.length > 1) {
+            // If stay spans multiple months, calculate for each month separately
+            nightsPerMonth.forEach(monthData => {
+              const adultPricePerNight = getRoomPriceForMonth(firstRoomType, monthData.date, false);
+              const childPricePerNight = getRoomPriceForMonth(firstRoomType, monthData.date, true);
+              
+              hotelCost += adultPricePerNight * monthData.nights * baseRoomCount;
+              
+              // Add children 6-12 price if applicable
+              if (includeChildren && children6to12Count > 0 && childPricePerNight) {
+                hotelCost += childPricePerNight * monthData.nights * children6to12Count;
+              }
+            });
+          } else {
+            // Single month stay (original calculation)
+            const adultPricePerNight = getRoomPriceForMonth(firstRoomType, startDate, false);
+            const childPricePerNight = getRoomPriceForMonth(firstRoomType, startDate, true);
+            
+            hotelCost += adultPricePerNight * nights * baseRoomCount;
+            
+            // Add children 6-12 price if applicable
+            if (includeChildren && children6to12Count > 0 && childPricePerNight) {
               hotelCost += childPricePerNight * nights * children6to12Count;
+            }
           }
         }
       } else if (selectedHotelData.pricePerNightPerPerson) {

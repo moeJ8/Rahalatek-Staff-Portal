@@ -2,12 +2,22 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { TextInput, Label, Button, Card, Alert } from 'flowbite-react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function SignInPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [resetStep, setResetStep] = useState(1); // 1: Enter username, 2: Security question, 3: New password
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
+  const [resetToken, setResetToken] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,6 +25,14 @@ export default function SignInPage() {
     setUsername('');
     setPassword('');
     setError('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setSuccessMessage('');
+    setIsForgotPassword(false);
+    setResetStep(1);
+    setSecurityQuestion('');
+    setSecurityAnswer('');
+    setResetToken('');
     
     const userInfo = localStorage.getItem('user');
     if (userInfo) {
@@ -29,19 +47,298 @@ export default function SignInPage() {
     
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await axios.post(endpoint, { username, password });
+      
+      // Add security question and answer for registration
+      const requestData = isLogin 
+        ? { username, password }
+        : { username, password, securityQuestion, securityAnswer };
+      
+      const response = await axios.post(endpoint, requestData);
       
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      if (response.data.user.isAdmin) {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/home', { replace: true });
-      }
+      // Direct all users to /home regardless of admin status
+      navigate('/home', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');
       console.error(err);
+    }
+  };
+
+  const handleResetStepOne = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    if (!username) {
+      setError('Please enter your username');
+      return;
+    }
+    
+    try {
+      const response = await axios.post('/api/auth/get-security-question', { username });
+      setSecurityQuestion(response.data.securityQuestion);
+      setResetStep(2);
+    } catch (err) {
+      console.error('Error fetching security question:', err);
+      if (err.response?.status === 404) {
+        setError('User not found. Please check your username.');
+      } else {
+        setError(err.response?.data?.message || 'Unable to retrieve security question');
+      }
+    }
+  };
+
+  const handleResetStepTwo = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    if (!securityAnswer) {
+      setError('Please answer the security question');
+      return;
+    }
+    
+    try {
+      const response = await axios.post('/api/auth/verify-security-answer', { 
+        username, 
+        securityAnswer 
+      });
+      
+      setResetToken(response.data.resetToken);
+      setResetStep(3);
+    } catch (err) {
+      console.error('Error verifying security answer:', err);
+      setError(err.response?.data?.message || 'Incorrect security answer');
+      setSecurityAnswer('');
+    }
+  };
+
+  const handleResetStepThree = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    if (!newPassword || newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    try {
+      await axios.post('/api/auth/reset-password', { 
+        username, 
+        resetToken,
+        newPassword 
+      });
+      
+      setSuccessMessage('Password has been reset successfully');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Return to login form after 3 seconds
+      setTimeout(() => {
+        setIsForgotPassword(false);
+        setSuccessMessage('');
+        setResetStep(1);
+      }, 3000);
+    } catch (err) {
+      console.error('Password reset error:', err);
+      
+      if (err.response) {
+        setError(err.response.data.message || 'Failed to reset password');
+      } else if (err.request) {
+        setError('No response from server. Please try again later.');
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+    }
+  };
+
+  const toggleForgotPassword = () => {
+    setIsForgotPassword(!isForgotPassword);
+    setError('');
+    setSuccessMessage('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetStep(1);
+    setSecurityQuestion('');
+    setSecurityAnswer('');
+    setResetToken('');
+  };
+
+  // Render the appropriate reset password form based on current step
+  const renderResetForm = () => {
+    switch (resetStep) {
+      case 1:
+        return (
+          <form onSubmit={handleResetStepOne} className="space-y-4">
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="username" value="Username" className="dark:text-white" />
+              </div>
+              <TextInput
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                placeholder="Enter your employee username"
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              gradientDuoTone="purpleToPink"
+              className="w-full"
+            >
+              Next
+            </Button>
+            
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={toggleForgotPassword}
+                className="text-blue-500 dark:text-blue-400 hover:underline"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        );
+        
+      case 2:
+        return (
+          <form onSubmit={handleResetStepTwo} className="space-y-4">
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="securityQuestion" value="Security Question" className="dark:text-white" />
+              </div>
+              <div className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-lg mb-4 shadow-md">
+                {securityQuestion}
+              </div>
+              
+              <div className="mb-2 block">
+                <Label htmlFor="securityAnswer" value="Answer" className="dark:text-white" />
+              </div>
+              <TextInput
+                id="securityAnswer"
+                type="text"
+                value={securityAnswer}
+                onChange={(e) => setSecurityAnswer(e.target.value)}
+                required
+                placeholder="Enter your answer"
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              gradientDuoTone="purpleToPink"
+              className="w-full"
+            >
+              Verify
+            </Button>
+            
+            <div className="mt-4 flex justify-between">
+              <button
+                type="button"
+                onClick={() => setResetStep(1)}
+                className="text-blue-500 dark:text-blue-400 hover:underline"
+              >
+                Back
+              </button>
+              
+              <button
+                type="button"
+                onClick={toggleForgotPassword}
+                className="text-blue-500 dark:text-blue-400 hover:underline"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        );
+        
+      case 3:
+        return (
+          <form onSubmit={handleResetStepThree} className="space-y-4">
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="newPassword" value="New Password" className="dark:text-white" />
+              </div>
+              <div className="relative">
+                <TextInput
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  placeholder="Enter new password"
+                  className="w-full"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash className="text-gray-500 dark:text-gray-400" />
+                  ) : (
+                    <FaEye className="text-gray-500 dark:text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="confirmPassword" value="Confirm Password" className="dark:text-white" />
+              </div>
+              <TextInput
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Confirm new password"
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              gradientDuoTone="purpleToPink"
+              className="w-full"
+            >
+              Reset Password
+            </Button>
+            
+            <div className="mt-4 flex justify-between">
+              <button
+                type="button"
+                onClick={() => setResetStep(2)}
+                className="text-blue-500 dark:text-blue-400 hover:underline"
+              >
+                Back
+              </button>
+              
+              <button
+                type="button"
+                onClick={toggleForgotPassword}
+                className="text-blue-500 dark:text-blue-400 hover:underline"
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        );
+        
+      default:
+        return null;
     }
   };
 
@@ -62,7 +359,11 @@ export default function SignInPage() {
         {/* Auth Form */}
         <Card className="w-full max-w-md md:mb-0 md:ml-8 dark:bg-gray-800">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-            {isLogin ? 'Sign In' : 'Register'}
+            {isForgotPassword ? 
+              (resetStep === 1 ? 'Reset Password' : 
+               resetStep === 2 ? 'Security Verification' : 
+               'Create New Password') 
+              : (isLogin ? 'Sign In' : 'Register')}
           </h2>
           
           {error && (
@@ -71,52 +372,130 @@ export default function SignInPage() {
             </Alert>
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <div className="mb-2 block">
-                <Label htmlFor="username" value="Username" className="dark:text-white" />
-              </div>
-              <TextInput
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Enter your employee username"
-              />
-            </div>
-            
-            <div>
-              <div className="mb-2 block">
-                <Label htmlFor="password" value="Password" className="dark:text-white" />
-              </div>
-              <TextInput
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
-              />
-            </div>
-            
-            <Button
-              type="submit"
-              gradientDuoTone="purpleToPink"
-              className="w-full"
-            >
-              {isLogin ? 'Sign In' : 'Register'}
-            </Button>
-          </form>
+          {successMessage && (
+            <Alert color="success" className="mb-4">
+              {successMessage}
+            </Alert>
+          )}
           
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-500 dark:text-blue-400 hover:underline"
-            >
-              {isLogin ? 'New employee? Register here' : 'Already registered? Sign In'}
-            </button>
-          </div>
+          {isForgotPassword ? (
+            renderResetForm()
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="username" value="Username" className="dark:text-white" />
+                </div>
+                <TextInput
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="Enter your employee username"
+                />
+              </div>
+              
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="password" value="Password" className="dark:text-white" />
+                </div>
+                <div className="relative">
+                  <TextInput
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Enter your password"
+                    className="w-full"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <FaEyeSlash className="text-gray-500 dark:text-gray-400" />
+                    ) : (
+                      <FaEye className="text-gray-500 dark:text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {!isLogin && (
+                <>
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="securityQuestion" value="Security Question" className="dark:text-white" />
+                    </div>
+                    <select
+                      id="securityQuestion"
+                      value={securityQuestion}
+                      onChange={(e) => setSecurityQuestion(e.target.value)}
+                      required
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                      focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 
+                      dark:border-gray-600 dark:placeholder-gray-400 dark:text-white 
+                      dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    >
+                      <option value="">Select a security question</option>
+                      <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+                      <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                      <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                      <option value="What was the model of your first car?">What was the model of your first car?</option>
+                      <option value="In what city were you born?">In what city were you born?</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="securityAnswer" value="Security Answer" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="securityAnswer"
+                      type="text"
+                      value={securityAnswer}
+                      onChange={(e) => setSecurityAnswer(e.target.value)}
+                      required
+                      placeholder="Enter your answer"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      This will be used to verify your identity if you need to reset your password.
+                    </p>
+                  </div>
+                </>
+              )}
+              
+              <Button
+                type="submit"
+                gradientDuoTone="purpleToPink"
+                className="w-full"
+              >
+                {isLogin ? 'Sign In' : 'Register'}
+              </Button>
+              
+              <div className="mt-4 text-center flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-blue-500 dark:text-blue-400 hover:underline"
+                >
+                  {isLogin ? 'New employee? Register' : 'Already registered? Sign In'}
+                </button>
+                
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={toggleForgotPassword}
+                    className="text-blue-500 dark:text-blue-400 hover:underline"
+                  >
+                    Forgot Password?
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
         </Card>
         
         {/* Company Info - Hidden on mobile, visible on md+ screens */}

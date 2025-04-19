@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Alert } from 'flowbite-react';
-import { safeParseInt, getRoomPriceForMonth } from '../utils/pricingUtils';
+import { safeParseInt, getRoomPriceForMonth, calculateNightsPerMonth } from '../utils/pricingUtils';
 import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaCalendarAlt } from 'react-icons/fa';
 import PriceBreakdownDownloader from './PriceBreakdownDownloader';
 
@@ -21,13 +21,40 @@ const PriceBreakdown = ({
   transportVehicleType,
   includeBreakfast,
   startDate,
+  endDate,
   selectedAirport
 }) => {
   const breakdownRef = useRef(null);
+  // Section counter state to keep track of section numbers
+  const [sections, setSections] = useState({
+    hotel: 0,
+    breakfast: 0,
+    tours: 0,
+    transportation: 0,
+    guests: 0
+  });
+
+  // Reset counter when component re-renders
+  useEffect(() => {
+    let counter = 1;
+    const newSections = {
+      hotel: counter++,
+      breakfast: includeBreakfast && selectedHotelData?.breakfastIncluded && selectedHotelData?.breakfastPrice > 0 ? counter++ : 0,
+      tours: selectedTours?.length > 0 ? counter++ : 0,
+      transportation: counter++,
+      guests: counter
+    };
+    setSections(newSections);
+  }, [includeBreakfast, selectedHotelData, selectedTours]);
 
   if (!selectedHotelData || !nights) return null;
 
-  const travelMonth = startDate ? new Date(startDate).toLocaleString('default', { month: 'long' }) : '';
+  const travelStartMonth = startDate ? new Date(startDate).toLocaleString('default', { month: 'long' }) : '';
+  const travelEndMonth = endDate ? new Date(endDate).toLocaleString('default', { month: 'long' }) : '';
+  const isMultiMonthStay = travelStartMonth !== travelEndMonth && travelStartMonth && travelEndMonth;
+  
+  // Calculate nights per month for multi-month stays
+  const nightsPerMonth = calculateNightsPerMonth(startDate, endDate);
   
   let hotelTotal = 0;
   let tourTotal = 0;
@@ -39,14 +66,30 @@ const PriceBreakdown = ({
       if (room.roomTypeIndex !== "" && selectedHotelData.roomTypes[room.roomTypeIndex]) {
         const roomTypeObj = selectedHotelData.roomTypes[room.roomTypeIndex];
         
-        const adultPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, false);
-        const childPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, true);
-        
-        const roomPrice = adultPricePerNight * nights;
-        hotelTotal += roomPrice;
-        
-        if (includeChildren && childPricePerNight && room.children6to12) {
-          hotelTotal += childPricePerNight * nights * room.children6to12;
+        if (isMultiMonthStay && nightsPerMonth.length > 1) {
+          // Handle multi-month pricing
+          nightsPerMonth.forEach(monthData => {
+            const adultPricePerNight = getRoomPriceForMonth(roomTypeObj, monthData.date, false);
+            const childPricePerNight = getRoomPriceForMonth(roomTypeObj, monthData.date, true);
+            
+            const roomPrice = adultPricePerNight * monthData.nights;
+            hotelTotal += roomPrice;
+            
+            if (includeChildren && childPricePerNight && room.children6to12) {
+              hotelTotal += childPricePerNight * monthData.nights * room.children6to12;
+            }
+          });
+        } else {
+          // Single month stay (original calculation)
+          const adultPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, false);
+          const childPricePerNight = getRoomPriceForMonth(roomTypeObj, startDate, true);
+          
+          const roomPrice = adultPricePerNight * nights;
+          hotelTotal += roomPrice;
+          
+          if (includeChildren && childPricePerNight && room.children6to12) {
+            hotelTotal += childPricePerNight * nights * room.children6to12;
+          }
         }
       }
     });
@@ -134,8 +177,6 @@ const PriceBreakdown = ({
   
   const directSum = hotelTotal + tourTotal + transportTotal + breakfastTotal;
   
-  const displayPrice = totalPrice || directSum;
-
   return (
     <div 
       className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md"
@@ -150,17 +191,22 @@ const PriceBreakdown = ({
       <div className="rounded-lg overflow-hidden shadow-md relative">
         <div className="bg-gradient-to-br from-blue-900 to-slate-900 text-white">
           <div className="p-4 text-center">
-            <h3 className="text-xl font-bold mb-1 text-green-400">Total Price: ${displayPrice}</h3>
+            <h3 className="text-xl font-bold mb-1 text-green-400">Total Price: ${Math.round(directSum)}</h3>
+            {totalPrice !== directSum && totalPrice > 0 && (
+              <p className="text-xs text-yellow-400 mb-1">Manual price: ${totalPrice}</p>
+            )}
             <p className="text-sm text-blue-200">
               {nights} nights • {numGuests} {numGuests === 1 ? 'person' : 'people'}
               {includeChildren && (childrenUnder3 > 0 || children3to6 > 0 || children6to12 > 0) && 
                 ` • ${safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)} ${(safeParseInt(childrenUnder3) + safeParseInt(children3to6) + safeParseInt(children6to12)) === 1 ? 'child' : 'children'}`
               }
             </p>
-            {travelMonth && (
+            {travelStartMonth && (
               <p className="text-sm text-blue-200 mt-1 flex items-center justify-center">
                 <FaCalendarAlt className="mr-1" /> 
-                Travel Month: <span className="font-semibold ml-1">{travelMonth}</span>
+                Travel Period: <span className="font-semibold ml-1">
+                  {isMultiMonthStay ? `${travelStartMonth} - ${travelEndMonth}` : travelStartMonth}
+                </span>
               </p>
             )}
           </div>
@@ -169,7 +215,7 @@ const PriceBreakdown = ({
             
             <div className="mb-3 p-3 bg-blue-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-blue-300 mb-2 flex items-center">
-                <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">1</span>
+                <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">{sections.hotel}</span>
                 Hotel Accommodation
               </h5>
               {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && roomAllocations.length > 0 ? (
@@ -206,11 +252,43 @@ const PriceBreakdown = ({
                         roomTypeCounts[roomType].children3to6 += (room.children3to6 || 0);
                         roomTypeCounts[roomType].children6to12 += (room.children6to12 || 0);
                         
-                        roomTypeCounts[roomType].adultPrice = roomTypeCounts[roomType].price * totalNights * roomTypeCounts[roomType].rooms;
-                        
-                        roomTypeCounts[roomType].childrenTotalPrice = 0;
-                        if (includeChildren && roomTypeCounts[roomType].children6to12 > 0 && roomTypeCounts[roomType].childrenPrice > 0) {
-                          roomTypeCounts[roomType].childrenTotalPrice = roomTypeCounts[roomType].childrenPrice * totalNights * roomTypeCounts[roomType].children6to12;
+                        // Calculate room cost based on whether it spans multiple months
+                        if (isMultiMonthStay && nightsPerMonth.length > 1) {
+                          let adultTotal = 0;
+                          let childrenTotal = 0;
+                          
+                          nightsPerMonth.forEach(monthData => {
+                            const monthlyAdultPrice = getRoomPriceForMonth(roomTypeObj, monthData.date, false);
+                            const monthlyChildPrice = getRoomPriceForMonth(roomTypeObj, monthData.date, true);
+                            
+                            adultTotal += monthlyAdultPrice * monthData.nights;
+                            
+                            if (includeChildren && room.children6to12 > 0) {
+                              childrenTotal += monthlyChildPrice * monthData.nights * room.children6to12;
+                            }
+                          });
+                          
+                          // For multi-month stays, we calculate costs per room differently
+                          if (!roomTypeCounts[roomType].perRoomMultiMonth) {
+                            roomTypeCounts[roomType].perRoomMultiMonth = [];
+                          }
+                          
+                          roomTypeCounts[roomType].perRoomMultiMonth.push({
+                            adultTotal,
+                            childrenTotal
+                          });
+                          
+                          // Add to the totals
+                          roomTypeCounts[roomType].adultPrice += adultTotal;
+                          roomTypeCounts[roomType].childrenTotalPrice += childrenTotal;
+                        } else {
+                          // Single month calculation (original)
+                          roomTypeCounts[roomType].adultPrice = roomTypeCounts[roomType].price * nights * roomTypeCounts[roomType].rooms;
+                          
+                          roomTypeCounts[roomType].childrenTotalPrice = 0;
+                          if (includeChildren && roomTypeCounts[roomType].children6to12 > 0 && roomTypeCounts[roomType].childrenPrice > 0) {
+                            roomTypeCounts[roomType].childrenTotalPrice = roomTypeCounts[roomType].childrenPrice * nights * roomTypeCounts[roomType].children6to12;
+                          }
                         }
                         
                         roomTypeCounts[roomType].totalPrice = roomTypeCounts[roomType].adultPrice + roomTypeCounts[roomType].childrenTotalPrice;
@@ -228,9 +306,18 @@ const PriceBreakdown = ({
                           </div>
                           
                           <div className="ml-2 mt-1 text-blue-200">
-                            {travelMonth && (
+                            {isMultiMonthStay ? (
                               <div className="text-blue-300 text-xs mb-2 italic">
-                                Using {travelMonth} pricing rates
+                                Using pricing from multiple months: {travelStartMonth} and {travelEndMonth}
+                                {info.isMonthlyPrice && (
+                                  <span className="text-yellow-300 ml-1 font-medium">
+                                    (seasonal pricing applied)
+                                  </span>
+                                )}
+                              </div>
+                            ) : travelStartMonth && (
+                              <div className="text-blue-300 text-xs mb-2 italic">
+                                Using {travelStartMonth} pricing rates
                                 {info.isMonthlyPrice && (
                                   <span className="text-yellow-300 ml-1 font-medium">
                                     (seasonal pricing applied)
@@ -239,10 +326,47 @@ const PriceBreakdown = ({
                               </div>
                             )}
                             
-                            <div className="flex justify-between">
-                              <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
-                              <span className="text-teal-300">${info.adultPrice}</span>
-                            </div>
+                            <p className="mb-1">• Adults: {info.people}</p>
+                            
+                            {isMultiMonthStay && nightsPerMonth.length > 1 ? (
+                              <div>
+                                {nightsPerMonth.map((monthData, idx) => {
+                                  const monthName = new Date(monthData.date).toLocaleString('default', { month: 'long' });
+                                  const monthlyPrice = getRoomPriceForMonth(originalRoomTypeObj, monthData.date, false);
+                                  const subtotal = monthlyPrice * monthData.nights * info.rooms;
+                                  
+                                  return (
+                                    <div key={idx} className="flex justify-between mb-1">
+                                      <span>• {monthName}: <span className="text-blue-300">${monthlyPrice}/night × {monthData.nights} nights × {info.rooms} rooms</span></span>
+                                      <span className="text-teal-300">${subtotal}</span>
+                                    </div>
+                                  );
+                                })}
+                                
+                                {includeChildren && info.children6to12 > 0 && (
+                                  <div className="mt-1 text-blue-200">
+                                    <p>+ Children 6-12 costs:</p>
+                                    {nightsPerMonth.map((monthData, idx) => {
+                                      const monthName = new Date(monthData.date).toLocaleString('default', { month: 'long' });
+                                      const monthlyChildPrice = getRoomPriceForMonth(originalRoomTypeObj, monthData.date, true);
+                                      const childSubtotal = monthlyChildPrice * monthData.nights * info.children6to12;
+                                      
+                                      return monthlyChildPrice > 0 ? (
+                                        <div key={`child-${idx}`} className="flex justify-between ml-2 text-xs">
+                                          <span>• {monthName}: <span className="text-blue-300">${monthlyChildPrice}/night × {monthData.nights} nights × {info.children6to12} children</span></span>
+                                          <span className="text-teal-300">${childSubtotal}</span>
+                                        </div>
+                                      ) : null;
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex justify-between">
+                                <span>• Room cost: <span className="text-blue-300">${info.price}/night × {totalNights} nights × {info.rooms} rooms</span></span>
+                                <span className="text-teal-300">${info.adultPrice}</span>
+                              </div>
+                            )}
                             
                             {info.isMonthlyPrice && originalRoomTypeObj && (
                               <div className="text-xs mt-1 ml-4 text-blue-200">
@@ -269,7 +393,6 @@ const PriceBreakdown = ({
                               </div>
                             )}
                             
-                            <p className="mt-1">• Adults: {info.people}</p>
                             {includeChildren && (
                               <>
                                 {info.childrenUnder3 > 0 && <p>• Children 0-3: {info.childrenUnder3} <span className="text-green-400">(free)</span></p>}
@@ -295,7 +418,7 @@ const PriceBreakdown = ({
             {includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 && (
               <div className="mb-3 p-3 bg-green-950/60 rounded-lg">
                 <h5 className="text-sm font-semibold text-green-300 mb-2 flex items-center">
-                  <span className="w-6 h-6 rounded-full bg-green-800 flex items-center justify-center mr-2 text-white text-xs">2</span>
+                  <span className="w-6 h-6 rounded-full bg-green-800 flex items-center justify-center mr-2 text-white text-xs">{sections.breakfast}</span>
                   Breakfast
                 </h5>
                 
@@ -331,7 +454,7 @@ const PriceBreakdown = ({
             {selectedTours.length > 0 && (
               <div className="mb-3 p-3 bg-purple-950/60 rounded-lg">
                 <h5 className="text-sm font-semibold text-purple-300 mb-2 flex items-center">
-                  <span className="w-6 h-6 rounded-full bg-purple-800 flex items-center justify-center mr-2 text-white text-xs">{includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '3' : '2'}</span>
+                  <span className="w-6 h-6 rounded-full bg-purple-800 flex items-center justify-center mr-2 text-white text-xs">{sections.tours}</span>
                   Tour Prices
                 </h5>
                 
@@ -396,7 +519,7 @@ const PriceBreakdown = ({
             
             <div className="mb-3 p-3 bg-blue-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-blue-300 mb-2 flex items-center">
-                <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">3</span>
+                <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">{sections.transportation}</span>
                 Transportation
               </h5>
               {(() => {
@@ -518,7 +641,7 @@ const PriceBreakdown = ({
             
             <div className="mb-3 p-3 bg-teal-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-teal-300 mb-2 flex items-center">
-                <span className="w-6 h-6 rounded-full bg-teal-800 flex items-center justify-center mr-2 text-white text-xs">{(includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 ? '5' : '4')}</span>
+                <span className="w-6 h-6 rounded-full bg-teal-800 flex items-center justify-center mr-2 text-white text-xs">{sections.guests}</span>
                 Guest Details
               </h5>
               
@@ -540,7 +663,12 @@ const PriceBreakdown = ({
           <div className="py-3 px-4 bg-green-900/30 border-t border-green-800 flex items-start">
             <FaRegCheckCircle className="text-green-400 mt-0.5 flex-shrink-0 mr-2" />
             <p className="text-xs text-green-100">
-              Price verified: The total amount of <span className="font-bold text-green-400">${displayPrice}</span> has been accurately calculated based on room rates, tour costs, and additional services.
+              Price verified: The total amount of <span className="font-bold text-green-400">${Math.round(directSum)}</span> has been accurately calculated based on room rates, tour costs, and additional services.
+              {totalPrice !== directSum && totalPrice > 0 && (
+                <span className="ml-1">
+                  Note: Manual price adjustment applied: <span className="font-bold text-yellow-400">${totalPrice}</span>
+                </span>
+              )}
             </p>
           </div>
         </div>
