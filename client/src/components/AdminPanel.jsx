@@ -1,8 +1,9 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect } from 'react'
-import { Button, TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Spinner, Badge, Table, ToggleSwitch, Accordion } from 'flowbite-react'
-import { HiPlus, HiX, HiTrash, HiCalendar } from 'react-icons/hi'
+import { Button, TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Spinner, Badge, Table, ToggleSwitch, Accordion, Modal } from 'flowbite-react'
+import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
+import toast from 'react-hot-toast'
 
 export default function AdminPanel() {
     const getInitialTab = () => {
@@ -29,6 +30,16 @@ export default function AdminPanel() {
         // Fetch users data only when switching to users tab and data not loaded yet
         if (tabName === 'users' && users.length === 0 && dataLoaded) {
             fetchUsers();
+        }
+        
+        // Fetch hotels data when switching to hotels tab and data not loaded yet
+        if (tabName === 'hotels' && hotels.length === 0 && dataLoaded) {
+            fetchHotels();
+        }
+        
+        // Fetch tours data when switching to tours tab and data not loaded yet
+        if (tabName === 'tours' && tours.length === 0 && dataLoaded) {
+            fetchTours();
         }
     };
 
@@ -70,6 +81,7 @@ export default function AdminPanel() {
     });
     const [airports, setAirports] = useState([]);
     const [users, setUsers] = useState([]);
+    const [tours, setTours] = useState([]);
     const [highlightInput, setHighlightInput] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -77,6 +89,15 @@ export default function AdminPanel() {
     const [customRoomTypes, setCustomRoomTypes] = useState([]);
     // Add a new state to track if initial data has been loaded
     const [dataLoaded, setDataLoaded] = useState(false);
+    
+    // Add state for available hotels and duplicate modal
+    const [hotels, setHotels] = useState([]);
+    const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+    const [selectedHotelToDuplicate, setSelectedHotelToDuplicate] = useState('');
+    
+    // Add state for tour duplication
+    const [tourDuplicateModalOpen, setTourDuplicateModalOpen] = useState(false);
+    const [selectedTourToDuplicate, setSelectedTourToDuplicate] = useState('');
 
     // Standard room types for hotels
     const standardRoomTypes = [
@@ -135,8 +156,15 @@ export default function AdminPanel() {
             const fetchInitialData = async () => {
                 setLoading(true);
                 try {
-                    const airportsResponse = await axios.get('/api/airports');
+                    const [airportsResponse, hotelsResponse, toursResponse] = await Promise.all([
+                        axios.get('/api/airports'),
+                        axios.get('/api/hotels'),
+                        axios.get('/api/tours')
+                    ]);
+                    
                     setAirports(airportsResponse.data);
+                    setHotels(hotelsResponse.data);
+                    setTours(toursResponse.data);
                     
                     // Only fetch users if starting on users tab
                     if (activeTab === 'users') {
@@ -162,7 +190,45 @@ export default function AdminPanel() {
         if (activeTab === 'users' && dataLoaded && users.length === 0) {
             fetchUsers();
         }
+        
+        // Fetch hotels when switching to hotels tab
+        if (activeTab === 'hotels' && dataLoaded && hotels.length === 0) {
+            fetchHotels();
+        }
+        
+        // Fetch tours when switching to tours tab
+        if (activeTab === 'tours' && dataLoaded && tours.length === 0) {
+            fetchTours();
+        }
     }, [activeTab]);
+
+    const fetchTours = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/tours');
+            setTours(response.data);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch tours:', err);
+            setError(err.response?.data?.message || 'Failed to fetch tours');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchHotels = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/hotels');
+            setHotels(response.data);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch hotels:', err);
+            setError(err.response?.data?.message || 'Failed to fetch hotels');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -409,43 +475,21 @@ export default function AdminPanel() {
 
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
-
         try {
-            // Get all the room types with their prices
+            // Get room types from the form
             const roomTypes = addRoomTypesToHotelData();
             
-            if (roomTypes.length === 0) {
-                setError('Please add at least one room type with price');
-                setLoading(false);
-                return;
-            }
-            
-            // Check if at least one airport transportation is added when needed
-            if (hotelData.airportTransportation.length === 0) {
-                // Add default airport from old field for backwards compatibility
-                if (hotelData.airport && Object.values(hotelData.transportation).some(price => price > 0)) {
-                    hotelData.airportTransportation.push({
-                        airport: hotelData.airport,
-                        transportation: hotelData.transportation
-                    });
-                }
-            } else {
-                // Set the first airport as the default for backwards compatibility
-                hotelData.airport = hotelData.airportTransportation[0].airport;
-                hotelData.transportation = hotelData.airportTransportation[0].transportation;
-            }
-            
-            // Update hotelData with the complete room types array
-            const hotelToSubmit = {
+            // Create a new hotel data object with the room types included
+            const hotelDataWithRoomTypes = {
                 ...hotelData,
                 roomTypes: roomTypes
             };
             
-            await axios.post('/api/hotels', hotelToSubmit);
+            // Send the updated hotel data to the API
+            await axios.post('/api/hotels', hotelDataWithRoomTypes);
             
-            // Reset the form after successful submission
+            // Reset the form
             setHotelData({
                 name: '',
                 city: '',
@@ -464,7 +508,7 @@ export default function AdminPanel() {
                 description: ''
             });
             
-            // Reset room types
+            // Reset room type related states
             setSelectedRoomTypes({
                 "SINGLE ROOM": false,
                 "DOUBLE ROOM": false,
@@ -489,27 +533,29 @@ export default function AdminPanel() {
                 "CUSTOM": ""
             });
             
-            // Reset monthly prices
-            const resetMonthlyPrices = {};
-            standardRoomTypes.forEach(roomType => {
-                const monthlyPriceData = {};
-                months.forEach(month => {
-                    monthlyPriceData[month] = { adult: 0, child: 0 };
-                });
-                resetMonthlyPrices[roomType] = monthlyPriceData;
-            });
-            resetMonthlyPrices["CUSTOM"] = {};
-            setMonthlyPrices(resetMonthlyPrices);
-            
-            // Clear custom room types
             setCustomRoomTypes([]);
             
+            toast.success('Hotel added successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             showSuccessMessage('Hotel added successfully!');
-        } catch (error) {
-            console.error('Error adding hotel:', error);
-            setError(error.response?.data?.message || 'An error occurred');
-        } finally {
-            setLoading(false);
+        } catch (err) {
+            setError('Failed to add hotel');
+            toast.error('Failed to add hotel', {
+                duration: 3000,
+            });
+            console.log(err);
         }
     };
 
@@ -601,9 +647,26 @@ export default function AdminPanel() {
                 duration: 1,
                 highlights: []
             });
+            toast.success('Tour added successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             showSuccessMessage('Tour added successfully!');
         } catch (err) {
             setError('Failed to add tour');
+            toast.error('Failed to add tour', {
+                duration: 3000,
+            });
             console.log(err);
         }
     };
@@ -618,7 +681,7 @@ export default function AdminPanel() {
                 name: '',
                 arabicName: ''
             });
-            showSuccessMessage('Airport added successfully!');
+            toast.success('Airport added successfully!');
         } catch (err) {
             setError('Failed to add airport');
             console.log(err);
@@ -629,7 +692,7 @@ export default function AdminPanel() {
         try {
             await axios.delete(`/api/airports/${id}`);
             setAirports(airports.filter(airport => airport._id !== id));
-            showSuccessMessage('Airport deleted successfully!');
+            toast.success('Airport deleted successfully!');
         } catch (err) {
             setError('Failed to delete airport');
             console.log(err);
@@ -660,7 +723,7 @@ export default function AdminPanel() {
                     : user
             ));
             
-            showSuccessMessage('User role updated successfully!');
+            toast.success('User role updated successfully!');
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to update user role');
             console.log(err);
@@ -685,7 +748,7 @@ export default function AdminPanel() {
                 // Update the local state by removing the deleted user
                 setUsers(users.filter(user => user._id !== userId));
                 
-                showSuccessMessage('User deleted successfully!');
+                toast.success('User deleted successfully!');
             } catch (err) {
                 setError(err.response?.data?.message || 'Failed to delete user');
                 console.log(err);
@@ -776,6 +839,156 @@ export default function AdminPanel() {
         });
     };
 
+    // Function to open duplicate modal
+    const openDuplicateModal = () => {
+        setDuplicateModalOpen(true);
+    };
+    
+    // Function to close duplicate modal
+    const closeDuplicateModal = () => {
+        setDuplicateModalOpen(false);
+        setSelectedHotelToDuplicate('');
+    };
+    
+    // Function to open tour duplicate modal
+    const openTourDuplicateModal = () => {
+        setTourDuplicateModalOpen(true);
+    };
+    
+    // Function to close tour duplicate modal
+    const closeTourDuplicateModal = () => {
+        setTourDuplicateModalOpen(false);
+        setSelectedTourToDuplicate('');
+    };
+    
+    // Function to handle tour duplication
+    const handleDuplicateTour = () => {
+        if (!selectedTourToDuplicate) return;
+        
+        const tourToDuplicate = tours.find(tour => tour._id === selectedTourToDuplicate);
+        if (!tourToDuplicate) return;
+        
+        // Set tour data from the selected tour
+        setTourData({
+            name: `${tourToDuplicate.name} (Copy)`,
+            city: tourToDuplicate.city,
+            description: tourToDuplicate.description || '',
+            detailedDescription: tourToDuplicate.detailedDescription || '',
+            tourType: tourToDuplicate.tourType,
+            price: tourToDuplicate.price.toString(),
+            vipCarType: tourToDuplicate.vipCarType || 'Vito',
+            carCapacity: {
+                min: tourToDuplicate.carCapacity?.min || 2,
+                max: tourToDuplicate.carCapacity?.max || 8
+            },
+            duration: tourToDuplicate.duration,
+            highlights: tourToDuplicate.highlights ? [...tourToDuplicate.highlights] : []
+        });
+        
+        // Close modal
+        closeTourDuplicateModal();
+        
+        // Show success message
+        showSuccessMessage('Tour data duplicated successfully! Make changes as needed and submit to create a new tour.');
+    };
+
+    // Function to handle hotel duplication
+    const handleDuplicateHotel = () => {
+        if (!selectedHotelToDuplicate) return;
+        
+        const hotelToDuplicate = hotels.find(hotel => hotel._id === selectedHotelToDuplicate);
+        if (!hotelToDuplicate) return;
+        
+        // Prepare new custom room types for the duplicated hotel
+        const newCustomRoomTypes = [];
+        const newSelectedRoomTypes = { ...selectedRoomTypes };
+        const newRoomTypePrices = { ...roomTypePrices };
+        const newRoomTypeChildrenPrices = { ...roomTypeChildrenPrices };
+        const newMonthlyPrices = { ...monthlyPrices };
+        
+        // Process room types
+        hotelToDuplicate.roomTypes.forEach(roomType => {
+            const type = roomType.type;
+            
+            // Check if it's a standard room type
+            if (standardRoomTypes.includes(type)) {
+                newSelectedRoomTypes[type] = true;
+                newRoomTypePrices[type] = roomType.pricePerNight.toString();
+                newRoomTypeChildrenPrices[type] = (roomType.childrenPricePerNight || '').toString();
+                
+                // Copy monthly prices if available
+                if (roomType.monthlyPrices) {
+                    newMonthlyPrices[type] = roomType.monthlyPrices;
+                }
+            } else {
+                // It's a custom room type
+                const customId = `CUSTOM_${Date.now()}_${newCustomRoomTypes.length}`;
+                newCustomRoomTypes.push({
+                    id: customId,
+                    name: type
+                });
+                
+                newSelectedRoomTypes['CUSTOM'] = true;
+                newRoomTypePrices[customId] = roomType.pricePerNight.toString();
+                newRoomTypeChildrenPrices[customId] = (roomType.childrenPricePerNight || '').toString();
+                
+                // Copy monthly prices if available
+                if (roomType.monthlyPrices) {
+                    newMonthlyPrices[customId] = roomType.monthlyPrices;
+                }
+            }
+        });
+        
+        // Copy airport transportation
+        const newAirportTransportation = [];
+        if (hotelToDuplicate.airportTransportation && hotelToDuplicate.airportTransportation.length > 0) {
+            hotelToDuplicate.airportTransportation.forEach(item => {
+                newAirportTransportation.push({
+                    airport: item.airport,
+                    transportation: { ...item.transportation }
+                });
+            });
+        } else if (hotelToDuplicate.airport && hotelToDuplicate.transportation) {
+            // Handle legacy format
+            newAirportTransportation.push({
+                airport: hotelToDuplicate.airport,
+                transportation: { ...hotelToDuplicate.transportation }
+            });
+        }
+        
+        // Set form data
+        setHotelData({
+            name: `${hotelToDuplicate.name} (Copy)`,
+            city: hotelToDuplicate.city,
+            stars: hotelToDuplicate.stars.toString(),
+            roomTypes: [],
+            breakfastIncluded: hotelToDuplicate.breakfastIncluded || false,
+            breakfastPrice: (hotelToDuplicate.breakfastPrice || '').toString(),
+            transportation: {
+                vitoReceptionPrice: (hotelToDuplicate.transportation?.vitoReceptionPrice || '').toString(),
+                vitoFarewellPrice: (hotelToDuplicate.transportation?.vitoFarewellPrice || '').toString(),
+                sprinterReceptionPrice: (hotelToDuplicate.transportation?.sprinterReceptionPrice || '').toString(),
+                sprinterFarewellPrice: (hotelToDuplicate.transportation?.sprinterFarewellPrice || '').toString()
+            },
+            airport: hotelToDuplicate.airport || '',
+            airportTransportation: newAirportTransportation,
+            description: hotelToDuplicate.description || ''
+        });
+        
+        // Set room type states
+        setSelectedRoomTypes(newSelectedRoomTypes);
+        setRoomTypePrices(newRoomTypePrices);
+        setRoomTypeChildrenPrices(newRoomTypeChildrenPrices);
+        setMonthlyPrices(newMonthlyPrices);
+        setCustomRoomTypes(newCustomRoomTypes);
+        
+        // Close modal
+        closeDuplicateModal();
+        
+        // Show success message
+        showSuccessMessage('Hotel data duplicated successfully! Make changes as needed and submit to create a new hotel.');
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-56">
@@ -846,6 +1059,20 @@ export default function AdminPanel() {
             {activeTab === 'hotels' && (
                 <Card className="w-full" id="hotels-panel" role="tabpanel" aria-labelledby="tab-hotels">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Hotel</h2>
+                    
+                    <div className="flex justify-end mb-4">
+                        <Button 
+                            size="sm" 
+                            gradientDuoTone="purpleToPink"
+                            onClick={openDuplicateModal}
+                            title="Duplicate existing hotel data"
+                        >
+                            <div className="flex items-center">
+                                <HiDuplicate className="mr-1.5" />
+                                <span>Duplicate Hotel</span>
+                            </div>
+                        </Button>
+                    </div>
                     
                     <form onSubmit={handleHotelSubmit} className="space-y-4">
                         <div>
@@ -936,7 +1163,7 @@ export default function AdminPanel() {
                                 {hotelData.airportTransportation.length === 0 ? (
                                     <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 mb-4">
                                         <p className="text-gray-500 dark:text-gray-400 mb-4">No airport transportation options added</p>
-                                        <Button size="sm" onClick={handleAddAirportTransportation} className="mr-2">
+                                        <Button size="sm" onClick={handleAddAirportTransportation} className="mr-2" color="blue">
                                             <HiPlus className="mr-1" /> Add Airport Transportation
                                         </Button>
                                     </div>
@@ -1019,7 +1246,7 @@ export default function AdminPanel() {
                                         ))}
                                         
                                         <div className="text-center mt-3">
-                                            <Button size="sm" onClick={handleAddAirportTransportation}>
+                                            <Button size="sm" onClick={handleAddAirportTransportation} color="blue">
                                                 <HiPlus className="mr-1" /> Add Another Airport
                                             </Button>
                                         </div>
@@ -1431,6 +1658,20 @@ export default function AdminPanel() {
                 <Card className="w-full" id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
                     
+                    <div className="flex justify-end mb-4">
+                        <Button 
+                            size="sm" 
+                            gradientDuoTone="purpleToPink"
+                            onClick={openTourDuplicateModal}
+                            title="Duplicate existing tour data"
+                        >
+                            <div className="flex items-center">
+                                <HiDuplicate className="mr-1.5" />
+                                <span>Duplicate Tour</span>
+                            </div>
+                        </Button>
+                    </div>
+                    
                     <form onSubmit={handleTourSubmit} className="space-y-4">
                         <div>
                             <div className="mb-2 block">
@@ -1754,6 +1995,134 @@ export default function AdminPanel() {
                     )}
                 </Card>
             )}
+            
+            {/* Duplicate Hotel Modal */}
+            <Modal
+                show={duplicateModalOpen}
+                onClose={closeDuplicateModal}
+                size="lg"
+                popup
+            >
+                <Modal.Header>
+                    <div className="text-center">
+                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+                            Duplicate Existing Hotel
+                        </h3>
+                    </div>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="space-y-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Select a hotel to duplicate its data. You can modify the duplicated data before creating a new hotel.
+                        </p>
+                        
+                        {hotels.length > 0 ? (
+                            <>
+                                <div>
+                                    <Label htmlFor="selectHotelToDuplicate" value="Select Hotel" />
+                                    <Select
+                                        id="selectHotelToDuplicate"
+                                        value={selectedHotelToDuplicate}
+                                        onChange={(e) => setSelectedHotelToDuplicate(e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Select a hotel</option>
+                                        {hotels.map(hotel => (
+                                            <option key={hotel._id} value={hotel._id}>
+                                                {hotel.name} - {hotel.city} ({hotel.stars}★)
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                
+                                <div className="flex justify-end gap-3">
+                                    <Button 
+                                        color="gray" 
+                                        onClick={closeDuplicateModal}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        gradientDuoTone="purpleToPink"
+                                        onClick={handleDuplicateHotel}
+                                        disabled={!selectedHotelToDuplicate}
+                                    >
+                                        Duplicate
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <Alert color="info">
+                                No hotels available to duplicate. Please add a hotel first.
+                            </Alert>
+                        )}
+                    </div>
+                </Modal.Body>
+            </Modal>
+            
+            {/* Tour Duplicate Modal */}
+            <Modal
+                show={tourDuplicateModalOpen}
+                onClose={closeTourDuplicateModal}
+                size="lg"
+                popup
+            >
+                <Modal.Header>
+                    <div className="text-center">
+                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+                            Duplicate Existing Tour
+                        </h3>
+                    </div>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="space-y-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Select a tour to duplicate its data. You can modify the duplicated data before creating a new tour.
+                        </p>
+                        
+                        {tours.length > 0 ? (
+                            <>
+                                <div>
+                                    <Label htmlFor="selectTourToDuplicate" value="Select Tour" />
+                                    <Select
+                                        id="selectTourToDuplicate"
+                                        value={selectedTourToDuplicate}
+                                        onChange={(e) => setSelectedTourToDuplicate(e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Select a tour</option>
+                                        {tours.map(tour => (
+                                            <option key={tour._id} value={tour._id}>
+                                                {tour.name} - {tour.city} ({tour.tourType})
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                
+                                <div className="flex justify-end gap-3">
+                                    <Button 
+                                        color="gray" 
+                                        onClick={closeTourDuplicateModal}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        gradientDuoTone="purpleToPink"
+                                        onClick={handleDuplicateTour}
+                                        disabled={!selectedTourToDuplicate}
+                                    >
+                                        Duplicate
+                                    </Button>
+                                </div>
+                            </>
+                        ) : (
+                            <Alert color="info">
+                                No tours available to duplicate. Please add a tour first.
+                            </Alert>
+                        )}
+                    </div>
+                </Modal.Body>
+            </Modal>
         </div>
     );
 }

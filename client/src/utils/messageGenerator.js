@@ -3,6 +3,15 @@ import { calculateDuration, getRoomTypeInArabic, getCityNameInArabic } from './p
 // RTL mark to ensure proper right-to-left display
 const RLM = '\u200F';
 
+// Function to convert numeric stars to Arabic text
+const getStarsInArabic = (stars) => {
+  const starsNum = parseInt(stars);
+  if (starsNum === 3) return "ثلاث نجوم";
+  if (starsNum === 4) return "أربع نجوم";
+  if (starsNum === 5) return "خمس نجوم";
+  return `${stars} نجوم`;
+};
+
 const arabicDayOrdinals = [
   'الاول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 
   'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر',
@@ -164,27 +173,6 @@ export const generateBookingMessage = ({
       Object.entries(roomTypeCounts).forEach(([type, details]) => {
         let detailString = `${details.count} ${getRoomTypeInArabic(type)}`;
         
-        const occupantDetails = [];
-        if (details.adults > 0) {
-          occupantDetails.push(`${details.adults} بالغ`);
-        }
-        
-        if (includeChildren) {
-          if (details.childrenUnder3 > 0) {
-            occupantDetails.push(`${details.childrenUnder3} طفل تحت 3 سنوات`);
-          }
-          if (details.children3to6 > 0) {
-            occupantDetails.push(`${details.children3to6} طفل 3-6 سنوات`);
-          }
-          if (details.children6to12 > 0) {
-            occupantDetails.push(`${details.children6to12} طفل 6-12 سنة`);
-          }
-        }
-        
-        if (occupantDetails.length > 0) {
-          detailString += ` (${occupantDetails.join(' + ')})`;
-        }
-        
         roomDetailsList.push(detailString);
       });
       
@@ -206,7 +194,6 @@ export const generateBookingMessage = ({
   const children3to6Count = parseInt(children3to6) || 0;
   const children6to12Count = parseInt(children6to12) || 0;
   const totalChildren = includeChildren ? (infantsCount + children3to6Count + children6to12Count) : 0;
-  const totalPeople = numGuests + totalChildren;
   
   if (includeChildren) {
     if (totalChildren > 0) {
@@ -243,7 +230,7 @@ ${RLM}سعر البكج ${finalPrice}$ 💵
 ${transportationText}
 
 ${RLM}الفندق 🏢
-${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${selectedHotelData.stars} نجوم ${totalPeople} اشخاص ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? `شامل الافطار ${selectedHotelData.breakfastPrice ? `(${selectedHotelData.breakfastPrice}$ للغرفة)` : ''}` : 'بدون افطار'}
+${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${getStarsInArabic(selectedHotelData.stars)} ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
 ${selectedHotelData.description ? `\n${RLM}${selectedHotelData.description}` : ''}
 
 ${orderedTourData.length > 0 ? `${RLM}تفاصيل الجولات 📋` : ''}

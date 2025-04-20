@@ -320,8 +320,6 @@ export default function WorkerForm() {
         includeBreakfast,
         selectedAirport
       });
-      // Update the trip price field with the calculated value
-      setTripPrice(finalPrice.toString());
     }
     
     if (selectedHotelData && selectedCity && startDate && endDate) {
@@ -487,9 +485,7 @@ export default function WorkerForm() {
                 .filter(hotel => !selectedCity || hotel.city === selectedCity)
                 .map((hotel) => (
                   <option key={hotel._id} value={hotel._id}>
-                    {hotel.name} ({hotel.stars} stars) {hotel.roomTypes && hotel.roomTypes.length > 0 
-                     ? `- ${hotel.roomTypes.length} room types available` 
-                     : `- $${hotel.pricePerNightPerPerson}/night`}
+                    {hotel.name} ({hotel.stars}★)
                   </option>
                 ))}
             </Select>

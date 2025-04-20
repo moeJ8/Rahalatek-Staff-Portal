@@ -25,7 +25,6 @@ const PriceBreakdown = ({
   selectedAirport
 }) => {
   const breakdownRef = useRef(null);
-  // Section counter state to keep track of section numbers
   const [sections, setSections] = useState({
     hotel: 0,
     breakfast: 0,
@@ -34,7 +33,6 @@ const PriceBreakdown = ({
     guests: 0
   });
 
-  // Reset counter when component re-renders
   useEffect(() => {
     let counter = 1;
     const newSections = {
@@ -52,8 +50,6 @@ const PriceBreakdown = ({
   const travelStartMonth = startDate ? new Date(startDate).toLocaleString('default', { month: 'long' }) : '';
   const travelEndMonth = endDate ? new Date(endDate).toLocaleString('default', { month: 'long' }) : '';
   const isMultiMonthStay = travelStartMonth !== travelEndMonth && travelStartMonth && travelEndMonth;
-  
-  // Calculate nights per month for multi-month stays
   const nightsPerMonth = calculateNightsPerMonth(startDate, endDate);
   
   let hotelTotal = 0;
@@ -414,7 +410,6 @@ const PriceBreakdown = ({
                 </p>
               )}
             </div>
-            
             {includeBreakfast && selectedHotelData.breakfastIncluded && selectedHotelData.breakfastPrice > 0 && (
               <div className="mb-3 p-3 bg-green-950/60 rounded-lg">
                 <h5 className="text-sm font-semibold text-green-300 mb-2 flex items-center">
