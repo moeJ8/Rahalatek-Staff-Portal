@@ -44,6 +44,7 @@ export default function SignInPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
@@ -55,13 +56,30 @@ export default function SignInPage() {
       
       const response = await axios.post(endpoint, requestData);
       
+      if (!isLogin) {
+        setSuccessMessage('Your account has been created. Please wait for admin approval to log in.');
+        setTimeout(() => {
+          setIsLogin(true);
+          setSuccessMessage('');
+        }, 3000);
+        return;
+      }
+      
+      if (response.data.isPendingApproval) {
+        setError('Your account is pending approval by an administrator.');
+        return;
+      }
+      
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      // Direct all users to /home regardless of admin status
       navigate('/home', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      if (err.response?.status === 403 && err.response?.data?.isPendingApproval) {
+        setError('Your account is pending approval by an administrator.');
+      } else {
+        setError(err.response?.data?.message || 'An error occurred');
+      }
       console.error(err);
     }
   };

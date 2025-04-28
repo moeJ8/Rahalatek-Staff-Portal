@@ -41,6 +41,7 @@ exports.register = async (req, res) => {
             username,
             password,
             isAdmin: isAdmin || false,
+            isApproved: false, // By default, users are not approved
             securityQuestion,
             securityAnswer
         });
@@ -59,7 +60,9 @@ exports.register = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                isAdmin: user.isAdmin
+                isAdmin: user.isAdmin,
+                isApproved: user.isApproved,
+                message: 'Account created successfully. Please wait for admin approval to login.'
             }
         });
     } catch (err) {
@@ -84,6 +87,13 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
         
+        if (!user.isApproved && !user.isAdmin) {
+            return res.status(403).json({ 
+                message: 'Your account is pending approval by an administrator.',
+                isPendingApproval: true
+            });
+        }
+        
         // Generate JWT token
         const token = jwt.sign(
             { userId: user._id, isAdmin: user.isAdmin },
@@ -96,7 +106,8 @@ exports.login = async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                isAdmin: user.isAdmin
+                isAdmin: user.isAdmin,
+                isApproved: user.isApproved
             }
         });
     } catch (err) {
@@ -140,6 +151,30 @@ exports.updateUserRole = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             userId, 
             { isAdmin }, 
+            { new: true }
+        ).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+exports.approveUser = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+        
+        const { userId, isApproved } = req.body;
+        
+        const user = await User.findByIdAndUpdate(
+            userId, 
+            { isApproved }, 
             { new: true }
         ).select('-password');
         

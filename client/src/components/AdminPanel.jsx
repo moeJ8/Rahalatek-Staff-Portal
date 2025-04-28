@@ -10,7 +10,7 @@ export default function AdminPanel() {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
-            if (['hotels', 'tours', 'airports', 'users'].includes(tabParam)) {
+            if (['hotels', 'tours', 'airports', 'users', 'requests'].includes(tabParam)) {
                 return tabParam;
             }
         }
@@ -30,6 +30,11 @@ export default function AdminPanel() {
         // Fetch users data only when switching to users tab and data not loaded yet
         if (tabName === 'users' && users.length === 0 && dataLoaded) {
             fetchUsers();
+        }
+        
+        // Fetch pending requests when switching to requests tab
+        if (tabName === 'requests' && dataLoaded) {
+            fetchPendingRequests();
         }
         
         // Fetch hotels data when switching to hotels tab and data not loaded yet
@@ -166,9 +171,11 @@ export default function AdminPanel() {
                     setHotels(hotelsResponse.data);
                     setTours(toursResponse.data);
                     
-                    // Only fetch users if starting on users tab
+                    // Only fetch users if starting on users tab or requests tab
                     if (activeTab === 'users') {
                         await fetchUsers();
+                    } else if (activeTab === 'requests') {
+                        await fetchPendingRequests();
                     }
                     
                     setError('');
@@ -189,6 +196,10 @@ export default function AdminPanel() {
     useEffect(() => {
         if (activeTab === 'users' && dataLoaded && users.length === 0) {
             fetchUsers();
+        }
+        
+        if (activeTab === 'requests' && dataLoaded) {
+            fetchPendingRequests();
         }
         
         // Fetch hotels when switching to hotels tab
@@ -245,7 +256,9 @@ export default function AdminPanel() {
                     Authorization: `Bearer ${token}`
                 }
             });
-            setUsers(response.data);
+            
+            const approvedUsers = response.data.filter(user => user.isApproved);
+            setUsers(approvedUsers);
             setError('');
         } catch (err) {
             console.error('Failed to fetch users:', err);
@@ -255,7 +268,6 @@ export default function AdminPanel() {
         }
     };
 
-    // Get airport options for hotel form
     const getAirportOptions = () => {
         return airports.map(airport => ({
             value: airport.name,
@@ -730,30 +742,92 @@ export default function AdminPanel() {
         }
     };
 
-    const handleDeleteUser = async (userId) => {
-        if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('You must be logged in to delete users');
-                    return;
-                }
-                
-                await axios.delete(`/api/auth/users/${userId}`, {
+    const handleToggleApprovalStatus = async (userId, currentStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('You must be logged in to update user approval status');
+                return;
+            }
+            
+            await axios.patch('/api/auth/users/approve', 
+                { userId, isApproved: !currentStatus },
+                {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
-                });
+                }
+            );
+            
+            if (activeTab === 'requests') {
+                setPendingRequests(pendingRequests.filter(user => user._id !== userId));
+                toast.success('User approved successfully!');
+            } else {
+                setUsers(users.map(user => 
+                    user._id === userId 
+                        ? { ...user, isApproved: !currentStatus } 
+                        : user
+                ));
                 
-                // Update the local state by removing the deleted user
-                setUsers(users.filter(user => user._id !== userId));
-                
-                toast.success('User deleted successfully!');
-            } catch (err) {
-                setError(err.response?.data?.message || 'Failed to delete user');
-                console.log(err);
+                toast.success(`User ${!currentStatus ? 'approved' : 'unapproved'} successfully!`);
             }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to update user approval status');
+            console.log(err);
         }
+    };
+
+    // Add state variables for the delete user modal
+    const [deleteUserModalOpen, setDeleteUserModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
+    const [deleteUserLoading, setDeleteUserLoading] = useState(false);
+
+    // Update the handleDeleteUser function to use the modal
+    const handleDeleteUser = async () => {
+        if (!userToDelete) return;
+        
+        setDeleteUserLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('You must be logged in to delete users');
+                setDeleteUserLoading(false);
+                return;
+            }
+            
+            await axios.delete(`/api/auth/users/${userToDelete._id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            // Update the appropriate state based on active tab
+            if (activeTab === 'requests') {
+                setPendingRequests(pendingRequests.filter(user => user._id !== userToDelete._id));
+                toast.success('User request rejected successfully!');
+            } else {
+                setUsers(users.filter(user => user._id !== userToDelete._id));
+                toast.success('User deleted successfully!');
+            }
+            
+            closeDeleteUserModal();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to delete user');
+            console.log(err);
+        } finally {
+            setDeleteUserLoading(false);
+        }
+    };
+
+    // Add functions to open and close the delete user modal
+    const openDeleteUserModal = (user) => {
+        setUserToDelete(user);
+        setDeleteUserModalOpen(true);
+    };
+
+    const closeDeleteUserModal = () => {
+        setDeleteUserModalOpen(false);
+        setUserToDelete(null);
     };
 
     // Inside the component, handle keyboard navigation with tab changing
@@ -761,7 +835,7 @@ export default function AdminPanel() {
         // Navigate with arrow keys
         if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
             e.preventDefault();
-            const tabs = ['hotels', 'tours', 'airports', 'users'];
+            const tabs = ['hotels', 'tours', 'airports', 'users', 'requests'];
             const currentIndex = tabs.indexOf(activeTab);
             
             let newIndex;
@@ -989,6 +1063,37 @@ export default function AdminPanel() {
         showSuccessMessage('Hotel data duplicated successfully! Make changes as needed and submit to create a new hotel.');
     };
 
+    const [pendingRequests, setPendingRequests] = useState([]);
+
+    // Add a new function to fetch pending requests
+    const fetchPendingRequests = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('You must be logged in to view pending requests');
+                setLoading(false);
+                return;
+            }
+            
+            const response = await axios.get('/api/auth/users', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            // Filter only users who are not approved
+            const pendingUsers = response.data.filter(user => !user.isApproved);
+            setPendingRequests(pendingUsers);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch pending requests:', err);
+            setError(err.response?.data?.message || 'Failed to fetch pending requests');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-56">
@@ -1052,6 +1157,23 @@ export default function AdminPanel() {
                     aria-controls="users-panel"
                 >
                     Users
+                </button>
+                <button
+                    id="tab-requests"
+                    className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'requests' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                    onClick={() => handleTabChange('requests')}
+                    onKeyDown={(e) => handleTabKeyDown(e, 'requests')}
+                    tabIndex={0}
+                    role="tab"
+                    aria-selected={activeTab === 'requests'}
+                    aria-controls="requests-panel"
+                >
+                    User Requests
+                    {pendingRequests.length > 0 && (
+                        <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                            {pendingRequests.length}
+                        </span>
+                    )}
                 </button>
             </div>
 
@@ -1980,7 +2102,7 @@ export default function AdminPanel() {
                                                 <Button 
                                                     gradientDuoTone="pinkToOrange"
                                                     size="xs"
-                                                    onClick={() => handleDeleteUser(user._id)}
+                                                    onClick={() => openDeleteUserModal(user)}
                                                 >
                                                     Delete
                                                 </Button>
@@ -1992,6 +2114,68 @@ export default function AdminPanel() {
                         </div>
                     ) : (
                         <Alert color="info">No users found. Admin users can manage other users here.</Alert>
+                    )}
+                </Card>
+            )}
+            
+            {activeTab === 'requests' && (
+                <Card className="w-full" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
+                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Pending User Approval Requests</h2>
+                    
+                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
+                    {success && <Alert color="success" className="mb-4">{success}</Alert>}
+                    
+                    {pendingRequests.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <Table.Head>
+                                    <Table.HeadCell>Username</Table.HeadCell>
+                                    <Table.HeadCell>Registration Date</Table.HeadCell>
+                                    <Table.HeadCell>Actions</Table.HeadCell>
+                                </Table.Head>
+                                <Table.Body className="divide-y">
+                                    {pendingRequests.map(user => (
+                                        <Table.Row key={user._id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
+                                            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                                                {user.username}
+                                            </Table.Cell>
+                                            <Table.Cell>
+                                                {new Date(user.createdAt).toLocaleDateString()}
+                                            </Table.Cell>
+                                            <Table.Cell>
+                                                <div className="flex items-center space-x-2">
+                                                    <Button 
+                                                        gradientDuoTone="greenToBlue" 
+                                                        size="xs"
+                                                        onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
+                                                    >
+                                                        Approve
+                                                    </Button>
+                                                    <Button 
+                                                        gradientDuoTone="pinkToOrange"
+                                                        size="xs"
+                                                        onClick={() => openDeleteUserModal(user)}
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                </div>
+                                            </Table.Cell>
+                                        </Table.Row>
+                                    ))}
+                                </Table.Body>
+                            </Table>
+                        </div>
+                    ) : (
+                        <div className="py-8 px-4 mx-auto text-center rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 bg-white dark:bg-gray-800">
+                            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                </svg>
+                            </div>
+                            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No pending requests</h3>
+                            <p className="mb-4 text-gray-500 dark:text-gray-400">There are no new user accounts awaiting approval at this time.</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">New registration requests will appear here when users sign up.</p>
+                        </div>
                     )}
                 </Card>
             )}
@@ -2120,6 +2304,56 @@ export default function AdminPanel() {
                                 No tours available to duplicate. Please add a tour first.
                             </Alert>
                         )}
+                    </div>
+                </Modal.Body>
+            </Modal>
+
+            {/* Delete User Confirmation Modal */}
+            <Modal
+                show={deleteUserModalOpen}
+                onClose={closeDeleteUserModal}
+                popup
+                size="md"
+                theme={{
+                    root: {
+                        base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+                        show: {
+                            on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
+                            off: "hidden"
+                        }
+                    },
+                    content: {
+                        base: "relative h-full w-full p-4 h-auto",
+                        inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
+                    }
+                }}
+            >
+                <Modal.Header />
+                <Modal.Body>
+                    <div className="text-center">
+                        <HiTrash className="mx-auto mb-4 h-12 w-12 text-red-500" />
+                        <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                            Are you sure you want to {activeTab === 'requests' ? 'reject' : 'delete'} the user
+                            <div className="font-bold text-gray-900 dark:text-white mt-1">
+                                "{userToDelete?.username}"?
+                            </div>
+                        </h3>
+                        <div className="flex justify-center gap-4">
+                            <Button
+                                color="failure"
+                                onClick={handleDeleteUser}
+                                isProcessing={deleteUserLoading}
+                            >
+                                Yes, {activeTab === 'requests' ? 'reject' : 'delete'} user
+                            </Button>
+                            <Button
+                                color="gray"
+                                onClick={closeDeleteUserModal}
+                                disabled={deleteUserLoading}
+                            >
+                                No, cancel
+                            </Button>
+                        </div>
                     </div>
                 </Modal.Body>
             </Modal>
