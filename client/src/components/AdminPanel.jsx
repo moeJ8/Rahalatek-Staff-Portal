@@ -1228,12 +1228,7 @@ export default function AdminPanel() {
                                 <option value="Cappadocia">Cappadocia</option>
                                 <option value="Fethiye">Fethiye</option>
                                 <option value="Istanbul">Istanbul</option>
-                                <option value="Izmir">Izmir</option>
-                                <option value="Konya">Konya</option>
-                                <option value="Marmaris">Marmaris</option>
-                                <option value="Pamukkale">Pamukkale</option>
                                 <option value="Trabzon">Trabzon</option>
-                                <option value="Uzungol">Uzungol</option>
                             </Select>
                         </div>
                         
@@ -1826,12 +1821,7 @@ export default function AdminPanel() {
                                 <option value="Cappadocia">Cappadocia</option>
                                 <option value="Fethiye">Fethiye</option>
                                 <option value="Istanbul">Istanbul</option>
-                                <option value="Izmir">Izmir</option>
-                                <option value="Konya">Konya</option>
-                                <option value="Marmaris">Marmaris</option>
-                                <option value="Pamukkale">Pamukkale</option>
                                 <option value="Trabzon">Trabzon</option>
-                                <option value="Uzungol">Uzungol</option>
                             </Select>
                         </div>
                         

@@ -42,8 +42,12 @@ export default function WorkerForm() {
     
     const [roomAllocations, setRoomAllocations] = useState(savedState?.roomAllocations || []);
 
+    // For date handling
     const [startDate, setStartDate] = useState(savedState?.startDate || '');
     const [endDate, setEndDate] = useState(savedState?.endDate || '');
+    const [displayStartDate, setDisplayStartDate] = useState('');
+    const [displayEndDate, setDisplayEndDate] = useState('');
+    
     const [numGuests, setNumGuests] = useState(savedState?.numGuests || 2);
     const [includeChildren, setIncludeChildren] = useState(savedState?.includeChildren || false);
     const [childrenUnder3, setChildrenUnder3] = useState(savedState?.childrenUnder3 || 0);
@@ -403,6 +407,32 @@ export default function WorkerForm() {
     return adultsAllocated && childrenUnder3Allocated && children3to6Allocated && children6to12Allocated;
   };
 
+  // Date formatting functions
+  const formatDateForDisplay = (isoDate) => {
+    if (!isoDate) return '';
+    const date = new Date(isoDate);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  
+  const parseDisplayDate = (displayDate) => {
+    if (!displayDate || !displayDate.includes('/')) return '';
+    const [day, month, year] = displayDate.split('/');
+    if (!day || !month || !year) return '';
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+  
+  useEffect(() => {
+    if (startDate) {
+      setDisplayStartDate(formatDateForDisplay(startDate));
+    }
+    if (endDate) {
+      setDisplayEndDate(formatDateForDisplay(endDate));
+    }
+  }, [startDate, endDate]);
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Booking Form</h2>
@@ -422,25 +452,97 @@ export default function WorkerForm() {
               <div className="mb-2 block">
                 <Label htmlFor="startDate" value="Start Date" className="dark:text-white" />
               </div>
-              <TextInput
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <TextInput
+                  id="displayStartDate"
+                  type="text"
+                  value={displayStartDate}
+                  onChange={(e) => {
+                    const newDisplayDate = e.target.value;
+                    setDisplayStartDate(newDisplayDate);
+                    
+                    // Only update the ISO date if we have a valid format
+                    if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                      const newIsoDate = parseDisplayDate(newDisplayDate);
+                      if (newIsoDate) {
+                        setStartDate(newIsoDate);
+                        
+                        // If end date is before the new start date, update it
+                        if (endDate && endDate < newIsoDate) {
+                          setEndDate(newIsoDate);
+                          setDisplayEndDate(formatDateForDisplay(newIsoDate));
+                        }
+                      }
+                    }
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  required
+                />
+                <input 
+                  type="date" 
+                  className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                  value={startDate}
+                  onChange={(e) => {
+                    const newIsoDate = e.target.value;
+                    setStartDate(newIsoDate);
+                    setDisplayStartDate(formatDateForDisplay(newIsoDate));
+                    
+                    // If end date is before the new start date, update it
+                    if (endDate && endDate < newIsoDate) {
+                      setEndDate(newIsoDate);
+                      setDisplayEndDate(formatDateForDisplay(newIsoDate));
+                    }
+                  }}
+                />
+                <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </span>
+              </div>
             </div>
+            
             <div>
               <div className="mb-2 block">
                 <Label htmlFor="endDate" value="End Date" className="dark:text-white" />
               </div>
-              <TextInput
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <TextInput
+                  id="displayEndDate"
+                  type="text"
+                  value={displayEndDate}
+                  onChange={(e) => {
+                    const newDisplayDate = e.target.value;
+                    setDisplayEndDate(newDisplayDate);
+                    
+                    // Only update the ISO date if we have a valid format
+                    if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                      const newIsoDate = parseDisplayDate(newDisplayDate);
+                      if (newIsoDate && (!startDate || newIsoDate >= startDate)) {
+                        setEndDate(newIsoDate);
+                      }
+                    }
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  required
+                />
+                <input 
+                  type="date" 
+                  className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                  value={endDate}
+                  min={startDate}
+                  onChange={(e) => {
+                    const newIsoDate = e.target.value;
+                    setEndDate(newIsoDate);
+                    setDisplayEndDate(formatDateForDisplay(newIsoDate));
+                  }}
+                />
+                <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
           
@@ -461,12 +563,7 @@ export default function WorkerForm() {
               <option value="Cappadocia">Cappadocia</option>
               <option value="Fethiye">Fethiye</option>
               <option value="Istanbul">Istanbul</option>
-              <option value="Izmir">Izmir</option>
-              <option value="Konya">Konya</option>
-              <option value="Marmaris">Marmaris</option>
-              <option value="Pamukkale">Pamukkale</option>
               <option value="Trabzon">Trabzon</option>
-              <option value="Uzungol">Uzungol</option>
             </Select>
           </div>
           

@@ -96,7 +96,7 @@ export const generateBookingMessage = ({
       const vehicleCapacityText = transportVehicleType === 'Vito' ? '(2-8 أشخاص)' : '(9-16 شخص)';
       
       if (hasReception && hasFarewell) {
-        transportationText = `${RLM}الاستقبال والتوديع من ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
+        transportationText = `${RLM}-الاستقبال والتوديع من ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
       } else if (hasReception) {
         transportationText = `${RLM}الاستقبال من ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
       } else if (hasFarewell) {
@@ -227,13 +227,17 @@ ${RLM}المدة ${nights} ليالي ⏰
 ${guestsInfo}
 ${RLM}سعر البكج ${finalPrice}$ 💵
 
+${RLM}يشمل:
+
 ${transportationText}
 
-${RLM}الفندق 🏢
+${RLM}-الفندق:
 ${RLM}الاقامة في ${getCityNameInArabic(selectedCity)} في فندق ${selectedHotelData.name} ${getStarsInArabic(selectedHotelData.stars)} ضمن ${roomTypeInfo} ${includeBreakfast && selectedHotelData.breakfastIncluded ? 'شامل الافطار' : 'بدون افطار'}
 ${selectedHotelData.description ? `\n${RLM}${selectedHotelData.description}` : ''}
 
-${orderedTourData.length > 0 ? `${RLM}تفاصيل الجولات 📋` : ''}
+${RLM}-عدد الجولات: ${orderedTourData.length}
+
+${orderedTourData.length > 0 ? `${RLM}-تفاصيل الجولات:` : ''}
 ${orderedTourData.map((tour, index) => {
   // Create VIP car capacity text with null checks
   let vipCarInfo = '';
