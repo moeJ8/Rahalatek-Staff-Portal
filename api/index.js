@@ -6,6 +6,7 @@ const hotelRoutes = require('./routes/hotelRoutes');
 const tourRoutes = require('./routes/tourRoutes');
 const authRoutes = require('./routes/authRoutes');
 const airportRoutes = require('./routes/airports');
+const voucherRoutes = require('./routes/voucherRoutes');
 const authController = require('./controllers/authController');
 const path = require('path');
 
@@ -34,6 +35,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/tours', tourRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/airports', airportRoutes);
+app.use('/api/vouchers', voucherRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

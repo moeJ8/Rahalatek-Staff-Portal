@@ -91,6 +91,12 @@ export default function Header() {
                 >
                   Tours
                 </Link>
+                <Link 
+                  to="/vouchers" 
+                  className={`font-medium ${isActive('/vouchers') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                >
+                  Vouchers
+                </Link>
                 {user.isAdmin && (
                   <Link 
                     to="/admin" 
@@ -197,6 +203,14 @@ export default function Header() {
                     className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Tours
+                  </Link>
+                  
+                  <Link 
+                    to="/vouchers"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/vouchers') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Vouchers
                   </Link>
                   
                   {user.isAdmin && (

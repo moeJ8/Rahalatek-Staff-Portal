@@ -6,6 +6,9 @@ import ToursPage from './pages/ToursPage'
 import EditTourPage from './pages/EditTourPage'
 import HotelsPage from './pages/HotelsPage'
 import EditHotelPage from './pages/EditHotelPage'
+import VouchersPage from './pages/VouchersPage'
+import VoucherDetailPage from './pages/VoucherDetailPage'
+import EditVoucherPage from './pages/EditVoucherPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -77,6 +80,9 @@ function App() {
             
             <Route element={<ProtectedRoute requireAdmin={false} />}>
               <Route path="/home" element={<WorkerPage />} />
+              <Route path="/vouchers" element={<VouchersPage />} />
+              <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
+              <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />
             </Route>
             
             {/* Catch-all route - redirect any undefined path to home */}

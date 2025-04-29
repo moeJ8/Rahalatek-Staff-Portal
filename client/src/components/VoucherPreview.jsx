@@ -1,0 +1,898 @@
+import React, { useRef, useState, useEffect } from 'react';
+import { Button } from 'flowbite-react';
+import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf } from 'react-icons/fa';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { formatDisplayDate } from '../utils/voucherGenerator';
+import { Link } from 'react-router-dom';
+
+const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
+  const voucherRef = useRef(null);
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  
+  // Preload the logo image and convert to data URL
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
+      setLogoDataUrl(dataUrl);
+    };
+    img.src = '/Logolight.png';
+  }, []);
+  
+  const generateDesktopVersionForDownload = () => {
+    // Create a completely new element with desktop-only styling
+    const container = document.createElement('div');
+    container.style.width = '720px'; // Slightly narrower for better PDF fit
+    container.style.backgroundColor = 'white';
+    container.style.padding = '20px';
+    container.style.fontFamily = 'Arial, sans-serif';
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    
+    // Header
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.alignItems = 'center';
+    header.style.justifyContent = 'space-between';
+    header.style.marginBottom = '20px';
+    header.style.paddingBottom = '10px';
+    header.style.borderBottom = '2px solid #e5efff';
+    
+    // Logo container
+    const logoContainer = document.createElement('div');
+    logoContainer.style.display = 'flex';
+    logoContainer.style.alignItems = 'center';
+    
+    // If we have the logo data URL, use it
+    if (logoDataUrl) {
+      const logoImg = document.createElement('img');
+      logoImg.src = logoDataUrl;
+      logoImg.style.height = '60px';
+      logoImg.style.marginRight = '15px';
+      logoContainer.appendChild(logoImg);
+    }
+    
+    // Logo text
+    const titleContainer = document.createElement('div');
+    
+    const companyTitle = document.createElement('div');
+    companyTitle.textContent = 'RAHALATEK';
+    companyTitle.style.color = '#1e40af';
+    companyTitle.style.fontSize = '28px';
+    companyTitle.style.fontWeight = 'bold';
+    companyTitle.style.lineHeight = '1.2';
+    
+    const companySubtitle = document.createElement('div');
+    companySubtitle.textContent = 'TOURISM';
+    companySubtitle.style.color = '#3b82f6';
+    companySubtitle.style.fontSize = '18px';
+    
+    titleContainer.appendChild(companyTitle);
+    titleContainer.appendChild(companySubtitle);
+    logoContainer.appendChild(titleContainer);
+    
+    header.appendChild(logoContainer);
+    container.appendChild(header);
+    
+    // Client Info
+    const clientInfo = document.createElement('div');
+    clientInfo.style.backgroundColor = '#ffffff';
+    clientInfo.style.border = '1px solid #e5e7eb';
+    clientInfo.style.padding = '15px';
+    clientInfo.style.borderRadius = '6px';
+    clientInfo.style.marginBottom = '20px';
+    clientInfo.style.display = 'grid';
+    clientInfo.style.gridTemplateColumns = '1fr 1fr';
+    clientInfo.style.gap = '10px';
+    
+    // Client Name
+    const clientNameDiv = document.createElement('div');
+    const clientNameLabel = document.createElement('span');
+    clientNameLabel.textContent = 'Clients: ';
+    clientNameLabel.style.fontWeight = '600';
+    clientNameDiv.appendChild(clientNameLabel);
+    clientNameDiv.appendChild(document.createTextNode(voucherData.clientName));
+    
+    // Add client nationality directly under client name
+    const clientNationalityDiv = document.createElement('div');
+    clientNationalityDiv.style.marginTop = '4px';
+    
+    const nationalityLabel = document.createElement('span');
+    nationalityLabel.textContent = 'Nationality: ';
+    nationalityLabel.style.fontWeight = '600';
+    
+    clientNationalityDiv.appendChild(nationalityLabel);
+    clientNationalityDiv.appendChild(document.createTextNode(voucherData.nationality));
+    
+    // Booking Number under nationality
+    const bookingDiv = document.createElement('div');
+    bookingDiv.style.marginTop = '4px';
+    const bookingLabel = document.createElement('span');
+    bookingLabel.textContent = 'Booking №: ';
+    bookingLabel.style.fontWeight = '600';
+    bookingDiv.appendChild(bookingLabel);
+    bookingDiv.appendChild(document.createTextNode(voucherData.voucherNumber || 10000));
+    
+    // Client container
+    const clientContainer = document.createElement('div');
+    clientContainer.appendChild(clientNameDiv);
+    clientContainer.appendChild(clientNationalityDiv);
+    clientContainer.appendChild(bookingDiv);
+    
+    // Dates
+    const datesDiv = document.createElement('div');
+    datesDiv.style.display = 'flex';
+    datesDiv.style.flexDirection = 'column';
+    
+    // Empty space div for alignment
+    const emptySpaceDiv = document.createElement('div');
+    emptySpaceDiv.textContent = '\u00A0'; // Non-breaking space
+    emptySpaceDiv.style.height = '24px'; // Approximate height of client name
+    
+    const arrivalDateDiv = document.createElement('div');
+    const arrivalLabel = document.createElement('span');
+    arrivalLabel.textContent = 'Arrival: ';
+    arrivalLabel.style.fontWeight = '600';
+    arrivalDateDiv.appendChild(arrivalLabel);
+    arrivalDateDiv.appendChild(document.createTextNode(formatDisplayDate(voucherData.arrivalDate)));
+    
+    const departureDateDiv = document.createElement('div');
+    const departureLabel = document.createElement('span');
+    departureLabel.textContent = 'Departure: ';
+    departureLabel.style.fontWeight = '600';
+    departureDateDiv.appendChild(departureLabel);
+    departureDateDiv.appendChild(document.createTextNode(formatDisplayDate(voucherData.departureDate)));
+    
+    datesDiv.appendChild(emptySpaceDiv);
+    datesDiv.appendChild(arrivalDateDiv);
+    datesDiv.appendChild(departureDateDiv);
+    
+    clientInfo.appendChild(clientContainer);
+    clientInfo.appendChild(datesDiv);
+    container.appendChild(clientInfo);
+    
+    // Hotels Section
+    const hotelSection = document.createElement('div');
+    hotelSection.style.marginBottom = '15px';
+    
+    const hotelSectionTitle = document.createElement('h3');
+    hotelSectionTitle.textContent = 'Hotels';
+    hotelSectionTitle.style.backgroundColor = '#1e40af';
+    hotelSectionTitle.style.color = 'white';
+    hotelSectionTitle.style.padding = '6px 15px';
+    hotelSectionTitle.style.paddingBottom = '18px';
+    hotelSectionTitle.style.borderTopLeftRadius = '6px';
+    hotelSectionTitle.style.borderTopRightRadius = '6px';
+    hotelSectionTitle.style.margin = '0';
+    hotelSectionTitle.style.fontSize = '16px';
+    hotelSectionTitle.style.fontWeight = '600';
+    hotelSectionTitle.style.display = 'flex';
+    hotelSectionTitle.style.alignItems = 'center';
+    
+    const hotelTableWrapper = document.createElement('div');
+    hotelTableWrapper.style.overflowX = 'auto';
+    
+    const hotelTable = document.createElement('table');
+    hotelTable.style.width = '100%';
+    hotelTable.style.fontSize = '12px';
+    hotelTable.style.textAlign = 'left';
+    hotelTable.style.color = '#374151';
+    hotelTable.style.borderCollapse = 'collapse';
+    hotelTable.style.border = '1px solid #bfdbfe';
+    
+    // Create table header
+    const hotelThead = document.createElement('thead');
+    hotelThead.style.backgroundColor = '#dbeafe';
+    hotelThead.style.textTransform = 'uppercase';
+    
+    const hotelHeaderRow = document.createElement('tr');
+    
+    const hotelHeaders = ['CITY', 'HOTEL', 'ROOM TYPE', 'NIGHT', 'CHECK IN', 'CHECK OUT', 'PAX', 'CN'];
+    hotelHeaders.forEach(headerText => {
+      const th = document.createElement('th');
+      th.textContent = headerText;
+      th.style.padding = '6px 10px';
+      th.style.border = '1px solid #bfdbfe';
+      th.style.fontSize = '12px';
+      hotelHeaderRow.appendChild(th);
+    });
+    
+    hotelThead.appendChild(hotelHeaderRow);
+    hotelTable.appendChild(hotelThead);
+    
+    // Create table body
+    const hotelTbody = document.createElement('tbody');
+    
+    voucherData.hotels.forEach(hotel => {
+      const row = document.createElement('tr');
+      row.style.backgroundColor = 'white';
+      row.style.borderBottom = '1px solid #e5e7eb';
+      
+      const hotelData = [
+        hotel.city,
+        hotel.hotelName,
+        hotel.roomType,
+        hotel.nights,
+        formatDisplayDate(hotel.checkIn),
+        formatDisplayDate(hotel.checkOut),
+        hotel.pax,
+        hotel.confirmationNumber || ''
+      ];
+      
+      hotelData.forEach(cellData => {
+        const td = document.createElement('td');
+        td.textContent = cellData;
+        td.style.padding = '6px 10px';
+        td.style.border = '1px solid #bfdbfe';
+        td.style.fontSize = '12px';
+        row.appendChild(td);
+      });
+      
+      hotelTbody.appendChild(row);
+    });
+    
+    hotelTable.appendChild(hotelTbody);
+    hotelTableWrapper.appendChild(hotelTable);
+    
+    hotelSection.appendChild(hotelSectionTitle);
+    hotelSection.appendChild(hotelTableWrapper);
+    container.appendChild(hotelSection);
+    
+    // Transfer Section
+    const transferSection = document.createElement('div');
+    transferSection.style.marginBottom = '15px';
+    
+    const transferSectionTitle = document.createElement('h3');
+    transferSectionTitle.textContent = 'Transfer';
+    transferSectionTitle.style.backgroundColor = '#1e40af';
+    transferSectionTitle.style.color = 'white';
+    transferSectionTitle.style.padding = '6px 15px';
+    transferSectionTitle.style.paddingBottom = '18px';
+    transferSectionTitle.style.borderTopLeftRadius = '6px';
+    transferSectionTitle.style.borderTopRightRadius = '6px';
+    transferSectionTitle.style.margin = '0';
+    transferSectionTitle.style.fontSize = '16px';
+    transferSectionTitle.style.fontWeight = '600';
+    transferSectionTitle.style.display = 'flex';
+    transferSectionTitle.style.alignItems = 'center';
+    
+    const transferTableWrapper = document.createElement('div');
+    transferTableWrapper.style.overflowX = 'auto';
+    
+    const transferTable = document.createElement('table');
+    transferTable.style.width = '100%';
+    transferTable.style.fontSize = '12px';
+    transferTable.style.textAlign = 'left';
+    transferTable.style.color = '#374151';
+    transferTable.style.borderCollapse = 'collapse';
+    transferTable.style.border = '1px solid #bfdbfe';
+    
+    // Create table header
+    const transferThead = document.createElement('thead');
+    transferThead.style.backgroundColor = '#dbeafe';
+    transferThead.style.textTransform = 'uppercase';
+    
+    const transferHeaderRow = document.createElement('tr');
+    
+    const transferHeaders = ['CITY', 'DATE', 'FROM', 'TO', 'PAX', 'TYPE'];
+    transferHeaders.forEach(headerText => {
+      const th = document.createElement('th');
+      th.textContent = headerText;
+      th.style.padding = '6px 10px';
+      th.style.border = '1px solid #bfdbfe';
+      th.style.fontSize = '12px';
+      th.style.verticalAlign = 'middle';
+      transferHeaderRow.appendChild(th);
+    });
+    
+    transferThead.appendChild(transferHeaderRow);
+    transferTable.appendChild(transferThead);
+    
+    // Create table body
+    const transferTbody = document.createElement('tbody');
+    
+    voucherData.transfers.forEach(transfer => {
+      const row = document.createElement('tr');
+      row.style.backgroundColor = 'white';
+      row.style.borderBottom = '1px solid #e5e7eb';
+      
+      const transferData = [
+        transfer.city || '',
+        `${transfer.type} ${formatDisplayDate(transfer.date)}`,
+        transfer.from,
+        transfer.to,
+        transfer.pax,
+        transfer.vehicleType
+      ];
+      
+      transferData.forEach(cellData => {
+        const td = document.createElement('td');
+        td.textContent = cellData;
+        td.style.padding = '6px 10px';
+        td.style.border = '1px solid #bfdbfe';
+        td.style.fontSize = '12px';
+        row.appendChild(td);
+      });
+      
+      transferTbody.appendChild(row);
+    });
+    
+    transferTable.appendChild(transferTbody);
+    transferTableWrapper.appendChild(transferTable);
+    
+    transferSection.appendChild(transferSectionTitle);
+    transferSection.appendChild(transferTableWrapper);
+    container.appendChild(transferSection);
+    
+    // Trips Section
+    const tripsSection = document.createElement('div');
+    tripsSection.style.marginBottom = '15px';
+    
+    const tripsSectionTitle = document.createElement('h3');
+    tripsSectionTitle.textContent = 'Trips';
+    tripsSectionTitle.style.backgroundColor = '#1e40af';
+    tripsSectionTitle.style.color = 'white';
+    tripsSectionTitle.style.padding = '6px 15px';
+    tripsSectionTitle.style.paddingBottom = '18px';
+    tripsSectionTitle.style.borderTopLeftRadius = '6px';
+    tripsSectionTitle.style.borderTopRightRadius = '6px';
+    tripsSectionTitle.style.margin = '0';
+    tripsSectionTitle.style.fontSize = '16px';
+    tripsSectionTitle.style.fontWeight = '600';
+    tripsSectionTitle.style.display = 'flex';
+    tripsSectionTitle.style.alignItems = 'center';
+    
+    const tripsTableWrapper = document.createElement('div');
+    tripsTableWrapper.style.overflowX = 'auto';
+    
+    const tripsTable = document.createElement('table');
+    tripsTable.style.width = '100%';
+    tripsTable.style.fontSize = '12px';
+    tripsTable.style.textAlign = 'left';
+    tripsTable.style.color = '#374151';
+    tripsTable.style.borderCollapse = 'collapse';
+    tripsTable.style.border = '1px solid #bfdbfe';
+    
+    // Create table header
+    const tripsThead = document.createElement('thead');
+    tripsThead.style.backgroundColor = '#dbeafe';
+    tripsThead.style.textTransform = 'uppercase';
+    
+    const tripsHeaderRow = document.createElement('tr');
+    
+    const tripsHeaders = ['CITY', 'TOURS', 'COUNT', 'TYPE', 'PAX'];
+    tripsHeaders.forEach(headerText => {
+      const th = document.createElement('th');
+      th.textContent = headerText;
+      th.style.padding = '6px 10px';
+      th.style.border = '1px solid #bfdbfe';
+      th.style.fontSize = '12px';
+      tripsHeaderRow.appendChild(th);
+    });
+    
+    tripsThead.appendChild(tripsHeaderRow);
+    tripsTable.appendChild(tripsThead);
+    
+    // Create table body
+    const tripsTbody = document.createElement('tbody');
+    
+    voucherData.trips.forEach(trip => {
+      const row = document.createElement('tr');
+      row.style.backgroundColor = 'white';
+      row.style.borderBottom = '1px solid #e5e7eb';
+      
+      const tripData = [
+        trip.city,
+        trip.tourName,
+        trip.count,
+        trip.type || '',
+        trip.pax
+      ];
+      
+      tripData.forEach(cellData => {
+        const td = document.createElement('td');
+        td.textContent = cellData;
+        td.style.padding = '6px 10px';
+        td.style.border = '1px solid #bfdbfe';
+        td.style.fontSize = '12px';
+        row.appendChild(td);
+      });
+      
+      tripsTbody.appendChild(row);
+    });
+    
+    tripsTable.appendChild(tripsTbody);
+    tripsTableWrapper.appendChild(tripsTable);
+    
+    tripsSection.appendChild(tripsSectionTitle);
+    tripsSection.appendChild(tripsTableWrapper);
+    container.appendChild(tripsSection);
+    
+    // Total Amount Section
+    const totalSection = document.createElement('div');
+    totalSection.style.marginBottom = '15px';
+    
+    // Total Amount Header
+    const totalSectionTitle = document.createElement('h3');
+    totalSectionTitle.textContent = 'Total amount';
+    totalSectionTitle.style.backgroundColor = '#1e40af';
+    totalSectionTitle.style.color = 'white';
+    totalSectionTitle.style.padding = '6px 15px';
+    totalSectionTitle.style.paddingBottom = '18px';
+    totalSectionTitle.style.borderTopLeftRadius = '6px';
+    totalSectionTitle.style.borderTopRightRadius = '6px';
+    totalSectionTitle.style.margin = '0';
+    totalSectionTitle.style.fontSize = '16px';
+    totalSectionTitle.style.fontWeight = '600';
+    totalSectionTitle.style.display = 'flex';
+    totalSectionTitle.style.justifyContent = 'center';
+    totalSectionTitle.style.alignItems = 'center';
+    totalSectionTitle.style.textAlign = 'center';
+    
+    // Value container
+    const totalValueContainer = document.createElement('div');
+    totalValueContainer.style.backgroundColor = 'white';
+    totalValueContainer.style.border = '1px solid #bfdbfe';
+    totalValueContainer.style.borderTop = 'none';
+    totalValueContainer.style.padding = '10px 15px';
+    totalValueContainer.style.textAlign = 'center';
+    totalValueContainer.style.display = 'flex';
+    totalValueContainer.style.justifyContent = 'center';
+    totalValueContainer.style.alignItems = 'center';
+    
+    const totalAmount = document.createElement('div');
+    totalAmount.textContent = `${voucherData.totalAmount}$`;
+    totalAmount.style.fontSize = '18px';
+    totalAmount.style.fontWeight = 'bold';
+    
+    totalValueContainer.appendChild(totalAmount);
+    
+    totalSection.appendChild(totalSectionTitle);
+    totalSection.appendChild(totalValueContainer);
+    container.appendChild(totalSection);
+    
+    // Contact Info
+    const contactSection = document.createElement('div');
+    contactSection.style.display = 'grid';
+    contactSection.style.gridTemplateColumns = '1fr 1fr 1fr';
+    contactSection.style.gap = '10px';
+    contactSection.style.marginBottom = '15px';
+    
+    // Phone
+    const phoneDiv = document.createElement('div');
+    phoneDiv.style.display = 'flex';
+    phoneDiv.style.alignItems = 'center';
+    phoneDiv.style.gap = '10px';
+    
+    const phoneIcon = document.createElement('span');
+    phoneIcon.textContent = '📱';
+    phoneIcon.style.fontSize = '20px';
+    
+    const phoneInfo = document.createElement('div');
+    
+    const phoneLabel = document.createElement('div');
+    phoneLabel.textContent = 'Phone';
+    phoneLabel.style.fontSize = '12px';
+    phoneLabel.style.color = '#6b7280';
+    
+    const phoneNumber = document.createElement('div');
+    phoneNumber.textContent = '+90 553 924 1644';
+    phoneNumber.style.fontSize = '14px';
+    
+    phoneInfo.appendChild(phoneLabel);
+    phoneInfo.appendChild(phoneNumber);
+    phoneDiv.appendChild(phoneIcon);
+    phoneDiv.appendChild(phoneInfo);
+    
+    // Email
+    const emailDiv = document.createElement('div');
+    emailDiv.style.display = 'flex';
+    emailDiv.style.alignItems = 'center';
+    emailDiv.style.gap = '10px';
+    
+    const emailIcon = document.createElement('span');
+    emailIcon.textContent = '✉️';
+    emailIcon.style.fontSize = '20px';
+    
+    const emailInfo = document.createElement('div');
+    
+    const emailLabel = document.createElement('div');
+    emailLabel.textContent = 'Email';
+    emailLabel.style.fontSize = '12px';
+    emailLabel.style.color = '#6b7280';
+    
+    const emailAddress = document.createElement('div');
+    emailAddress.textContent = 'rahalatek@gmail.com';
+    emailAddress.style.fontSize = '14px';
+    
+    emailInfo.appendChild(emailLabel);
+    emailInfo.appendChild(emailAddress);
+    emailDiv.appendChild(emailIcon);
+    emailDiv.appendChild(emailInfo);
+    
+    // Address
+    const addressDiv = document.createElement('div');
+    addressDiv.style.display = 'flex';
+    addressDiv.style.alignItems = 'center';
+    addressDiv.style.gap = '10px';
+    
+    const addressIcon = document.createElement('span');
+    addressIcon.textContent = '📍';
+    addressIcon.style.fontSize = '20px';
+    
+    const addressInfo = document.createElement('div');
+    
+    const addressLabel = document.createElement('div');
+    addressLabel.textContent = 'Address';
+    addressLabel.style.fontSize = '12px';
+    addressLabel.style.color = '#6b7280';
+    
+    const addressText = document.createElement('div');
+    addressText.textContent = 'Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye';
+    addressText.style.fontSize = '14px';
+    
+    addressInfo.appendChild(addressLabel);
+    addressInfo.appendChild(addressText);
+    addressDiv.appendChild(addressIcon);
+    addressDiv.appendChild(addressInfo);
+    
+    contactSection.appendChild(phoneDiv);
+    contactSection.appendChild(emailDiv);
+    contactSection.appendChild(addressDiv);
+    container.appendChild(contactSection);
+    
+    // Footer
+    const footer = document.createElement('div');
+    footer.style.textAlign = 'center';
+    footer.style.color = '#1e40af';
+    footer.style.fontWeight = 'bold';
+    footer.style.borderTop = '2px solid #e5efff';
+    footer.style.paddingTop = '15px';
+    footer.textContent = `Voucher #${voucherData.voucherNumber || 10000}`;
+    container.appendChild(footer);
+    
+    // Add to body temporarily for rendering
+    document.body.appendChild(container);
+    return container;
+  };
+  
+  const handleDownloadPDF = async () => {
+    if (!voucherRef.current) return;
+    
+    try {
+      setIsPdfLoading(true);
+      
+      // Generate a desktop-styled element
+      const desktopElement = generateDesktopVersionForDownload();
+      
+      const canvas = await html2canvas(desktopElement, {
+        scale: 1.5, // Reduced scale for better fit
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      
+      // Remove the temporary element
+      document.body.removeChild(desktopElement);
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      
+      // Calculate scale to fit on one page
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const maxHeight = pageHeight - 10; // Leave small margins
+      
+      let scale = 1;
+      if (imgHeight > maxHeight) {
+        scale = maxHeight / imgHeight;
+      }
+      
+      const scaledWidth = imgWidth * scale;
+      const scaledHeight = imgHeight * scale;
+      
+      // Center the image
+      const xPos = (imgWidth - scaledWidth) / 2;
+      const yPos = 5; // Small top margin
+      
+      pdf.addImage(imgData, 'PNG', xPos, yPos, scaledWidth, scaledHeight);
+      pdf.save(`voucher_${voucherData.voucherNumber}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+  
+  const handleDownloadImage = async () => {
+    if (!voucherRef.current) return;
+    
+    try {
+      setIsImageLoading(true);
+      
+      // Generate a desktop-styled element
+      const desktopElement = generateDesktopVersionForDownload();
+      
+      const canvas = await html2canvas(desktopElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove the temporary element
+      document.body.removeChild(desktopElement);
+      
+      canvas.toBlob((blob) => {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `voucher_${voucherData.voucherNumber}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        setIsImageLoading(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error generating image:', error);
+      setIsImageLoading(false);
+    }
+  };
+  
+  return (
+    <div className="p-2 md:p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:flex sm:flex-row sm:justify-center">
+        <Button 
+          className="w-full flex justify-center" 
+          color="light" 
+          onClick={handleDownloadImage}
+          disabled={isImageLoading}
+        >
+          {isImageLoading ? (
+            <FaSpinner className="animate-spin sm:mr-2" />
+          ) : (
+            <FaFileImage className="sm:mr-2 m-0.5" />
+          )}
+          <span className="hidden sm:inline">
+            {isImageLoading ? 'Generating...' : 'Download as Image'}
+          </span>
+        </Button>
+        
+        <Button 
+          className="w-full flex justify-center" 
+          gradientDuoTone="purpleToPink" 
+          onClick={handleDownloadPDF}
+          disabled={isPdfLoading}
+        >
+          {isPdfLoading ? (
+            <FaSpinner className="animate-spin sm:mr-2" />
+          ) : (
+            <FaFilePdf className="sm:mr-2 m-0.5" />
+          )}
+          <span className="hidden sm:inline">
+            {isPdfLoading ? 'Generating...' : 'Download as PDF'}
+          </span>
+        </Button>
+        
+        {editUrl && (
+          <Button
+            className="w-full flex justify-center"
+            gradientDuoTone="greenToBlue"
+            as={Link}
+            to={editUrl}
+          >
+            <FaPen className="sm:mr-2 sm:mt-0.5" />
+            <span className="hidden sm:inline">Edit Voucher</span>
+          </Button>
+        )}
+        
+        {onDelete && (
+          <Button 
+            className="w-full flex justify-center"
+            color="failure" 
+            onClick={onDelete}
+          >
+            <FaTrash className="sm:mr-2 sm:mt-0.5" />
+            <span className="hidden sm:inline">Delete Voucher</span>
+          </Button>
+        )}
+      </div>
+      
+      <div className="bg-white p-4 md:p-8 rounded-lg shadow-lg max-w-full" ref={voucherRef}>
+        {/* Voucher Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
+          <div className="flex items-center">
+            <img 
+              src="/Logolight.png" 
+              alt="Rahalatek Tourism" 
+              className="h-12 md:h-16 object-contain"
+            />
+            <div className="ml-4">
+              <h1 className="text-xl md:text-2xl font-bold text-blue-800">RAHALATEK</h1>
+              <h2 className="text-lg md:text-xl text-blue-600">TOURISM</h2>
+            </div>
+          </div>
+        </div>
+        
+        {/* Client Info */}
+        <div className="p-3 md:p-4 rounded-md mb-6 border border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
+            <div className="flex flex-col">
+              <div>
+                <span className="font-semibold">Clients:</span> {voucherData.clientName}
+              </div>
+              <div>
+                <span className="font-semibold">Nationality:</span> {voucherData.nationality}
+              </div>
+              <div>
+                <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <div>
+                &nbsp;
+              </div>
+              <div>
+                <span className="font-semibold">Arrival:</span> {formatDisplayDate(voucherData.arrivalDate)}
+              </div>
+              <div>
+                <span className="font-semibold">Departure:</span> {formatDisplayDate(voucherData.departureDate)}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Hotels */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Hotels</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+              <thead className="text-xs text-gray-700 uppercase bg-blue-100">
+                <tr>
+                  <th className="px-2 md:px-4 py-2 border">CITY</th>
+                  <th className="px-2 md:px-4 py-2 border">Hotel</th>
+                  <th className="px-2 md:px-4 py-2 border">Room Type</th>
+                  <th className="px-2 md:px-4 py-2 border">Night</th>
+                  <th className="px-2 md:px-4 py-2 border">Check in</th>
+                  <th className="px-2 md:px-4 py-2 border">Check Out</th>
+                  <th className="px-2 md:px-4 py-2 border">PAX</th>
+                  <th className="px-2 md:px-4 py-2 border">CN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {voucherData.hotels.map((hotel, index) => (
+                  <tr key={`hotel-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.city}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.hotelName}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.roomType}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.nights}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(hotel.checkIn)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(hotel.checkOut)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.pax}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.confirmationNumber}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Transfers */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Transfer</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+              <thead className="text-xs text-gray-700 uppercase bg-blue-100">
+                <tr>
+                  <th className="px-2 md:px-4 py-2 border">City</th>
+                  <th className="px-2 md:px-4 py-2 border">Date</th>
+                  <th className="px-2 md:px-4 py-2 border">From</th>
+                  <th className="px-2 md:px-4 py-2 border">To</th>
+                  <th className="px-2 md:px-4 py-2 border">Pax</th>
+                  <th className="px-2 md:px-4 py-2 border">TYPE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {voucherData.transfers.map((transfer, index) => (
+                  <tr key={`transfer-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.city || ''}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(transfer.date)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.from}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.to}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.pax}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.vehicleType}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Trips */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Trips</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+              <thead className="text-xs text-gray-700 uppercase bg-blue-100">
+                <tr>
+                  <th className="px-2 md:px-4 py-2 border">City</th>
+                  <th className="px-2 md:px-4 py-2 border">Tours</th>
+                  <th className="px-2 md:px-4 py-2 border">Count</th>
+                  <th className="px-2 md:px-4 py-2 border">Type</th>
+                  <th className="px-2 md:px-4 py-2 border">Pax</th>
+                </tr>
+              </thead>
+              <tbody>
+                {voucherData.trips.map((trip, index) => (
+                  <tr key={`trip-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.city}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.tourName}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.count}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.type}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.pax}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Total Amount */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex justify-center items-center">Total amount</h3>
+          <div className="border border-blue-200 border-t-0 p-3 flex justify-center items-center">
+            <div className="text-xl font-bold">{voucherData.totalAmount}$</div>
+          </div>
+        </div>
+        
+        {/* Contact Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📱</span>
+            <div>
+              <div className="text-sm text-gray-500">Phone</div>
+              <div className="text-sm">+90 553 924 1644</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✉️</span>
+            <div>
+              <div className="text-sm text-gray-500">Email</div>
+              <div className="text-sm">rahalatek@gmail.com</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📍</span>
+            <div>
+              <div className="text-sm text-gray-500">Address</div>
+              <div className="text-sm">Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div className="text-center text-blue-800 font-bold border-t-2 border-blue-200 pt-4">
+          Voucher #{voucherData.voucherNumber || 10000}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default VoucherPreview;
