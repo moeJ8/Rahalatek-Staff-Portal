@@ -434,9 +434,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     totalSectionTitle.style.fontSize = '16px';
     totalSectionTitle.style.fontWeight = '600';
     totalSectionTitle.style.display = 'flex';
-    totalSectionTitle.style.justifyContent = 'center';
     totalSectionTitle.style.alignItems = 'center';
-    totalSectionTitle.style.textAlign = 'center';
     
     // Value container - Now using a table like other sections
     const totalTableWrapper = document.createElement('div');
@@ -941,7 +939,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         
         {/* Total Amount */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex justify-center items-center">Total amount</h3>
+          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total amount</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0">
               <tbody>
