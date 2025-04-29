@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, TextInput, Select, Label, Alert } from 'flowbite-react';
+import { Card, Button, TextInput, Select, Label } from 'flowbite-react';
 import axios from 'axios';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
@@ -13,7 +13,6 @@ export default function EditVoucherPage() {
   const [voucher, setVoucher] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     clientName: '',
     nationality: '',
@@ -78,10 +77,22 @@ export default function EditVoucherPage() {
         ])];
         
         setCities(uniqueCities);
-        setError('');
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load voucher data. Please try again.');
+        toast.error('Failed to load voucher data. Please try again.', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#f44336',
+          },
+        });
       } finally {
         setLoading(false);
       }
@@ -232,18 +243,43 @@ export default function EditVoucherPage() {
   const handleSave = async () => {
     // Validate form
     if (!formData.clientName || !formData.nationality) {
-      setError('Please fill in all required client fields');
+      toast.error('Please fill in all required fields', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
       return;
     }
     
     if (!formData.arrivalDate || !formData.departureDate) {
-      setError('Please select arrival and departure dates');
+      toast.error('Please select arrival and departure dates', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
       return;
     }
     
     try {
       setSaving(true);
-      setError('');
       
       const token = localStorage.getItem('token');
       
@@ -274,13 +310,39 @@ export default function EditVoucherPage() {
         }
       });
       
-      toast.success('Voucher updated successfully!');
+      toast.success(`Voucher #${voucher.voucherNumber} for ${formData.clientName} has been updated successfully!`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
       
       // Navigate back to voucher details
       navigate(`/vouchers/${id}`);
     } catch (err) {
       console.error('Error updating voucher:', err);
-      setError(err.response?.data?.message || 'Failed to update voucher. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to update voucher. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
     } finally {
       setSaving(false);
     }
@@ -300,11 +362,11 @@ export default function EditVoucherPage() {
     );
   }
   
-  if (error && !voucher) {
+  if (!voucher) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
-          <div className="text-center py-8 text-red-500">{error}</div>
+          <div className="text-center py-8 text-red-500">Voucher not found. Please check the URL and try again.</div>
         </Card>
       </div>
     );
@@ -325,12 +387,6 @@ export default function EditVoucherPage() {
       <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
         Edit Voucher #{voucher?.voucherNumber}
       </h1>
-      
-      {error && (
-        <Alert color="failure" className="mb-4">
-          <span>{error}</span>
-        </Alert>
-      )}
       
       <Card className="mb-8">
         <h3 className="text-xl font-semibold mb-4 dark:text-white">Client Information</h3>

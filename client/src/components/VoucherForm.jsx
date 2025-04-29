@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, TextInput, Select, Label, Card, Checkbox, Alert } from 'flowbite-react';
+import { Button, TextInput, Select, Label, Card, Checkbox } from 'flowbite-react';
 import VoucherPreview from './VoucherPreview';
+import { toast } from 'react-hot-toast';
 
 export default function VoucherForm({ onSuccess }) {
   // Form data state
@@ -40,11 +41,8 @@ export default function VoucherForm({ onSuccess }) {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [generatedVoucher, setGeneratedVoucher] = useState(null);
-
 
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
@@ -69,10 +67,22 @@ export default function VoucherForm({ onSuccess }) {
         ])];
         
         setCities(uniqueCities);
-        setError('');
       } catch (err) {
         console.error(err);
-        setError('Failed to load data. Please try again.');
+        toast.error('Failed to load data. Please try again.', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#f44336',
+          },
+        });
       } finally {
         setLoading(false);
       }
@@ -222,12 +232,38 @@ export default function VoucherForm({ onSuccess }) {
   // Preview and submit handlers
   const handlePreview = async () => {
     if (!formData.clientName || !formData.nationality) {
-      setError('Please fill in all required client fields');
+      toast.error('Please fill in all required fields', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
       return;
     }
     
     if (!formData.arrivalDate || !formData.departureDate) {
-      setError('Please select arrival and departure dates');
+      toast.error('Please select arrival and departure dates', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
       return;
     }
 
@@ -251,9 +287,22 @@ export default function VoucherForm({ onSuccess }) {
       });
       
       setShowPreview(true);
-      setError('');
     } catch (err) {
       console.error('Error getting voucher number:', err);
+      toast.error('Could not get a unique voucher number. Using a default number instead.', {
+        duration: 3000,
+        style: {
+          background: '#ff9800',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#ff9800',
+        },
+      });
       // Continue with preview even if we couldn't get a unique number
       setGeneratedVoucher({
         ...formData,
@@ -267,7 +316,6 @@ export default function VoucherForm({ onSuccess }) {
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError('');
     
     try {
       const token = localStorage.getItem('token');
@@ -302,7 +350,20 @@ export default function VoucherForm({ onSuccess }) {
       });
       
       setGeneratedVoucher(response.data.data);
-      setSuccess('Voucher created successfully!');
+      toast.success(`Voucher #${generatedVoucher.voucherNumber} for ${formData.clientName} has been created successfully!`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
       
       // Call onSuccess callback if provided
       if (typeof onSuccess === 'function') {
@@ -310,7 +371,20 @@ export default function VoucherForm({ onSuccess }) {
       }
     } catch (err) {
       console.error('Error creating voucher:', err);
-      setError(err.response?.data?.message || 'Failed to create voucher. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to create voucher. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -330,17 +404,6 @@ export default function VoucherForm({ onSuccess }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {success && (
-            <Alert color="success" className="mb-4">
-              <span>{success}</span>
-            </Alert>
-          )}
-          
-          {error && (
-            <Alert color="failure" className="mb-4">
-              <span>{error}</span>
-            </Alert>
-          )}
           
           {!showPreview ? (
             <Card className="dark:bg-gray-800">

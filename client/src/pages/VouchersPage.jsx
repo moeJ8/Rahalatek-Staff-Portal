@@ -71,12 +71,38 @@ export default function VouchersPage() {
         prevVouchers.filter(v => v._id !== voucherToDelete._id)
       );
       
-      toast.success('Voucher deleted successfully');
+      toast.success(`Voucher #${voucherToDelete.voucherNumber} for ${voucherToDelete.clientName} has been deleted successfully.`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
       setDeleteModal(false);
       setVoucherToDelete(null);
     } catch (err) {
       console.error('Error deleting voucher:', err);
-      toast.error('Failed to delete voucher. Please try again.');
+      toast.error('Failed to delete voucher. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
     } finally {
       setDeleteLoading(false);
     }
