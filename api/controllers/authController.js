@@ -262,13 +262,9 @@ exports.verifySecurityAnswer = async (req, res) => {
             return res.status(400).json({ message: 'Incorrect security answer' });
         }
         
-        // Generate reset token
         const resetToken = crypto.randomBytes(20).toString('hex');
-        
-        // Set token expiration (15 minutes)
         const resetExpires = Date.now() + 15 * 60 * 1000;
         
-        // Save to user
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = resetExpires;
         await user.save();
@@ -284,7 +280,6 @@ exports.verifySecurityAnswer = async (req, res) => {
     }
 };
 
-// Reset password with valid token
 exports.resetPassword = async (req, res) => {
     try {
         const { username, resetToken, newPassword } = req.body;
@@ -302,10 +297,8 @@ exports.resetPassword = async (req, res) => {
             });
         }
         
-        // Set new password
         user.password = newPassword;
         
-        // Clear reset token fields
         user.resetPasswordToken = null;
         user.resetPasswordExpires = null;
         

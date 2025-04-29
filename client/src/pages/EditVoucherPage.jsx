@@ -994,7 +994,7 @@ export default function EditVoucherPage() {
               </>
             ) : (
               <>
-                <FaSave className="mr-2" />
+                <FaSave className="mr-2 mt-1" />
                 Save Changes
               </>
             )}
