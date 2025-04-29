@@ -31,12 +31,13 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
   const generateDesktopVersionForDownload = () => {
     // Create a completely new element with desktop-only styling
     const container = document.createElement('div');
-    container.style.width = '720px'; // Slightly narrower for better PDF fit
+    container.style.width = '800px'; // Increased width for better quality
     container.style.backgroundColor = 'white';
     container.style.padding = '20px';
     container.style.fontFamily = 'Arial, sans-serif';
     container.style.position = 'absolute';
     container.style.left = '-9999px';
+    container.style.fontWeight = 'bold'; // Make all text bold by default
     
     // Header
     const header = document.createElement('div');
@@ -188,6 +189,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     hotelTable.style.color = '#374151';
     hotelTable.style.borderCollapse = 'collapse';
     hotelTable.style.border = '1px solid #bfdbfe';
+    hotelTable.style.fontWeight = 'bold';
     
     // Create table header
     const hotelThead = document.createElement('thead');
@@ -203,6 +205,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       th.style.padding = '6px 10px';
       th.style.border = '1px solid #bfdbfe';
       th.style.fontSize = '12px';
+      th.style.fontWeight = 'bold';
       hotelHeaderRow.appendChild(th);
     });
     
@@ -234,6 +237,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         td.style.padding = '6px 10px';
         td.style.border = '1px solid #bfdbfe';
         td.style.fontSize = '12px';
+        td.style.fontWeight = 'bold';
         row.appendChild(td);
       });
       
@@ -275,6 +279,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     transferTable.style.color = '#374151';
     transferTable.style.borderCollapse = 'collapse';
     transferTable.style.border = '1px solid #bfdbfe';
+    transferTable.style.fontWeight = 'bold';
     
     // Create table header
     const transferThead = document.createElement('thead');
@@ -290,6 +295,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       th.style.padding = '6px 10px';
       th.style.border = '1px solid #bfdbfe';
       th.style.fontSize = '12px';
+      th.style.fontWeight = 'bold';
       th.style.verticalAlign = 'middle';
       transferHeaderRow.appendChild(th);
     });
@@ -320,6 +326,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         td.style.padding = '6px 10px';
         td.style.border = '1px solid #bfdbfe';
         td.style.fontSize = '12px';
+        td.style.fontWeight = 'bold';
         row.appendChild(td);
       });
       
@@ -361,6 +368,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     tripsTable.style.color = '#374151';
     tripsTable.style.borderCollapse = 'collapse';
     tripsTable.style.border = '1px solid #bfdbfe';
+    tripsTable.style.fontWeight = 'bold';
     
     // Create table header
     const tripsThead = document.createElement('thead');
@@ -376,6 +384,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       th.style.padding = '6px 10px';
       th.style.border = '1px solid #bfdbfe';
       th.style.fontSize = '12px';
+      th.style.fontWeight = 'bold';
       tripsHeaderRow.appendChild(th);
     });
     
@@ -404,6 +413,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         td.style.padding = '6px 10px';
         td.style.border = '1px solid #bfdbfe';
         td.style.fontSize = '12px';
+        td.style.fontWeight = 'bold';
         row.appendChild(td);
       });
       
@@ -432,7 +442,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     totalSectionTitle.style.borderTopRightRadius = '6px';
     totalSectionTitle.style.margin = '0';
     totalSectionTitle.style.fontSize = '16px';
-    totalSectionTitle.style.fontWeight = '600';
+    totalSectionTitle.style.fontWeight = '900'; // Extra bold for header
     totalSectionTitle.style.display = 'flex';
     totalSectionTitle.style.alignItems = 'center';
     
@@ -447,6 +457,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     totalTable.style.color = '#374151';
     totalTable.style.borderCollapse = 'collapse';
     totalTable.style.border = '1px solid #bfdbfe';
+    totalTable.style.fontWeight = 'bold';
     
     // Create table body
     const totalTbody = document.createElement('tbody');
@@ -460,14 +471,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       totalLabelCell.textContent = 'Total Amount';
       totalLabelCell.style.padding = '8px 15px';
       totalLabelCell.style.border = '1px solid #bfdbfe';
-      totalLabelCell.style.fontWeight = 'bold';
+      totalLabelCell.style.fontWeight = '900'; // Extra bold
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
       totalValueCell.textContent = `${voucherData.totalAmount}$`;
       totalValueCell.style.padding = '8px 15px';
       totalValueCell.style.border = '1px solid #bfdbfe';
-      totalValueCell.style.fontWeight = 'bold';
+      totalValueCell.style.fontWeight = '900'; // Extra bold
       totalValueCell.style.textAlign = 'right';
       
       totalRow.appendChild(totalLabelCell);
@@ -482,12 +493,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       advancedLabelCell.textContent = 'Advanced Payment';
       advancedLabelCell.style.padding = '8px 15px';
       advancedLabelCell.style.border = '1px solid #bfdbfe';
+      advancedLabelCell.style.fontWeight = '900'; // Extra bold to match other rows
       
       const advancedValueCell = document.createElement('td');
       advancedValueCell.textContent = `${voucherData.advancedAmount}$`;
       advancedValueCell.style.padding = '8px 15px';
       advancedValueCell.style.border = '1px solid #bfdbfe';
       advancedValueCell.style.textAlign = 'right';
+      advancedValueCell.style.fontWeight = '900'; // Extra bold to match other rows
       
       advancedRow.appendChild(advancedLabelCell);
       advancedRow.appendChild(advancedValueCell);
@@ -501,13 +514,13 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       remainingLabelCell.textContent = 'Balance Due';
       remainingLabelCell.style.padding = '8px 15px';
       remainingLabelCell.style.border = '1px solid #bfdbfe';
-      remainingLabelCell.style.fontWeight = 'bold';
+      remainingLabelCell.style.fontWeight = '900'; // Extra bold
       
       const remainingValueCell = document.createElement('td');
       remainingValueCell.textContent = `${voucherData.remainingAmount}$`;
       remainingValueCell.style.padding = '8px 15px';
       remainingValueCell.style.border = '1px solid #bfdbfe';
-      remainingValueCell.style.fontWeight = 'bold';
+      remainingValueCell.style.fontWeight = '900'; // Extra bold
       remainingValueCell.style.textAlign = 'right';
       
       remainingRow.appendChild(remainingLabelCell);
@@ -522,14 +535,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       totalLabelCell.textContent = 'Total Amount';
       totalLabelCell.style.padding = '8px 15px';
       totalLabelCell.style.border = '1px solid #bfdbfe';
-      totalLabelCell.style.fontWeight = 'bold';
+      totalLabelCell.style.fontWeight = '900'; // Extra bold
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
       totalValueCell.textContent = `${voucherData.totalAmount}$`;
       totalValueCell.style.padding = '8px 15px';
       totalValueCell.style.border = '1px solid #bfdbfe';
-      totalValueCell.style.fontWeight = 'bold';
+      totalValueCell.style.fontWeight = '900'; // Extra bold
       totalValueCell.style.textAlign = 'right';
       
       singleRow.appendChild(totalLabelCell);
@@ -659,22 +672,36 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       const desktopElement = generateDesktopVersionForDownload();
       
       const canvas = await html2canvas(desktopElement, {
-        scale: 1.5, // Reduced scale for better fit
+        scale: 3, // Increased from 2 for better resolution
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        imageTimeout: 0, // No timeout for images
+        onclone: (clonedDoc) => {
+          // Ensure all images in the cloned document are loaded
+          const images = clonedDoc.querySelectorAll('img');
+          for (let img of images) {
+            if (!img.complete) {
+              // Force image to be fully loaded
+              const currentSrc = img.src;
+              img.src = '';
+              img.src = currentSrc;
+            }
+          }
+        }
       });
       
       // Remove the temporary element
       document.body.removeChild(desktopElement);
       
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0); // Use maximum quality for PDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
-        compress: true
+        compress: false, // Disable compression for higher quality
+        hotfixes: ["px_scaling"] // Apply pixel scaling fix for better quality
       });
       
       const imgWidth = 210; // A4 width in mm
@@ -696,7 +723,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       const xPos = (imgWidth - scaledWidth) / 2;
       const yPos = 5; // Small top margin
       
-      pdf.addImage(imgData, 'PNG', xPos, yPos, scaledWidth, scaledHeight);
+      pdf.addImage(imgData, 'PNG', xPos, yPos, scaledWidth, scaledHeight, null, 'FAST', 0); // FAST interpolation mode, no rotation
       pdf.save(`voucher_${voucherData.voucherNumber}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -715,10 +742,23 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
       const desktopElement = generateDesktopVersionForDownload();
       
       const canvas = await html2canvas(desktopElement, {
-        scale: 2,
+        scale: 3, // Reduced scale to ensure proper rendering
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        imageTimeout: 0, // No timeout for images
+        onclone: (clonedDoc) => {
+          // Ensure all images in the cloned document are loaded
+          const images = clonedDoc.querySelectorAll('img');
+          for (let img of images) {
+            if (!img.complete) {
+              // Force image to be fully loaded
+              const currentSrc = img.src;
+              img.src = '';
+              img.src = currentSrc;
+            }
+          }
+        }
       });
       
       // Remove the temporary element
@@ -732,7 +772,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         downloadLink.click();
         document.body.removeChild(downloadLink);
         setIsImageLoading(false);
-      }, 'image/png');
+      }, 'image/png', 0.95); // Slightly reduced quality for better compatibility
     } catch (error) {
       console.error('Error generating image:', error);
       setIsImageLoading(false);
@@ -798,7 +838,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         )}
       </div>
       
-      <div className="bg-white p-4 md:p-8 rounded-lg shadow-lg max-w-full" ref={voucherRef}>
+      <div className="bg-white p-4 md:p-8 rounded-lg shadow-lg max-w-full font-bold" ref={voucherRef}>
         {/* Voucher Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
           <div className="flex items-center">
@@ -846,7 +886,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Hotels</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
                   <th className="px-2 md:px-4 py-2 border">CITY</th>
@@ -881,7 +921,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Transfer</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
                   <th className="px-2 md:px-4 py-2 border">City</th>
@@ -912,7 +952,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Trips</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
                   <th className="px-2 md:px-4 py-2 border">City</th>
@@ -941,27 +981,27 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total amount</h3>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0 font-bold">
               <tbody>
                 {voucherData.advancedPayment ? (
                   <>
                     <tr className="bg-white border-b">
-                      <td className="px-4 py-3 border font-semibold w-3/4">Total Amount</td>
-                      <td className="px-4 py-3 border text-right font-semibold">{voucherData.totalAmount}$</td>
+                      <td className="px-4 py-3 border font-black w-3/4">Total Amount</td>
+                      <td className="px-4 py-3 border text-right font-black">{voucherData.totalAmount}$</td>
                     </tr>
                     <tr className="bg-white border-b">
-                      <td className="px-4 py-3 border">Advanced Payment</td>
-                      <td className="px-4 py-3 border text-right">{voucherData.advancedAmount}$</td>
+                      <td className="px-4 py-3 border font-black">Advanced Payment</td>
+                      <td className="px-4 py-3 border text-right font-black">{voucherData.advancedAmount}$</td>
                     </tr>
                     <tr className="bg-blue-50 border-b">
-                      <td className="px-4 py-3 border font-semibold">Balance Due</td>
-                      <td className="px-4 py-3 border text-right font-semibold">{voucherData.remainingAmount}$</td>
+                      <td className="px-4 py-3 border font-black">Balance Due</td>
+                      <td className="px-4 py-3 border text-right font-black">{voucherData.remainingAmount}$</td>
                     </tr>
                   </>
                 ) : (
                   <tr className="bg-white border-b">
-                    <td className="px-4 py-3 border font-semibold w-3/4">Total Amount</td>
-                    <td className="px-4 py-3 border text-right font-semibold">{voucherData.totalAmount}$</td>
+                    <td className="px-4 py-3 border font-black w-3/4">Total Amount</td>
+                    <td className="px-4 py-3 border text-right font-black">{voucherData.totalAmount}$</td>
                   </tr>
                 )}
               </tbody>

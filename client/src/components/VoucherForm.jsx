@@ -717,7 +717,7 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Hotels</h3>
-                  <Button size="sm" onClick={handleAddHotel}>+ Add Hotel</Button>
+                  <Button size="sm" onClick={handleAddHotel} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Hotel</Button>
                 </div>
                 
                 {formData.hotels.map((hotel, index) => (
@@ -872,7 +872,7 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Transfers</h3>
-                  <Button size="sm" onClick={handleAddTransfer}>+ Add Transfer</Button>
+                  <Button size="sm" onClick={handleAddTransfer} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Transfer</Button>
                 </div>
                 
                 {formData.transfers.map((transfer, index) => (
@@ -992,7 +992,7 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Trips</h3>
-                  <Button size="sm" onClick={handleAddTrip}>+ Add Trip</Button>
+                  <Button size="sm" onClick={handleAddTrip} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Trip</Button>
                 </div>
                 
                 {formData.trips.map((trip, index) => (
