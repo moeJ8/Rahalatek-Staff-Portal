@@ -167,7 +167,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     
     const hotelSectionTitle = document.createElement('h3');
     hotelSectionTitle.textContent = 'Hotels';
-    hotelSectionTitle.style.backgroundColor = '#1e40af';
+    hotelSectionTitle.style.backgroundColor = '#0f3785';
     hotelSectionTitle.style.color = 'white';
     hotelSectionTitle.style.padding = '6px 15px';
     hotelSectionTitle.style.paddingBottom = '18px';
@@ -257,7 +257,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     
     const transferSectionTitle = document.createElement('h3');
     transferSectionTitle.textContent = 'Transfer';
-    transferSectionTitle.style.backgroundColor = '#1e40af';
+    transferSectionTitle.style.backgroundColor = '#0f3785';
     transferSectionTitle.style.color = 'white';
     transferSectionTitle.style.padding = '6px 15px';
     transferSectionTitle.style.paddingBottom = '18px';
@@ -346,7 +346,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     
     const tripsSectionTitle = document.createElement('h3');
     tripsSectionTitle.textContent = 'Trips';
-    tripsSectionTitle.style.backgroundColor = '#1e40af';
+    tripsSectionTitle.style.backgroundColor = '#0f3785';
     tripsSectionTitle.style.color = 'white';
     tripsSectionTitle.style.padding = '6px 15px';
     tripsSectionTitle.style.paddingBottom = '18px';
@@ -434,7 +434,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     // Total Amount Header
     const totalSectionTitle = document.createElement('h3');
     totalSectionTitle.textContent = 'Total amount';
-    totalSectionTitle.style.backgroundColor = '#1e40af';
+    totalSectionTitle.style.backgroundColor = '#0f3785';
     totalSectionTitle.style.color = 'white';
     totalSectionTitle.style.padding = '6px 15px';
     totalSectionTitle.style.paddingBottom = '18px';
@@ -884,7 +884,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         
         {/* Hotels */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Hotels</h3>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Hotels</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
@@ -919,7 +919,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         
         {/* Transfers */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Transfer</h3>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Transfer</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
@@ -950,7 +950,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         
         {/* Trips */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md">Trips</h3>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Trips</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
@@ -979,7 +979,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         
         {/* Total Amount */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total amount</h3>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total amount</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0 font-bold">
               <tbody>
