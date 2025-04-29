@@ -1,8 +1,11 @@
-// Format date to MM/DD/YYYY
+// Format date to DD/MM/YYYY
 export const formatDisplayDate = (date) => {
   if (!date) return '';
   const dateObj = new Date(date);
-  return `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+  const day = dateObj.getDate().toString().padStart(2, '0');
+  const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const year = dateObj.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 // Function to create a PDF-ready voucher using the voucher data

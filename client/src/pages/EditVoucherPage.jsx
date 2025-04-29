@@ -24,10 +24,41 @@ export default function EditVoucherPage() {
     trips: []
   });
   
+  // Date display formatting
+  const [displayArrivalDate, setDisplayArrivalDate] = useState('');
+  const [displayDepartureDate, setDisplayDepartureDate] = useState('');
+  
   // Hotels, Cities, and Tours data
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [cities, setCities] = useState([]);
+  
+  // Date formatting functions
+  const formatDateForDisplay = (isoDate) => {
+    if (!isoDate) return '';
+    const date = new Date(isoDate);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+  
+  const parseDisplayDate = (displayDate) => {
+    if (!displayDate || !displayDate.includes('/')) return '';
+    const [day, month, year] = displayDate.split('/');
+    if (!day || !month || !year) return '';
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+  
+  // Update display dates when ISO dates change
+  useEffect(() => {
+    if (formData.arrivalDate) {
+      setDisplayArrivalDate(formatDateForDisplay(formData.arrivalDate));
+    }
+    if (formData.departureDate) {
+      setDisplayDepartureDate(formatDateForDisplay(formData.departureDate));
+    }
+  }, [formData.arrivalDate, formData.departureDate]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -239,6 +270,45 @@ export default function EditVoucherPage() {
     }));
   };
   
+  // Helper function to format date for a specific hotel index
+  const formatHotelDateForDisplay = (index, dateType) => {
+    const date = formData.hotels[index][dateType];
+    return formatDateForDisplay(date);
+  };
+
+  // Helper function to update hotel date
+  const updateHotelDate = (index, dateType, isoDate) => {
+    const updatedHotels = [...formData.hotels];
+    updatedHotels[index][dateType] = isoDate;
+    
+    // If check-in date is later than check-out, update check-out
+    if (dateType === 'checkIn' && updatedHotels[index].checkOut && updatedHotels[index].checkOut < isoDate) {
+      updatedHotels[index].checkOut = isoDate;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      hotels: updatedHotels
+    }));
+  };
+
+  // Helper function to format date for a specific transfer index
+  const formatTransferDateForDisplay = (index) => {
+    const date = formData.transfers[index].date;
+    return formatDateForDisplay(date);
+  };
+
+  // Helper function to update transfer date
+  const updateTransferDate = (index, isoDate) => {
+    const updatedTransfers = [...formData.transfers];
+    updatedTransfers[index].date = isoDate;
+    
+    setFormData(prev => ({
+      ...prev,
+      transfers: updatedTransfers
+    }));
+  };
+  
   // Save voucher
   const handleSave = async () => {
     // Validate form
@@ -428,26 +498,115 @@ export default function EditVoucherPage() {
           
           <div>
             <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
-            <TextInput
-              id="arrivalDate"
-              name="arrivalDate"
-              type="date"
-              value={formData.arrivalDate}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="relative">
+              <TextInput
+                id="displayArrivalDate"
+                type="text"
+                value={displayArrivalDate}
+                onChange={(e) => {
+                  const newDisplayDate = e.target.value;
+                  setDisplayArrivalDate(newDisplayDate);
+                  
+                  // Only update the ISO date if we have a valid format
+                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                    const newIsoDate = parseDisplayDate(newDisplayDate);
+                    if (newIsoDate) {
+                      setFormData(prev => ({
+                        ...prev,
+                        arrivalDate: newIsoDate
+                      }));
+                      
+                      // If departure date is before the new arrival date, update it
+                      if (formData.departureDate && formData.departureDate < newIsoDate) {
+                        setFormData(prev => ({
+                          ...prev,
+                          departureDate: newIsoDate
+                        }));
+                        setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                      }
+                    }
+                  }
+                }}
+                placeholder="DD/MM/YYYY"
+                required
+              />
+              <input 
+                type="date" 
+                name="arrivalDate"
+                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                value={formData.arrivalDate}
+                onChange={(e) => {
+                  const newIsoDate = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    arrivalDate: newIsoDate
+                  }));
+                  setDisplayArrivalDate(formatDateForDisplay(newIsoDate));
+                  
+                  // If departure date is before the new arrival date, update it
+                  if (formData.departureDate && formData.departureDate < newIsoDate) {
+                    setFormData(prev => ({
+                      ...prev,
+                      departureDate: newIsoDate
+                    }));
+                    setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                  }
+                }}
+              />
+              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+            </div>
           </div>
           
           <div>
             <Label htmlFor="departureDate" value="Departure Date" className="mb-2 block" />
-            <TextInput
-              id="departureDate"
-              name="departureDate"
-              type="date"
-              value={formData.departureDate}
-              onChange={handleInputChange}
-              required
-            />
+            <div className="relative">
+              <TextInput
+                id="displayDepartureDate"
+                type="text"
+                value={displayDepartureDate}
+                onChange={(e) => {
+                  const newDisplayDate = e.target.value;
+                  setDisplayDepartureDate(newDisplayDate);
+                  
+                  // Only update the ISO date if we have a valid format
+                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                    const newIsoDate = parseDisplayDate(newDisplayDate);
+                    if (newIsoDate && (!formData.arrivalDate || newIsoDate >= formData.arrivalDate)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        departureDate: newIsoDate
+                      }));
+                    }
+                  }
+                }}
+                placeholder="DD/MM/YYYY"
+                required
+              />
+              <input 
+                type="date" 
+                name="departureDate"
+                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                value={formData.departureDate}
+                min={formData.arrivalDate}
+                onChange={(e) => {
+                  const newIsoDate = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    departureDate: newIsoDate
+                  }));
+                  setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                }}
+              />
+              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
         
@@ -522,20 +681,67 @@ export default function EditVoucherPage() {
                 
                 <div>
                   <Label value="Check In" className="mb-2 block" />
-                  <TextInput
-                    type="date"
-                    value={hotel.checkIn}
-                    onChange={(e) => handleHotelChange(index, 'checkIn', e.target.value)}
-                  />
+                  <div className="relative">
+                    <TextInput
+                      type="text"
+                      value={formatHotelDateForDisplay(index, 'checkIn')}
+                      onChange={(e) => {
+                        const newDisplayDate = e.target.value;
+                        // Only update if valid format
+                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                          const newIsoDate = parseDisplayDate(newDisplayDate);
+                          if (newIsoDate) {
+                            updateHotelDate(index, 'checkIn', newIsoDate);
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                    />
+                    <input 
+                      type="date" 
+                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                      value={formData.hotels[index].checkIn}
+                      onChange={(e) => updateHotelDate(index, 'checkIn', e.target.value)}
+                    />
+                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
                 
                 <div>
                   <Label value="Check Out" className="mb-2 block" />
-                  <TextInput
-                    type="date"
-                    value={hotel.checkOut}
-                    onChange={(e) => handleHotelChange(index, 'checkOut', e.target.value)}
-                  />
+                  <div className="relative">
+                    <TextInput
+                      type="text"
+                      value={formatHotelDateForDisplay(index, 'checkOut')}
+                      onChange={(e) => {
+                        const newDisplayDate = e.target.value;
+                        // Only update if valid format and after check-in
+                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                          const newIsoDate = parseDisplayDate(newDisplayDate);
+                          if (newIsoDate && (!formData.hotels[index].checkIn || newIsoDate >= formData.hotels[index].checkIn)) {
+                            updateHotelDate(index, 'checkOut', newIsoDate);
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                    />
+                    <input 
+                      type="date" 
+                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                      value={formData.hotels[index].checkOut}
+                      min={formData.hotels[index].checkIn}
+                      onChange={(e) => updateHotelDate(index, 'checkOut', e.target.value)}
+                    />
+                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
                 
                 <div>
@@ -598,13 +804,37 @@ export default function EditVoucherPage() {
                 
                 <div>
                   <Label htmlFor={`transferDate-${index}`} value="Date" className="mb-2 block" />
-                  <TextInput
-                    type="date"
-                    id={`transferDate-${index}`}
-                    value={transfer.date}
-                    onChange={(e) => handleTransferChange(index, 'date', e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <TextInput
+                      type="text"
+                      value={formatTransferDateForDisplay(index)}
+                      onChange={(e) => {
+                        const newDisplayDate = e.target.value;
+                        // Only update if valid format
+                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                          const newIsoDate = parseDisplayDate(newDisplayDate);
+                          if (newIsoDate) {
+                            updateTransferDate(index, newIsoDate);
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                      required
+                    />
+                    <input 
+                      type="date" 
+                      id={`transferDate-${index}`}
+                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                      value={formData.transfers[index].date}
+                      onChange={(e) => updateTransferDate(index, e.target.value)}
+                      required
+                    />
+                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
                 
                 <div>
