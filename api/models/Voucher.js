@@ -58,6 +58,18 @@ const voucherSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    advancedPayment: {
+        type: Boolean,
+        default: false
+    },
+    advancedAmount: {
+        type: Number,
+        default: 0
+    },
+    remainingAmount: {
+        type: Number,
+        default: 0
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

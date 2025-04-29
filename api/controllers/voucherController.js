@@ -13,7 +13,10 @@ exports.createVoucher = async (req, res) => {
             hotels,
             transfers,
             trips,
-            totalAmount
+            totalAmount,
+            advancedPayment,
+            advancedAmount,
+            remainingAmount
         } = req.body;
 
         let processedTrips;
@@ -54,6 +57,9 @@ exports.createVoucher = async (req, res) => {
             transfers,
             trips: processedTrips,
             totalAmount: Number(totalAmount) || 0,
+            advancedPayment: advancedPayment || false,
+            advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
+            remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0,
             createdBy: req.user.userId
         });
         
@@ -81,6 +87,9 @@ exports.createVoucher = async (req, res) => {
                     transfers,
                     trips: processedTrips,
                     totalAmount: Number(totalAmount) || 0,
+                    advancedPayment: advancedPayment || false,
+                    advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
+                    remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0,
                     createdBy: req.user.userId
                 });
                 
@@ -226,7 +235,10 @@ exports.updateVoucher = async (req, res) => {
             hotels,
             transfers,
             trips,
-            totalAmount
+            totalAmount,
+            advancedPayment,
+            advancedAmount,
+            remainingAmount
         } = req.body;
 
         // Process trips if needed
@@ -255,7 +267,10 @@ exports.updateVoucher = async (req, res) => {
                 hotels,
                 transfers,
                 trips: processedTrips,
-                totalAmount: Number(totalAmount) || 0
+                totalAmount: Number(totalAmount) || 0,
+                advancedPayment: advancedPayment || false,
+                advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
+                remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0
             },
             { new: true, runValidators: true }
         ).populate('createdBy', 'username');

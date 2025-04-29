@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, TextInput, Select, Label } from 'flowbite-react';
+import { Card, Button, TextInput, Select, Label, Checkbox } from 'flowbite-react';
 import axios from 'axios';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
@@ -21,7 +21,10 @@ export default function EditVoucherPage() {
     totalAmount: 0,
     hotels: [],
     transfers: [],
-    trips: []
+    trips: [],
+    advancedPayment: false,
+    advancedAmount: 0,
+    remainingAmount: 0
   });
   
   // Date display formatting
@@ -94,7 +97,10 @@ export default function EditVoucherPage() {
             ...transfer,
             date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
           })),
-          trips: voucherData.trips || []
+          trips: voucherData.trips || [],
+          advancedPayment: voucherData.advancedPayment || false,
+          advancedAmount: voucherData.advancedAmount || 0,
+          remainingAmount: voucherData.remainingAmount || 0
         });
         
         // Set hotels and tours data
@@ -309,6 +315,44 @@ export default function EditVoucherPage() {
     }));
   };
   
+  // Handle advanced payment checkbox
+  const handleAdvancedPaymentChange = (e) => {
+    const isChecked = e.target.checked;
+    setFormData(prevData => ({
+      ...prevData,
+      advancedPayment: isChecked,
+      // Reset advanced and remaining amounts when unchecking
+      ...(isChecked ? {} : { advancedAmount: 0, remainingAmount: 0 })
+    }));
+  };
+
+  // Handle advanced amount changes and calculate remaining amount
+  const handleAdvancedAmountChange = (e) => {
+    const advancedAmount = parseFloat(e.target.value) || 0;
+    const totalAmount = parseFloat(formData.totalAmount) || 0;
+    const remainingAmount = Math.max(0, totalAmount - advancedAmount);
+    
+    setFormData(prevData => ({
+      ...prevData,
+      advancedAmount,
+      remainingAmount
+    }));
+  };
+
+  // Recalculate remaining amount when total changes
+  useEffect(() => {
+    if (formData.advancedPayment) {
+      const totalAmount = parseFloat(formData.totalAmount) || 0;
+      const advancedAmount = parseFloat(formData.advancedAmount) || 0;
+      const remainingAmount = Math.max(0, totalAmount - advancedAmount);
+      
+      setFormData(prevData => ({
+        ...prevData,
+        remainingAmount
+      }));
+    }
+  }, [formData.totalAmount, formData.advancedAmount, formData.advancedPayment]);
+  
   // Save voucher
   const handleSave = async () => {
     // Validate form
@@ -370,7 +414,10 @@ export default function EditVoucherPage() {
         totalAmount: Number(formData.totalAmount),
         hotels: formData.hotels,
         transfers: formData.transfers,
-        trips: formattedTrips
+        trips: formattedTrips,
+        advancedPayment: formData.advancedPayment,
+        advancedAmount: formData.advancedPayment ? Number(formData.advancedAmount) : 0,
+        remainingAmount: formData.advancedPayment ? Number(formData.remainingAmount) : 0
       };
       
       await axios.put(`/api/vouchers/${id}`, payload, {
@@ -494,6 +541,47 @@ export default function EditVoucherPage() {
               onChange={handleInputChange}
               required
             />
+          </div>
+          
+          <div>
+            <div className="flex items-center mb-2">
+              <Checkbox
+                id="advancedPayment"
+                checked={formData.advancedPayment}
+                onChange={handleAdvancedPaymentChange}
+              />
+              <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
+            </div>
+            
+            {formData.advancedPayment && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <TextInput
+                    id="advancedAmount"
+                    name="advancedAmount"
+                    type="number"
+                    placeholder="Advanced Amount ($)"
+                    value={formData.advancedAmount}
+                    onChange={(e) => {
+                      handleInputChange(e);
+                      handleAdvancedAmountChange(e);
+                    }}
+                    required={formData.advancedPayment}
+                  />
+                </div>
+                <div>
+                  <TextInput
+                    id="remainingAmount"
+                    name="remainingAmount"
+                    type="number"
+                    placeholder="Remaining Amount ($)"
+                    value={formData.remainingAmount}
+                    readOnly
+                    disabled
+                  />
+                </div>
+              </div>
+            )}
           </div>
           
           <div>

@@ -37,7 +37,10 @@ export default function VoucherForm({ onSuccess }) {
       type: '', 
       pax: 1 
     }],
-    totalAmount: 0
+    totalAmount: 0,
+    advancedPayment: false,
+    advancedAmount: 0,
+    remainingAmount: 0
   });
 
   const [loading, setLoading] = useState(false);
@@ -130,6 +133,44 @@ export default function VoucherForm({ onSuccess }) {
       [name]: value
     });
   };
+
+  // Handle advanced payment checkbox
+  const handleAdvancedPaymentChange = (e) => {
+    const isChecked = e.target.checked;
+    setFormData(prevData => ({
+      ...prevData,
+      advancedPayment: isChecked,
+      // Reset advanced and remaining amounts when unchecking
+      ...(isChecked ? {} : { advancedAmount: 0, remainingAmount: 0 })
+    }));
+  };
+
+  // Handle advanced amount changes and calculate remaining amount
+  const handleAdvancedAmountChange = (e) => {
+    const advancedAmount = parseFloat(e.target.value) || 0;
+    const totalAmount = parseFloat(formData.totalAmount) || 0;
+    const remainingAmount = Math.max(0, totalAmount - advancedAmount);
+    
+    setFormData(prevData => ({
+      ...prevData,
+      advancedAmount,
+      remainingAmount
+    }));
+  };
+
+  // Recalculate remaining amount when total changes
+  useEffect(() => {
+    if (formData.advancedPayment) {
+      const totalAmount = parseFloat(formData.totalAmount) || 0;
+      const advancedAmount = parseFloat(formData.advancedAmount) || 0;
+      const remainingAmount = Math.max(0, totalAmount - advancedAmount);
+      
+      setFormData(prevData => ({
+        ...prevData,
+        remainingAmount
+      }));
+    }
+  }, [formData.totalAmount, formData.advancedAmount, formData.advancedPayment]);
 
   // Hotel fields handlers
   const handleAddHotel = () => {
@@ -407,7 +448,10 @@ export default function VoucherForm({ onSuccess }) {
         totalAmount: Number(formData.totalAmount),
         hotels: formData.hotels,
         transfers: formData.transfers,
-        trips: formattedTrips
+        trips: formattedTrips,
+        advancedPayment: formData.advancedPayment,
+        advancedAmount: formData.advancedPayment ? Number(formData.advancedAmount) : 0,
+        remainingAmount: formData.advancedPayment ? Number(formData.remainingAmount) : 0
       };
       
       console.log('Sending payload:', payload);
@@ -512,6 +556,47 @@ export default function VoucherForm({ onSuccess }) {
                     onChange={handleInputChange}
                     required
                   />
+                </div>
+                
+                <div>
+                  <div className="flex items-center mb-2">
+                    <Checkbox
+                      id="advancedPayment"
+                      checked={formData.advancedPayment}
+                      onChange={handleAdvancedPaymentChange}
+                    />
+                    <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
+                  </div>
+                  
+                  {formData.advancedPayment && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <TextInput
+                          id="advancedAmount"
+                          name="advancedAmount"
+                          type="number"
+                          placeholder="Advanced Amount ($)"
+                          value={formData.advancedAmount}
+                          onChange={(e) => {
+                            handleInputChange(e);
+                            handleAdvancedAmountChange(e);
+                          }}
+                          required={formData.advancedPayment}
+                        />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="remainingAmount"
+                          name="remainingAmount"
+                          type="number"
+                          placeholder="Remaining Amount ($)"
+                          value={formData.remainingAmount}
+                          readOnly
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div>

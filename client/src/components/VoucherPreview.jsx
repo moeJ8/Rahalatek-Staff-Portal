@@ -438,26 +438,112 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     totalSectionTitle.style.alignItems = 'center';
     totalSectionTitle.style.textAlign = 'center';
     
-    // Value container
-    const totalValueContainer = document.createElement('div');
-    totalValueContainer.style.backgroundColor = 'white';
-    totalValueContainer.style.border = '1px solid #bfdbfe';
-    totalValueContainer.style.borderTop = 'none';
-    totalValueContainer.style.padding = '10px 15px';
-    totalValueContainer.style.textAlign = 'center';
-    totalValueContainer.style.display = 'flex';
-    totalValueContainer.style.justifyContent = 'center';
-    totalValueContainer.style.alignItems = 'center';
+    // Value container - Now using a table like other sections
+    const totalTableWrapper = document.createElement('div');
+    totalTableWrapper.style.overflowX = 'auto';
     
-    const totalAmount = document.createElement('div');
-    totalAmount.textContent = `${voucherData.totalAmount}$`;
-    totalAmount.style.fontSize = '18px';
-    totalAmount.style.fontWeight = 'bold';
+    const totalTable = document.createElement('table');
+    totalTable.style.width = '100%';
+    totalTable.style.fontSize = '12px';
+    totalTable.style.textAlign = 'left';
+    totalTable.style.color = '#374151';
+    totalTable.style.borderCollapse = 'collapse';
+    totalTable.style.border = '1px solid #bfdbfe';
     
-    totalValueContainer.appendChild(totalAmount);
+    // Create table body
+    const totalTbody = document.createElement('tbody');
+    
+    if (voucherData.advancedPayment) {
+      // Row for total amount
+      const totalRow = document.createElement('tr');
+      totalRow.style.backgroundColor = 'white';
+      
+      const totalLabelCell = document.createElement('td');
+      totalLabelCell.textContent = 'Total Amount';
+      totalLabelCell.style.padding = '8px 15px';
+      totalLabelCell.style.border = '1px solid #bfdbfe';
+      totalLabelCell.style.fontWeight = 'bold';
+      totalLabelCell.style.width = '70%';
+      
+      const totalValueCell = document.createElement('td');
+      totalValueCell.textContent = `${voucherData.totalAmount}$`;
+      totalValueCell.style.padding = '8px 15px';
+      totalValueCell.style.border = '1px solid #bfdbfe';
+      totalValueCell.style.fontWeight = 'bold';
+      totalValueCell.style.textAlign = 'right';
+      
+      totalRow.appendChild(totalLabelCell);
+      totalRow.appendChild(totalValueCell);
+      totalTbody.appendChild(totalRow);
+      
+      // Row for advanced payment
+      const advancedRow = document.createElement('tr');
+      advancedRow.style.backgroundColor = 'white';
+      
+      const advancedLabelCell = document.createElement('td');
+      advancedLabelCell.textContent = 'Advanced Payment';
+      advancedLabelCell.style.padding = '8px 15px';
+      advancedLabelCell.style.border = '1px solid #bfdbfe';
+      
+      const advancedValueCell = document.createElement('td');
+      advancedValueCell.textContent = `${voucherData.advancedAmount}$`;
+      advancedValueCell.style.padding = '8px 15px';
+      advancedValueCell.style.border = '1px solid #bfdbfe';
+      advancedValueCell.style.textAlign = 'right';
+      
+      advancedRow.appendChild(advancedLabelCell);
+      advancedRow.appendChild(advancedValueCell);
+      totalTbody.appendChild(advancedRow);
+      
+      // Row for remaining amount
+      const remainingRow = document.createElement('tr');
+      remainingRow.style.backgroundColor = '#f0f7ff'; // Light blue background to highlight
+      
+      const remainingLabelCell = document.createElement('td');
+      remainingLabelCell.textContent = 'Balance Due';
+      remainingLabelCell.style.padding = '8px 15px';
+      remainingLabelCell.style.border = '1px solid #bfdbfe';
+      remainingLabelCell.style.fontWeight = 'bold';
+      
+      const remainingValueCell = document.createElement('td');
+      remainingValueCell.textContent = `${voucherData.remainingAmount}$`;
+      remainingValueCell.style.padding = '8px 15px';
+      remainingValueCell.style.border = '1px solid #bfdbfe';
+      remainingValueCell.style.fontWeight = 'bold';
+      remainingValueCell.style.textAlign = 'right';
+      
+      remainingRow.appendChild(remainingLabelCell);
+      remainingRow.appendChild(remainingValueCell);
+      totalTbody.appendChild(remainingRow);
+    } else {
+      // Just a single row for total when no advanced payment
+      const singleRow = document.createElement('tr');
+      singleRow.style.backgroundColor = 'white';
+      
+      const totalLabelCell = document.createElement('td');
+      totalLabelCell.textContent = 'Total Amount';
+      totalLabelCell.style.padding = '8px 15px';
+      totalLabelCell.style.border = '1px solid #bfdbfe';
+      totalLabelCell.style.fontWeight = 'bold';
+      totalLabelCell.style.width = '70%';
+      
+      const totalValueCell = document.createElement('td');
+      totalValueCell.textContent = `${voucherData.totalAmount}$`;
+      totalValueCell.style.padding = '8px 15px';
+      totalValueCell.style.border = '1px solid #bfdbfe';
+      totalValueCell.style.fontWeight = 'bold';
+      totalValueCell.style.textAlign = 'right';
+      
+      singleRow.appendChild(totalLabelCell);
+      singleRow.appendChild(totalValueCell);
+      totalTbody.appendChild(singleRow);
+    }
+    
+    totalTable.appendChild(totalTbody);
+    totalTableWrapper.appendChild(totalTable);
     
     totalSection.appendChild(totalSectionTitle);
-    totalSection.appendChild(totalValueContainer);
+    totalSection.appendChild(totalTableWrapper);
     container.appendChild(totalSection);
     
     // Contact Info
@@ -856,8 +942,32 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         {/* Total Amount */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold bg-blue-700 text-white pt-2 pb-6 px-4 rounded-t-md flex justify-center items-center">Total amount</h3>
-          <div className="border border-blue-200 border-t-0 p-3 flex justify-center items-center">
-            <div className="text-xl font-bold">{voucherData.totalAmount}$</div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0">
+              <tbody>
+                {voucherData.advancedPayment ? (
+                  <>
+                    <tr className="bg-white border-b">
+                      <td className="px-4 py-3 border font-semibold w-3/4">Total Amount</td>
+                      <td className="px-4 py-3 border text-right font-semibold">{voucherData.totalAmount}$</td>
+                    </tr>
+                    <tr className="bg-white border-b">
+                      <td className="px-4 py-3 border">Advanced Payment</td>
+                      <td className="px-4 py-3 border text-right">{voucherData.advancedAmount}$</td>
+                    </tr>
+                    <tr className="bg-blue-50 border-b">
+                      <td className="px-4 py-3 border font-semibold">Balance Due</td>
+                      <td className="px-4 py-3 border text-right font-semibold">{voucherData.remainingAmount}$</td>
+                    </tr>
+                  </>
+                ) : (
+                  <tr className="bg-white border-b">
+                    <td className="px-4 py-3 border font-semibold w-3/4">Total Amount</td>
+                    <td className="px-4 py-3 border text-right font-semibold">{voucherData.totalAmount}$</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
         
