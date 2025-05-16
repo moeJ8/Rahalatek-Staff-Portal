@@ -11,7 +11,10 @@ const PriceBreakdownDownloader = ({ breakdownRef }) => {
       container.style.position = 'absolute';
       container.style.left = '-9999px';
       container.style.background = 'white';
-      container.style.width = breakdownRef.current.offsetWidth + 'px';
+      container.style.width = Math.max(breakdownRef.current.offsetWidth, 800) + 'px';
+      container.style.minWidth = '800px'; 
+      container.style.overflowX = 'hidden'; 
+      container.style.boxSizing = 'border-box';
       
       const clone = breakdownRef.current.cloneNode(true);
       
@@ -49,13 +52,33 @@ const PriceBreakdownDownloader = ({ breakdownRef }) => {
       
       logoDiv.appendChild(logo);
       
+      // Remove calendar icon (only from the Travel Period text)
       const travelMonthElements = clone.querySelectorAll('p.text-sm.text-blue-200.mt-1');
       travelMonthElements.forEach(element => {
-        if (element.textContent.includes('Travel Month')) {
+        if (element.textContent.includes('Travel Period')) {
+
+          const calendarIcon = element.querySelector('.fa-calendar-alt');
+          if (calendarIcon) {
+            calendarIcon.remove();
+          }
           const monthText = element.textContent.trim();
-          element.innerHTML = monthText.replace('• ', '');
+          element.innerHTML = monthText;
           element.style.textAlign = 'center';
         }
+      });
+      
+      const hotelElements = clone.querySelectorAll('.font-semibold.text-white');
+      hotelElements.forEach(element => {
+        if (element.textContent.includes('★')) {
+          element.textContent = element.textContent.replace('★', ' stars');
+        }
+      });
+      
+      const monthBadges = clone.querySelectorAll('.bg-yellow-500\\/20');
+      monthBadges.forEach(badge => {
+        badge.style.background = 'none';
+        badge.style.padding = '0';
+        badge.style.color = '#FBBF24';
       });
       
       const headingElements = clone.querySelectorAll('h3.text-xl.font-bold.text-gray-900.dark\\:text-white');
@@ -131,7 +154,7 @@ const PriceBreakdownDownloader = ({ breakdownRef }) => {
           } else if (icon.classList.contains('fa-users')) {
             iconText = "👥 ";
           } else if (icon.classList.contains('fa-car')) {
-            iconText = "🚗 ";
+            iconText = "Car: ";
           } else if (icon.classList.contains('fa-check-circle')) {
             iconText = "✓ ";
           } else {
@@ -141,23 +164,33 @@ const PriceBreakdownDownloader = ({ breakdownRef }) => {
           const textSpan = document.createElement('span');
           textSpan.textContent = iconText;
           textSpan.style.marginRight = '4px';
+          textSpan.style.display = 'inline-block'; // Ensure proper display
           icon.parentNode.replaceChild(textSpan, icon);
         });
       };
       
       replaceIconsWithText(clone);
 
+      // Ensure all elements have explicit styling to prevent mobile rendering issues
       const allElements = clone.querySelectorAll('*');
       allElements.forEach(el => {
+        // Explicitly set display style for all flex elements
         if (el.classList.contains('flex') && 
             el.classList.contains('justify-between')) {
           el.style.display = 'flex';
           el.style.justifyContent = 'space-between';
           el.style.width = '100%';
+          el.style.flexWrap = 'nowrap'; // Prevent wrapping on small screens
         }
         else if (el.classList.contains('flex') || 
                  el.classList.contains('inline-flex')) {
           el.style.display = 'inline-block';
+        }
+        
+        // Ensure text doesn't wrap unnecessarily
+        if (el.classList.contains('font-semibold') || 
+            el.classList.contains('font-medium')) {
+          el.style.whiteSpace = 'normal';
         }
       });
 
@@ -177,26 +210,49 @@ const PriceBreakdownDownloader = ({ breakdownRef }) => {
       container.appendChild(clone);
       document.body.appendChild(container);
 
-      const canvas = await html2canvas(clone, {
-        scale: 2, 
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false
-      });
+      // Use setTimeout to allow browser to fully render the element before capturing
+      setTimeout(async () => {
+        try {
+          // Get accurate height after full rendering
+          const fullHeight = clone.scrollHeight || clone.offsetHeight;
+          
+          // Set minimum width to ensure mobile doesn't shrink the output
+          const minWidth = Math.max(breakdownRef.current.offsetWidth, 800);
+          
+          const canvas = await html2canvas(clone, {
+            scale: 2,
+            width: minWidth,
+            height: fullHeight + 200, // Add extra padding at bottom
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false,
+            onclone: (document, element) => {
+              // Force container width to be the minimum width we've set
+              element.style.width = `${minWidth}px`;
+              element.style.maxWidth = `${minWidth}px`;
+            }
+          });
 
-      canvas.toBlob((blob) => {
-        const downloadLink = document.createElement('a');
-        downloadLink.href = URL.createObjectURL(blob);
-        downloadLink.download = `price_breakdown_${new Date().toISOString().split('T')[0]}.png`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
+          canvas.toBlob((blob) => {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = `price_breakdown_${new Date().toISOString().split('T')[0]}.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
 
-        document.body.removeChild(downloadLink);
-        document.body.removeChild(container);
-      }, 'image/png');
+            // Clean up
+            URL.revokeObjectURL(downloadLink.href);
+            document.body.removeChild(downloadLink);
+            document.body.removeChild(container);
+          }, 'image/png', 1.0); // Use maximum quality
+        } catch (error) {
+          console.error('Error generating image:', error);
+          document.body.removeChild(container);
+        }
+      }, 200); // Wait 200ms for elements to render fully
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('Error in setup:', error);
     }
   };
 

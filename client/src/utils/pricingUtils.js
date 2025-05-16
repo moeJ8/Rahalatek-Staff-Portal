@@ -395,4 +395,303 @@ export const getCityNameInArabic = (cityName) => {
     'Pamukkale': 'باموكالي'
   };
   return cityMap[cityName] || cityName;
+};
+
+export const calculateMultiHotelTotalPrice = ({
+  hotelEntries,
+  numGuests,
+  includeChildren,
+  childrenUnder3,
+  children3to6,
+  children6to12,
+  selectedTours,
+  tours,
+  includeReception,
+  includeFarewell,
+  transportVehicleType,
+  selectedAirport,
+}) => {
+  try {
+    let total = 0;
+    let hotelCosts = [];
+    let transportationCost = 0;
+    let tourCost = 0;
+    
+    const adultCount = safeParseInt(numGuests);
+    const children3to6Count = safeParseInt(children3to6);
+    const children6to12Count = safeParseInt(children6to12);
+    const infantsCount = safeParseInt(childrenUnder3);
+    
+    const totalChildrenCount = includeChildren ? (children3to6Count + children6to12Count + infantsCount) : 0;
+    const totalPeopleCount = adultCount + totalChildrenCount;
+
+    // Calculate costs for each hotel separately
+    hotelEntries.forEach((entry, index) => {
+      if (!entry.hotelData || !entry.checkIn || !entry.checkOut) {
+        return;
+      }
+      
+      const isFirstHotel = index === 0;
+      const isLastHotel = index === hotelEntries.length - 1;
+      let hotelCost = 0;
+      let breakfastCost = 0;
+      
+      const nights = calculateDuration(entry.checkIn, entry.checkOut);
+      const nightsPerMonth = calculateNightsPerMonth(entry.checkIn, entry.checkOut);
+      
+      // Hotel costs
+      if (entry.hotelData.roomTypes && entry.hotelData.roomTypes.length > 0) {
+        if (entry.roomAllocations.length > 0) {
+          entry.roomAllocations.forEach(room => {
+            if (room.roomTypeIndex !== undefined && room.roomTypeIndex !== "" && 
+                entry.hotelData.roomTypes[room.roomTypeIndex]) {
+                const roomType = entry.hotelData.roomTypes[room.roomTypeIndex];
+                
+                // Calculate cost per month for multi-month stays
+                let roomCost = 0;
+                
+                if (nightsPerMonth.length > 1) {
+                  // If stay spans multiple months, calculate for each month separately
+                  nightsPerMonth.forEach(monthData => {
+                    const adultPricePerNight = getRoomPriceForMonth(roomType, monthData.date, false);
+                    const childPricePerNight = getRoomPriceForMonth(roomType, monthData.date, true);
+                    
+                    roomCost += adultPricePerNight * monthData.nights;
+                    
+                    if (includeChildren && childPricePerNight) {
+                      // Use the specific count of children 6-12 in this room
+                      const roomChildren6to12Count = room.children6to12 || 0;
+                      if (roomChildren6to12Count > 0) {
+                        roomCost += childPricePerNight * monthData.nights * roomChildren6to12Count;
+                      }
+                    }
+                  });
+                } else {
+                  // Single month stay (original calculation)
+                  const adultPricePerNight = getRoomPriceForMonth(roomType, entry.checkIn, false);
+                  const childPricePerNight = getRoomPriceForMonth(roomType, entry.checkIn, true);
+                  roomCost = adultPricePerNight * nights;
+                  
+                  if (includeChildren && childPricePerNight) {
+                    // Use the specific count of children 6-12 in this room
+                    const roomChildren6to12Count = room.children6to12 || 0;
+                    if (roomChildren6to12Count > 0) {
+                      roomCost += childPricePerNight * nights * roomChildren6to12Count;
+                    }
+                  }
+                }
+                
+                hotelCost += roomCost;
+            }
+          });
+        } else {
+          // If no room allocations, estimate based on first room type
+          const baseRoomCount = Math.ceil(adultCount / 2); // Estimate 2 adults per room
+          const firstRoomType = entry.hotelData.roomTypes[0];
+          
+          // Calculate cost per month for multi-month stays
+          if (nightsPerMonth.length > 1) {
+            // If stay spans multiple months, calculate for each month separately
+            nightsPerMonth.forEach(monthData => {
+              const adultPricePerNight = getRoomPriceForMonth(firstRoomType, monthData.date, false);
+              const childPricePerNight = getRoomPriceForMonth(firstRoomType, monthData.date, true);
+              
+              hotelCost += adultPricePerNight * monthData.nights * baseRoomCount;
+              
+              // Add children 6-12 price if applicable
+              if (includeChildren && children6to12Count > 0 && childPricePerNight) {
+                hotelCost += childPricePerNight * monthData.nights * children6to12Count;
+              }
+            });
+          } else {
+            // Single month stay (original calculation)
+            const adultPricePerNight = getRoomPriceForMonth(firstRoomType, entry.checkIn, false);
+            const childPricePerNight = getRoomPriceForMonth(firstRoomType, entry.checkIn, true);
+            
+            hotelCost += adultPricePerNight * nights * baseRoomCount;
+            
+            // Add children 6-12 price if applicable
+            if (includeChildren && children6to12Count > 0 && childPricePerNight) {
+              hotelCost += childPricePerNight * nights * children6to12Count;
+            }
+          }
+        }
+      } else if (entry.hotelData.pricePerNightPerPerson) {
+        // Legacy pricing model - use per-person rates for older hotel data
+        hotelCost += entry.hotelData.pricePerNightPerPerson * nights * adultCount;
+        
+        // Children 6-12 pay with a special rate (if defined) or half price by default
+        if (includeChildren && children6to12Count > 0) {
+            const childRate = entry.hotelData.childrenPrice || (entry.hotelData.pricePerNightPerPerson * 0.5);
+            hotelCost += childRate * nights * children6to12Count;
+        }
+      }
+      
+      // Breakfast costs for this hotel
+      if (entry.includeBreakfast && entry.hotelData.breakfastIncluded && entry.hotelData.breakfastPrice) {
+        // Calculate breakfast per room per night instead of per person
+        const totalRooms = entry.roomAllocations.length > 0 ? entry.roomAllocations.length : Math.ceil(adultCount / 2);
+        breakfastCost = entry.hotelData.breakfastPrice * totalRooms * nights;
+        hotelCost += breakfastCost;
+      }
+      
+      // Add hotel costs to hotelCosts array
+      hotelCosts.push({
+        hotel: entry.hotelData.name,
+        roomCost: hotelCost - breakfastCost,
+        breakfastCost,
+        transportCost: 0, // No transport cost attached to hotels
+        totalCost: hotelCost // Only includes room and breakfast
+      });
+      
+      // Add hotel cost to total
+      total += hotelCost;
+    });
+    
+    // Calculate transportation costs separately - based on first and last hotel
+    // This is a static cost that applies to the entire booking, not to specific hotels
+    if (hotelEntries.length > 0) {
+      // Get first and last hotel for reference (they may contain airport information)
+      const firstHotel = hotelEntries[0]?.hotelData;
+      const lastHotel = hotelEntries[hotelEntries.length - 1]?.hotelData;
+      
+      if (firstHotel && includeReception) {
+        // Airport Reception - from airport to first hotel
+        let receptionCost = 0;
+        
+        // If hotel has the new airportTransportation structure
+        if (firstHotel.airportTransportation && firstHotel.airportTransportation.length > 0) {
+          // Find the selected airport's transportation costs
+          const selectedAirportObj = firstHotel.airportTransportation.find(
+            item => item.airport === selectedAirport || firstHotel.airport
+          );
+          
+          // If no specific airport is selected, use the first available airport
+          const airportTransport = selectedAirportObj || firstHotel.airportTransportation[0];
+          
+          if (airportTransport) {
+            if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.vitoReceptionPrice);
+            } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+            }
+          }
+        } 
+        // If hotel has the old transportation structure
+        else if (firstHotel.transportation) {
+          if (transportVehicleType === 'Vito' && firstHotel.transportation.vitoReceptionPrice) {
+            receptionCost = parseFloat(firstHotel.transportation.vitoReceptionPrice);
+          } else if (transportVehicleType === 'Sprinter' && firstHotel.transportation.sprinterReceptionPrice) {
+            receptionCost = parseFloat(firstHotel.transportation.sprinterReceptionPrice);
+          }
+        }
+        // Backward compatibility with very old data structure
+        else if (firstHotel.transportationPrice) {
+          // For older hotels with per-person pricing
+          const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);
+          // Only charge half price for one-way transfers
+          receptionCost = (firstHotel.transportationPrice * transportPeopleCount) / 2;
+        }
+        
+        transportationCost += receptionCost;
+      }
+      
+      if (lastHotel && includeFarewell) {
+        // Airport Farewell - from last hotel to airport
+        let farewellCost = 0;
+        
+        // If hotel has the new airportTransportation structure
+        if (lastHotel.airportTransportation && lastHotel.airportTransportation.length > 0) {
+          // Find the selected airport's transportation costs
+          const selectedAirportObj = lastHotel.airportTransportation.find(
+            item => item.airport === selectedAirport || lastHotel.airport
+          );
+          
+          // If no specific airport is selected, use the first available airport
+          const airportTransport = selectedAirportObj || lastHotel.airportTransportation[0];
+          
+          if (airportTransport) {
+            if (transportVehicleType === 'Vito' && airportTransport.transportation.vitoFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.vitoFarewellPrice);
+            } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+            }
+          }
+        } 
+        // If hotel has the old transportation structure
+        else if (lastHotel.transportation) {
+          if (transportVehicleType === 'Vito' && lastHotel.transportation.vitoFarewellPrice) {
+            farewellCost = parseFloat(lastHotel.transportation.vitoFarewellPrice);
+          } else if (transportVehicleType === 'Sprinter' && lastHotel.transportation.sprinterFarewellPrice) {
+            farewellCost = parseFloat(lastHotel.transportation.sprinterFarewellPrice);
+          }
+        }
+        // Backward compatibility with very old data structure
+        else if (lastHotel.transportationPrice) {
+          // For older hotels with per-person pricing
+          const transportPeopleCount = adultCount + (includeChildren ? totalChildrenCount : 0);
+          // Only charge half price for one-way transfers
+          farewellCost = (lastHotel.transportationPrice * transportPeopleCount) / 2;
+        }
+        
+        transportationCost += farewellCost;
+      }
+    }
+
+    // Tour costs - calculated once for the entire package
+    if (selectedTours.length > 0 && tours.length > 0) {
+      selectedTours.forEach(tourId => {
+        const tourData = tours.find(tour => tour._id === tourId);
+        if (tourData) {
+          // For Group tours: Adults and children 3-12 pay per person
+          // For VIP tours: One price per car regardless of the number of people
+          if (tourData.tourType === 'Group') {
+            // Adults pay full price
+            const adultTourCost = tourData.price * adultCount;
+            
+            // Children 3-12 pay full price for tours
+            const children3to12Count = children3to6Count + children6to12Count;
+            const children3to12Cost = includeChildren ? tourData.price * children3to12Count : 0;
+            
+            // Children under 3 are free for tours
+            const tourSubtotal = adultTourCost + children3to12Cost;
+            
+            tourCost += tourSubtotal;
+          } else if (tourData.tourType === 'VIP') {
+            // VIP tours have a single price per car
+            const vipCost = parseFloat(tourData.price);
+            tourCost += vipCost;
+          }
+        }
+      });
+      
+      total += tourCost;
+    }
+    
+    // Now add transportation costs to total
+    total += transportationCost;
+
+    // Log for debugging
+    console.log('Multi-Hotel Price breakdown:', {
+      hotelTotal: total - tourCost - transportationCost,
+      tourCost,
+      transportationCost,
+      grandTotal: total
+    });
+
+    return {
+      total,
+      hotelCosts,
+      transportationCost,
+      tourCost
+    };
+  } catch (error) {
+    console.error('Error calculating multi-hotel price:', error);
+    return {
+      total: 0,
+      hotelCosts: [],
+      transportationCost: 0,
+      tourCost: 0
+    };
+  }
 }; 

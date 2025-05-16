@@ -9,7 +9,7 @@ export const formatDisplayDate = (date) => {
 };
 
 // Function to create a PDF-ready voucher using the voucher data
-export const createVoucherTemplate = (voucherData) => {
+export const createVoucherTemplate = (voucherData, visibilitySettings = { showHotels: true, showTransfers: true, showTrips: true }) => {
   if (!voucherData) return '';
   
   const {
@@ -23,6 +23,8 @@ export const createVoucherTemplate = (voucherData) => {
     trips,
     totalAmount
   } = voucherData;
+
+  const { showHotels, showTransfers, showTrips } = visibilitySettings;
 
   // Format dates
   const formattedArrivalDate = formatDisplayDate(arrivalDate);
@@ -51,6 +53,7 @@ export const createVoucherTemplate = (voucherData) => {
         </div>
       </div>
       
+      ${showHotels && hotels && hotels.length > 0 ? `
       <h3 class="section-title">Hotels</h3>
       <table class="voucher-table hotels-table">
         <thead>
@@ -80,12 +83,16 @@ export const createVoucherTemplate = (voucherData) => {
           `).join('')}
         </tbody>
       </table>
+      ` : ''}
       
+      ${showTransfers && transfers && transfers.length > 0 ? `
       <h3 class="section-title">Transfer</h3>
       <table class="voucher-table transfer-table">
         <thead>
           <tr>
             <th>Date</th>
+            <th>Time</th>
+            <th>Flight</th>
             <th>From</th>
             <th>To</th>
             <th>Pax</th>
@@ -96,6 +103,8 @@ export const createVoucherTemplate = (voucherData) => {
           ${transfers.map(transfer => `
             <tr>
               <td>${transfer.type} ${formatDisplayDate(transfer.date)}</td>
+              <td>${transfer.time || ''}</td>
+              <td>${transfer.flightNumber || ''}</td>
               <td>${transfer.from}</td>
               <td>${transfer.to}</td>
               <td>${transfer.pax}</td>
@@ -104,14 +113,15 @@ export const createVoucherTemplate = (voucherData) => {
           `).join('')}
         </tbody>
       </table>
+      ` : ''}
       
+      ${showTrips && trips && trips.length > 0 ? `
       <h3 class="section-title">Trips</h3>
       <table class="voucher-table trips-table">
         <thead>
           <tr>
             <th>City</th>
             <th>Tours</th>
-            <th>COUNT</th>
             <th>Type</th>
             <th>Pax</th>
           </tr>
@@ -121,13 +131,13 @@ export const createVoucherTemplate = (voucherData) => {
             <tr>
               <td>${trip.city}</td>
               <td>${trip.tourName}</td>
-              <td>${trip.count}</td>
               <td>${trip.type || ''}</td>
               <td>${trip.pax}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
+      ` : ''}
       
       <div class="total-amount">
         <div>Total amount</div>

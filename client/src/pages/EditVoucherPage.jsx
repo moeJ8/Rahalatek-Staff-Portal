@@ -18,6 +18,7 @@ export default function EditVoucherPage() {
     nationality: '',
     arrivalDate: '',
     departureDate: '',
+    capital: '',
     totalAmount: 0,
     hotels: [],
     transfers: [],
@@ -87,6 +88,7 @@ export default function EditVoucherPage() {
           nationality: voucherData.nationality || '',
           arrivalDate: voucherData.arrivalDate ? new Date(voucherData.arrivalDate).toISOString().split('T')[0] : '',
           departureDate: voucherData.departureDate ? new Date(voucherData.departureDate).toISOString().split('T')[0] : '',
+          capital: voucherData.capital || '',
           totalAmount: voucherData.totalAmount || 0,
           hotels: voucherData.hotels.map(hotel => ({
             ...hotel,
@@ -212,6 +214,8 @@ export default function EditVoucherPage() {
         { 
           type: 'ARV', 
           date: '', 
+          time: '',
+          flightNumber: '',
           city: '',
           from: '', 
           to: '', 
@@ -411,6 +415,7 @@ export default function EditVoucherPage() {
         nationality: formData.nationality,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
+        capital: formData.capital,
         totalAmount: Number(formData.totalAmount),
         hotels: formData.hotels,
         transfers: formData.transfers,
@@ -696,6 +701,17 @@ export default function EditVoucherPage() {
               </span>
             </div>
           </div>
+          
+          <div>
+            <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+            <TextInput
+              id="capital"
+              name="capital"
+              value={formData.capital}
+              onChange={handleInputChange}
+              placeholder="This will only show in preview"
+            />
+          </div>
         </div>
         
         {/* Hotels Section */}
@@ -936,6 +952,24 @@ export default function EditVoucherPage() {
                       <option key={`transfer-city-opt-${i}`} value={city}>{city}</option>
                     ))}
                   </Select>
+                </div>
+                
+                <div>
+                  <Label value="Time" className="mb-2 block" />
+                  <TextInput
+                    value={transfer.time || ''}
+                    onChange={(e) => handleTransferChange(index, 'time', e.target.value)}
+                    placeholder="e.g. 14:30"
+                  />
+                </div>
+                
+                <div>
+                  <Label value="Flight Number" className="mb-2 block" />
+                  <TextInput
+                    value={transfer.flightNumber || ''}
+                    onChange={(e) => handleTransferChange(index, 'flightNumber', e.target.value)}
+                    placeholder="e.g. TK1234"
+                  />
                 </div>
                 
                 <div>

@@ -11,6 +11,7 @@ export default function VoucherForm({ onSuccess }) {
     nationality: '',
     arrivalDate: '',
     departureDate: '',
+    capital: '',
     hotels: [{ 
       city: '', 
       hotelName: '', 
@@ -24,6 +25,8 @@ export default function VoucherForm({ onSuccess }) {
     transfers: [{ 
       type: 'ARV', 
       date: '', 
+      time: '',
+      flightNumber: '',
       city: '',
       from: '', 
       to: '', 
@@ -250,6 +253,8 @@ export default function VoucherForm({ onSuccess }) {
         { 
           type: 'ARV', 
           date: '', 
+          time: '',
+          flightNumber: '',
           city: '',
           from: '', 
           to: '', 
@@ -445,6 +450,7 @@ export default function VoucherForm({ onSuccess }) {
         nationality: formData.nationality,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
+        capital: formData.capital,
         totalAmount: Number(formData.totalAmount),
         hotels: formData.hotels,
         transfers: formData.transfers,
@@ -711,6 +717,17 @@ export default function VoucherForm({ onSuccess }) {
                     </span>
                   </div>
                 </div>
+
+                <div>
+                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <TextInput
+                    id="capital"
+                    name="capital"
+                    value={formData.capital}
+                    onChange={handleInputChange}
+                    placeholder="This will only show in preview"
+                  />
+                </div>
               </div>
               
               {/* Hotels Section */}
@@ -934,6 +951,24 @@ export default function VoucherForm({ onSuccess }) {
                       </div>
                       
                       <div>
+                        <Label value="Time" className="mb-2 block" />
+                        <TextInput
+                          value={transfer.time || ''}
+                          onChange={(e) => handleTransferChange(index, 'time', e.target.value)}
+                          placeholder="e.g. 14:30"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label value="Flight Number" className="mb-2 block" />
+                        <TextInput
+                          value={transfer.flightNumber || ''}
+                          onChange={(e) => handleTransferChange(index, 'flightNumber', e.target.value)}
+                          placeholder="e.g. TK1234"
+                        />
+                      </div>
+                      
+                      <div>
                         <Label value="City" className="mb-2 block" />
                         <Select
                           value={transfer.city}
@@ -1082,19 +1117,22 @@ export default function VoucherForm({ onSuccess }) {
                 <Button color="gray" onClick={() => setShowPreview(false)}>
                   Back to Edit
                 </Button>
-                <Button gradientDuoTone="purpleToPink" onClick={handleSubmit} disabled={loading}>
-                  {loading ? (
-                    <div className="relative w-5 h-5 mr-2">
-                      <div className="absolute top-0 left-0 w-full h-full border-2 border-white rounded-full opacity-25"></div>
-                      <div className="absolute top-0 left-0 w-full h-full border-2 border-t-white rounded-full animate-spin"></div>
-                    </div>
-                  ) : null}
-                  Save Voucher
-                </Button>
               </div>
               
               <VoucherPreview 
                 voucherData={generatedVoucher || { ...formData, voucherNumber: 10000 }}
+                onSave={handleSubmit}
+                saveButton={
+                  <Button gradientDuoTone="purpleToPink" onClick={handleSubmit} disabled={loading} className="w-full sm:w-auto flex justify-center">
+                    {loading ? (
+                      <div className="relative w-5 h-5 mr-2">
+                        <div className="absolute top-0 left-0 w-full h-full border-2 border-white rounded-full opacity-25"></div>
+                        <div className="absolute top-0 left-0 w-full h-full border-2 border-t-white rounded-full animate-spin"></div>
+                      </div>
+                    ) : null}
+                    Save Voucher
+                  </Button>
+                }
               />
             </div>
           )}

@@ -284,6 +284,10 @@ const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
             on: "flex bg-gray-900/50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
             off: "hidden"
           }
+        },
+        content: {
+          base: "relative h-full w-full p-4 md:h-auto",
+          inner: "relative flex flex-col rounded-lg bg-white shadow dark:bg-gray-700 max-h-[90vh]"
         }
       }}
     >

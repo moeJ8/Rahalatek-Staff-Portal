@@ -34,6 +34,10 @@ const voucherSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    capital: {
+        type: String,
+        default: ''
+    },
     hotels: [{
         city: String,
         hotelName: String,
@@ -47,6 +51,8 @@ const voucherSchema = new mongoose.Schema({
     transfers: [{
         type: { type: String, enum: ['ARV', 'DEP'] },
         date: Date,
+        time: String,
+        flightNumber: String,
         city: String,
         from: String,
         to: String,

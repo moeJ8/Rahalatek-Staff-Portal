@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Button, TextInput, Select, Label, Card, Checkbox, Alert, Datepicker, Spinner } from 'flowbite-react'
+import { Button, TextInput, Select, Label, Card, Checkbox, Alert, Datepicker, Spinner, Modal } from 'flowbite-react'
 import BookingMessage from './BookingMessage'
 import TourSelector from './TourSelector'
 import RoomAllocator from './RoomAllocator'
-import HotelInfo from './HotelInfo'
 import PriceBreakdown from './PriceBreakdown'
 import ChildrenSection from './ChildrenSection'
+import HotelDetailModal from './HotelDetailModal'
+import { FaInfoCircle } from 'react-icons/fa'
 import { 
-  calculateTotalPrice, 
-  calculateDuration
+  calculateDuration,
+  calculateMultiHotelTotalPrice
 } from '../utils/pricingUtils'
 import { generateBookingMessage } from '../utils/messageGenerator'
 
@@ -31,8 +32,9 @@ export default function WorkerForm() {
     const [hotels, setHotels] = useState([]);
     const [tours, setTours] = useState([]);
     const [airports, setAirports] = useState([]);
-    const [selectedHotel, setSelectedHotel] = useState(savedState?.selectedHotel || '');
-    const [selectedHotelData, setSelectedHotelData] = useState(null);
+    
+    // Replace single hotel selection with array of hotel entries
+    const [hotelEntries, setHotelEntries] = useState(savedState?.hotelEntries || []);
     const [selectedCity, setSelectedCity] = useState(savedState?.selectedCity || '');
     const [message, setMessage] = useState('');
     const [availableTours, setAvailableTours] = useState([]);
@@ -40,8 +42,10 @@ export default function WorkerForm() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
-    const [roomAllocations, setRoomAllocations] = useState(savedState?.roomAllocations || []);
-
+    // For hotel detail modal
+    const [selectedHotelForModal, setSelectedHotelForModal] = useState(null);
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    
     // For date handling
     const [startDate, setStartDate] = useState(savedState?.startDate || '');
     const [endDate, setEndDate] = useState(savedState?.endDate || '');
@@ -57,7 +61,6 @@ export default function WorkerForm() {
     const [includeReception, setIncludeReception] = useState(savedState?.includeReception !== undefined ? savedState.includeReception : true);
     const [includeFarewell, setIncludeFarewell] = useState(savedState?.includeFarewell !== undefined ? savedState.includeFarewell : true);
     const [transportVehicleType, setTransportVehicleType] = useState(savedState?.transportVehicleType || 'Vito');
-    const [includeBreakfast, setIncludeBreakfast] = useState(savedState?.includeBreakfast !== undefined ? savedState.includeBreakfast : true);
     const [selectedAirport, setSelectedAirport] = useState(savedState?.selectedAirport || '');
 
     // Save form data to localStorage whenever relevant state changes
@@ -66,7 +69,7 @@ export default function WorkerForm() {
         try {
           const formData = {
             selectedCity,
-            selectedHotel,
+            hotelEntries,
             startDate,
             endDate,
             numGuests,
@@ -75,11 +78,10 @@ export default function WorkerForm() {
             children3to6,
             children6to12,
             selectedTours,
-            roomAllocations,
             includeReception,
             includeFarewell,
             transportVehicleType,
-            includeBreakfast,
+            includeBreakfast: hotelEntries.some(entry => entry.includeBreakfast),
             tripPrice,
             selectedAirport
           };
@@ -93,7 +95,7 @@ export default function WorkerForm() {
       saveFormData();
     }, [
       selectedCity, 
-      selectedHotel, 
+      hotelEntries,
       startDate, 
       endDate, 
       numGuests, 
@@ -102,11 +104,9 @@ export default function WorkerForm() {
       children3to6, 
       children6to12, 
       selectedTours, 
-      roomAllocations, 
       includeReception,
       includeFarewell,
       transportVehicleType,
-      includeBreakfast, 
       tripPrice,
       selectedAirport
     ]);
@@ -162,65 +162,80 @@ export default function WorkerForm() {
       }
     }, [selectedCity, tours]);
 
-    useEffect(() => {
-      if (selectedHotel) {
-        const hotelData = hotels.find(hotel => hotel._id === selectedHotel);
-        setSelectedHotelData(hotelData);
-        
-        if (hotelData && hotelData.city !== selectedCity) {
-          setSelectedCity(hotelData.city);
-        }
-      } else {
-        setSelectedHotelData(null);
-      }
-    }, [selectedHotel, hotels, selectedCity]);
-
   const handleCityChange = (e) => {
     const city = e.target.value;
     setSelectedCity(city);
-    setSelectedHotel('');
-    setSelectedHotelData(null);
+    // Clear hotel entries when city changes
+    setHotelEntries([]);
   };
 
-  const handleHotelChange = (e) => {
-    setSelectedHotel(e.target.value);
-  };
-
-  const handleTourSelection = (tourId) => {
-    setSelectedTours(prevSelected => {
-      if (prevSelected.includes(tourId)) {
-        return prevSelected.filter(id => id !== tourId);
-      } else {
-        return [...prevSelected, tourId];
+  const handleAddHotel = () => {
+    setHotelEntries([
+      ...hotelEntries,
+      {
+        hotelId: '',
+        hotelData: null,
+        checkIn: startDate,
+        checkOut: endDate,
+        displayCheckIn: displayStartDate,
+        displayCheckOut: displayEndDate,
+        roomAllocations: [],
+        includeBreakfast: true
       }
-    });
+    ]);
   };
-  
-  const moveTourUp = (tourId) => {
-    setSelectedTours(prevSelected => {
-      const index = prevSelected.indexOf(tourId);
-      if (index <= 0) return prevSelected;
+
+  const handleRemoveHotel = (index) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries.splice(index, 1);
+    setHotelEntries(updatedEntries);
+  };
+
+  const handleHotelChange = (index, hotelId) => {
+    const updatedEntries = [...hotelEntries];
+    const hotelData = hotels.find(hotel => hotel._id === hotelId);
+    
+    updatedEntries[index] = {
+      ...updatedEntries[index],
+      hotelId,
+      hotelData,
+      roomAllocations: [] // Reset room allocations when hotel changes
+    };
+    
+    setHotelEntries(updatedEntries);
+  };
+
+  const handleHotelDateChange = (index, field, value, displayValue) => {
+    const updatedEntries = [...hotelEntries];
+    
+    if (field === 'checkIn') {
+      updatedEntries[index].checkIn = value;
+      updatedEntries[index].displayCheckIn = displayValue;
       
-      const newSelected = [...prevSelected];
-      [newSelected[index], newSelected[index - 1]] = [newSelected[index - 1], newSelected[index]];
-      return newSelected;
-    });
+      // If check-out is before check-in, update check-out
+      if (updatedEntries[index].checkOut && updatedEntries[index].checkOut < value) {
+        updatedEntries[index].checkOut = value;
+        updatedEntries[index].displayCheckOut = displayValue;
+      }
+    } else if (field === 'checkOut') {
+      updatedEntries[index].checkOut = value;
+      updatedEntries[index].displayCheckOut = displayValue;
+    }
+    
+    setHotelEntries(updatedEntries);
   };
-  
-  const moveTourDown = (tourId) => {
-    setSelectedTours(prevSelected => {
-      const index = prevSelected.indexOf(tourId);
-      if (index < 0 || index >= prevSelected.length - 1) return prevSelected;
-      
-      const newSelected = [...prevSelected];
-      [newSelected[index], newSelected[index + 1]] = [newSelected[index + 1], newSelected[index]];
-      return newSelected;
-    });
+
+  const handleHotelBreakfastChange = (index, value) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[index].includeBreakfast = value;
+    setHotelEntries(updatedEntries);
   };
-  
-  const handleAddRoom = () => {
-    setRoomAllocations([
-      ...roomAllocations,
+
+  const handleAddRoom = (hotelIndex) => {
+    const updatedEntries = [...hotelEntries];
+    
+    updatedEntries[hotelIndex].roomAllocations = [
+      ...updatedEntries[hotelIndex].roomAllocations,
       { 
         roomTypeIndex: "", 
         occupants: 1,
@@ -228,60 +243,148 @@ export default function WorkerForm() {
         children3to6: 0,
         children6to12: 0
       }
-    ]);
+    ];
+    
+    setHotelEntries(updatedEntries);
   };
 
-  const handleRemoveRoom = (index) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations.splice(index, 1);
-    setRoomAllocations(newAllocations);
+  const handleRemoveRoom = (hotelIndex, roomIndex) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations.splice(roomIndex, 1);
+    setHotelEntries(updatedEntries);
   };
 
-  const handleRoomTypeSelect = (roomIndex, roomTypeIndex) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations[roomIndex].roomTypeIndex = roomTypeIndex;
-    setRoomAllocations(newAllocations);
+  const handleRoomTypeSelect = (hotelIndex, roomIndex, roomTypeIndex) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations[roomIndex].roomTypeIndex = roomTypeIndex;
+    setHotelEntries(updatedEntries);
   };
 
-  const handleOccupantsChange = (roomIndex, occupants) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations[roomIndex].occupants = parseInt(occupants);
-    setRoomAllocations(newAllocations);
+  const handleOccupantsChange = (hotelIndex, roomIndex, occupants) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations[roomIndex].occupants = parseInt(occupants);
+    setHotelEntries(updatedEntries);
   };
 
-  const handleChildrenUnder3Change = (roomIndex, count) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations[roomIndex].childrenUnder3 = count;
-    setRoomAllocations(newAllocations);
+  const handleChildrenUnder3Change = (hotelIndex, roomIndex, count) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations[roomIndex].childrenUnder3 = count;
+    setHotelEntries(updatedEntries);
   };
 
-  const handleChildren3to6Change = (roomIndex, count) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations[roomIndex].children3to6 = count;
-    setRoomAllocations(newAllocations);
+  const handleChildren3to6Change = (hotelIndex, roomIndex, count) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations[roomIndex].children3to6 = count;
+    setHotelEntries(updatedEntries);
   };
 
-  const handleChildren6to12Change = (roomIndex, count) => {
-    const newAllocations = [...roomAllocations];
-    newAllocations[roomIndex].children6to12 = count;
-    setRoomAllocations(newAllocations);
+  const handleChildren6to12Change = (hotelIndex, roomIndex, count) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[hotelIndex].roomAllocations[roomIndex].children6to12 = count;
+    setHotelEntries(updatedEntries);
   };
 
   const handleNumGuestsChange = (e) => {
     const newGuestCount = parseInt(e.target.value);
     setNumGuests(newGuestCount);
     
-    setRoomAllocations([]);
+    // Reset all room allocations when guest count changes
+    const updatedEntries = hotelEntries.map(entry => ({
+      ...entry,
+      roomAllocations: []
+    }));
+    
+    setHotelEntries(updatedEntries);
   };
 
   const getTotalPrice = () => {
     // If the user has entered a trip price manually, we should respect it
-    if (tripPrice && parseFloat(tripPrice) > 0) {
+    // Only use manual price if it's a non-empty string entered by the user
+    if (tripPrice && typeof tripPrice === 'string' && tripPrice.trim() !== '' && parseFloat(tripPrice) > 0) {
       return parseFloat(tripPrice);
     }
     
-    // Otherwise, calculate the price
-    return calculateTotalPrice({
+    // Use calculateMultiHotelTotalPrice to properly include transportation costs
+    if (hotelEntries.length > 0 && hotelEntries.every(entry => entry.hotelData)) {
+      const priceDetails = calculateMultiHotelTotalPrice({
+        hotelEntries,
+        numGuests,
+        includeChildren,
+        childrenUnder3,
+        children3to6,
+        children6to12,
+        selectedTours,
+        tours,
+        includeReception,
+        includeFarewell,
+        transportVehicleType,
+        selectedAirport
+      });
+      
+      return priceDetails.total;
+    }
+    
+    return 0;
+  };
+
+  const handleGenerateMessage = () => {
+    let finalPrice;
+    // Only use manual price if it's explicitly entered by the user
+    if (tripPrice && typeof tripPrice === 'string' && tripPrice.trim() !== '' && parseFloat(tripPrice) > 0) {
+      finalPrice = parseFloat(tripPrice);
+    } else {
+      finalPrice = getTotalPrice();
+    }
+    
+    // Validate that at least one hotel is selected
+    if (hotelEntries.length === 0) {
+      setError('Please select at least one hotel.');
+      return;
+    }
+    
+    // Validate each hotel entry
+    for (let i = 0; i < hotelEntries.length; i++) {
+      const entry = hotelEntries[i];
+      
+      if (!entry.hotelData || !entry.checkIn || !entry.checkOut) {
+        setError(`Please fill in all required fields for hotel #${i + 1}.`);
+        return;
+      }
+      
+      if (entry.hotelData.roomTypes && entry.hotelData.roomTypes.length > 0) {
+        const assignedGuests = entry.roomAllocations.reduce((sum, room) => sum + room.occupants, 0);
+        if (assignedGuests < numGuests) {
+          setError(`Please assign room types for all ${numGuests} guests in hotel ${entry.hotelData.name}.`);
+          return;
+        }
+        
+        if (includeChildren) {
+          const childrenUnder3Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0);
+          const children3to6Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0);
+          const children6to12Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0);
+          
+          if (childrenUnder3Allocated !== childrenUnder3 || 
+              children3to6Allocated !== children3to6 || 
+              children6to12Allocated !== children6to12) {
+            setError(`Please assign all children to rooms in hotel ${entry.hotelData.name}.`);
+            return;
+          }
+        }
+      }
+      
+      // Apply selected airport to the hotelData
+      entry.hotelData = {
+        ...entry.hotelData,
+        airport: selectedAirport || (entry.hotelData.airportTransportation?.length > 0 
+          ? entry.hotelData.airportTransportation[0]?.airport 
+          : entry.hotelData.airport)
+      };
+    }
+    
+    // Generate message with multiple hotels
+    const message = generateBookingMessage({
+      hotelEntries,
+      selectedCity,
       startDate,
       endDate,
       numGuests,
@@ -289,122 +392,44 @@ export default function WorkerForm() {
       childrenUnder3,
       children3to6,
       children6to12,
-      selectedHotelData,
-      roomAllocations,
+      tripPrice: tripPrice && typeof tripPrice === 'string' && tripPrice.trim() !== '' ? tripPrice : finalPrice.toString(),
+      calculatedPrice: finalPrice,
       includeReception,
       includeFarewell,
       transportVehicleType,
       selectedTours,
       tours,
-      includeBreakfast,
-      selectedAirport
+      getAirportArabicName
     });
-  };
 
-  const handleGenerateMessage = () => {
-    let finalPrice;
-    if (tripPrice && parseFloat(tripPrice) > 0) {
-      finalPrice = parseFloat(tripPrice);
-    } else {
-      finalPrice = calculateTotalPrice({
-        startDate,
-        endDate,
-        numGuests,
-        includeChildren,
-        childrenUnder3,
-        children3to6,
-        children6to12,
-        selectedHotelData,
-        roomAllocations,
-        includeReception,
-        includeFarewell,
-        transportVehicleType,
-        selectedTours,
-        tours,
-        includeBreakfast,
-        selectedAirport
-      });
-    }
+    setMessage(message);
     
-    if (selectedHotelData && selectedCity && startDate && endDate) {
-      if (selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0) {
-        const assignedGuests = roomAllocations.reduce((sum, room) => sum + room.occupants, 0);
-        if (assignedGuests < numGuests) {
-          setError(`Please assign room types for all ${numGuests} guests.`);
-          return;
-        }
-        
-        if (includeChildren) {
-          const childrenUnder3Allocated = roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0);
-          const children3to6Allocated = roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0);
-          const children6to12Allocated = roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0);
-          
-          if (childrenUnder3Allocated !== childrenUnder3 || 
-              children3to6Allocated !== children3to6 || 
-              children6to12Allocated !== children6to12) {
-            setError('Please assign all children to rooms.');
-            return;
-          }
-        }
-      }
-      
-      // Apply selected airport to the hotelData
-      const hotelDataWithAirport = {
-        ...selectedHotelData,
-        airport: selectedAirport || (selectedHotelData.airportTransportation?.length > 0 
-          ? selectedHotelData.airportTransportation[0]?.airport 
-          : selectedHotelData.airport)
-      };
-      
-      // Use the finalized price for the message
-      const message = generateBookingMessage({
-        selectedHotelData: hotelDataWithAirport,
-        selectedCity,
-        startDate,
-        endDate,
-        numGuests,
-        includeChildren,
-        childrenUnder3,
-        children3to6,
-        children6to12,
-        tripPrice: finalPrice.toString(),
-        calculatedPrice: finalPrice,
-        includeReception,
-        includeFarewell,
-        transportVehicleType,
-        includeBreakfast,
-        roomAllocations,
-        selectedTours,
-        tours,
-        getAirportArabicName
-      });
-
-      setMessage(message);
-      
-      // Clear the saved form data after successfully generating the message
-      localStorage.removeItem('workerFormData');
-    } else {
-      setError('Please fill in all required fields.');
-    }
+    // Clear the saved form data after successfully generating the message
+    localStorage.removeItem('workerFormData');
   };
 
   const allRoomAllocationsComplete = () => {
-    if (!selectedHotelData || !selectedHotelData.roomTypes || selectedHotelData.roomTypes.length === 0) {
-      return true;
+    if (hotelEntries.length === 0) {
+      return false;
     }
     
-    const adultsAllocated = roomAllocations.reduce((sum, room) => sum + room.occupants, 0) === numGuests;
-    
-    if (!includeChildren) {
-      return adultsAllocated;
-    }
-    
-    // Check if all children are allocated to rooms
-    const childrenUnder3Allocated = roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0) === childrenUnder3;
-    const children3to6Allocated = roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0) === children3to6;
-    const children6to12Allocated = roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0) === children6to12;
-    
-    return adultsAllocated && childrenUnder3Allocated && children3to6Allocated && children6to12Allocated;
+    return hotelEntries.every(entry => {
+      if (!entry.hotelData || !entry.hotelData.roomTypes || entry.hotelData.roomTypes.length === 0) {
+        return true;
+      }
+      
+      const adultsAllocated = entry.roomAllocations.reduce((sum, room) => sum + room.occupants, 0) === numGuests;
+      
+      if (!includeChildren) {
+        return adultsAllocated;
+      }
+      
+      const childrenUnder3Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.childrenUnder3 || 0), 0) === childrenUnder3;
+      const children3to6Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.children3to6 || 0), 0) === children3to6;
+      const children6to12Allocated = entry.roomAllocations.reduce((sum, room) => sum + (room.children6to12 || 0), 0) === children6to12;
+      
+      return adultsAllocated && childrenUnder3Allocated && children3to6Allocated && children6to12Allocated;
+    });
   };
 
   // Date formatting functions
@@ -433,6 +458,50 @@ export default function WorkerForm() {
     }
   }, [startDate, endDate]);
 
+  // Add the missing tour selection functions
+  const handleTourSelection = (tourId) => {
+    setSelectedTours(prevSelected => {
+      if (prevSelected.includes(tourId)) {
+        return prevSelected.filter(id => id !== tourId);
+      } else {
+        return [...prevSelected, tourId];
+      }
+    });
+  };
+
+  const moveTourUp = (tourId) => {
+    setSelectedTours(prevSelected => {
+      const index = prevSelected.indexOf(tourId);
+      if (index <= 0) return prevSelected;
+      
+      const newSelected = [...prevSelected];
+      [newSelected[index], newSelected[index - 1]] = [newSelected[index - 1], newSelected[index]];
+      return newSelected;
+    });
+  };
+
+  const moveTourDown = (tourId) => {
+    setSelectedTours(prevSelected => {
+      const index = prevSelected.indexOf(tourId);
+      if (index < 0 || index >= prevSelected.length - 1) return prevSelected;
+      
+      const newSelected = [...prevSelected];
+      [newSelected[index], newSelected[index + 1]] = [newSelected[index + 1], newSelected[index]];
+      return newSelected;
+    });
+  };
+
+  // Functions for hotel detail modal
+  const openHotelDetailModal = (hotel) => {
+    setSelectedHotelForModal(hotel);
+    setDetailModalOpen(true);
+  };
+  
+  const closeHotelDetailModal = () => {
+    setDetailModalOpen(false);
+    setSelectedHotelForModal(null);
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Booking Form</h2>
@@ -450,7 +519,7 @@ export default function WorkerForm() {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="startDate" value="Start Date" className="dark:text-white" />
+                <Label htmlFor="startDate" value="Package Start Date" className="dark:text-white" />
               </div>
               <div className="relative">
                 <TextInput
@@ -504,7 +573,7 @@ export default function WorkerForm() {
             
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="endDate" value="End Date" className="dark:text-white" />
+                <Label htmlFor="endDate" value="Package End Date" className="dark:text-white" />
               </div>
               <div className="relative">
                 <TextInput
@@ -569,27 +638,6 @@ export default function WorkerForm() {
           
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="hotelSelect" value="Select Hotel" className="dark:text-white" />
-            </div>
-            <Select
-              id="hotelSelect"
-              value={selectedHotel}
-              onChange={handleHotelChange}
-              required
-            >
-              <option value="">Select Hotel</option>
-              {hotels
-                .filter(hotel => !selectedCity || hotel.city === selectedCity)
-                .map((hotel) => (
-                  <option key={hotel._id} value={hotel._id}>
-                    {hotel.name} ({hotel.stars}★)
-                  </option>
-                ))}
-            </Select>
-          </div>
-          
-          <div>
-            <div className="mb-2 block">
               <Label htmlFor="numGuests" value="Number of Adults" className="dark:text-white" />
             </div>
             <TextInput
@@ -613,54 +661,203 @@ export default function WorkerForm() {
             onChildren6to12Change={setChildren6to12}
           />
           
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="includeBreakfast"
-              checked={includeBreakfast}
-              onChange={(e) => setIncludeBreakfast(e.target.checked)}
-            />
-            <Label htmlFor="includeBreakfast" className="dark:text-white">
-              Include breakfast (if available)
-            </Label>
-          </div>
-          
-          {selectedHotelData && (
-            <div className="mt-8 mb-6">
-              <h3 className="text-xl font-bold mb-4 text-center dark:text-white border-b pb-2">Hotel & Room Selection</h3>
-              
-              <div className="space-y-6">
-                {/* Hotel Information Card */}
-                <Card className="dark:bg-gray-800 overflow-hidden">
-                  <HotelInfo hotelData={selectedHotelData} />
-                </Card>
-                
-                {/* Room Allocation Card */}
-                {selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && (
-                  <Card className="dark:bg-gray-800 overflow-hidden">
-                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <h4 className="text-lg font-semibold mb-4 text-center dark:text-white">Room Allocation</h4>
-                      <RoomAllocator
-                        selectedHotelData={selectedHotelData}
-                        numGuests={numGuests}
-                        roomAllocations={roomAllocations}
-                        onAddRoom={handleAddRoom}
-                        onRemoveRoom={handleRemoveRoom}
-                        onRoomTypeSelect={handleRoomTypeSelect}
-                        onOccupantsChange={handleOccupantsChange}
-                        includeChildren={includeChildren}
-                        childrenUnder3={childrenUnder3}
-                        children3to6={children3to6}
-                        children6to12={children6to12}
-                        onChildrenUnder3Change={handleChildrenUnder3Change}
-                        onChildren3to6Change={handleChildren3to6Change}
-                        onChildren6to12Change={handleChildren6to12Change}
-                      />
-                    </div>
-                  </Card>
-                )}
-              </div>
+          {/* Hotels Section */}
+          <div className="mt-8 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-center dark:text-white">Hotels</h3>
+              <Button 
+                onClick={handleAddHotel}
+                gradientDuoTone="pinkToOrange"
+                size="sm"
+                disabled={!selectedCity || !startDate || !endDate}
+              >
+                + Add Hotel
+              </Button>
             </div>
-          )}
+            
+            {hotelEntries.map((entry, hotelIndex) => (
+              <Card key={hotelIndex} className="dark:bg-gray-800 overflow-hidden mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-semibold dark:text-white">Hotel #{hotelIndex + 1}</h4>
+                  {hotelEntries.length > 1 && (
+                    <Button 
+                      onClick={() => handleRemoveHotel(hotelIndex)}
+                      color="failure"
+                      size="xs"
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor={`hotelSelect-${hotelIndex}`} value="Select Hotel" className="dark:text-white" />
+                    </div>
+                    <Select
+                      id={`hotelSelect-${hotelIndex}`}
+                      value={entry.hotelId}
+                      onChange={(e) => handleHotelChange(hotelIndex, e.target.value)}
+                      required
+                    >
+                      <option value="">Select Hotel</option>
+                      {hotels
+                        .filter(hotel => !selectedCity || hotel.city === selectedCity)
+                        .map((hotel) => (
+                          <option key={hotel._id} value={hotel._id}>
+                            {hotel.name} ({hotel.stars}★)
+                          </option>
+                        ))}
+                    </Select>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="mb-2 block">
+                        <Label htmlFor={`checkIn-${hotelIndex}`} value="Check-in Date" className="dark:text-white" />
+                      </div>
+                      <div className="relative">
+                        <TextInput
+                          id={`displayCheckIn-${hotelIndex}`}
+                          type="text"
+                          value={entry.displayCheckIn || ''}
+                          onChange={(e) => {
+                            const newDisplayDate = e.target.value;
+                            
+                            // Only update the ISO date if we have a valid format
+                            if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                              const newIsoDate = parseDisplayDate(newDisplayDate);
+                              if (newIsoDate) {
+                                handleHotelDateChange(hotelIndex, 'checkIn', newIsoDate, newDisplayDate);
+                              }
+                            } else {
+                              handleHotelDateChange(hotelIndex, 'checkIn', entry.checkIn, newDisplayDate);
+                            }
+                          }}
+                          placeholder="DD/MM/YYYY"
+                          required
+                        />
+                        <input 
+                          type="date" 
+                          className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                          value={entry.checkIn || ''}
+                          min={startDate}
+                          max={endDate}
+                          onChange={(e) => {
+                            const newIsoDate = e.target.value;
+                            handleHotelDateChange(hotelIndex, 'checkIn', newIsoDate, formatDateForDisplay(newIsoDate));
+                          }}
+                        />
+                        <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="mb-2 block">
+                        <Label htmlFor={`checkOut-${hotelIndex}`} value="Check-out Date" className="dark:text-white" />
+                      </div>
+                      <div className="relative">
+                        <TextInput
+                          id={`displayCheckOut-${hotelIndex}`}
+                          type="text"
+                          value={entry.displayCheckOut || ''}
+                          onChange={(e) => {
+                            const newDisplayDate = e.target.value;
+                            
+                            // Only update the ISO date if we have a valid format
+                            if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                              const newIsoDate = parseDisplayDate(newDisplayDate);
+                              if (newIsoDate && (!entry.checkIn || newIsoDate >= entry.checkIn)) {
+                                handleHotelDateChange(hotelIndex, 'checkOut', newIsoDate, newDisplayDate);
+                              }
+                            } else {
+                              handleHotelDateChange(hotelIndex, 'checkOut', entry.checkOut, newDisplayDate);
+                            }
+                          }}
+                          placeholder="DD/MM/YYYY"
+                          required
+                        />
+                        <input 
+                          type="date" 
+                          className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                          value={entry.checkOut || ''}
+                          min={entry.checkIn || startDate}
+                          max={endDate}
+                          onChange={(e) => {
+                            const newIsoDate = e.target.value;
+                            handleHotelDateChange(hotelIndex, 'checkOut', newIsoDate, formatDateForDisplay(newIsoDate));
+                          }}
+                        />
+                        <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`includeBreakfast-${hotelIndex}`}
+                      checked={entry.includeBreakfast}
+                      onChange={(e) => handleHotelBreakfastChange(hotelIndex, e.target.checked)}
+                    />
+                    <Label htmlFor={`includeBreakfast-${hotelIndex}`} className="dark:text-white">
+                      Include breakfast (if available)
+                    </Label>
+                  </div>
+                  
+                  {/* Hotel Info & Room Allocation */}
+                  {entry.hotelData && (
+                    <div className="space-y-6 mt-4">
+                      {/* Hotel Details Button */}
+                      <div className="flex justify-center">
+                        <Button 
+                          gradientDuoTone="pinkToOrange"
+                          size="md"
+                          onClick={() => openHotelDetailModal(entry.hotelData)}
+                        >
+                          <div className="flex items-center justify-center w-full">
+                            <FaInfoCircle className="mr-1.5" />
+                            <span>Show Hotel Details</span>
+                          </div>
+                        </Button>
+                      </div>
+                      
+                      {/* Room Allocation Card */}
+                      {entry.hotelData.roomTypes && entry.hotelData.roomTypes.length > 0 && (
+                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mt-4">
+                          <h4 className="text-lg font-semibold mb-4 text-center dark:text-white">Room Allocation</h4>
+                          <RoomAllocator
+                            selectedHotelData={entry.hotelData}
+                            numGuests={numGuests}
+                            roomAllocations={entry.roomAllocations}
+                            onAddRoom={() => handleAddRoom(hotelIndex)}
+                            onRemoveRoom={(roomIndex) => handleRemoveRoom(hotelIndex, roomIndex)}
+                            onRoomTypeSelect={(roomIndex, typeIndex) => handleRoomTypeSelect(hotelIndex, roomIndex, typeIndex)}
+                            onOccupantsChange={(roomIndex, occupants) => handleOccupantsChange(hotelIndex, roomIndex, occupants)}
+                            includeChildren={includeChildren}
+                            childrenUnder3={childrenUnder3}
+                            children3to6={children3to6}
+                            children6to12={children6to12}
+                            onChildrenUnder3Change={(roomIndex, count) => handleChildrenUnder3Change(hotelIndex, roomIndex, count)}
+                            onChildren3to6Change={(roomIndex, count) => handleChildren3to6Change(hotelIndex, roomIndex, count)}
+                            onChildren6to12Change={(roomIndex, count) => handleChildren6to12Change(hotelIndex, roomIndex, count)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
           
           <TourSelector 
             availableTours={availableTours}
@@ -670,7 +867,10 @@ export default function WorkerForm() {
             onMoveTourDown={moveTourDown}
           />
           
-          {selectedHotelData && (selectedHotelData.airportTransportation?.length > 0 || selectedHotelData.airport) && (
+          {hotelEntries.length > 0 && hotelEntries.some(entry => 
+            entry.hotelData && 
+            (entry.hotelData.airportTransportation?.length > 0 || entry.hotelData.airport)
+          ) && (
             <div>
               <div className="mb-2 block">
                 <Label htmlFor="clientAirport" value="Client's Airport" className="dark:text-white" />
@@ -682,19 +882,11 @@ export default function WorkerForm() {
                 required={includeReception || includeFarewell}
               >
                 <option value="">Select Airport</option>
-                {selectedHotelData.airportTransportation && selectedHotelData.airportTransportation.length > 0 ? (
-                  selectedHotelData.airportTransportation.map((item, idx) => (
-                    <option key={idx} value={item.airport}>
-                      {item.airport}
-                    </option>
-                  ))
-                ) : (
-                  airports.map((airport, idx) => (
-                    <option key={idx} value={airport.name}>
-                      {airport.name}
-                    </option>
-                  ))
-                )}
+                {airports.map((airport, idx) => (
+                  <option key={idx} value={airport.name}>
+                    {airport.name}
+                  </option>
+                ))}
               </Select>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Select which airport the clients will be arriving at/departing from
@@ -752,13 +944,12 @@ export default function WorkerForm() {
             />
           </div>
           
-          {startDate && endDate && selectedHotelData && (
+          {startDate && endDate && hotelEntries.length > 0 && hotelEntries.every(entry => entry.hotelData && entry.checkIn && entry.checkOut) && (
             <PriceBreakdown
-              totalPrice={getTotalPrice()}
+              totalPrice={tripPrice && tripPrice.trim() !== '' ? parseFloat(tripPrice) : null}
               nights={calculateDuration(startDate, endDate)}
               numGuests={numGuests}
-              selectedHotelData={selectedHotelData}
-              roomAllocations={roomAllocations}
+              hotelEntries={hotelEntries}
               selectedTours={selectedTours}
               tours={tours}
               includeChildren={includeChildren}
@@ -768,7 +959,6 @@ export default function WorkerForm() {
               includeReception={includeReception}
               includeFarewell={includeFarewell}
               transportVehicleType={transportVehicleType}
-              includeBreakfast={includeBreakfast}
               startDate={startDate}
               endDate={endDate}
               selectedAirport={selectedAirport}
@@ -780,7 +970,7 @@ export default function WorkerForm() {
             gradientDuoTone="purpleToPink"
             size="lg"
             className="w-full mt-6"
-            disabled={selectedHotelData && selectedHotelData.roomTypes && selectedHotelData.roomTypes.length > 0 && !allRoomAllocationsComplete()}
+            disabled={!allRoomAllocationsComplete()}
           >
             Generate Booking Message
           </Button>
@@ -793,6 +983,15 @@ export default function WorkerForm() {
           
           {message && <BookingMessage message={message} />}
         </div>
+      )}
+      
+      {/* Hotel Detail Modal */}
+      {selectedHotelForModal && (
+        <HotelDetailModal 
+          isOpen={detailModalOpen} 
+          onClose={closeHotelDetailModal} 
+          hotelData={selectedHotelForModal} 
+        />
       )}
     </div>
   );

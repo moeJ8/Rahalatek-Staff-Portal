@@ -1,16 +1,39 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from 'flowbite-react';
-import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf } from 'react-icons/fa';
+import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDisplayDate } from '../utils/voucherGenerator';
 import { Link } from 'react-router-dom';
 
-const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
+const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) => {
   const voucherRef = useRef(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  
+  // Visibility state for each section
+  const [showHotels, setShowHotels] = useState(true);
+  const [showTransfers, setShowTransfers] = useState(true);
+  const [showTrips, setShowTrips] = useState(true);
+  
+  // Determine if all sections are visible
+  const allSectionsVisible = showHotels && showTransfers && showTrips;
+  
+  // Toggle all sections visibility
+  const toggleAllSections = () => {
+    if (allSectionsVisible) {
+      // Hide all sections
+      setShowHotels(false);
+      setShowTransfers(false);
+      setShowTrips(false);
+    } else {
+      // Show all sections
+      setShowHotels(true);
+      setShowTransfers(true);
+      setShowTrips(true);
+    }
+  };
   
   // Preload the logo image and convert to data URL
   useEffect(() => {
@@ -162,270 +185,277 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     container.appendChild(clientInfo);
     
     // Hotels Section
-    const hotelSection = document.createElement('div');
-    hotelSection.style.marginBottom = '15px';
-    
-    const hotelSectionTitle = document.createElement('h3');
-    hotelSectionTitle.textContent = 'Hotels';
-    hotelSectionTitle.style.backgroundColor = '#0f3785';
-    hotelSectionTitle.style.color = 'white';
-    hotelSectionTitle.style.padding = '6px 15px';
-    hotelSectionTitle.style.paddingBottom = '18px';
-    hotelSectionTitle.style.borderTopLeftRadius = '6px';
-    hotelSectionTitle.style.borderTopRightRadius = '6px';
-    hotelSectionTitle.style.margin = '0';
-    hotelSectionTitle.style.fontSize = '16px';
-    hotelSectionTitle.style.fontWeight = '600';
-    hotelSectionTitle.style.display = 'flex';
-    hotelSectionTitle.style.alignItems = 'center';
-    
-    const hotelTableWrapper = document.createElement('div');
-    hotelTableWrapper.style.overflowX = 'auto';
-    
-    const hotelTable = document.createElement('table');
-    hotelTable.style.width = '100%';
-    hotelTable.style.fontSize = '12px';
-    hotelTable.style.textAlign = 'left';
-    hotelTable.style.color = '#374151';
-    hotelTable.style.borderCollapse = 'collapse';
-    hotelTable.style.border = '1px solid #bfdbfe';
-    hotelTable.style.fontWeight = 'bold';
-    
-    // Create table header
-    const hotelThead = document.createElement('thead');
-    hotelThead.style.backgroundColor = '#dbeafe';
-    hotelThead.style.textTransform = 'uppercase';
-    
-    const hotelHeaderRow = document.createElement('tr');
-    
-    const hotelHeaders = ['CITY', 'HOTEL', 'ROOM TYPE', 'NIGHT', 'CHECK IN', 'CHECK OUT', 'PAX', 'CN'];
-    hotelHeaders.forEach(headerText => {
-      const th = document.createElement('th');
-      th.textContent = headerText;
-      th.style.padding = '6px 10px';
-      th.style.border = '1px solid #bfdbfe';
-      th.style.fontSize = '12px';
-      th.style.fontWeight = 'bold';
-      hotelHeaderRow.appendChild(th);
-    });
-    
-    hotelThead.appendChild(hotelHeaderRow);
-    hotelTable.appendChild(hotelThead);
-    
-    // Create table body
-    const hotelTbody = document.createElement('tbody');
-    
-    voucherData.hotels.forEach(hotel => {
-      const row = document.createElement('tr');
-      row.style.backgroundColor = 'white';
-      row.style.borderBottom = '1px solid #e5e7eb';
+    if (showHotels && voucherData.hotels && voucherData.hotels.length > 0) {
+      const hotelSection = document.createElement('div');
+      hotelSection.style.marginBottom = '15px';
       
-      const hotelData = [
-        hotel.city,
-        hotel.hotelName,
-        hotel.roomType,
-        hotel.nights,
-        formatDisplayDate(hotel.checkIn),
-        formatDisplayDate(hotel.checkOut),
-        hotel.pax,
-        hotel.confirmationNumber || ''
-      ];
+      const hotelSectionTitle = document.createElement('h3');
+      hotelSectionTitle.textContent = 'Hotels';
+      hotelSectionTitle.style.backgroundColor = '#0f3785';
+      hotelSectionTitle.style.color = 'white';
+      hotelSectionTitle.style.padding = '6px 15px';
+      hotelSectionTitle.style.paddingBottom = '18px';
+      hotelSectionTitle.style.borderTopLeftRadius = '6px';
+      hotelSectionTitle.style.borderTopRightRadius = '6px';
+      hotelSectionTitle.style.margin = '0';
+      hotelSectionTitle.style.fontSize = '16px';
+      hotelSectionTitle.style.fontWeight = '600';
+      hotelSectionTitle.style.display = 'flex';
+      hotelSectionTitle.style.alignItems = 'center';
       
-      hotelData.forEach(cellData => {
-        const td = document.createElement('td');
-        td.textContent = cellData;
-        td.style.padding = '6px 10px';
-        td.style.border = '1px solid #bfdbfe';
-        td.style.fontSize = '12px';
-        td.style.fontWeight = 'bold';
-        row.appendChild(td);
+      const hotelTableWrapper = document.createElement('div');
+      hotelTableWrapper.style.overflowX = 'auto';
+      
+      const hotelTable = document.createElement('table');
+      hotelTable.style.width = '100%';
+      hotelTable.style.fontSize = '12px';
+      hotelTable.style.textAlign = 'left';
+      hotelTable.style.color = '#374151';
+      hotelTable.style.borderCollapse = 'collapse';
+      hotelTable.style.border = '1px solid #bfdbfe';
+      hotelTable.style.fontWeight = 'bold';
+      
+      // Create table header
+      const hotelThead = document.createElement('thead');
+      hotelThead.style.backgroundColor = '#dbeafe';
+      hotelThead.style.textTransform = 'uppercase';
+      
+      const hotelHeaderRow = document.createElement('tr');
+      
+      const hotelHeaders = ['CITY', 'HOTEL', 'ROOM TYPE', 'NIGHT', 'CHECK IN', 'CHECK OUT', 'PAX', 'CN'];
+      hotelHeaders.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.style.padding = '6px 10px';
+        th.style.border = '1px solid #bfdbfe';
+        th.style.fontSize = '12px';
+        th.style.fontWeight = 'bold';
+        hotelHeaderRow.appendChild(th);
       });
       
-      hotelTbody.appendChild(row);
-    });
-    
-    hotelTable.appendChild(hotelTbody);
-    hotelTableWrapper.appendChild(hotelTable);
-    
-    hotelSection.appendChild(hotelSectionTitle);
-    hotelSection.appendChild(hotelTableWrapper);
-    container.appendChild(hotelSection);
+      hotelThead.appendChild(hotelHeaderRow);
+      hotelTable.appendChild(hotelThead);
+      
+      // Create table body
+      const hotelTbody = document.createElement('tbody');
+      
+      voucherData.hotels.forEach(hotel => {
+        const row = document.createElement('tr');
+        row.style.backgroundColor = 'white';
+        row.style.borderBottom = '1px solid #e5e7eb';
+        
+        const hotelData = [
+          hotel.city,
+          hotel.hotelName,
+          hotel.roomType,
+          hotel.nights,
+          formatDisplayDate(hotel.checkIn),
+          formatDisplayDate(hotel.checkOut),
+          hotel.pax,
+          hotel.confirmationNumber || ''
+        ];
+        
+        hotelData.forEach(cellData => {
+          const td = document.createElement('td');
+          td.textContent = cellData;
+          td.style.padding = '6px 10px';
+          td.style.border = '1px solid #bfdbfe';
+          td.style.fontSize = '12px';
+          td.style.fontWeight = 'bold';
+          row.appendChild(td);
+        });
+        
+        hotelTbody.appendChild(row);
+      });
+      
+      hotelTable.appendChild(hotelTbody);
+      hotelTableWrapper.appendChild(hotelTable);
+      
+      hotelSection.appendChild(hotelSectionTitle);
+      hotelSection.appendChild(hotelTableWrapper);
+      container.appendChild(hotelSection);
+    }
     
     // Transfer Section
-    const transferSection = document.createElement('div');
-    transferSection.style.marginBottom = '15px';
-    
-    const transferSectionTitle = document.createElement('h3');
-    transferSectionTitle.textContent = 'Transfer';
-    transferSectionTitle.style.backgroundColor = '#0f3785';
-    transferSectionTitle.style.color = 'white';
-    transferSectionTitle.style.padding = '6px 15px';
-    transferSectionTitle.style.paddingBottom = '18px';
-    transferSectionTitle.style.borderTopLeftRadius = '6px';
-    transferSectionTitle.style.borderTopRightRadius = '6px';
-    transferSectionTitle.style.margin = '0';
-    transferSectionTitle.style.fontSize = '16px';
-    transferSectionTitle.style.fontWeight = '600';
-    transferSectionTitle.style.display = 'flex';
-    transferSectionTitle.style.alignItems = 'center';
-    
-    const transferTableWrapper = document.createElement('div');
-    transferTableWrapper.style.overflowX = 'auto';
-    
-    const transferTable = document.createElement('table');
-    transferTable.style.width = '100%';
-    transferTable.style.fontSize = '12px';
-    transferTable.style.textAlign = 'left';
-    transferTable.style.color = '#374151';
-    transferTable.style.borderCollapse = 'collapse';
-    transferTable.style.border = '1px solid #bfdbfe';
-    transferTable.style.fontWeight = 'bold';
-    
-    // Create table header
-    const transferThead = document.createElement('thead');
-    transferThead.style.backgroundColor = '#dbeafe';
-    transferThead.style.textTransform = 'uppercase';
-    
-    const transferHeaderRow = document.createElement('tr');
-    
-    const transferHeaders = ['CITY', 'DATE', 'FROM', 'TO', 'PAX', 'TYPE'];
-    transferHeaders.forEach(headerText => {
-      const th = document.createElement('th');
-      th.textContent = headerText;
-      th.style.padding = '6px 10px';
-      th.style.border = '1px solid #bfdbfe';
-      th.style.fontSize = '12px';
-      th.style.fontWeight = 'bold';
-      th.style.verticalAlign = 'middle';
-      transferHeaderRow.appendChild(th);
-    });
-    
-    transferThead.appendChild(transferHeaderRow);
-    transferTable.appendChild(transferThead);
-    
-    // Create table body
-    const transferTbody = document.createElement('tbody');
-    
-    voucherData.transfers.forEach(transfer => {
-      const row = document.createElement('tr');
-      row.style.backgroundColor = 'white';
-      row.style.borderBottom = '1px solid #e5e7eb';
+    if (showTransfers && voucherData.transfers && voucherData.transfers.length > 0) {
+      const transferSection = document.createElement('div');
+      transferSection.style.marginBottom = '15px';
       
-      const transferData = [
-        transfer.city || '',
-        `${transfer.type} ${formatDisplayDate(transfer.date)}`,
-        transfer.from,
-        transfer.to,
-        transfer.pax,
-        transfer.vehicleType
-      ];
+      const transferSectionTitle = document.createElement('h3');
+      transferSectionTitle.textContent = 'Transfer';
+      transferSectionTitle.style.backgroundColor = '#0f3785';
+      transferSectionTitle.style.color = 'white';
+      transferSectionTitle.style.padding = '6px 15px';
+      transferSectionTitle.style.paddingBottom = '18px';
+      transferSectionTitle.style.borderTopLeftRadius = '6px';
+      transferSectionTitle.style.borderTopRightRadius = '6px';
+      transferSectionTitle.style.margin = '0';
+      transferSectionTitle.style.fontSize = '16px';
+      transferSectionTitle.style.fontWeight = '600';
+      transferSectionTitle.style.display = 'flex';
+      transferSectionTitle.style.alignItems = 'center';
       
-      transferData.forEach(cellData => {
-        const td = document.createElement('td');
-        td.textContent = cellData;
-        td.style.padding = '6px 10px';
-        td.style.border = '1px solid #bfdbfe';
-        td.style.fontSize = '12px';
-        td.style.fontWeight = 'bold';
-        row.appendChild(td);
+      const transferTableWrapper = document.createElement('div');
+      transferTableWrapper.style.overflowX = 'auto';
+      
+      const transferTable = document.createElement('table');
+      transferTable.style.width = '100%';
+      transferTable.style.fontSize = '12px';
+      transferTable.style.textAlign = 'left';
+      transferTable.style.color = '#374151';
+      transferTable.style.borderCollapse = 'collapse';
+      transferTable.style.border = '1px solid #bfdbfe';
+      transferTable.style.fontWeight = 'bold';
+      
+      // Create table header
+      const transferThead = document.createElement('thead');
+      transferThead.style.backgroundColor = '#dbeafe';
+      transferThead.style.textTransform = 'uppercase';
+      
+      const transferHeaderRow = document.createElement('tr');
+      
+      const transferHeaders = ['CITY', 'DATE', 'TIME', 'FLIGHT', 'FROM', 'TO', 'PAX', 'TYPE'];
+      transferHeaders.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.style.padding = '6px 10px';
+        th.style.border = '1px solid #bfdbfe';
+        th.style.fontSize = '12px';
+        th.style.fontWeight = 'bold';
+        th.style.verticalAlign = 'middle';
+        transferHeaderRow.appendChild(th);
       });
       
-      transferTbody.appendChild(row);
-    });
-    
-    transferTable.appendChild(transferTbody);
-    transferTableWrapper.appendChild(transferTable);
-    
-    transferSection.appendChild(transferSectionTitle);
-    transferSection.appendChild(transferTableWrapper);
-    container.appendChild(transferSection);
+      transferThead.appendChild(transferHeaderRow);
+      transferTable.appendChild(transferThead);
+      
+      // Create table body
+      const transferTbody = document.createElement('tbody');
+      
+      voucherData.transfers.forEach(transfer => {
+        const row = document.createElement('tr');
+        row.style.backgroundColor = 'white';
+        row.style.borderBottom = '1px solid #e5e7eb';
+        
+        const transferData = [
+          transfer.city || '',
+          `${transfer.type} ${formatDisplayDate(transfer.date)}`,
+          transfer.time || '',
+          transfer.flightNumber || '',
+          transfer.from,
+          transfer.to,
+          transfer.pax,
+          transfer.vehicleType
+        ];
+        
+        transferData.forEach(cellData => {
+          const td = document.createElement('td');
+          td.textContent = cellData;
+          td.style.padding = '6px 10px';
+          td.style.border = '1px solid #bfdbfe';
+          td.style.fontSize = '12px';
+          td.style.fontWeight = 'bold';
+          row.appendChild(td);
+        });
+        
+        transferTbody.appendChild(row);
+      });
+      
+      transferTable.appendChild(transferTbody);
+      transferTableWrapper.appendChild(transferTable);
+      
+      transferSection.appendChild(transferSectionTitle);
+      transferSection.appendChild(transferTableWrapper);
+      container.appendChild(transferSection);
+    }
     
     // Trips Section
-    const tripsSection = document.createElement('div');
-    tripsSection.style.marginBottom = '15px';
-    
-    const tripsSectionTitle = document.createElement('h3');
-    tripsSectionTitle.textContent = 'Trips';
-    tripsSectionTitle.style.backgroundColor = '#0f3785';
-    tripsSectionTitle.style.color = 'white';
-    tripsSectionTitle.style.padding = '6px 15px';
-    tripsSectionTitle.style.paddingBottom = '18px';
-    tripsSectionTitle.style.borderTopLeftRadius = '6px';
-    tripsSectionTitle.style.borderTopRightRadius = '6px';
-    tripsSectionTitle.style.margin = '0';
-    tripsSectionTitle.style.fontSize = '16px';
-    tripsSectionTitle.style.fontWeight = '600';
-    tripsSectionTitle.style.display = 'flex';
-    tripsSectionTitle.style.alignItems = 'center';
-    
-    const tripsTableWrapper = document.createElement('div');
-    tripsTableWrapper.style.overflowX = 'auto';
-    
-    const tripsTable = document.createElement('table');
-    tripsTable.style.width = '100%';
-    tripsTable.style.fontSize = '12px';
-    tripsTable.style.textAlign = 'left';
-    tripsTable.style.color = '#374151';
-    tripsTable.style.borderCollapse = 'collapse';
-    tripsTable.style.border = '1px solid #bfdbfe';
-    tripsTable.style.fontWeight = 'bold';
-    
-    // Create table header
-    const tripsThead = document.createElement('thead');
-    tripsThead.style.backgroundColor = '#dbeafe';
-    tripsThead.style.textTransform = 'uppercase';
-    
-    const tripsHeaderRow = document.createElement('tr');
-    
-    const tripsHeaders = ['CITY', 'TOURS', 'COUNT', 'TYPE', 'PAX'];
-    tripsHeaders.forEach(headerText => {
-      const th = document.createElement('th');
-      th.textContent = headerText;
-      th.style.padding = '6px 10px';
-      th.style.border = '1px solid #bfdbfe';
-      th.style.fontSize = '12px';
-      th.style.fontWeight = 'bold';
-      tripsHeaderRow.appendChild(th);
-    });
-    
-    tripsThead.appendChild(tripsHeaderRow);
-    tripsTable.appendChild(tripsThead);
-    
-    // Create table body
-    const tripsTbody = document.createElement('tbody');
-    
-    voucherData.trips.forEach(trip => {
-      const row = document.createElement('tr');
-      row.style.backgroundColor = 'white';
-      row.style.borderBottom = '1px solid #e5e7eb';
+    if (showTrips && voucherData.trips && voucherData.trips.length > 0) {
+      const tripsSection = document.createElement('div');
+      tripsSection.style.marginBottom = '15px';
       
-      const tripData = [
-        trip.city,
-        trip.tourName,
-        trip.count,
-        trip.type || '',
-        trip.pax
-      ];
+      const tripsSectionTitle = document.createElement('h3');
+      tripsSectionTitle.textContent = 'Trips';
+      tripsSectionTitle.style.backgroundColor = '#0f3785';
+      tripsSectionTitle.style.color = 'white';
+      tripsSectionTitle.style.padding = '6px 15px';
+      tripsSectionTitle.style.paddingBottom = '18px';
+      tripsSectionTitle.style.borderTopLeftRadius = '6px';
+      tripsSectionTitle.style.borderTopRightRadius = '6px';
+      tripsSectionTitle.style.margin = '0';
+      tripsSectionTitle.style.fontSize = '16px';
+      tripsSectionTitle.style.fontWeight = '600';
+      tripsSectionTitle.style.display = 'flex';
+      tripsSectionTitle.style.alignItems = 'center';
       
-      tripData.forEach(cellData => {
-        const td = document.createElement('td');
-        td.textContent = cellData;
-        td.style.padding = '6px 10px';
-        td.style.border = '1px solid #bfdbfe';
-        td.style.fontSize = '12px';
-        td.style.fontWeight = 'bold';
-        row.appendChild(td);
+      const tripsTableWrapper = document.createElement('div');
+      tripsTableWrapper.style.overflowX = 'auto';
+      
+      const tripsTable = document.createElement('table');
+      tripsTable.style.width = '100%';
+      tripsTable.style.fontSize = '12px';
+      tripsTable.style.textAlign = 'left';
+      tripsTable.style.color = '#374151';
+      tripsTable.style.borderCollapse = 'collapse';
+      tripsTable.style.border = '1px solid #bfdbfe';
+      tripsTable.style.fontWeight = 'bold';
+      
+      // Create table header
+      const tripsThead = document.createElement('thead');
+      tripsThead.style.backgroundColor = '#dbeafe';
+      tripsThead.style.textTransform = 'uppercase';
+      
+      const tripsHeaderRow = document.createElement('tr');
+      
+      const tripsHeaders = ['CITY', 'TOURS', 'TYPE', 'PAX'];
+      tripsHeaders.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.style.padding = '6px 10px';
+        th.style.border = '1px solid #bfdbfe';
+        th.style.fontSize = '12px';
+        th.style.fontWeight = 'bold';
+        tripsHeaderRow.appendChild(th);
       });
       
-      tripsTbody.appendChild(row);
-    });
-    
-    tripsTable.appendChild(tripsTbody);
-    tripsTableWrapper.appendChild(tripsTable);
-    
-    tripsSection.appendChild(tripsSectionTitle);
-    tripsSection.appendChild(tripsTableWrapper);
-    container.appendChild(tripsSection);
+      tripsThead.appendChild(tripsHeaderRow);
+      tripsTable.appendChild(tripsThead);
+      
+      // Create table body
+      const tripsTbody = document.createElement('tbody');
+      
+      voucherData.trips.forEach(trip => {
+        const row = document.createElement('tr');
+        row.style.backgroundColor = 'white';
+        row.style.borderBottom = '1px solid #e5e7eb';
+        
+        const tripData = [
+          trip.city,
+          trip.tourName,
+          trip.type || '',
+          trip.pax
+        ];
+        
+        tripData.forEach(cellData => {
+          const td = document.createElement('td');
+          td.textContent = cellData;
+          td.style.padding = '6px 10px';
+          td.style.border = '1px solid #bfdbfe';
+          td.style.fontSize = '12px';
+          td.style.fontWeight = 'bold';
+          row.appendChild(td);
+        });
+        
+        tripsTbody.appendChild(row);
+      });
+      
+      tripsTable.appendChild(tripsTbody);
+      tripsTableWrapper.appendChild(tripsTable);
+      
+      tripsSection.appendChild(tripsSectionTitle);
+      tripsSection.appendChild(tripsTableWrapper);
+      container.appendChild(tripsSection);
+    }
     
     // Total Amount Section
     const totalSection = document.createElement('div');
@@ -668,6 +698,11 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     try {
       setIsPdfLoading(true);
       
+      // If onSave is provided, call it first to save the voucher
+      if (onSave && typeof onSave === 'function') {
+        await onSave();
+      }
+      
       // Generate a desktop-styled element
       const desktopElement = generateDesktopVersionForDownload();
       
@@ -737,6 +772,11 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
     
     try {
       setIsImageLoading(true);
+      
+      // If onSave is provided, call it first to save the voucher
+      if (onSave && typeof onSave === 'function') {
+        await onSave();
+      }
       
       // Generate a desktop-styled element
       const desktopElement = generateDesktopVersionForDownload();
@@ -838,6 +878,67 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         )}
       </div>
       
+      {/* Section Visibility Controls */}
+      <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mb-4">
+        <div className="mb-3 text-center">
+          <span className="font-medium text-gray-700 dark:text-gray-300">Toggle Sections</span>
+        </div>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
+          <Button 
+            size="xs" 
+            color={showHotels ? "success" : "light"}
+            onClick={() => setShowHotels(!showHotels)}
+            className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+          >
+            {showHotels ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Hotels
+          </Button>
+          <Button 
+            size="xs" 
+            color={showTransfers ? "success" : "light"}
+            onClick={() => setShowTransfers(!showTransfers)}
+            className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+          >
+            {showTransfers ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Transfers
+          </Button>
+          <div className="col-span-1 sm:col-span-auto">
+            <Button 
+              size="xs" 
+              color={showTrips ? "success" : "light"}
+              onClick={() => setShowTrips(!showTrips)}
+              className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+            >
+              {showTrips ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Trips
+            </Button>
+          </div>
+          <div className="col-span-1 sm:hidden">
+            <Button 
+              size="xs" 
+              color="info"
+              onClick={toggleAllSections}
+              className="w-full flex items-center justify-center py-1 px-3"
+            >
+              {allSectionsVisible ? 
+                <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
+                <><FaEye className="mr-1 mt-0.5" /> Show All</>
+              }
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 hidden sm:flex justify-center">
+          <Button 
+            size="xs" 
+            color="info"
+            onClick={toggleAllSections}
+            className="py-1 px-6"
+          >
+            {allSectionsVisible ? 
+              <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
+              <><FaEye className="mr-1 mt-0.5" /> Show All</>
+            }
+          </Button>
+        </div>
+      </div>
+      
       <div className="bg-white p-4 md:p-8 rounded-lg shadow-lg max-w-full font-bold" ref={voucherRef}>
         {/* Voucher Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
@@ -867,6 +968,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
               <div>
                 <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
               </div>
+              {voucherData.capital && (
+                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md">
+                  <span className="font-semibold">Capital:</span> {voucherData.capital}
+                  <div className="text-xs text-gray-500 italic mt-1">
+                    (This field is only visible in preview)
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col">
               <div>
@@ -883,7 +992,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
         </div>
         
         {/* Hotels */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ display: showHotels ? 'block' : 'none' }}>
           <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Hotels</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
@@ -917,8 +1026,20 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
           </div>
         </div>
         
+        {!showHotels && voucherData.hotels && voucherData.hotels.length > 0 && (
+          <div 
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+            onClick={() => setShowHotels(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">Hotels section hidden</span>
+            <Button size="xs" color="light" className="flex items-center py-1 px-3">
+              <FaEye className="mr-1 mt-0.5" /> Show
+            </Button>
+          </div>
+        )}
+        
         {/* Transfers */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ display: showTransfers ? 'block' : 'none' }}>
           <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Transfer</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
@@ -926,6 +1047,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
                 <tr>
                   <th className="px-2 md:px-4 py-2 border">City</th>
                   <th className="px-2 md:px-4 py-2 border">Date</th>
+                  <th className="px-2 md:px-4 py-2 border">Time</th>
+                  <th className="px-2 md:px-4 py-2 border">Flight</th>
                   <th className="px-2 md:px-4 py-2 border">From</th>
                   <th className="px-2 md:px-4 py-2 border">To</th>
                   <th className="px-2 md:px-4 py-2 border">Pax</th>
@@ -937,6 +1060,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
                   <tr key={`transfer-row-${index}`} className="bg-white border-b hover:bg-gray-50">
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.city || ''}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(transfer.date)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.time || ''}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.flightNumber || ''}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.from}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.to}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.pax}</td>
@@ -948,8 +1073,20 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
           </div>
         </div>
         
+        {!showTransfers && voucherData.transfers && voucherData.transfers.length > 0 && (
+          <div 
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+            onClick={() => setShowTransfers(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">Transfers section hidden</span>
+            <Button size="xs" color="light" className="flex items-center py-1 px-3">
+              <FaEye className="mr-1 mt-0.5" /> Show
+            </Button>
+          </div>
+        )}
+        
         {/* Trips */}
-        <div className="mb-6">
+        <div className="mb-6" style={{ display: showTrips ? 'block' : 'none' }}>
           <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Trips</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
@@ -957,7 +1094,6 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
                 <tr>
                   <th className="px-2 md:px-4 py-2 border">City</th>
                   <th className="px-2 md:px-4 py-2 border">Tours</th>
-                  <th className="px-2 md:px-4 py-2 border">Count</th>
                   <th className="px-2 md:px-4 py-2 border">Type</th>
                   <th className="px-2 md:px-4 py-2 border">Pax</th>
                 </tr>
@@ -967,7 +1103,6 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
                   <tr key={`trip-row-${index}`} className="bg-white border-b hover:bg-gray-50">
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.city}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.tourName}</td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.count}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.type}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.pax}</td>
                   </tr>
@@ -976,6 +1111,18 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
             </table>
           </div>
         </div>
+        
+        {!showTrips && voucherData.trips && voucherData.trips.length > 0 && (
+          <div 
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+            onClick={() => setShowTrips(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">Trips section hidden</span>
+            <Button size="xs" color="light" className="flex items-center py-1 px-3">
+              <FaEye className="mr-1 mt-0.5" /> Show
+            </Button>
+          </div>
+        )}
         
         {/* Total Amount */}
         <div className="mb-6">
@@ -1039,6 +1186,13 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl }) => {
           Voucher #{voucherData.voucherNumber || 10000}
         </div>
       </div>
+      
+      {/* Save Voucher Button */}
+      {saveButton && (
+        <div className="mt-4 flex justify-center">
+          {saveButton}
+        </div>
+      )}
     </div>
   );
 };
