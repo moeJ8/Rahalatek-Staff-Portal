@@ -16,6 +16,7 @@ export default function EditVoucherPage() {
   const [formData, setFormData] = useState({
     clientName: '',
     nationality: '',
+    officeName: '',
     arrivalDate: '',
     departureDate: '',
     capital: '',
@@ -27,6 +28,9 @@ export default function EditVoucherPage() {
     advancedAmount: 0,
     remainingAmount: 0
   });
+  
+  // Custom hotel input state
+  const [useCustomHotel, setUseCustomHotel] = useState([]);
   
   // Date display formatting
   const [displayArrivalDate, setDisplayArrivalDate] = useState('');
@@ -80,12 +84,39 @@ export default function EditVoucherPage() {
         ]);
         
         const voucherData = voucherResponse.data.data;
+        
+        // Check if the user has permission to edit this voucher
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const isAdmin = user.isAdmin || false;
+        const currentUserId = user.id || null;
+        
+        // If not admin and not the creator, redirect with error
+        if (!isAdmin && (!voucherData.createdBy || voucherData.createdBy._id !== currentUserId)) {
+          toast.error('You do not have permission to edit this voucher.', {
+            duration: 3000,
+            style: {
+              background: '#f44336',
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              padding: '16px',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#f44336',
+            },
+          });
+          navigate('/vouchers');
+          return;
+        }
+        
         setVoucher(voucherData);
         
         // Set form data from voucher
         setFormData({
           clientName: voucherData.clientName || '',
           nationality: voucherData.nationality || '',
+          officeName: voucherData.officeName || '',
           arrivalDate: voucherData.arrivalDate ? new Date(voucherData.arrivalDate).toISOString().split('T')[0] : '',
           departureDate: voucherData.departureDate ? new Date(voucherData.departureDate).toISOString().split('T')[0] : '',
           capital: voucherData.capital || '',
@@ -105,11 +136,15 @@ export default function EditVoucherPage() {
           remainingAmount: voucherData.remainingAmount || 0
         });
         
-        // Set hotels and tours data
+        setUseCustomHotel(voucherData.hotels.map(hotel => {
+          const hotelExists = hotelsResponse.data.some(h => h.name === hotel.hotelName);
+          return !hotelExists && hotel.hotelName !== '';
+        }));
+        
         setHotels(hotelsResponse.data);
         setTours(toursResponse.data);
         
-        // Extract unique cities
+
         const uniqueCities = [...new Set([
           ...hotelsResponse.data.map(h => h.city),
           ...toursResponse.data.map(t => t.city)
@@ -155,7 +190,7 @@ export default function EditVoucherPage() {
     updatedHotels[index][field] = value;
     
     // If selecting a hotel name, populate the city
-    if (field === 'hotelName') {
+    if (field === 'hotelName' && !useCustomHotel[index]) {
       const selectedHotel = hotels.find(h => h.name === value);
       if (selectedHotel) {
         updatedHotels[index].city = selectedHotel.city;
@@ -166,6 +201,21 @@ export default function EditVoucherPage() {
       ...prev,
       hotels: updatedHotels
     }));
+  };
+  
+  const toggleCustomHotel = (index) => {
+    const newUseCustom = [...useCustomHotel];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomHotel(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedHotels = [...formData.hotels];
+      updatedHotels[index].hotelName = '';
+      setFormData(prev => ({
+        ...prev,
+        hotels: updatedHotels
+      }));
+    }
   };
   
   const handleAddHotel = () => {
@@ -185,6 +235,8 @@ export default function EditVoucherPage() {
         }
       ]
     }));
+    
+    setUseCustomHotel(prev => [...prev, false]);
   };
   
   const handleRemoveHotel = (index) => {
@@ -194,6 +246,11 @@ export default function EditVoucherPage() {
       ...prev,
       hotels: updatedHotels
     }));
+    
+    // Remove entry from useCustomHotel array
+    const updatedUseCustom = [...useCustomHotel];
+    updatedUseCustom.splice(index, 1);
+    setUseCustomHotel(updatedUseCustom);
   };
   
   // Transfer handlers
@@ -413,6 +470,7 @@ export default function EditVoucherPage() {
         voucherNumber: voucher.voucherNumber,
         clientName: formData.clientName,
         nationality: formData.nationality,
+        officeName: formData.officeName,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
         capital: formData.capital,
@@ -537,6 +595,17 @@ export default function EditVoucherPage() {
           </div>
           
           <div>
+            <Label htmlFor="officeName" value="Office Name" className="mb-2 block" />
+            <TextInput
+              id="officeName"
+              name="officeName"
+              value={formData.officeName}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          
+          <div>
             <Label htmlFor="totalAmount" value="Total Amount ($)" className="mb-2 block" />
             <TextInput
               id="totalAmount"
@@ -587,6 +656,17 @@ export default function EditVoucherPage() {
                 </div>
               </div>
             )}
+          </div>
+          
+          <div>
+            <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+            <TextInput
+              id="capital"
+              name="capital"
+              value={formData.capital}
+              onChange={handleInputChange}
+              placeholder="This will only show in preview"
+            />
           </div>
           
           <div>
@@ -701,24 +781,13 @@ export default function EditVoucherPage() {
               </span>
             </div>
           </div>
-          
-          <div>
-            <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
-            <TextInput
-              id="capital"
-              name="capital"
-              value={formData.capital}
-              onChange={handleInputChange}
-              placeholder="This will only show in preview"
-            />
-          </div>
         </div>
         
         {/* Hotels Section */}
         <div className="mt-6 mb-6">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xl font-semibold dark:text-white">Hotels</h3>
-            <Button size="sm" onClick={handleAddHotel} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Hotel</Button>
+            <Button size="sm" onClick={handleAddHotel} gradientDuoTone="pinkToOrange">+ Add Hotel</Button>
           </div>
           
           {formData.hotels.map((hotel, index) => (
@@ -751,18 +820,37 @@ export default function EditVoucherPage() {
                 </div>
                 
                 <div>
-                  <Label value="Hotel Name" className="mb-2 block" />
-                  <Select 
-                    value={hotel.hotelName} 
-                    onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
-                  >
-                    <option value="">Select Hotel</option>
-                    {hotels
-                      .filter(h => !hotel.city || h.city === hotel.city)
-                      .map(h => (
-                        <option key={h._id} value={h.name}>{h.name}</option>
-                      ))}
-                  </Select>
+                  <div className="flex justify-between items-center mb-2">
+                    <Label value="Hotel Name" className="block" />
+                    <div className="flex items-center">
+                      <Checkbox 
+                        id={`customHotel-${index}`}
+                        checked={useCustomHotel[index]}
+                        onChange={() => toggleCustomHotel(index)}
+                      />
+                      <Label htmlFor={`customHotel-${index}`} value="Custom Hotel" className="ml-2 text-sm" />
+                    </div>
+                  </div>
+                  
+                  {useCustomHotel[index] ? (
+                    <TextInput
+                      value={hotel.hotelName}
+                      onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
+                      placeholder="Enter hotel name"
+                    />
+                  ) : (
+                    <Select 
+                      value={hotel.hotelName} 
+                      onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
+                    >
+                      <option value="">Select Hotel</option>
+                      {hotels
+                        .filter(h => !hotel.city || h.city === hotel.city)
+                        .map(h => (
+                          <option key={h._id} value={h.name}>{h.name}</option>
+                        ))}
+                    </Select>
+                  )}
                 </div>
                 
                 <div>
@@ -874,7 +962,7 @@ export default function EditVoucherPage() {
         <div className="mt-6 mb-6">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xl font-semibold dark:text-white">Transfers</h3>
-            <Button size="sm" onClick={handleAddTransfer} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Transfer</Button>
+            <Button size="sm" onClick={handleAddTransfer} gradientDuoTone="pinkToOrange">+ Add Transfer</Button>
           </div>
           
           {formData.transfers.map((transfer, index) => (
@@ -1020,7 +1108,7 @@ export default function EditVoucherPage() {
         <div className="mt-6 mb-6">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-xl font-semibold dark:text-white">Trips</h3>
-            <Button size="sm" onClick={handleAddTrip} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Trip</Button>
+            <Button size="sm" onClick={handleAddTrip} gradientDuoTone="pinkToOrange">+ Add Trip</Button>
           </div>
           
           {formData.trips.map((trip, index) => (

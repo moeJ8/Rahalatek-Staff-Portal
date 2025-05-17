@@ -4,7 +4,7 @@ import { Card, Button } from 'flowbite-react';
 import axios from 'axios';
 import VoucherPreview from '../components/VoucherPreview';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import { FaArrowLeft, FaTrash, FaPen } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaPen, FaUser } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 export default function VoucherDetailPage() {
@@ -15,6 +15,21 @@ export default function VoucherDetailPage() {
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  useEffect(() => {
+    // Check if the current user is an admin
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setIsAdmin(user.isAdmin || false);
+    setCurrentUserId(user.id || null);
+  }, []);
+
+  // Simple helper function to check if user can manage this voucher
+  const canManageVoucher = () => {
+    if (isAdmin) return true;
+    return voucher && voucher.createdBy && voucher.createdBy._id === currentUserId;
+  };
 
   useEffect(() => {
     const fetchVoucher = async () => {
@@ -96,16 +111,25 @@ export default function VoucherDetailPage() {
       <div className="flex justify-between items-center mb-6">
         <Link 
           to="/vouchers"
-          className="flex items-center text-blue-600 hover:underline dark:text-blue-500"
+          className="flex items-center text-blue-600 hover:underline dark:text-blue-500 text-sm"
         >
           <FaArrowLeft className="mr-2" />
           Back to Vouchers
         </Link>
       </div>
       
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h1 className="text-2xl font-medium mb-4 text-gray-900 dark:text-white">
         {loading ? 'Loading Voucher...' : `Voucher #${voucher?.voucherNumber}`}
       </h1>
+      
+      {isAdmin && voucher && voucher.createdBy && (
+        <div className="flex items-center mb-5 text-gray-700 dark:text-gray-300">
+          <FaUser className="mr-2 text-indigo-600 dark:text-indigo-400" />
+          <span className="text-sm">
+            Created by: <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{voucher.createdBy.username}</span>
+          </span>
+        </div>
+      )}
       
       {loading ? (
         <div className="flex justify-center items-center h-40">
@@ -122,8 +146,8 @@ export default function VoucherDetailPage() {
       ) : voucher ? (
         <VoucherPreview 
           voucherData={voucher} 
-          onDelete={handleDeleteClick}
-          editUrl={`/edit-voucher/${id}`}
+          onDelete={canManageVoucher() ? handleDeleteClick : null}
+          editUrl={canManageVoucher() ? `/edit-voucher/${id}` : null}
         />
       ) : (
         <Card>

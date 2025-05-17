@@ -118,18 +118,6 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link 
-                  to="/hotels" 
-                  className={`font-medium ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-                >
-                  Hotels
-                </Link>
-                <Link 
-                  to="/tours" 
-                  className={`font-medium ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-                >
-                  Tours
-                </Link>
                 <CustomDarkModeToggle />
                 <Link to="/signin">
                   <Button gradientDuoTone="purpleToPink" size="sm" outline>
@@ -232,22 +220,6 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/hotels"
-                    onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-                  >
-                    Hotels
-                  </Link>
-                  
-                  <Link 
-                    to="/tours"
-                    onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
-                  >
-                    Tours
-                  </Link>
-                
                   <Link 
                     to="/signin"
                     onClick={closeMobileMenu}

@@ -7,6 +7,7 @@ exports.createVoucher = async (req, res) => {
             voucherNumber: providedVoucherNumber,
             clientName,
             nationality,
+            officeName,
             bookingReference,
             arrivalDate,
             departureDate,
@@ -51,6 +52,7 @@ exports.createVoucher = async (req, res) => {
             bookingNumber: voucherNumber,
             clientName,
             nationality,
+            officeName: officeName || '',
             bookingReference: bookingReference || 'Auto-generated',
             arrivalDate,
             departureDate,
@@ -82,6 +84,7 @@ exports.createVoucher = async (req, res) => {
                     bookingNumber: randomNumber,
                     clientName,
                     nationality,
+                    officeName: officeName || '',
                     bookingReference: bookingReference || 'Auto-generated',
                     arrivalDate,
                     departureDate,
@@ -205,7 +208,7 @@ exports.getNextVoucherNumber = async (req, res) => {
 
 exports.deleteVoucher = async (req, res) => {
     try {
-        const voucher = await Voucher.findByIdAndDelete(req.params.id);
+        const voucher = await Voucher.findById(req.params.id);
         
         if (!voucher) {
             return res.status(404).json({
@@ -213,6 +216,16 @@ exports.deleteVoucher = async (req, res) => {
                 message: 'Voucher not found'
             });
         }
+        
+        // Check if the user is authorized to delete the voucher
+        if (!req.user.isAdmin && voucher.createdBy.toString() !== req.user.userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to delete this voucher'
+            });
+        }
+        
+        await Voucher.findByIdAndDelete(req.params.id);
         
         res.status(200).json({
             success: true,
@@ -229,9 +242,28 @@ exports.deleteVoucher = async (req, res) => {
 
 exports.updateVoucher = async (req, res) => {
     try {
+        // First check if the voucher exists and if the user is authorized
+        const voucher = await Voucher.findById(req.params.id);
+        
+        if (!voucher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voucher not found'
+            });
+        }
+        
+        // Check if the user is authorized to update the voucher
+        if (!req.user.isAdmin && voucher.createdBy.toString() !== req.user.userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to update this voucher'
+            });
+        }
+        
         const {
             clientName,
             nationality,
+            officeName,
             bookingReference,
             arrivalDate,
             departureDate,
@@ -265,6 +297,7 @@ exports.updateVoucher = async (req, res) => {
             {
                 clientName,
                 nationality,
+                officeName: officeName || '',
                 bookingReference: bookingReference || 'Auto-generated',
                 arrivalDate,
                 departureDate,

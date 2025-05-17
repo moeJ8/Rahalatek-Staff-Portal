@@ -9,6 +9,7 @@ export default function VoucherForm({ onSuccess }) {
   const [formData, setFormData] = useState({
     clientName: '',
     nationality: '',
+    officeName: '',
     arrivalDate: '',
     departureDate: '',
     capital: '',
@@ -448,6 +449,7 @@ export default function VoucherForm({ onSuccess }) {
         voucherNumber: generatedVoucher.voucherNumber, 
         clientName: formData.clientName,
         nationality: formData.nationality,
+        officeName: formData.officeName,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
         capital: formData.capital,
@@ -512,7 +514,7 @@ export default function VoucherForm({ onSuccess }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Voucher Generator</h2>
+      {/* <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Voucher Generator</h2> */}
       
       {loading && !showPreview ? (
         <div className="flex justify-center items-center h-40">
@@ -547,6 +549,17 @@ export default function VoucherForm({ onSuccess }) {
                     id="nationality"
                     name="nationality"
                     value={formData.nationality}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="officeName" value="Office Name" className="mb-2 block" />
+                  <TextInput
+                    id="officeName"
+                    name="officeName"
+                    value={formData.officeName}
                     onChange={handleInputChange}
                     required
                   />
@@ -605,6 +618,17 @@ export default function VoucherForm({ onSuccess }) {
                   )}
                 </div>
                 
+                <div>
+                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <TextInput
+                    id="capital"
+                    name="capital"
+                    value={formData.capital}
+                    onChange={handleInputChange}
+                    placeholder="This will only show in preview"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
                   <div className="relative">
@@ -717,24 +741,13 @@ export default function VoucherForm({ onSuccess }) {
                     </span>
                   </div>
                 </div>
-
-                <div>
-                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
-                  <TextInput
-                    id="capital"
-                    name="capital"
-                    value={formData.capital}
-                    onChange={handleInputChange}
-                    placeholder="This will only show in preview"
-                  />
-                </div>
               </div>
               
               {/* Hotels Section */}
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Hotels</h3>
-                  <Button size="sm" onClick={handleAddHotel} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Hotel</Button>
+                  <Button size="sm" onClick={handleAddHotel} gradientDuoTone="pinkToOrange">+ Add Hotel</Button>
                 </div>
                 
                 {formData.hotels.map((hotel, index) => (
@@ -889,7 +902,7 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Transfers</h3>
-                  <Button size="sm" onClick={handleAddTransfer} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Transfer</Button>
+                  <Button size="sm" onClick={handleAddTransfer} gradientDuoTone="pinkToOrange">+ Add Transfer</Button>
                 </div>
                 
                 {formData.transfers.map((transfer, index) => (
@@ -1027,7 +1040,7 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Trips</h3>
-                  <Button size="sm" onClick={handleAddTrip} className="bg-blue-500 text-white hover:bg-blue-600">+ Add Trip</Button>
+                  <Button size="sm" onClick={handleAddTrip} gradientDuoTone="pinkToOrange">+ Add Trip</Button>
                 </div>
                 
                 {formData.trips.map((trip, index) => (

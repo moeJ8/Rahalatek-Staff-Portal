@@ -9,6 +9,7 @@ import EditHotelPage from './pages/EditHotelPage'
 import VouchersPage from './pages/VouchersPage'
 import VoucherDetailPage from './pages/VoucherDetailPage'
 import EditVoucherPage from './pages/EditVoucherPage'
+import CreateVoucherPage from './pages/CreateVoucherPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -67,9 +68,6 @@ function App() {
               user ? <Navigate to="/home" /> : <Navigate to="/signin" />
             } />
             <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
-
-            <Route path="/tours" element={<ToursPage />} />
-            <Route path="/hotels" element={<HotelsPage />} />
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>
@@ -81,11 +79,13 @@ function App() {
             <Route element={<ProtectedRoute requireAdmin={false} />}>
               <Route path="/home" element={<WorkerPage />} />
               <Route path="/vouchers" element={<VouchersPage />} />
+              <Route path="/vouchers/new" element={<CreateVoucherPage />} />
               <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
               <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />
+              <Route path="/tours" element={<ToursPage />} />
+              <Route path="/hotels" element={<HotelsPage />} />
             </Route>
             
-            {/* Catch-all route - redirect any undefined path to home */}
             <Route path="*" element={user ? <Navigate to="/home" /> : <Navigate to="/signin" />} />
           </Routes>
         </main>

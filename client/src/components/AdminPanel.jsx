@@ -1110,44 +1110,44 @@ export default function AdminPanel() {
         <div className="max-w-2xl mx-auto p-3 flex flex-col items-center">
             {/* Custom Tab Implementation */}
             <div className="flex flex-wrap justify-center border-b mb-4 gap-1" role="tablist" aria-label="Admin Sections">
-                <button
-                    id="tab-hotels"
+                    <button
+                        id="tab-hotels"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'hotels' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => handleTabChange('hotels')}
-                    onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
-                    tabIndex={0}
-                    role="tab"
-                    aria-selected={activeTab === 'hotels'}
-                    aria-controls="hotels-panel"
-                >
+                        onClick={() => handleTabChange('hotels')}
+                        onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
+                        tabIndex={0}
+                        role="tab"
+                        aria-selected={activeTab === 'hotels'}
+                        aria-controls="hotels-panel"
+                    >
                     Hotels
-                </button>
-                <button
-                    id="tab-tours"
+                    </button>
+                    <button
+                        id="tab-tours"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'tours' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => handleTabChange('tours')}
-                    onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
-                    tabIndex={0}
-                    role="tab"
-                    aria-selected={activeTab === 'tours'}
-                    aria-controls="tours-panel"
-                >
+                        onClick={() => handleTabChange('tours')}
+                        onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
+                        tabIndex={0}
+                        role="tab"
+                        aria-selected={activeTab === 'tours'}
+                        aria-controls="tours-panel"
+                    >
                     Tours
-                </button>
-                <button
-                    id="tab-airports"
+                    </button>
+                    <button
+                        id="tab-airports"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'airports' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                    onClick={() => handleTabChange('airports')}
-                    onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
-                    tabIndex={0}
-                    role="tab"
-                    aria-selected={activeTab === 'airports'}
-                    aria-controls="airports-panel"
-                >
+                        onClick={() => handleTabChange('airports')}
+                        onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
+                        tabIndex={0}
+                        role="tab"
+                        aria-selected={activeTab === 'airports'}
+                        aria-controls="airports-panel"
+                    >
                     Airports
-                </button>
-                <button
-                    id="tab-users"
+                    </button>
+                    <button
+                        id="tab-users"
                     className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-purple-600 font-medium text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                     onClick={() => handleTabChange('users')}
                     onKeyDown={(e) => handleTabKeyDown(e, 'users')}
@@ -1281,7 +1281,7 @@ export default function AdminPanel() {
                                     <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 mb-4">
                                         <p className="text-gray-500 dark:text-gray-400 mb-4">No airport transportation options added</p>
                                         <Button size="sm" onClick={handleAddAirportTransportation} className="mr-2" color="blue">
-                                            <HiPlus className="mr-1" /> Add Airport Transportation
+                                            <HiPlus className="mr-1 mt-1" /> Add Airport Transportation
                                         </Button>
                                     </div>
                                 ) : (

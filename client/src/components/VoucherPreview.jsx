@@ -148,6 +148,19 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     
     // Client container
     const clientContainer = document.createElement('div');
+    
+    // Office Name if provided - Moved to the top
+    let officeDiv;
+    if (voucherData.officeName) {
+      officeDiv = document.createElement('div');
+      const officeLabel = document.createElement('span');
+      officeLabel.textContent = 'Office: ';
+      officeLabel.style.fontWeight = '600';
+      officeDiv.appendChild(officeLabel);
+      officeDiv.appendChild(document.createTextNode(voucherData.officeName));
+      clientContainer.appendChild(officeDiv);
+    }
+    
     clientContainer.appendChild(clientNameDiv);
     clientContainer.appendChild(clientNationalityDiv);
     clientContainer.appendChild(bookingDiv);
@@ -880,9 +893,6 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       {/* Section Visibility Controls */}
       <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mb-4">
-        <div className="mb-3 text-center">
-          <span className="font-medium text-gray-700 dark:text-gray-300">Toggle Sections</span>
-        </div>
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
           <Button 
             size="xs" 
@@ -910,12 +920,12 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               {showTrips ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Trips
             </Button>
           </div>
-          <div className="col-span-1 sm:hidden">
+          <div className="col-span-1 sm:col-span-auto">
             <Button 
               size="xs" 
               color="info"
               onClick={toggleAllSections}
-              className="w-full flex items-center justify-center py-1 px-3"
+              className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
             >
               {allSectionsVisible ? 
                 <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
@@ -923,19 +933,6 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               }
             </Button>
           </div>
-        </div>
-        <div className="mt-3 hidden sm:flex justify-center">
-          <Button 
-            size="xs" 
-            color="info"
-            onClick={toggleAllSections}
-            className="py-1 px-6"
-          >
-            {allSectionsVisible ? 
-              <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
-              <><FaEye className="mr-1 mt-0.5" /> Show All</>
-            }
-          </Button>
         </div>
       </div>
       
@@ -959,6 +956,12 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         <div className="p-3 md:p-4 rounded-md mb-6 border border-gray-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4">
             <div className="flex flex-col">
+              {/* Display Office first */}
+              {voucherData.officeName && (
+                <div>
+                  <span className="font-semibold">Office:</span> {voucherData.officeName}
+                </div>
+              )}
               <div>
                 <span className="font-semibold">Clients:</span> {voucherData.clientName}
               </div>

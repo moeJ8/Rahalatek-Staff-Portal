@@ -22,6 +22,10 @@ const voucherSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    officeName: {
+        type: String,
+        default: ''
+    },
     bookingReference: {
         type: String,
         required: true
