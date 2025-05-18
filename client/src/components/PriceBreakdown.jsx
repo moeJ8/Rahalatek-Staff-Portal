@@ -154,16 +154,22 @@ const PriceBreakdown = ({
                   totalCost: 0
                 };
                 
-                // Calculate the hotel's display cost (room + breakfast + its share of transportation)
-                const hotelDisplayCost = hotelCostInfo.totalCost; // This now includes transportation
+                const hotelDisplayCost = hotelCostInfo.totalCost;
                 
                 return (
-                  <div key={hotelIndex} className="mb-4 border-b border-blue-800 pb-4 last:border-0 last:pb-0">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-semibold text-white">
-                        Hotel #{hotelIndex + 1}: {hotelData.name} ({hotelData.stars}★)
+                  <div key={hotelIndex} className="mb-4 last:mb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h5 className="text-sm font-semibold text-blue-200">
+                          {hotelData.name} ({hotelData.stars}★)
+                        </h5>
+                        <p className="text-xs text-blue-300">
+                          {hotelData.city} • {hotelNights} {hotelNights === 1 ? 'night' : 'nights'}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold text-blue-200">
+                        ${Math.round(hotelDisplayCost)}
                       </span>
-                      <span className="text-green-400 font-medium">${Math.round(hotelDisplayCost)}</span>
                     </div>
                     
                     <div className="text-xs text-blue-200 ml-2 mb-2">

@@ -302,29 +302,50 @@ export default function HotelsPage() {
       <Modal
         show={deleteModalOpen}
         onClose={closeDeleteModal}
+        popup
         size="md"
+        theme={{
+          root: {
+            base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
+            show: {
+              on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
+              off: "hidden"
+            }
+          },
+          content: {
+            base: "relative h-full w-full p-4 h-auto",
+            inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
+          }
+        }}
       >
-        <Modal.Header>Confirm Deletion</Modal.Header>
+        <Modal.Header />
         <Modal.Body>
-          <div className="text-center sm:text-left">
-            <p className="text-gray-700 dark:text-gray-300">
-              Are you sure you want to delete hotel <span className="font-semibold">{hotelToDelete?.name}</span>?
-              This action cannot be undone.
-            </p>
+          <div className="text-center">
+            <FaTrash className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete the hotel
+              <div className="font-bold text-gray-900 dark:text-white mt-1">
+                "{hotelToDelete?.name}"?
+              </div>
+            </h3>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="failure"
+                onClick={handleDeleteHotel}
+                isProcessing={deleteLoading}
+              >
+                Yes, delete hotel
+              </Button>
+              <Button
+                color="gray"
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+              >
+                No, cancel
+              </Button>
+            </div>
           </div>
         </Modal.Body>
-        <Modal.Footer>
-          <Button color="gray" onClick={closeDeleteModal}>
-            Cancel
-          </Button>
-          <Button 
-            color="failure" 
-            onClick={handleDeleteHotel}
-            isProcessing={deleteLoading}
-          >
-            Delete
-          </Button>
-        </Modal.Footer>
       </Modal>
       
       {selectedHotel && (

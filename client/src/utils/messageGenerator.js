@@ -18,9 +18,20 @@ const arabicDayOrdinals = [
   'الحادي عشر', 'الثاني عشر', 'الثالث عشر', 'الرابع عشر', 'الخامس عشر'
 ];
 
+// Add city name translations
+const cityTranslations = {
+  'Antalya': 'انطاليا',
+  'Bodrum': 'بودروم',
+  'Bursa': 'بورصة',
+  'Cappadocia': 'كابادوكيا',
+  'Fethiye': 'فتحية',
+  'Istanbul': 'اسطنبول',
+  'Trabzon': 'طرابزون'
+};
+
 export const generateBookingMessage = ({
   hotelEntries,
-  selectedCity,
+  selectedCities,
   startDate,
   endDate,
   numGuests,
@@ -40,14 +51,22 @@ export const generateBookingMessage = ({
   const totalNights = calculateDuration(startDate, endDate);
   const finalPrice = tripPrice || calculatedPrice;
 
-  const dateOptions = {
-    day: 'numeric', 
-    month: 'numeric',
-    numberingSystem: 'latn' 
+  // Format cities for Arabic message
+  const formattedCities = selectedCities
+    .map(city => cityTranslations[city] || city)
+    .join(' و ');
+
+  // Helper function to format date as dd/mm/yyyy
+  const formatDateDDMMYYYY = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
   
-  const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', dateOptions);
-  const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', dateOptions);
+  const formattedStartDate = formatDateDDMMYYYY(startDate);
+  const formattedEndDate = formatDateDDMMYYYY(endDate);
 
   // Generate transportation text - only for first and last hotel
   let transportationText = '';
@@ -115,7 +134,10 @@ export const generateBookingMessage = ({
     
     // Combine reception and farewell text
     if (receptionText && farewellText) {
-      transportationText = `${RLM}${receptionText.substring(2)} و${farewellText.substring(2)}`;
+      // If both reception and farewell use the same vehicle type to/from the same airport,
+      // combine them into a single line to avoid redundancy
+      const vehicleCapacityText = transportVehicleType === 'Vito' ? '(2-8 أشخاص)' : '(9-16 شخص)';
+      transportationText = `${RLM}استقبال وتوديع من وإلى مطار ${airportName} بسيارة ${transportVehicleType} خاصة ${vehicleCapacityText}`;
     } else if (receptionText) {
       transportationText = receptionText;
     } else if (farewellText) {
@@ -128,8 +150,8 @@ export const generateBookingMessage = ({
   
   hotelEntries.forEach((entry, index) => {
     const hotelData = entry.hotelData;
-    const hotelCheckIn = new Date(entry.checkIn).toLocaleDateString('en-US', dateOptions);
-    const hotelCheckOut = new Date(entry.checkOut).toLocaleDateString('en-US', dateOptions);
+    const hotelCheckIn = formatDateDDMMYYYY(entry.checkIn);
+    const hotelCheckOut = formatDateDDMMYYYY(entry.checkOut);
     const hotelNights = calculateDuration(entry.checkIn, entry.checkOut);
     
     let roomTypeInfo = "";
@@ -223,8 +245,8 @@ ${hotelData.description ? `${RLM}${hotelData.description}` : ''}
     tours.find(tour => tour._id === tourId)
   ).filter(Boolean);
 
-  const itinerary = `${RLM}🇹🇷 بكج ${getCityNameInArabic(selectedCity)} 🇹🇷
-${RLM}تاريخ من ${formattedStartDate} لغاية ${formattedEndDate} 🗓
+  const itinerary = `${RLM}🇹🇷 بكج ${formattedCities} 🇹🇷
+${RLM} من ${formattedStartDate} لغاية ${formattedEndDate} 🗓
 ${RLM}المدة ${totalNights} ليالي ⏰
 ${guestsInfo}
 ${RLM}سعر البكج ${finalPrice}$ 💵

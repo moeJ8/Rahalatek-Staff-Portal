@@ -35,7 +35,7 @@ export default function WorkerForm() {
     
     // Replace single hotel selection with array of hotel entries
     const [hotelEntries, setHotelEntries] = useState(savedState?.hotelEntries || []);
-    const [selectedCity, setSelectedCity] = useState(savedState?.selectedCity || '');
+    const [selectedCities, setSelectedCities] = useState(savedState?.selectedCities || []);
     const [message, setMessage] = useState('');
     const [availableTours, setAvailableTours] = useState([]);
     const [selectedTours, setSelectedTours] = useState(savedState?.selectedTours || []);
@@ -68,7 +68,7 @@ export default function WorkerForm() {
       const saveFormData = () => {
         try {
           const formData = {
-            selectedCity,
+            selectedCities,
             hotelEntries,
             startDate,
             endDate,
@@ -94,7 +94,7 @@ export default function WorkerForm() {
       
       saveFormData();
     }, [
-      selectedCity, 
+      selectedCities, 
       hotelEntries,
       startDate, 
       endDate, 
@@ -153,20 +153,26 @@ export default function WorkerForm() {
     
 
     useEffect(() => {
-      if (selectedCity) {
-        const filteredTours = tours.filter(tour => tour.city === selectedCity);
+      if (selectedCities.length > 0) {
+        const filteredTours = tours.filter(tour => selectedCities.includes(tour.city));
         setAvailableTours(filteredTours);
-        setSelectedTours([]);
       } else {
         setAvailableTours([]);
       }
-    }, [selectedCity, tours]);
+    }, [selectedCities, tours]);
 
-  const handleCityChange = (e) => {
-    const city = e.target.value;
-    setSelectedCity(city);
-    // Clear hotel entries when city changes
-    setHotelEntries([]);
+  
+  const handleNumGuestsChange = (e) => {
+    const newGuestCount = parseInt(e.target.value);
+    setNumGuests(newGuestCount);
+    
+    // Reset all room allocations when guest count changes
+    const updatedEntries = hotelEntries.map(entry => ({
+      ...entry,
+      roomAllocations: []
+    }));
+    
+    setHotelEntries(updatedEntries);
   };
 
   const handleAddHotel = () => {
@@ -284,19 +290,6 @@ export default function WorkerForm() {
     setHotelEntries(updatedEntries);
   };
 
-  const handleNumGuestsChange = (e) => {
-    const newGuestCount = parseInt(e.target.value);
-    setNumGuests(newGuestCount);
-    
-    // Reset all room allocations when guest count changes
-    const updatedEntries = hotelEntries.map(entry => ({
-      ...entry,
-      roomAllocations: []
-    }));
-    
-    setHotelEntries(updatedEntries);
-  };
-
   const getTotalPrice = () => {
     // If the user has entered a trip price manually, we should respect it
     // Only use manual price if it's a non-empty string entered by the user
@@ -384,7 +377,7 @@ export default function WorkerForm() {
     // Generate message with multiple hotels
     const message = generateBookingMessage({
       hotelEntries,
-      selectedCity,
+      selectedCities,
       startDate,
       endDate,
       numGuests,
@@ -617,49 +610,145 @@ export default function WorkerForm() {
           
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="citySelect" value="Select City" className="dark:text-white" />
+              <Label value="Select Cities" className="dark:text-white text-lg" />
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Select one or more cities for your package
+              </p>
             </div>
-            <Select
-              id="citySelect"
-              value={selectedCity}
-              onChange={handleCityChange}
-              required
-            >
-              <option value="">Select City</option>
-              <option value="Antalya">Antalya</option>
-              <option value="Bodrum">Bodrum</option>
-              <option value="Bursa">Bursa</option>
-              <option value="Cappadocia">Cappadocia</option>
-              <option value="Fethiye">Fethiye</option>
-              <option value="Istanbul">Istanbul</option>
-              <option value="Trabzon">Trabzon</option>
-            </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                "Istanbul",
+                "Antalya",
+                "Cappadocia",
+                "Bodrum",
+                "Fethiye",
+                "Bursa",
+                "Trabzon"
+              ].map((city) => (
+                <div
+                  key={city}
+                  onClick={() => {
+                    if (selectedCities.includes(city)) {
+                      setSelectedCities(selectedCities.filter(c => c !== city));
+                      setHotelEntries([]);
+                      setSelectedTours([]);
+                    } else {
+                      setSelectedCities([...selectedCities, city]);
+                      setHotelEntries([]);
+                      setSelectedTours([]);
+                    }
+                  }}
+                  className={`
+                    cursor-pointer p-4 rounded-lg border-2 transition-all duration-200
+                    ${selectedCities.includes(city)
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className={`font-medium ${
+                      selectedCities.includes(city)
+                        ? 'text-purple-700 dark:text-purple-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {city}
+                    </p>
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                      selectedCities.includes(city)
+                        ? 'bg-purple-500 border-purple-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}>
+                      {selectedCities.includes(city) && (
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           
-          <div>
-            <div className="mb-2 block">
-              <Label htmlFor="numGuests" value="Number of Adults" className="dark:text-white" />
+          {/* Guest Information Card */}
+          <Card className="dark:bg-gray-800 overflow-hidden">
+            <h4 className="text-lg font-semibold dark:text-white mb-4">Guest Information</h4>
+            
+            <div className="flex items-center mb-3">
+              <Checkbox
+                id="includeChildren"
+                checked={includeChildren}
+                onChange={(e) => setIncludeChildren(e.target.checked)}
+                className="mr-2"
+              />
+              <Label htmlFor="includeChildren" className="dark:text-white">
+                Include children
+              </Label>
             </div>
-            <TextInput
-              id="numGuests"
-              type="number"
-              value={numGuests}
-              onChange={handleNumGuestsChange}
-              min={1}
-              required
-            />
-          </div>
-          
-          <ChildrenSection
-            includeChildren={includeChildren}
-            onIncludeChildrenChange={setIncludeChildren}
-            childrenUnder3={childrenUnder3}
-            onChildrenUnder3Change={setChildrenUnder3}
-            children3to6={children3to6}
-            onChildren3to6Change={setChildren3to6}
-            children6to12={children6to12}
-            onChildren6to12Change={setChildren6to12}
-          />
+            
+            <div className={`grid ${includeChildren ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'} gap-4`}>
+              <div>
+                <div className="mb-2 block">
+                  <Label htmlFor="numGuests" value="Number of Adults" className="dark:text-white" />
+                </div>
+                <TextInput
+                  id="numGuests"
+                  type="number"
+                  value={numGuests}
+                  onChange={handleNumGuestsChange}
+                  min={1}
+                  required
+                />
+              </div>
+              
+              {includeChildren && (
+                <>
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="childrenUnder3" value="Children (0-3 years)" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="childrenUnder3"
+                      type="number"
+                      value={childrenUnder3}
+                      onChange={(e) => setChildrenUnder3(parseInt(e.target.value) || 0)}
+                      min={0}
+                    />
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free on tours</p>
+                  </div>
+                  
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="children3to6" value="Children (3-6 years)" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="children3to6"
+                      type="number"
+                      value={children3to6}
+                      onChange={(e) => setChildren3to6(parseInt(e.target.value) || 0)}
+                      min={0}
+                    />
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free accommodation</p>
+                  </div>
+                  
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="children6to12" value="Children (6-12 years)" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="children6to12"
+                      type="number"
+                      value={children6to12}
+                      onChange={(e) => setChildren6to12(parseInt(e.target.value) || 0)}
+                      min={0}
+                    />
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Special hotel rate</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </Card>
           
           {/* Hotels Section */}
           <div className="mt-8 mb-6">
@@ -669,7 +758,7 @@ export default function WorkerForm() {
                 onClick={handleAddHotel}
                 gradientDuoTone="pinkToOrange"
                 size="sm"
-                disabled={!selectedCity || !startDate || !endDate}
+                disabled={!selectedCities.length || !startDate || !endDate}
               >
                 + Add Hotel
               </Button>
@@ -703,10 +792,10 @@ export default function WorkerForm() {
                     >
                       <option value="">Select Hotel</option>
                       {hotels
-                        .filter(hotel => !selectedCity || hotel.city === selectedCity)
+                        .filter(hotel => selectedCities.length === 0 || selectedCities.includes(hotel.city))
                         .map((hotel) => (
                           <option key={hotel._id} value={hotel._id}>
-                            {hotel.name} ({hotel.stars}★)
+                            {hotel.name} ({hotel.stars}★) - {hotel.city}
                           </option>
                         ))}
                     </Select>

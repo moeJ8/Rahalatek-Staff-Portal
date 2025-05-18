@@ -7,14 +7,18 @@ const TourInfo = ({ tourData }) => {
   
   if (!tourData) return null;
 
-  const isRTL = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(tourData.name);
+  // Check if the text contains Arabic characters
+  const containsRTL = (text) => {
+    return /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+  };
+  
+  const isRTL = containsRTL(tourData.name);
 
   return (
     <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg h-full min-h-[24rem] flex flex-col mb-2">
       <h5 
         className="text-xl font-bold text-gray-900 dark:text-white mb-4 break-words"
         dir={isRTL ? "rtl" : "ltr"}
-        style={{ unicodeBidi: "bidi-override", textAlign: isRTL ? "right" : "left" }}
       >
         {tourData.name}
       </h5>
@@ -99,14 +103,14 @@ const TourInfo = ({ tourData }) => {
         {tourData.detailedDescription ? (
           <p 
             className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3"
-            dir={isRTL ? "rtl" : "ltr"}
+            dir={containsRTL(tourData.detailedDescription) ? "rtl" : "ltr"}
           >
             {tourData.detailedDescription}
           </p>
         ) : tourData.description ? (
           <p 
             className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3"
-            dir={isRTL ? "rtl" : "ltr"}
+            dir={containsRTL(tourData.description) ? "rtl" : "ltr"}
           >
             {tourData.description}
           </p>
@@ -137,7 +141,7 @@ const TourInfo = ({ tourData }) => {
           {showHighlights && (
             <div className="overflow-hidden mt-1">
               {tourData.highlights.map((highlight, index) => {
-                const isHighlightRTL = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(highlight);
+                const isHighlightRTL = containsRTL(highlight);
                 return (
                   <p 
                     key={index} 
