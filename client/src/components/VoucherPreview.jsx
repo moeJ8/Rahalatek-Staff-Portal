@@ -137,7 +137,19 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     clientNationalityDiv.appendChild(nationalityLabel);
     clientNationalityDiv.appendChild(document.createTextNode(voucherData.nationality));
     
-    // Booking Number under nationality
+    // Add phone number if provided
+    let clientPhoneDiv;
+    if (voucherData.phoneNumber) {
+      clientPhoneDiv = document.createElement('div');
+      clientPhoneDiv.style.marginTop = '4px';
+      const phoneLabel = document.createElement('span');
+      phoneLabel.textContent = 'Phone Number: ';
+      phoneLabel.style.fontWeight = '600';
+      clientPhoneDiv.appendChild(phoneLabel);
+      clientPhoneDiv.appendChild(document.createTextNode(voucherData.phoneNumber));
+    }
+    
+    // Booking Number under nationality/phone
     const bookingDiv = document.createElement('div');
     bookingDiv.style.marginTop = '4px';
     const bookingLabel = document.createElement('span');
@@ -163,6 +175,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     
     clientContainer.appendChild(clientNameDiv);
     clientContainer.appendChild(clientNationalityDiv);
+    if (clientPhoneDiv) {
+      clientContainer.appendChild(clientPhoneDiv);
+    }
     clientContainer.appendChild(bookingDiv);
     
     // Dates
@@ -896,26 +911,26 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
           <Button 
             size="xs" 
-            color={showHotels ? "success" : "light"}
+            color={showHotels ? "success" : "dark"}
             onClick={() => setShowHotels(!showHotels)}
-            className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+            className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
           >
             {showHotels ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Hotels
           </Button>
           <Button 
             size="xs" 
-            color={showTransfers ? "success" : "light"}
+            color={showTransfers ? "success" : "dark"}
             onClick={() => setShowTransfers(!showTransfers)}
-            className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+            className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
           >
             {showTransfers ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Transfers
           </Button>
           <div className="col-span-1 sm:col-span-auto">
             <Button 
               size="xs" 
-              color={showTrips ? "success" : "light"}
+              color={showTrips ? "success" : "dark"}
               onClick={() => setShowTrips(!showTrips)}
-              className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
             >
               {showTrips ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Trips
             </Button>
@@ -923,9 +938,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           <div className="col-span-1 sm:col-span-auto">
             <Button 
               size="xs" 
-              color="info"
+              color={allSectionsVisible ? "dark" : "purple"}
               onClick={toggleAllSections}
-              className="w-full sm:w-auto flex items-center justify-center py-1 px-3"
+              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
             >
               {allSectionsVisible ? 
                 <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
@@ -968,6 +983,11 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               <div>
                 <span className="font-semibold">Nationality:</span> {voucherData.nationality}
               </div>
+              {voucherData.phoneNumber && (
+                <div>
+                  <span className="font-semibold">Phone Number:</span> {voucherData.phoneNumber}
+                </div>
+              )}
               <div>
                 <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
               </div>

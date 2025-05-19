@@ -3,6 +3,7 @@ import { Card, Button, Table, Modal, Alert, TextInput } from 'flowbite-react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
 import { FaTrash, FaEye, FaPen, FaCalendarAlt, FaPlane, FaMoneyBill, FaUser, FaSearch, FaPlus } from 'react-icons/fa';
 
@@ -189,165 +190,181 @@ export default function VouchersPage() {
           <>
             {/* Desktop Table View (visible on sm screens and up) */}
             <div className="hidden sm:block overflow-x-auto">
-              <Table striped>
-                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
-                  {isAdmin && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
-                  <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                </Table.Head>
-                <Table.Body>
-                  {filteredVouchers.map(voucher => (
-                    <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                        {voucher.voucherNumber}
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-3">
-                        <div className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
-                          {voucher.clientName}
-                        </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-300">
-                          {voucher.nationality}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
-                      <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.departureDate)}</Table.Cell>
-                      <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">${voucher.totalAmount}</Table.Cell>
-                      <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.createdAt)}</Table.Cell>
-                      {isAdmin && (
-                        <Table.Cell className="text-sm text-indigo-600 dark:text-indigo-300 px-4 py-3">
-                          {voucher.createdBy ? <span className="font-semibold">{voucher.createdBy.username}</span> : 'N/A'}
+              <CustomScrollbar>
+                <Table striped>
+                  <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
+                    {isAdmin && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
+                  </Table.Head>
+                  <Table.Body>
+                    {filteredVouchers.map(voucher => (
+                      <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                          {voucher.voucherNumber}
                         </Table.Cell>
-                      )}
-                      <Table.Cell className="px-4 py-3">
-                        <div className="flex space-x-4">
-                          <Link 
-                            to={`/vouchers/${voucher._id}`}
-                            className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          >
-                            View
-                          </Link>
-                          
-                          {canManageVoucher(voucher) && (
-                            <>
-                              <Link 
-                                to={`/edit-voucher/${voucher._id}`}
-                                className="font-medium text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
-                              >
-                                Edit
-                              </Link>
-                              <button
-                                className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                onClick={() => handleDeleteClick(voucher)}
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table>
+                        <Table.Cell className="px-4 py-3">
+                          <div className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
+                            {voucher.clientName}
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                            {voucher.nationality}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.departureDate)}</Table.Cell>
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{voucher.capital || '-'}</Table.Cell>
+                        <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">${voucher.totalAmount}</Table.Cell>
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.createdAt)}</Table.Cell>
+                        {isAdmin && (
+                          <Table.Cell className="text-sm text-indigo-600 dark:text-indigo-300 px-4 py-3">
+                            {voucher.createdBy ? <span className="font-semibold">{voucher.createdBy.username}</span> : 'N/A'}
+                          </Table.Cell>
+                        )}
+                        <Table.Cell className="px-4 py-3">
+                          <div className="flex space-x-4">
+                            <Link 
+                              to={`/vouchers/${voucher._id}`}
+                              className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            >
+                              View
+                            </Link>
+                            
+                            {canManageVoucher(voucher) && (
+                              <>
+                                <Link 
+                                  to={`/edit-voucher/${voucher._id}`}
+                                  className="font-medium text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                                >
+                                  Edit
+                                </Link>
+                                <button
+                                  className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  onClick={() => handleDeleteClick(voucher)}
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </CustomScrollbar>
             </div>
 
             {/* Mobile Card View (visible on xs screens) */}
             <div className="sm:hidden">
-              <div className="grid grid-cols-1 gap-4">
-                {filteredVouchers.map(voucher => (
-                  <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700">
-                    <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
-                      <div>
-                        <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
-                        <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
-                      </div>
-                      <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">
-                        {voucher.nationality}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex items-center">
-                        <FaPlane className="mr-2 text-blue-600 dark:text-blue-400" />
+              <CustomScrollbar className="pr-1">
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredVouchers.map(voucher => (
+                    <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700">
+                      <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
                         <div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Arrival</div>
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.arrivalDate)}</div>
+                          <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
+                          <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
+                        </div>
+                        <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">
+                          {voucher.nationality}
                         </div>
                       </div>
                       
-                      <div className="flex items-center">
-                        <FaPlane className="mr-2 text-red-600 dark:text-red-400 transform rotate-180" />
-                        <div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Departure</div>
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.departureDate)}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <FaMoneyBill className="mr-2 text-green-600 dark:text-green-400" />
-                        <div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">${voucher.totalAmount}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
-                        <div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">Created</div>
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.createdAt)}</div>
-                        </div>
-                      </div>
-                      
-                      {isAdmin && voucher.createdBy && (
-                        <div className="flex items-center col-span-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                          <FaUser className="mr-2 text-indigo-600 dark:text-indigo-400" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center">
+                          <FaPlane className="mr-2 text-blue-600 dark:text-blue-400" />
                           <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
-                            <div className="text-sm text-indigo-700 dark:text-indigo-300">
-                              <span className="font-semibold">{voucher.createdBy.username}</span>
-                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Arrival</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.arrivalDate)}</div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <Link 
-                        to={`/vouchers/${voucher._id}`}
-                        className="flex items-center justify-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        <FaEye className="mr-1" />
-                        <span>View</span>
-                      </Link>
+                        
+                        <div className="flex items-center">
+                          <FaPlane className="mr-2 text-red-600 dark:text-red-400 transform rotate-180" />
+                          <div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Departure</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.departureDate)}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <FaMoneyBill className="mr-2 text-green-600 dark:text-green-400" />
+                          <div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">${voucher.totalAmount}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
+                          <div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Created</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.createdAt)}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center col-span-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          <svg className="mr-2 text-orange-600 dark:text-orange-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                          </svg>
+                          <div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Capital</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">{voucher.capital || '-'}</div>
+                          </div>
+                        </div>
+                        
+                        {isAdmin && voucher.createdBy && (
+                          <div className="flex items-center col-span-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <FaUser className="mr-2 text-indigo-600 dark:text-indigo-400" />
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
+                              <div className="text-sm text-indigo-700 dark:text-indigo-300">
+                                <span className="font-semibold">{voucher.createdBy.username}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       
-                      {canManageVoucher(voucher) && (
-                        <>
-                          <Link
-                            to={`/edit-voucher/${voucher._id}`}
-                            className="flex items-center justify-center text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
-                          >
-                            <FaPen className="mr-1" />
-                            <span>Edit</span>
-                          </Link>
-                          <button
-                            className="flex items-center justify-center text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                            onClick={() => handleDeleteClick(voucher)}
-                          >
-                            <FaTrash className="mr-1" />
-                            <span>Delete</span>
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                      <div className="flex justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <Link 
+                          to={`/vouchers/${voucher._id}`}
+                          className="flex items-center justify-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          <FaEye className="mr-1" />
+                          <span>View</span>
+                        </Link>
+                        
+                        {canManageVoucher(voucher) && (
+                          <>
+                            <Link
+                              to={`/edit-voucher/${voucher._id}`}
+                              className="flex items-center justify-center text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                            >
+                              <FaPen className="mr-1" />
+                              <span>Edit</span>
+                            </Link>
+                            <button
+                              className="flex items-center justify-center text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                              onClick={() => handleDeleteClick(voucher)}
+                            >
+                              <FaTrash className="mr-1" />
+                              <span>Delete</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </CustomScrollbar>
             </div>
           </>
         )}

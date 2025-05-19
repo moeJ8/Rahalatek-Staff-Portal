@@ -7,7 +7,8 @@ import RoomAllocator from './RoomAllocator'
 import PriceBreakdown from './PriceBreakdown'
 import ChildrenSection from './ChildrenSection'
 import HotelDetailModal from './HotelDetailModal'
-import { FaInfoCircle } from 'react-icons/fa'
+import SearchableSelect from './SearchableSelect'
+import { FaInfoCircle, FaUndoAlt } from 'react-icons/fa'
 import { 
   calculateDuration,
   calculateMultiHotelTotalPrice
@@ -58,10 +59,44 @@ export default function WorkerForm() {
     const [children3to6, setChildren3to6] = useState(savedState?.children3to6 || 0);
     const [children6to12, setChildren6to12] = useState(savedState?.children6to12 || 0);
     const [tripPrice, setTripPrice] = useState(savedState?.tripPrice || '');
-    const [includeReception, setIncludeReception] = useState(savedState?.includeReception !== undefined ? savedState.includeReception : true);
-    const [includeFarewell, setIncludeFarewell] = useState(savedState?.includeFarewell !== undefined ? savedState.includeFarewell : true);
-    const [transportVehicleType, setTransportVehicleType] = useState(savedState?.transportVehicleType || 'Vito');
-    const [selectedAirport, setSelectedAirport] = useState(savedState?.selectedAirport || '');
+    const [includeReception, _setIncludeReception] = useState(savedState?.includeReception !== undefined ? savedState.includeReception : true);
+    const [includeFarewell, _setIncludeFarewell] = useState(savedState?.includeFarewell !== undefined ? savedState.includeFarewell : true);
+    const [transportVehicleType, _setTransportVehicleType] = useState(savedState?.transportVehicleType || 'Vito');
+    const [selectedAirport, _setSelectedAirport] = useState(savedState?.selectedAirport || '');
+
+    // Set error with timeout
+    const setErrorWithTimeout = (errorMessage) => {
+      setError(errorMessage);
+      setTimeout(() => {
+        setError('');
+      }, 5000); // 5 seconds
+    };
+
+    // Reset form function
+    const resetForm = () => {
+      // Reset all form fields to initial values
+      setHotelEntries([]);
+      setSelectedCities([]);
+      setMessage('');
+      setSelectedTours([]);
+      setStartDate('');
+      setEndDate('');
+      setDisplayStartDate('');
+      setDisplayEndDate('');
+      setNumGuests(2);
+      setIncludeChildren(false);
+      setChildrenUnder3(0);
+      setChildren3to6(0);
+      setChildren6to12(0);
+      setTripPrice('');
+      _setIncludeReception(true);
+      _setIncludeFarewell(true);
+      _setTransportVehicleType('Vito');
+      _setSelectedAirport('');
+      
+      // Clear localStorage
+      localStorage.removeItem('workerFormData');
+    };
 
     // Save form data to localStorage whenever relevant state changes
     useEffect(() => {
@@ -186,7 +221,11 @@ export default function WorkerForm() {
         displayCheckIn: displayStartDate,
         displayCheckOut: displayEndDate,
         roomAllocations: [],
-        includeBreakfast: true
+        includeBreakfast: true,
+        selectedAirport: selectedAirport,
+        includeReception: includeReception,
+        includeFarewell: includeFarewell,
+        transportVehicleType: transportVehicleType
       }
     ]);
   };
@@ -290,6 +329,30 @@ export default function WorkerForm() {
     setHotelEntries(updatedEntries);
   };
 
+  const handleHotelAirportChange = (index, airport) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[index].selectedAirport = airport;
+    setHotelEntries(updatedEntries);
+  };
+
+  const handleHotelReceptionChange = (index, value) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[index].includeReception = value;
+    setHotelEntries(updatedEntries);
+  };
+  
+  const handleHotelFarewellChange = (index, value) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[index].includeFarewell = value;
+    setHotelEntries(updatedEntries);
+  };
+
+  const handleHotelVehicleTypeChange = (index, vehicleType) => {
+    const updatedEntries = [...hotelEntries];
+    updatedEntries[index].transportVehicleType = vehicleType;
+    setHotelEntries(updatedEntries);
+  };
+
   const getTotalPrice = () => {
     // If the user has entered a trip price manually, we should respect it
     // Only use manual price if it's a non-empty string entered by the user
@@ -307,11 +370,7 @@ export default function WorkerForm() {
         children3to6,
         children6to12,
         selectedTours,
-        tours,
-        includeReception,
-        includeFarewell,
-        transportVehicleType,
-        selectedAirport
+        tours
       });
       
       return priceDetails.total;
@@ -331,7 +390,7 @@ export default function WorkerForm() {
     
     // Validate that at least one hotel is selected
     if (hotelEntries.length === 0) {
-      setError('Please select at least one hotel.');
+      setErrorWithTimeout('Please select at least one hotel.');
       return;
     }
     
@@ -340,14 +399,19 @@ export default function WorkerForm() {
       const entry = hotelEntries[i];
       
       if (!entry.hotelData || !entry.checkIn || !entry.checkOut) {
-        setError(`Please fill in all required fields for hotel #${i + 1}.`);
+        setErrorWithTimeout(`Please fill in all required fields for hotel #${i + 1}.`);
+        return;
+      }
+      
+      if (!entry.selectedAirport) {
+        setErrorWithTimeout(`Please select an airport for hotel #${i + 1}.`);
         return;
       }
       
       if (entry.hotelData.roomTypes && entry.hotelData.roomTypes.length > 0) {
         const assignedGuests = entry.roomAllocations.reduce((sum, room) => sum + room.occupants, 0);
         if (assignedGuests < numGuests) {
-          setError(`Please assign room types for all ${numGuests} guests in hotel ${entry.hotelData.name}.`);
+          setErrorWithTimeout(`Please assign room types for all ${numGuests} guests in hotel ${entry.hotelData.name}.`);
           return;
         }
         
@@ -359,7 +423,7 @@ export default function WorkerForm() {
           if (childrenUnder3Allocated !== childrenUnder3 || 
               children3to6Allocated !== children3to6 || 
               children6to12Allocated !== children6to12) {
-            setError(`Please assign all children to rooms in hotel ${entry.hotelData.name}.`);
+            setErrorWithTimeout(`Please assign all children to rooms in hotel ${entry.hotelData.name}.`);
             return;
           }
         }
@@ -368,7 +432,7 @@ export default function WorkerForm() {
       // Apply selected airport to the hotelData
       entry.hotelData = {
         ...entry.hotelData,
-        airport: selectedAirport || (entry.hotelData.airportTransportation?.length > 0 
+        airport: entry.selectedAirport || (entry.hotelData.airportTransportation?.length > 0 
           ? entry.hotelData.airportTransportation[0]?.airport 
           : entry.hotelData.airport)
       };
@@ -387,8 +451,6 @@ export default function WorkerForm() {
       children6to12,
       tripPrice: tripPrice && typeof tripPrice === 'string' && tripPrice.trim() !== '' ? tripPrice : finalPrice.toString(),
       calculatedPrice: finalPrice,
-      includeReception,
-      includeFarewell,
       transportVehicleType,
       selectedTours,
       tours,
@@ -462,6 +524,27 @@ export default function WorkerForm() {
     });
   };
 
+  const handleTourDayAssignment = (tourId, dayIndex) => {
+    setSelectedTours(prevSelected => {
+      // Create a copy of the current array
+      const newSelected = [...prevSelected];
+      
+      // Remove the tour from its current position
+      const currentIndex = newSelected.indexOf(tourId);
+      if (currentIndex !== -1) {
+        newSelected.splice(currentIndex, 1);
+      }
+      
+      // Insert the tour at the new position (dayIndex)
+      // Ensure dayIndex is at most the current length of the array (after removal)
+      const insertIndex = Math.min(dayIndex, newSelected.length);
+      newSelected.splice(insertIndex, 0, tourId);
+      
+      return newSelected;
+    });
+  };
+
+  // Keep these functions for backward compatibility and alternative method
   const moveTourUp = (tourId) => {
     setSelectedTours(prevSelected => {
       const index = prevSelected.indexOf(tourId);
@@ -497,7 +580,18 @@ export default function WorkerForm() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Booking Form</h2>
+      <div className="relative mb-6">
+        <h2 className="text-2xl font-bold text-center dark:text-white">Booking Form</h2>
+        <Button 
+          color="dark" 
+          size="xs" 
+          onClick={resetForm}
+          className="absolute right-0 top-0"
+        >
+          <FaUndoAlt className="mr-1 text-xs mt-0.5" />
+          Reset
+        </Button>
+      </div>
       
       {loading ? (
         <div className="flex justify-center items-center h-40">
@@ -784,21 +878,19 @@ export default function WorkerForm() {
                     <div className="mb-2 block">
                       <Label htmlFor={`hotelSelect-${hotelIndex}`} value="Select Hotel" className="dark:text-white" />
                     </div>
-                    <Select
+                    <SearchableSelect
                       id={`hotelSelect-${hotelIndex}`}
                       value={entry.hotelId}
                       onChange={(e) => handleHotelChange(hotelIndex, e.target.value)}
-                      required
-                    >
-                      <option value="">Select Hotel</option>
-                      {hotels
+                      options={hotels
                         .filter(hotel => selectedCities.length === 0 || selectedCities.includes(hotel.city))
-                        .map((hotel) => (
-                          <option key={hotel._id} value={hotel._id}>
-                            {hotel.name} ({hotel.stars}★) - {hotel.city}
-                          </option>
-                        ))}
-                    </Select>
+                        .map((hotel) => ({
+                          value: hotel._id,
+                          label: `${hotel.name} (${hotel.stars}★) - ${hotel.city}`
+                        }))}
+                      placeholder="Select Hotel"
+                      required
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -941,6 +1033,87 @@ export default function WorkerForm() {
                           />
                         </div>
                       )}
+                      
+                      {/* Airport & Transportation */}
+                      <div className="space-y-4 mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                        <h6 className="font-medium text-gray-900 dark:text-white">Airport & Transportation</h6>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="mb-2 block">
+                              <Label htmlFor={`hotelAirport-${hotelIndex}`} value="Hotel Airport" className="dark:text-white" />
+                            </div>
+                            <Select
+                              id={`hotelAirport-${hotelIndex}`}
+                              value={entry.selectedAirport || ""}
+                              onChange={(e) => handleHotelAirportChange(hotelIndex, e.target.value)}
+                              required
+                            >
+                              <option value="">Select Airport</option>
+                              {/* Only show airports associated with this hotel */}
+                              {entry.hotelData.airportTransportation && entry.hotelData.airportTransportation.length > 0 ? (
+                                // If hotel has airportTransportation array, use those airports
+                                entry.hotelData.airportTransportation.map((item, idx) => (
+                                  <option key={idx} value={item.airport}>
+                                    {item.airport}
+                                  </option>
+                                ))
+                              ) : entry.hotelData.airport ? (
+                                // If hotel just has a single airport field, show that
+                                <option value={entry.hotelData.airport}>
+                                  {entry.hotelData.airport}
+                                </option>
+                              ) : (
+                                // If no airports are found for this hotel, show all airports as fallback
+                                airports.map((airport, idx) => (
+                                  <option key={idx} value={airport.name}>
+                                    {airport.name}
+                                  </option>
+                                ))
+                              )}
+                            </Select>
+                            
+                          </div>
+                          
+                          <div>
+                            <div className="mb-2 block">
+                              <Label htmlFor={`vehicleType-${hotelIndex}`} value="Transport Vehicle Type" className="dark:text-white" />
+                            </div>
+                            <Select
+                              id={`vehicleType-${hotelIndex}`}
+                              value={entry.transportVehicleType || "Vito"}
+                              onChange={(e) => handleHotelVehicleTypeChange(hotelIndex, e.target.value)}
+                              required
+                            >
+                              <option value="Vito">Vito (2-8 people)</option>
+                              <option value="Sprinter">Sprinter (9-16 people)</option>
+                            </Select>
+                            
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 mt-3">
+                          <Checkbox
+                            id={`includeReception-${hotelIndex}`}
+                            checked={entry.includeReception}
+                            onChange={(e) => handleHotelReceptionChange(hotelIndex, e.target.checked)}
+                          />
+                          <Label htmlFor={`includeReception-${hotelIndex}`} className="dark:text-white">
+                            Include reception from airport
+                          </Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Checkbox
+                            id={`includeFarewell-${hotelIndex}`}
+                            checked={entry.includeFarewell}
+                            onChange={(e) => handleHotelFarewellChange(hotelIndex, e.target.checked)}
+                          />
+                          <Label htmlFor={`includeFarewell-${hotelIndex}`} className="dark:text-white">
+                            Include farewell to airport
+                          </Label>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -952,73 +1125,12 @@ export default function WorkerForm() {
             availableTours={availableTours}
             selectedTours={selectedTours}
             onTourSelection={handleTourSelection}
+            onTourDayAssignment={handleTourDayAssignment}
             onMoveTourUp={moveTourUp}
             onMoveTourDown={moveTourDown}
           />
           
-          {hotelEntries.length > 0 && hotelEntries.some(entry => 
-            entry.hotelData && 
-            (entry.hotelData.airportTransportation?.length > 0 || entry.hotelData.airport)
-          ) && (
-            <div>
-              <div className="mb-2 block">
-                <Label htmlFor="clientAirport" value="Client's Airport" className="dark:text-white" />
-              </div>
-              <Select
-                id="clientAirport"
-                value={selectedAirport}
-                onChange={(e) => setSelectedAirport(e.target.value)}
-                required={includeReception || includeFarewell}
-              >
-                <option value="">Select Airport</option>
-                {airports.map((airport, idx) => (
-                  <option key={idx} value={airport.name}>
-                    {airport.name}
-                  </option>
-                ))}
-              </Select>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Select which airport the clients will be arriving at/departing from
-              </p>
-              
-              <div className="flex items-center space-x-2 mt-3">
-                <Checkbox
-                  id="includeReception"
-                  checked={includeReception}
-                  onChange={(e) => setIncludeReception(e.target.checked)}
-                />
-                <Label htmlFor="includeReception" className="dark:text-white">
-                  Include reception
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2 mt-2">
-                <Checkbox
-                  id="includeFarewell"
-                  checked={includeFarewell}
-                  onChange={(e) => setIncludeFarewell(e.target.checked)}
-                />
-                <Label htmlFor="includeFarewell" className="dark:text-white">
-                  Include farewell
-                </Label>
-              </div>
-            </div>
-          )}
           
-          <div>
-            <div className="mb-2 block">
-              <Label htmlFor="transportVehicleType" value="Transport Vehicle Type" className="dark:text-white" />
-            </div>
-            <Select
-              id="transportVehicleType"
-              value={transportVehicleType}
-              onChange={(e) => setTransportVehicleType(e.target.value)}
-              required
-            >
-              <option value="Vito">Vito</option>
-              <option value="Sprinter">Sprinter</option>
-            </Select>
-          </div>
           
           <div>
             <div className="mb-2 block">
@@ -1045,12 +1157,8 @@ export default function WorkerForm() {
               childrenUnder3={childrenUnder3}
               children3to6={children3to6}
               children6to12={children6to12}
-              includeReception={includeReception}
-              includeFarewell={includeFarewell}
-              transportVehicleType={transportVehicleType}
               startDate={startDate}
               endDate={endDate}
-              selectedAirport={selectedAirport}
             />
           )}
           

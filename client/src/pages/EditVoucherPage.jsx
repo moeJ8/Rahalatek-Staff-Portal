@@ -16,6 +16,7 @@ export default function EditVoucherPage() {
   const [formData, setFormData] = useState({
     clientName: '',
     nationality: '',
+    phoneNumber: '',
     officeName: '',
     arrivalDate: '',
     departureDate: '',
@@ -116,6 +117,7 @@ export default function EditVoucherPage() {
         setFormData({
           clientName: voucherData.clientName || '',
           nationality: voucherData.nationality || '',
+          phoneNumber: voucherData.phoneNumber || '',
           officeName: voucherData.officeName || '',
           arrivalDate: voucherData.arrivalDate ? new Date(voucherData.arrivalDate).toISOString().split('T')[0] : '',
           departureDate: voucherData.departureDate ? new Date(voucherData.departureDate).toISOString().split('T')[0] : '',
@@ -470,6 +472,7 @@ export default function EditVoucherPage() {
         voucherNumber: voucher.voucherNumber,
         clientName: formData.clientName,
         nationality: formData.nationality,
+        phoneNumber: formData.phoneNumber,
         officeName: formData.officeName,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
@@ -591,6 +594,17 @@ export default function EditVoucherPage() {
               value={formData.nationality}
               onChange={handleInputChange}
               required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="phoneNumber" value="Phone Number" className="mb-2 block" />
+            <TextInput
+              id="phoneNumber"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              placeholder="+1 123-456-7890"
             />
           </div>
           

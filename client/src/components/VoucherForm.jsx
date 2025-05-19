@@ -9,6 +9,7 @@ export default function VoucherForm({ onSuccess }) {
   const [formData, setFormData] = useState({
     clientName: '',
     nationality: '',
+    phoneNumber: '',
     officeName: '',
     arrivalDate: '',
     departureDate: '',
@@ -46,6 +47,9 @@ export default function VoucherForm({ onSuccess }) {
     advancedAmount: 0,
     remainingAmount: 0
   });
+
+  // Custom hotel input state
+  const [useCustomHotel, setUseCustomHotel] = useState([false]);
 
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -194,6 +198,8 @@ export default function VoucherForm({ onSuccess }) {
         }
       ]
     });
+    
+    setUseCustomHotel(prev => [...prev, false]);
   };
 
   const handleRemoveHotel = (index) => {
@@ -203,6 +209,10 @@ export default function VoucherForm({ onSuccess }) {
       ...formData,
       hotels: updatedHotels
     });
+    
+    const updatedCustomHotels = [...useCustomHotel];
+    updatedCustomHotels.splice(index, 1);
+    setUseCustomHotel(updatedCustomHotels);
   };
 
   const handleHotelChange = (index, field, value) => {
@@ -210,7 +220,7 @@ export default function VoucherForm({ onSuccess }) {
     updatedHotels[index][field] = value;
     
     // If selecting a hotel name, populate the city
-    if (field === 'hotelName') {
+    if (field === 'hotelName' && !useCustomHotel[index]) {
       const selectedHotel = hotels.find(h => h.name === value);
       if (selectedHotel) {
         updatedHotels[index].city = selectedHotel.city;
@@ -221,6 +231,22 @@ export default function VoucherForm({ onSuccess }) {
       ...formData,
       hotels: updatedHotels
     });
+  };
+
+  // Toggle custom hotel input
+  const toggleCustomHotel = (index) => {
+    const newUseCustom = [...useCustomHotel];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomHotel(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedHotels = [...formData.hotels];
+      updatedHotels[index].hotelName = '';
+      setFormData(prev => ({
+        ...prev,
+        hotels: updatedHotels
+      }));
+    }
   };
 
   // Helper function to format date for a specific hotel index
@@ -449,6 +475,7 @@ export default function VoucherForm({ onSuccess }) {
         voucherNumber: generatedVoucher.voucherNumber, 
         clientName: formData.clientName,
         nationality: formData.nationality,
+        phoneNumber: formData.phoneNumber,
         officeName: formData.officeName,
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
@@ -551,6 +578,17 @@ export default function VoucherForm({ onSuccess }) {
                     value={formData.nationality}
                     onChange={handleInputChange}
                     required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="phoneNumber" value="Phone Number" className="mb-2 block" />
+                  <TextInput
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="+1 123-456-7890"
                   />
                 </div>
                 
@@ -779,18 +817,37 @@ export default function VoucherForm({ onSuccess }) {
                       </div>
                       
                       <div>
-                        <Label value="Hotel Name" className="mb-2 block" />
-                        <Select 
-                          value={hotel.hotelName} 
-                          onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
-                        >
-                          <option value="">Select Hotel</option>
-                          {hotels
-                            .filter(h => !hotel.city || h.city === hotel.city)
-                            .map(h => (
-                              <option key={h._id} value={h.name}>{h.name}</option>
-                            ))}
-                        </Select>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label value="Hotel Name" className="block" />
+                          <div className="flex items-center">
+                            <Checkbox 
+                              id={`customHotel-${index}`}
+                              checked={useCustomHotel[index]}
+                              onChange={() => toggleCustomHotel(index)}
+                            />
+                            <Label htmlFor={`customHotel-${index}`} value="Custom Hotel" className="ml-2 text-sm" />
+                          </div>
+                        </div>
+                        
+                        {useCustomHotel[index] ? (
+                          <TextInput
+                            value={hotel.hotelName}
+                            onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
+                            placeholder="Enter hotel name"
+                          />
+                        ) : (
+                          <Select 
+                            value={hotel.hotelName} 
+                            onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
+                          >
+                            <option value="">Select Hotel</option>
+                            {hotels
+                              .filter(h => !hotel.city || h.city === hotel.city)
+                              .map(h => (
+                                <option key={h._id} value={h.name}>{h.name}</option>
+                              ))}
+                          </Select>
+                        )}
                       </div>
                       
                       <div>

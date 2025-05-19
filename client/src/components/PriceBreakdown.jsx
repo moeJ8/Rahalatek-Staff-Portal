@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Alert } from 'flowbite-react';
 import { safeParseInt, getRoomPriceForMonth, calculateNightsPerMonth, calculateDuration, calculateMultiHotelTotalPrice, getMonthName } from '../utils/pricingUtils';
-import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaCalendarAlt } from 'react-icons/fa';
+import { FaCrown, FaUsers, FaCar, FaRegCheckCircle, FaCalendarAlt, FaPlane } from 'react-icons/fa';
 import PriceBreakdownDownloader from './PriceBreakdownDownloader';
 
 const PriceBreakdown = ({ 
@@ -19,8 +19,7 @@ const PriceBreakdown = ({
   includeFarewell,
   transportVehicleType,
   startDate,
-  endDate,
-  selectedAirport
+  endDate
 }) => {
   const breakdownRef = useRef(null);
   const [sections, setSections] = useState({
@@ -32,9 +31,11 @@ const PriceBreakdown = ({
 
   const [calculatedPrices, setCalculatedPrices] = useState({
     total: 0,
-    hotelCosts: [],
-    transportationCost: 0,
-    tourCost: 0
+    breakdown: {
+      hotels: [],
+      transportation: 0,
+      tours: 0
+    }
   });
 
   // Format date to dd/mm/yyyy
@@ -59,8 +60,7 @@ const PriceBreakdown = ({
         tours,
         includeReception,
         includeFarewell,
-        transportVehicleType,
-        selectedAirport
+        transportVehicleType
       });
       
       setCalculatedPrices(prices);
@@ -76,8 +76,7 @@ const PriceBreakdown = ({
     tours, 
     includeReception, 
     includeFarewell, 
-    transportVehicleType, 
-    selectedAirport
+    transportVehicleType
   ]);
 
   useEffect(() => {
@@ -147,11 +146,13 @@ const PriceBreakdown = ({
                 const includeBreakfast = entry.includeBreakfast;
                 const roomAllocations = entry.roomAllocations;
                 
-                const hotelCostInfo = calculatedPrices.hotelCosts[hotelIndex] || {
+                const hotelCostInfo = calculatedPrices.breakdown?.hotels[hotelIndex] || {
                   roomCost: 0,
                   breakfastCost: 0,
                   transportCost: 0,
-                  totalCost: 0
+                  totalCost: 0,
+                  includeReception: false,
+                  includeFarewell: false
                 };
                 
                 const hotelDisplayCost = hotelCostInfo.totalCost;
@@ -176,6 +177,7 @@ const PriceBreakdown = ({
                       <p>• {formatDate(entry.checkIn)} - {formatDate(entry.checkOut)} ({hotelNights} nights)</p>
                     </div>
                     
+                    {/* Room allocations and pricing */}
                     {hotelData.roomTypes && hotelData.roomTypes.length > 0 && roomAllocations.length > 0 ? (
                       <div className="space-y-2 pl-8">
                         {(() => {
@@ -423,7 +425,10 @@ const PriceBreakdown = ({
                           
                           <div className="ml-2 mt-1 text-purple-200">
                             <p>• Vehicle: {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'} persons)</p>
-                            <p>• Fixed price per car</p>
+                            <p className="flex items-center">
+                              <FaRegCheckCircle className="mr-1" size={10} />
+                              <span className="text-green-300 font-medium">Fixed price per vehicle</span>
+                            </p>
                           </div>
                         </div>
                       );
@@ -465,29 +470,61 @@ const PriceBreakdown = ({
             <div className="mb-3 p-3 bg-blue-950/60 rounded-lg">
               <h5 className="text-sm font-semibold text-blue-300 mb-2 flex items-center">
                 <span className="w-6 h-6 rounded-full bg-blue-800 flex items-center justify-center mr-2 text-white text-xs">{sections.transportation}</span>
-                Transportation
+                Transportation Summary
               </h5>
               <div>
                 <div className="flex justify-between mb-1">
                   <span className="font-medium text-white">Airport Transportation</span>
-                  <span className="text-green-400 font-medium">${calculatedPrices.transportationCost}</span>
+                  <span className="text-green-400 font-medium">${calculatedPrices.breakdown?.transportation}</span>
                 </div>
                 
-                {calculatedPrices.transportationCost > 0 ? (
+                {calculatedPrices.breakdown?.transportation > 0 ? (
                   <div className="pl-2">
-                    {includeReception && hotelEntries.length > 0 && (
-                      <p className="text-xs text-blue-200">
-                        • Reception from {hotelEntries[0].hotelData.airport || selectedAirport || "Airport"} ({transportVehicleType})
-                      </p>
-                    )}
-                    {includeFarewell && hotelEntries.length > 0 && (
-                      <p className="text-xs text-blue-200">
-                        • Farewell to {hotelEntries[hotelEntries.length - 1].hotelData.airport || selectedAirport || "Airport"} ({transportVehicleType})
-                      </p>
-                    )}
-                    <p className="text-xs text-blue-200 mt-1">
-                      • Vehicle type: {transportVehicleType} {transportVehicleType === 'Vito' ? '(2-8 people)' : '(9-16 people)'}
-                    </p>
+                    {/* List all hotel transportation details here */}
+                    {hotelEntries.map((entry, hotelIndex) => {
+                      const hotelCostInfo = calculatedPrices.breakdown?.hotels[hotelIndex] || {
+                        transportCost: 0,
+                        includeReception: false,
+                        includeFarewell: false,
+                        transportVehicleType: 'Vito'
+                      };
+                      
+                      if (hotelCostInfo.transportCost <= 0) return null;
+                      
+                      const vehicleType = hotelCostInfo.transportVehicleType || entry.transportVehicleType || "Vito";
+                      const vehicleCapacity = vehicleType === 'Vito' ? '(2-8 people)' : '(9-16 people)';
+                      
+                      return (
+                        <div key={hotelIndex} className="mb-3 last:mb-0">
+                          <div className="flex items-center justify-between text-teal-300 font-medium mb-1">
+                            <div className="flex items-center">
+                              <FaPlane className="mr-1.5" size={12} />
+                              <span>{entry.hotelData.name} - {entry.hotelData.city}</span>
+                            </div>
+                            <span>${Math.round(hotelCostInfo.transportCost)}</span>
+                          </div>
+                          
+                          <div className="ml-4 text-xs text-blue-200">
+                            <p>• Airport: <span className="text-blue-300 font-medium">{entry.selectedAirport || "Airport"}</span></p>
+                            <p>• Vehicle: {vehicleType} {vehicleCapacity}</p>
+                            
+                            {entry.includeReception && (
+                              <p className="flex items-center mt-1">
+                                <FaCar className="mr-1" size={10} />
+                                <span>Reception from airport to hotel</span>
+                              </p>
+                            )}
+                            
+                            {entry.includeFarewell && (
+                              <p className="flex items-center mt-1">
+                                <FaCar className="mr-1" size={10} />
+                                <span>Farewell from hotel to airport</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-xs text-amber-200">No transportation included</p>
