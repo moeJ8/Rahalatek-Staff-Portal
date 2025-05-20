@@ -1395,15 +1395,13 @@ export default function AdminPanel() {
                                     
                                     <div className="flex justify-end mb-4">
                                         <Button 
-                                            size="sm" 
-                                            gradientDuoTone="purpleToPink"
+                                            color="light"
                                             onClick={openDuplicateModal}
                                             title="Duplicate existing hotel data"
+                                            className="flex items-center gap-1"
                                         >
-                                            <div className="flex items-center">
-                                                <HiDuplicate className="mr-1.5" />
-                                                <span>Duplicate Hotel</span>
-                                            </div>
+                                            <HiDuplicate className="mr-1 mt-1" />
+                                            <span>Duplicate Hotel</span>
                                         </Button>
                                     </div>
                                     
@@ -1991,15 +1989,13 @@ export default function AdminPanel() {
                                     
                                     <div className="flex justify-end mb-4">
                                         <Button 
-                                            size="sm" 
-                                            gradientDuoTone="purpleToPink"
+                                            color="light"
                                             onClick={openTourDuplicateModal}
                                             title="Duplicate existing tour data"
+                                            className="flex items-center gap-1"
                                         >
-                                            <div className="flex items-center">
-                                                <HiDuplicate className="mr-1.5" />
-                                                <span>Duplicate Tour</span>
-                                            </div>
+                                            <HiDuplicate className="mr-1 mt-1" />
+                                            <span>Duplicate Tour</span>
                                         </Button>
                                     </div>
                                     
@@ -2436,11 +2432,13 @@ export default function AdminPanel() {
                                                         Cancel
                                                     </Button>
                                                     <Button 
-                                                        gradientDuoTone="purpleToPink"
+                                                        color="light"
                                                         onClick={handleDuplicateHotel}
                                                         disabled={!selectedHotelToDuplicate}
+                                                        className="flex items-center gap-1"
                                                     >
-                                                        Duplicate
+                                                        <HiDuplicate className="mr-1 mt-1" />
+                                                        <span>Duplicate</span>
                                                     </Button>
                                                 </div>
                                             </>
@@ -2500,11 +2498,13 @@ export default function AdminPanel() {
                                                         Cancel
                                                     </Button>
                                                     <Button 
-                                                        gradientDuoTone="purpleToPink"
+                                                        color="light"
                                                         onClick={handleDuplicateTour}
                                                         disabled={!selectedTourToDuplicate}
+                                                        className="flex items-center gap-1"
                                                     >
-                                                        Duplicate
+                                                        <HiDuplicate className="mr-1 mt-1" />
+                                                        <span>Duplicate</span>
                                                     </Button>
                                                 </div>
                                             </>

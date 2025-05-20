@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, TextInput, Select, Label, Card, Checkbox } from 'flowbite-react';
+import { Button, TextInput, Select, Label, Card, Checkbox, Modal } from 'flowbite-react';
 import VoucherPreview from './VoucherPreview';
 import { toast } from 'react-hot-toast';
+import SearchableSelect from './SearchableSelect';
+import { HiDuplicate } from 'react-icons/hi';
 
 export default function VoucherForm({ onSuccess }) {
   // Form data state
@@ -62,6 +64,118 @@ export default function VoucherForm({ onSuccess }) {
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [cities, setCities] = useState([]);
+
+  // Duplicate voucher functionality
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [selectedVoucherToDuplicate, setSelectedVoucherToDuplicate] = useState('');
+  const [availableVouchers, setAvailableVouchers] = useState([]);
+  
+  // Function to open duplicate modal
+  const openDuplicateModal = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/vouchers', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setAvailableVouchers(response.data.data);
+      setDuplicateModalOpen(true);
+    } catch (err) {
+      console.error('Error fetching vouchers:', err);
+      toast.error('Failed to load vouchers for duplication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to close duplicate modal
+  const closeDuplicateModal = () => {
+    setDuplicateModalOpen(false);
+    setSelectedVoucherToDuplicate('');
+  };
+
+  // Function to handle duplicating a voucher
+  const handleDuplicateVoucher = async () => {
+    if (!selectedVoucherToDuplicate) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/vouchers/${selectedVoucherToDuplicate}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const voucherToDuplicate = response.data.data;
+      
+      // Process hotel dates to ensure they're in the correct format
+      const processedHotels = voucherToDuplicate.hotels.map(hotel => ({
+        ...hotel,
+        checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
+        checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : ''
+      }));
+      
+      // Process transfer dates
+      const processedTransfers = voucherToDuplicate.transfers.map(transfer => ({
+        ...transfer,
+        date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
+      }));
+      
+      // Set form data from the duplicated voucher
+      setFormData({
+        clientName: `${voucherToDuplicate.clientName} (Copy)`,
+        nationality: voucherToDuplicate.nationality,
+        phoneNumber: voucherToDuplicate.phoneNumber || '',
+        officeName: voucherToDuplicate.officeName || '',
+        arrivalDate: voucherToDuplicate.arrivalDate ? new Date(voucherToDuplicate.arrivalDate).toISOString().split('T')[0] : '',
+        departureDate: voucherToDuplicate.departureDate ? new Date(voucherToDuplicate.departureDate).toISOString().split('T')[0] : '',
+        capital: voucherToDuplicate.capital || '',
+        hotels: processedHotels,
+        transfers: processedTransfers,
+        trips: voucherToDuplicate.trips || [],
+        totalAmount: voucherToDuplicate.totalAmount || 0,
+        advancedPayment: voucherToDuplicate.advancedPayment || false,
+        advancedAmount: voucherToDuplicate.advancedAmount || 0,
+        remainingAmount: voucherToDuplicate.remainingAmount || 0
+      });
+      
+      // Update display dates
+      if (voucherToDuplicate.arrivalDate) {
+        setDisplayArrivalDate(formatDateForDisplay(new Date(voucherToDuplicate.arrivalDate).toISOString()));
+      }
+      if (voucherToDuplicate.departureDate) {
+        setDisplayDepartureDate(formatDateForDisplay(new Date(voucherToDuplicate.departureDate).toISOString()));
+      }
+      
+      // Update custom hotel states
+      setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
+        const hotelExists = hotels.some(h => h.name === hotel.hotelName);
+        return !hotelExists && hotel.hotelName !== '';
+      }));
+      
+      toast.success('Voucher data duplicated successfully! Make changes as needed and submit to create a new voucher.', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
+      closeDuplicateModal();
+    } catch (err) {
+      console.error('Error duplicating voucher:', err);
+      toast.error('Failed to duplicate voucher. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Date formatting functions
   const formatDateForDisplay = (isoDate) => {
@@ -556,7 +670,18 @@ export default function VoucherForm({ onSuccess }) {
           
           {!showPreview ? (
             <Card className="dark:bg-gray-800">
-              <h3 className="text-xl font-semibold mb-4 dark:text-white">Client Information</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold dark:text-white">Client Information</h3>
+                <Button
+                  color="light"
+                  onClick={openDuplicateModal}
+                  title="Duplicate existing voucher data"
+                  className="flex items-center gap-1"
+                >
+                  <HiDuplicate className="mr-1 mt-1" />
+                  <span>Duplicate Voucher</span>
+                </Button>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -603,70 +728,6 @@ export default function VoucherForm({ onSuccess }) {
                   />
                 </div>
                 
-                <div>
-                  <Label htmlFor="totalAmount" value="Total Amount ($)" className="mb-2 block" />
-                  <TextInput
-                    id="totalAmount"
-                    name="totalAmount"
-                    type="number"
-                    value={formData.totalAmount}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-2">
-                    <Checkbox
-                      id="advancedPayment"
-                      checked={formData.advancedPayment}
-                      onChange={handleAdvancedPaymentChange}
-                    />
-                    <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
-                  </div>
-                  
-                  {formData.advancedPayment && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <TextInput
-                          id="advancedAmount"
-                          name="advancedAmount"
-                          type="number"
-                          placeholder="Advanced Amount ($)"
-                          value={formData.advancedAmount}
-                          onChange={(e) => {
-                            handleInputChange(e);
-                            handleAdvancedAmountChange(e);
-                          }}
-                          required={formData.advancedPayment}
-                        />
-                      </div>
-                      <div>
-                        <TextInput
-                          id="remainingAmount"
-                          name="remainingAmount"
-                          type="number"
-                          placeholder="Remaining Amount ($)"
-                          value={formData.remainingAmount}
-                          readOnly
-                          disabled
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
-                  <TextInput
-                    id="capital"
-                    name="capital"
-                    value={formData.capital}
-                    onChange={handleInputChange}
-                    placeholder="This will only show in preview"
-                  />
-                </div>
-
                 <div>
                   <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
                   <div className="relative">
@@ -762,7 +823,7 @@ export default function VoucherForm({ onSuccess }) {
                       name="departureDate"
                       className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
                       value={formData.departureDate}
-                      min={formData.arrivalDate}
+                      min={formData.arrivalDate || ''}
                       onChange={(e) => {
                         const newIsoDate = e.target.value;
                         setFormData({
@@ -778,6 +839,70 @@ export default function VoucherForm({ onSuccess }) {
                       </svg>
                     </span>
                   </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="totalAmount" value="Total Amount ($)" className="mb-2 block" />
+                  <TextInput
+                    id="totalAmount"
+                    name="totalAmount"
+                    type="number"
+                    value={formData.totalAmount}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex items-center mb-2">
+                    <Checkbox
+                      id="advancedPayment"
+                      checked={formData.advancedPayment}
+                      onChange={handleAdvancedPaymentChange}
+                    />
+                    <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
+                  </div>
+                  
+                  {formData.advancedPayment && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <TextInput
+                          id="advancedAmount"
+                          name="advancedAmount"
+                          type="number"
+                          placeholder="Advanced Amount ($)"
+                          value={formData.advancedAmount}
+                          onChange={(e) => {
+                            handleInputChange(e);
+                            handleAdvancedAmountChange(e);
+                          }}
+                          required={formData.advancedPayment}
+                        />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="remainingAmount"
+                          name="remainingAmount"
+                          type="number"
+                          placeholder="Remaining Amount ($)"
+                          value={formData.remainingAmount}
+                          readOnly
+                          disabled
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <TextInput
+                    id="capital"
+                    name="capital"
+                    value={formData.capital}
+                    onChange={handleInputChange}
+                    placeholder="This will only show in preview"
+                  />
                 </div>
               </div>
               
@@ -836,17 +961,16 @@ export default function VoucherForm({ onSuccess }) {
                             placeholder="Enter hotel name"
                           />
                         ) : (
-                          <Select 
-                            value={hotel.hotelName} 
+                          <SearchableSelect
+                            id={`hotelSelect-${index}`}
+                            value={hotel.hotelName}
                             onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
-                          >
-                            <option value="">Select Hotel</option>
-                            {hotels
-                              .filter(h => !hotel.city || h.city === hotel.city)
-                              .map(h => (
-                                <option key={h._id} value={h.name}>{h.name}</option>
-                              ))}
-                          </Select>
+                            options={hotels.filter(h => !hotel.city || h.city === hotel.city).map(h => ({
+                              value: h.name,
+                              label: h.stars ? `${h.name} (${h.stars}★) - ${h.city}` : h.name
+                            }))}
+                            placeholder="Search for a hotel..."
+                          />
                         )}
                       </div>
                       
@@ -1130,17 +1254,18 @@ export default function VoucherForm({ onSuccess }) {
                       
                       <div>
                         <Label value="Tour Name" className="mb-2 block" />
-                        <Select 
+                        <SearchableSelect 
+                          id={`tourSelect-${index}`}
                           value={trip.tourName} 
                           onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
-                        >
-                          <option value="">Select Tour</option>
-                          {tours
+                          options={tours
                             .filter(t => !trip.city || t.city === trip.city)
-                            .map(t => (
-                              <option key={t._id} value={t.name}>{t.name}</option>
-                            ))}
-                        </Select>
+                            .map(t => ({
+                              value: t.name,
+                              label: `${t.name} - ${t.tourType} (${t.city})`
+                            }))}
+                          placeholder="Search for a tour..."
+                        />
                       </div>
                       
                       <div>
@@ -1206,6 +1331,49 @@ export default function VoucherForm({ onSuccess }) {
               />
             </div>
           )}
+
+          {/* Voucher Duplication Modal */}
+          <Modal
+            show={duplicateModalOpen}
+            onClose={closeDuplicateModal}
+            dismissible
+            size="md"
+          >
+            <Modal.Header className="border-b border-gray-200 dark:border-gray-700">
+              Duplicate Existing Voucher
+            </Modal.Header>
+            <Modal.Body>
+              <div className="space-y-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Select a voucher to duplicate its data. You can modify the duplicated data before creating a new voucher.
+                </p>
+                
+                {availableVouchers.length > 0 ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
+                    <Select
+                      id="selectVoucherToDuplicate"
+                      value={selectedVoucherToDuplicate}
+                      onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
+                      className="w-full"
+                    >
+                      <option value="">Choose a voucher</option>
+                      {availableVouchers.map(voucher => (
+                        <option key={voucher._id} value={voucher._id}>
+                          #{voucher.voucherNumber} - {voucher.clientName} ({formatDateForDisplay(voucher.arrivalDate)} to {formatDateForDisplay(voucher.departureDate)})
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No vouchers available to duplicate. Please create a voucher first.
+                  </div>
+                )}
+              </div>
+            </Modal.Body>
+                        <Modal.Footer className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">              <Button color="gray" onClick={closeDuplicateModal}>                Cancel              </Button>              <Button                color="light"                onClick={handleDuplicateVoucher}                disabled={!selectedVoucherToDuplicate}                className="flex items-center gap-1"              >                <HiDuplicate className="mr-1 mt-1" />                <span>Duplicate</span>              </Button>            </Modal.Footer>
+          </Modal>
         </div>
       )}
     </div>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, TextInput, Select, Label, Checkbox } from 'flowbite-react';
+import { Card, Button, TextInput, Select, Label, Checkbox, Modal, Alert } from 'flowbite-react';
 import axios from 'axios';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
+import SearchableSelect from '../components/SearchableSelect';
+import { HiDuplicate } from 'react-icons/hi';
 
 export default function EditVoucherPage() {
   const { id } = useParams();
@@ -41,6 +43,11 @@ export default function EditVoucherPage() {
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [cities, setCities] = useState([]);
+  
+  // Duplicate voucher functionality
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [selectedVoucherToDuplicate, setSelectedVoucherToDuplicate] = useState('');
+  const [availableVouchers, setAvailableVouchers] = useState([]);
   
   // Date formatting functions
   const formatDateForDisplay = (isoDate) => {
@@ -531,6 +538,115 @@ export default function EditVoucherPage() {
     }
   };
   
+  // Function to open duplicate modal
+  const openDuplicateModal = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/vouchers', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Filter out the current voucher from available vouchers
+      const filteredVouchers = response.data.data.filter(v => v._id !== id);
+      setAvailableVouchers(filteredVouchers);
+      setDuplicateModalOpen(true);
+    } catch (err) {
+      console.error('Error fetching vouchers:', err);
+      toast.error('Failed to load vouchers for duplication.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to close duplicate modal
+  const closeDuplicateModal = () => {
+    setDuplicateModalOpen(false);
+    setSelectedVoucherToDuplicate('');
+  };
+
+  // Function to handle duplicating a voucher
+  const handleDuplicateVoucher = async () => {
+    if (!selectedVoucherToDuplicate) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/vouchers/${selectedVoucherToDuplicate}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      const voucherToDuplicate = response.data.data;
+      
+      // Process hotel dates to ensure they're in the correct format
+      const processedHotels = voucherToDuplicate.hotels.map(hotel => ({
+        ...hotel,
+        checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
+        checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : ''
+      }));
+      
+      // Process transfer dates
+      const processedTransfers = voucherToDuplicate.transfers.map(transfer => ({
+        ...transfer,
+        date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
+      }));
+      
+      // Set form data from the duplicated voucher
+      setFormData({
+        clientName: voucherToDuplicate.clientName,
+        nationality: voucherToDuplicate.nationality,
+        phoneNumber: voucherToDuplicate.phoneNumber || '',
+        officeName: voucherToDuplicate.officeName || '',
+        arrivalDate: voucherToDuplicate.arrivalDate ? new Date(voucherToDuplicate.arrivalDate).toISOString().split('T')[0] : '',
+        departureDate: voucherToDuplicate.departureDate ? new Date(voucherToDuplicate.departureDate).toISOString().split('T')[0] : '',
+        capital: voucherToDuplicate.capital || '',
+        hotels: processedHotels,
+        transfers: processedTransfers,
+        trips: voucherToDuplicate.trips || [],
+        totalAmount: voucherToDuplicate.totalAmount || 0,
+        advancedPayment: voucherToDuplicate.advancedPayment || false,
+        advancedAmount: voucherToDuplicate.advancedAmount || 0,
+        remainingAmount: voucherToDuplicate.remainingAmount || 0
+      });
+      
+      // Update display dates
+      if (voucherToDuplicate.arrivalDate) {
+        setDisplayArrivalDate(formatDateForDisplay(new Date(voucherToDuplicate.arrivalDate).toISOString()));
+      }
+      if (voucherToDuplicate.departureDate) {
+        setDisplayDepartureDate(formatDateForDisplay(new Date(voucherToDuplicate.departureDate).toISOString()));
+      }
+      
+      // Update custom hotel states
+      setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
+        const hotelExists = hotels.some(h => h.name === hotel.hotelName);
+        return !hotelExists && hotel.hotelName !== '';
+      }));
+      
+      toast.success('Voucher data duplicated successfully! Make changes as needed and save.', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
+      closeDuplicateModal();
+    } catch (err) {
+      console.error('Error duplicating voucher:', err);
+      toast.error('Failed to duplicate voucher. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -567,9 +683,21 @@ export default function EditVoucherPage() {
         </Link>
       </div>
       
-      <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-        Edit Voucher #{voucher?.voucherNumber}
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Edit Voucher #{voucher?.voucherNumber}
+        </h1>
+        
+        <Button
+          color="light"
+          onClick={openDuplicateModal}
+          title="Import data from another voucher"
+          className="flex items-center gap-1"
+        >
+          <HiDuplicate className="mr-1 mt-1" />
+          <span>Import Data</span>
+        </Button>
+      </div>
       
       <Card className="mb-8">
         <h3 className="text-xl font-semibold mb-4 dark:text-white">Client Information</h3>
@@ -617,6 +745,117 @@ export default function EditVoucherPage() {
               onChange={handleInputChange}
               required
             />
+          </div>
+          
+          <div>
+            <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
+            <div className="relative">
+              <TextInput
+                id="displayArrivalDate"
+                type="text"
+                value={displayArrivalDate}
+                onChange={(e) => {
+                  const newDisplayDate = e.target.value;
+                  setDisplayArrivalDate(newDisplayDate);
+                  
+                  // Only update the ISO date if we have a valid format
+                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                    const newIsoDate = parseDisplayDate(newDisplayDate);
+                    if (newIsoDate) {
+                      setFormData({
+                        ...formData,
+                        arrivalDate: newIsoDate
+                      });
+                      
+                      // If departure date is before the new arrival date, update it
+                      if (formData.departureDate && formData.departureDate < newIsoDate) {
+                        setFormData(prev => ({
+                          ...prev,
+                          departureDate: newIsoDate
+                        }));
+                        setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                      }
+                    }
+                  }
+                }}
+                placeholder="DD/MM/YYYY"
+                required
+              />
+              <input 
+                type="date" 
+                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                value={formData.arrivalDate}
+                onChange={(e) => {
+                  const newIsoDate = e.target.value;
+                  setFormData({
+                    ...formData,
+                    arrivalDate: newIsoDate
+                  });
+                  setDisplayArrivalDate(formatDateForDisplay(newIsoDate));
+                  
+                  // If departure date is before the new arrival date, update it
+                  if (formData.departureDate && formData.departureDate < newIsoDate) {
+                    setFormData(prev => ({
+                      ...prev,
+                      departureDate: newIsoDate
+                    }));
+                    setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                  }
+                }}
+              />
+              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+            </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="departureDate" value="Departure Date" className="mb-2 block" />
+            <div className="relative">
+              <TextInput
+                id="displayDepartureDate"
+                type="text"
+                value={displayDepartureDate}
+                onChange={(e) => {
+                  const newDisplayDate = e.target.value;
+                  setDisplayDepartureDate(newDisplayDate);
+                  
+                  // Only update the ISO date if we have a valid format
+                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                    const newIsoDate = parseDisplayDate(newDisplayDate);
+                    if (newIsoDate && (!formData.arrivalDate || newIsoDate >= formData.arrivalDate)) {
+                      setFormData({
+                        ...formData,
+                        departureDate: newIsoDate
+                      });
+                    }
+                  }
+                }}
+                placeholder="DD/MM/YYYY"
+                required
+              />
+              <input 
+                type="date" 
+                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                value={formData.departureDate}
+                min={formData.arrivalDate || ''}
+                onChange={(e) => {
+                  const newIsoDate = e.target.value;
+                  setFormData({
+                    ...formData,
+                    departureDate: newIsoDate
+                  });
+                  setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
+                }}
+              />
+              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </span>
+            </div>
           </div>
           
           <div>
@@ -682,119 +921,6 @@ export default function EditVoucherPage() {
               placeholder="This will only show in preview"
             />
           </div>
-          
-          <div>
-            <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
-            <div className="relative">
-              <TextInput
-                id="displayArrivalDate"
-                type="text"
-                value={displayArrivalDate}
-                onChange={(e) => {
-                  const newDisplayDate = e.target.value;
-                  setDisplayArrivalDate(newDisplayDate);
-                  
-                  // Only update the ISO date if we have a valid format
-                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                    const newIsoDate = parseDisplayDate(newDisplayDate);
-                    if (newIsoDate) {
-                      setFormData(prev => ({
-                        ...prev,
-                        arrivalDate: newIsoDate
-                      }));
-                      
-                      // If departure date is before the new arrival date, update it
-                      if (formData.departureDate && formData.departureDate < newIsoDate) {
-                        setFormData(prev => ({
-                          ...prev,
-                          departureDate: newIsoDate
-                        }));
-                        setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                      }
-                    }
-                  }
-                }}
-                placeholder="DD/MM/YYYY"
-                required
-              />
-              <input 
-                type="date" 
-                name="arrivalDate"
-                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                value={formData.arrivalDate}
-                onChange={(e) => {
-                  const newIsoDate = e.target.value;
-                  setFormData(prev => ({
-                    ...prev,
-                    arrivalDate: newIsoDate
-                  }));
-                  setDisplayArrivalDate(formatDateForDisplay(newIsoDate));
-                  
-                  // If departure date is before the new arrival date, update it
-                  if (formData.departureDate && formData.departureDate < newIsoDate) {
-                    setFormData(prev => ({
-                      ...prev,
-                      departureDate: newIsoDate
-                    }));
-                    setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                  }
-                }}
-              />
-              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </span>
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="departureDate" value="Departure Date" className="mb-2 block" />
-            <div className="relative">
-              <TextInput
-                id="displayDepartureDate"
-                type="text"
-                value={displayDepartureDate}
-                onChange={(e) => {
-                  const newDisplayDate = e.target.value;
-                  setDisplayDepartureDate(newDisplayDate);
-                  
-                  // Only update the ISO date if we have a valid format
-                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                    const newIsoDate = parseDisplayDate(newDisplayDate);
-                    if (newIsoDate && (!formData.arrivalDate || newIsoDate >= formData.arrivalDate)) {
-                      setFormData(prev => ({
-                        ...prev,
-                        departureDate: newIsoDate
-                      }));
-                    }
-                  }
-                }}
-                placeholder="DD/MM/YYYY"
-                required
-              />
-              <input 
-                type="date" 
-                name="departureDate"
-                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                value={formData.departureDate}
-                min={formData.arrivalDate}
-                onChange={(e) => {
-                  const newIsoDate = e.target.value;
-                  setFormData(prev => ({
-                    ...prev,
-                    departureDate: newIsoDate
-                  }));
-                  setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                }}
-              />
-              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </span>
-            </div>
-          </div>
         </div>
         
         {/* Hotels Section */}
@@ -853,17 +979,18 @@ export default function EditVoucherPage() {
                       placeholder="Enter hotel name"
                     />
                   ) : (
-                    <Select 
-                      value={hotel.hotelName} 
+                    <SearchableSelect
+                      id={`hotelSelect-${index}`}
+                      value={hotel.hotelName}
                       onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
-                    >
-                      <option value="">Select Hotel</option>
-                      {hotels
+                      options={hotels
                         .filter(h => !hotel.city || h.city === hotel.city)
-                        .map(h => (
-                          <option key={h._id} value={h.name}>{h.name}</option>
-                        ))}
-                    </Select>
+                        .map(h => ({
+                          value: h.name,
+                          label: h.stars ? `${h.name} (${h.stars}★) - ${h.city}` : h.name
+                        }))}
+                      placeholder="Search for a hotel..."
+                    />
                   )}
                 </div>
                 
@@ -1156,17 +1283,18 @@ export default function EditVoucherPage() {
                 
                 <div>
                   <Label value="Tour Name" className="mb-2 block" />
-                  <Select 
+                  <SearchableSelect 
+                    id={`tourSelect-${index}`}
                     value={trip.tourName} 
                     onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
-                  >
-                    <option value="">Select Tour</option>
-                    {tours
+                    options={tours
                       .filter(t => !trip.city || t.city === trip.city)
-                      .map(t => (
-                        <option key={t._id} value={t.name}>{t.name}</option>
-                      ))}
-                  </Select>
+                      .map(t => ({
+                        value: t.name,
+                        label: `${t.name} - ${t.tourType} (${t.city})`
+                      }))}
+                    placeholder="Search for a tour..."
+                  />
                 </div>
                 
                 <div>
@@ -1224,6 +1352,66 @@ export default function EditVoucherPage() {
             )}
           </Button>
         </div>
+
+        {/* Voucher Duplication Modal */}
+        <Modal
+          show={duplicateModalOpen}
+          onClose={closeDuplicateModal}
+          dismissible
+          size="md"
+        >
+          <Modal.Header className="border-b border-gray-200 dark:border-gray-700">
+            Import Data From Another Voucher
+          </Modal.Header>
+          <Modal.Body>
+            <div className="space-y-6">
+              <Alert color="warning">
+                <p className="font-medium">Important</p>
+                <p className="text-sm">
+                  This will replace all current data in the form with data from the selected voucher.
+                  Your changes will not be saved until you click "Save Changes".
+                </p>
+              </Alert>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Select a voucher to import its data. You can modify the imported data before saving.
+              </p>
+              
+              {availableVouchers.length > 0 ? (
+                <div className="space-y-2">
+                  <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
+                  <Select
+                    id="selectVoucherToDuplicate"
+                    value={selectedVoucherToDuplicate}
+                    onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
+                    className="w-full"
+                  >
+                    <option value="">Choose a voucher</option>
+                    {availableVouchers.map(voucher => (
+                      <option key={voucher._id} value={voucher._id}>
+                        #{voucher.voucherNumber} - {voucher.clientName} ({formatDateForDisplay(voucher.arrivalDate)} to {formatDateForDisplay(voucher.departureDate)})
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500">
+                  No other vouchers available to import data from.
+                </div>
+              )}
+            </div>
+          </Modal.Body>
+                  <Modal.Footer className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
+                     <Button color="gray" onClick={closeDuplicateModal}>
+                      Cancel 
+                    </Button>
+                    <Button color="light" onClick={handleDuplicateVoucher} 
+                      disabled={!selectedVoucherToDuplicate}
+                      className="flex items-center gap-1">
+                      <HiDuplicate className="mr-1 mt-1" /><span>Import Data</span> 
+                    </Button>
+                  </Modal.Footer>
+        </Modal>
       </Card>
     </div>
   );
