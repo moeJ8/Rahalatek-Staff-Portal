@@ -46,6 +46,11 @@ const voucherSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    currency: {
+        type: String,
+        enum: ['USD', 'EUR', 'TRY'],
+        default: 'USD'
+    },
     hotels: [{
         city: String,
         hotelName: String,

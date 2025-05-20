@@ -24,6 +24,7 @@ export default function EditVoucherPage() {
     departureDate: '',
     capital: '',
     totalAmount: 0,
+    currency: 'USD',
     hotels: [],
     transfers: [],
     trips: [],
@@ -130,6 +131,7 @@ export default function EditVoucherPage() {
           departureDate: voucherData.departureDate ? new Date(voucherData.departureDate).toISOString().split('T')[0] : '',
           capital: voucherData.capital || '',
           totalAmount: voucherData.totalAmount || 0,
+          currency: voucherData.currency || 'USD',
           hotels: voucherData.hotels.map(hotel => ({
             ...hotel,
             checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
@@ -362,6 +364,14 @@ export default function EditVoucherPage() {
       updatedHotels[index].checkOut = isoDate;
     }
     
+    if (updatedHotels[index].checkIn && updatedHotels[index].checkOut) {
+      const checkInDate = new Date(updatedHotels[index].checkIn);
+      const checkOutDate = new Date(updatedHotels[index].checkOut);
+      const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      updatedHotels[index].nights = Math.max(1, diffDays);
+    }
+    
     setFormData(prev => ({
       ...prev,
       hotels: updatedHotels
@@ -485,6 +495,7 @@ export default function EditVoucherPage() {
         departureDate: formData.departureDate,
         capital: formData.capital,
         totalAmount: Number(formData.totalAmount),
+        currency: formData.currency,
         hotels: formData.hotels,
         transfers: formData.transfers,
         trips: formattedTrips,
@@ -604,6 +615,7 @@ export default function EditVoucherPage() {
         transfers: processedTransfers,
         trips: voucherToDuplicate.trips || [],
         totalAmount: voucherToDuplicate.totalAmount || 0,
+        currency: voucherToDuplicate.currency || 'USD',
         advancedPayment: voucherToDuplicate.advancedPayment || false,
         advancedAmount: voucherToDuplicate.advancedAmount || 0,
         remainingAmount: voucherToDuplicate.remainingAmount || 0
@@ -859,15 +871,29 @@ export default function EditVoucherPage() {
           </div>
           
           <div>
-            <Label htmlFor="totalAmount" value="Total Amount ($)" className="mb-2 block" />
-            <TextInput
-              id="totalAmount"
-              name="totalAmount"
-              type="number"
-              value={formData.totalAmount}
-              onChange={handleInputChange}
-              required
-            />
+            <Label htmlFor="totalAmount" value="Total Amount" className="mb-2 block" />
+            <div className="flex">
+              <TextInput
+                id="totalAmount"
+                name="totalAmount"
+                type="number"
+                value={formData.totalAmount}
+                onChange={handleInputChange}
+                className="flex-grow"
+                required
+              />
+              <Select
+                id="currency"
+                name="currency"
+                value={formData.currency}
+                onChange={handleInputChange}
+                className="ml-2 w-24"
+              >
+                <option value="USD">$ USD</option>
+                <option value="EUR">€ EUR</option>
+                <option value="TRY">₺ TRY</option>
+              </Select>
+            </div>
           </div>
           
           <div>
@@ -883,29 +909,41 @@ export default function EditVoucherPage() {
             {formData.advancedPayment && (
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <TextInput
-                    id="advancedAmount"
-                    name="advancedAmount"
-                    type="number"
-                    placeholder="Advanced Amount ($)"
-                    value={formData.advancedAmount}
-                    onChange={(e) => {
-                      handleInputChange(e);
-                      handleAdvancedAmountChange(e);
-                    }}
-                    required={formData.advancedPayment}
-                  />
+                  <div className="flex">
+                    <TextInput
+                      id="advancedAmount"
+                      name="advancedAmount"
+                      type="number"
+                      placeholder="Advanced Amount"
+                      value={formData.advancedAmount}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        handleAdvancedAmountChange(e);
+                      }}
+                      required={formData.advancedPayment}
+                      className="flex-grow"
+                    />
+                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                      {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                    </span>
+                  </div>
                 </div>
                 <div>
-                  <TextInput
-                    id="remainingAmount"
-                    name="remainingAmount"
-                    type="number"
-                    placeholder="Remaining Amount ($)"
-                    value={formData.remainingAmount}
-                    readOnly
-                    disabled
-                  />
+                  <div className="flex">
+                    <TextInput
+                      id="remainingAmount"
+                      name="remainingAmount"
+                      type="number"
+                      placeholder="Remaining Amount"
+                      value={formData.remainingAmount}
+                      readOnly
+                      disabled
+                      className="flex-grow"
+                    />
+                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                      {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -913,13 +951,19 @@ export default function EditVoucherPage() {
           
           <div>
             <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
-            <TextInput
-              id="capital"
-              name="capital"
-              value={formData.capital}
-              onChange={handleInputChange}
-              placeholder="This will only show in preview"
-            />
+            <div className="flex">
+              <TextInput
+                id="capital"
+                name="capital"
+                value={formData.capital}
+                onChange={handleInputChange}
+                placeholder="This will only show in preview"
+                className="flex-grow"
+              />
+              <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+              </span>
+            </div>
           </div>
         </div>
         

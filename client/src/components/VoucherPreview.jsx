@@ -6,6 +6,17 @@ import jsPDF from 'jspdf';
 import { formatDisplayDate } from '../utils/voucherGenerator';
 import { Link } from 'react-router-dom';
 
+// Helper function to get currency symbol
+const getCurrencySymbol = (currency) => {
+  if (!currency) return '$'; // default to USD
+  switch (currency) {
+    case 'EUR': return '€';
+    case 'TRY': return '₺';
+    case 'USD':
+    default: return '$';
+  }
+};
+
 const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) => {
   const voucherRef = useRef(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
@@ -52,6 +63,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   }, []);
   
   const generateDesktopVersionForDownload = () => {
+    // Get currency symbol for the voucher
+    const currencySymbol = getCurrencySymbol(voucherData.currency);
+
     // Create a completely new element with desktop-only styling
     const container = document.createElement('div');
     container.style.width = '800px'; // Increased width for better quality
@@ -533,7 +547,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
-      totalValueCell.textContent = `${voucherData.totalAmount}$`;
+      totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
       totalValueCell.style.padding = '8px 15px';
       totalValueCell.style.border = '1px solid #bfdbfe';
       totalValueCell.style.fontWeight = '900'; // Extra bold
@@ -554,7 +568,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       advancedLabelCell.style.fontWeight = '900'; // Extra bold to match other rows
       
       const advancedValueCell = document.createElement('td');
-      advancedValueCell.textContent = `${voucherData.advancedAmount}$`;
+      advancedValueCell.textContent = `${currencySymbol}${voucherData.advancedAmount}`;
       advancedValueCell.style.padding = '8px 15px';
       advancedValueCell.style.border = '1px solid #bfdbfe';
       advancedValueCell.style.textAlign = 'right';
@@ -575,7 +589,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       remainingLabelCell.style.fontWeight = '900'; // Extra bold
       
       const remainingValueCell = document.createElement('td');
-      remainingValueCell.textContent = `${voucherData.remainingAmount}$`;
+      remainingValueCell.textContent = `${currencySymbol}${voucherData.remainingAmount}`;
       remainingValueCell.style.padding = '8px 15px';
       remainingValueCell.style.border = '1px solid #bfdbfe';
       remainingValueCell.style.fontWeight = '900'; // Extra bold
@@ -597,7 +611,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
-      totalValueCell.textContent = `${voucherData.totalAmount}$`;
+      totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
       totalValueCell.style.padding = '8px 15px';
       totalValueCell.style.border = '1px solid #bfdbfe';
       totalValueCell.style.fontWeight = '900'; // Extra bold
@@ -993,7 +1007,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               </div>
               {voucherData.capital && (
                 <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md">
-                  <span className="font-semibold">Capital:</span> {voucherData.capital}
+                  <span className="font-semibold">Capital:</span> {getCurrencySymbol(voucherData.currency)}{voucherData.capital}
                   <div className="text-xs text-gray-500 italic mt-1">
                     (This field is only visible in preview)
                   </div>
@@ -1157,21 +1171,21 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                   <>
                     <tr className="bg-white border-b">
                       <td className="px-4 py-3 border font-black w-3/4">Total Amount</td>
-                      <td className="px-4 py-3 border text-right font-black">{voucherData.totalAmount}$</td>
+                      <td className="px-4 py-3 border text-right font-black">{getCurrencySymbol(voucherData.currency)}{voucherData.totalAmount}</td>
                     </tr>
                     <tr className="bg-white border-b">
                       <td className="px-4 py-3 border font-black">Advanced Payment</td>
-                      <td className="px-4 py-3 border text-right font-black">{voucherData.advancedAmount}$</td>
+                      <td className="px-4 py-3 border text-right font-black">{getCurrencySymbol(voucherData.currency)}{voucherData.advancedAmount}</td>
                     </tr>
                     <tr className="bg-blue-50 border-b">
                       <td className="px-4 py-3 border font-black">Balance Due</td>
-                      <td className="px-4 py-3 border text-right font-black">{voucherData.remainingAmount}$</td>
+                      <td className="px-4 py-3 border text-right font-black">{getCurrencySymbol(voucherData.currency)}{voucherData.remainingAmount}</td>
                     </tr>
                   </>
                 ) : (
                   <tr className="bg-white border-b">
                     <td className="px-4 py-3 border font-black w-3/4">Total Amount</td>
-                    <td className="px-4 py-3 border text-right font-black">{voucherData.totalAmount}$</td>
+                    <td className="px-4 py-3 border text-right font-black">{getCurrencySymbol(voucherData.currency)}{voucherData.totalAmount}</td>
                   </tr>
                 )}
               </tbody>

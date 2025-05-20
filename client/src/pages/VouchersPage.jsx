@@ -20,6 +20,17 @@ export default function VouchersPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
+  // Helper function to get currency symbol
+  const getCurrencySymbol = (currency) => {
+    if (!currency) return '$'; // default to USD
+    switch (currency) {
+      case 'EUR': return '€';
+      case 'TRY': return '₺';
+      case 'USD':
+      default: return '$';
+    }
+  };
+
   useEffect(() => {
     // Check if the current user is an admin
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -219,8 +230,12 @@ export default function VouchersPage() {
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.departureDate)}</Table.Cell>
-                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{voucher.capital || '-'}</Table.Cell>
-                        <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">${voucher.totalAmount}</Table.Cell>
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                          {voucher.capital ? `${getCurrencySymbol(voucher.currency)}${voucher.capital}` : '-'}
+                        </Table.Cell>
+                        <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
+                          {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                        </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.createdAt)}</Table.Cell>
                         {isAdmin && (
                           <Table.Cell className="text-sm text-indigo-600 dark:text-indigo-300 px-4 py-3">
@@ -298,7 +313,9 @@ export default function VouchersPage() {
                           <FaMoneyBill className="mr-2 text-green-600 dark:text-green-400" />
                           <div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">${voucher.totalAmount}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                            </div>
                           </div>
                         </div>
                         
@@ -316,7 +333,9 @@ export default function VouchersPage() {
                           </svg>
                           <div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">Capital</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">{voucher.capital || '-'}</div>
+                            <div className="text-sm text-gray-900 dark:text-gray-100">
+                              {voucher.capital ? `${getCurrencySymbol(voucher.currency)}${voucher.capital}` : '-'}
+                            </div>
                           </div>
                         </div>
                         
