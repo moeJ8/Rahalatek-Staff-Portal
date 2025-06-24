@@ -10,6 +10,7 @@ import VouchersPage from './pages/VouchersPage'
 import VoucherDetailPage from './pages/VoucherDetailPage'
 import EditVoucherPage from './pages/EditVoucherPage'
 import CreateVoucherPage from './pages/CreateVoucherPage'
+import TrashPage from './pages/TrashPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -82,6 +83,7 @@ function App() {
               <Route path="/vouchers/new" element={<CreateVoucherPage />} />
               <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
               <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />
+              <Route path="/trash" element={<TrashPage />} />
               <Route path="/tours" element={<ToursPage />} />
               <Route path="/hotels" element={<HotelsPage />} />
             </Route>

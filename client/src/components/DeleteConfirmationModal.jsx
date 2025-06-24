@@ -61,14 +61,16 @@ export default function DeleteConfirmationModal({
               onClick={onConfirm}
               isProcessing={isLoading}
             >
-              Yes, delete {itemType}
+              {itemType.includes('move to trash') ? 'Yes, move to trash' : 
+               itemType.includes('permanently') ? 'Yes, delete forever' : 
+               `Yes, delete ${itemType}`}
             </Button>
             <Button
               color="gray"
               onClick={onClose}
               disabled={isLoading}
             >
-              No, cancel
+              Cancel
             </Button>
           </div>
         </div>

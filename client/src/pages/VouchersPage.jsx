@@ -274,7 +274,7 @@ export default function VouchersPage() {
         prevVouchers.filter(v => v._id !== voucherToDelete._id)
       );
       
-      toast.success(`Voucher #${voucherToDelete.voucherNumber} for ${voucherToDelete.clientName} has been deleted successfully.`, {
+      toast.success(`Voucher #${voucherToDelete.voucherNumber} for ${voucherToDelete.clientName} has been moved to trash.`, {
         duration: 3000,
         style: {
           background: '#4CAF50',
@@ -315,13 +315,23 @@ export default function VouchersPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vouchers</h1>
-        <Button 
-          gradientDuoTone="purpleToPink" 
-          onClick={() => navigate('/vouchers/new')}
-        >
-          <FaPlus className="mr-1 mt-1 text-xs" />
-          Create New Voucher
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            color="gray"
+            onClick={() => navigate('/trash')}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
+          >
+            <FaTrash className="mr-1 mt-1 text-xs" />
+            View Trash
+          </Button>
+          <Button 
+            gradientDuoTone="purpleToPink" 
+            onClick={() => navigate('/vouchers/new')}
+          >
+            <FaPlus className="mr-1 mt-1 text-xs" />
+            Create New Voucher
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -714,9 +724,9 @@ export default function VouchersPage() {
         }}
         onConfirm={handleDeleteConfirm}
         isLoading={deleteLoading}
-        itemType="voucher"
-        itemName={`#${voucherToDelete?.voucherNumber}`}
-        itemExtra={voucherToDelete?.clientName}
+        itemType="voucher (move to trash)"
+        itemName={`#${voucherToDelete?.voucherNumber || ''}`}
+        itemExtra={voucherToDelete?.clientName || ''}
       />
     </div>
   );
