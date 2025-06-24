@@ -219,6 +219,32 @@ export default function VouchersPage() {
     setCustomArrivalDate('');
   };
 
+  // Calculate totals for the filtered vouchers by currency
+  const calculateTotals = () => {
+    if (filteredVouchers.length === 0) return {};
+    
+    const totalsByCurrency = filteredVouchers.reduce((acc, voucher) => {
+      const currency = voucher.currency || 'USD';
+      const capital = parseFloat(voucher.capital) || 0;
+      const total = parseFloat(voucher.totalAmount) || 0;
+      const profit = capital > 0 ? total - capital : 0;
+
+      if (!acc[currency]) {
+        acc[currency] = { totalCapital: 0, totalAmount: 0, totalProfit: 0 };
+      }
+
+      acc[currency].totalCapital += capital;
+      acc[currency].totalAmount += total;
+      acc[currency].totalProfit += profit;
+
+      return acc;
+    }, {});
+
+    return totalsByCurrency;
+  };
+
+  const totals = calculateTotals();
+
   const handleDeleteClick = (voucher) => {
     setVoucherToDelete(voucher);
     setDeleteModal(true);
@@ -281,22 +307,22 @@ export default function VouchersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vouchers</h1>
-        <div className="flex gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Vouchers</h1>
+        <div className="flex gap-2 sm:gap-3">
           <Button 
             color="gray"
             onClick={() => navigate('/trash')}
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
           >
-            <FaTrash className="mr-1 mt-1 text-xs" />
-            View Trash
+            <FaTrash className="w-3 h-3 sm:mr-1 sm:mt-1 sm:text-xs" />
+            <span className="hidden sm:inline">View Trash</span>
           </Button>
           <Button 
             gradientDuoTone="purpleToPink" 
             onClick={() => navigate('/vouchers/new')}
           >
-            <FaPlus className="mr-1 mt-1 text-xs" />
-            Create New Voucher
+            <FaPlus className="w-3 h-3 sm:mr-1 sm:mt-1 sm:text-xs" />
+            <span className="hidden sm:inline">Create New Voucher</span>
           </Button>
         </div>
       </div>
@@ -316,10 +342,10 @@ export default function VouchersPage() {
           </div>
 
           {/* Filters Row */}
-          <div className="flex flex-col lg:flex-row gap-4 justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row gap-2 sm:gap-4 lg:justify-center">
             {/* Creation Date Filter */}
             <div className="flex gap-2">
-              <div className="w-48">
+              <div className="w-full sm:w-48">
                 <Select
                   value={dateFilter}
                   onChange={handleDateFilterChange}
@@ -345,7 +371,7 @@ export default function VouchersPage() {
               
               {/* Custom Creation Date Picker */}
               {dateFilter === 'custom' && (
-                <div className="w-40">
+                <div className="w-32 sm:w-40">
                   <CustomDatePicker
                     value={customDate}
                     onChange={setCustomDate}
@@ -357,7 +383,7 @@ export default function VouchersPage() {
 
             {/* Arrival Date Filter */}
             <div className="flex gap-2">
-              <div className="w-48">
+              <div className="w-full sm:w-48">
                 <Select
                   value={arrivalDateFilter}
                   onChange={handleArrivalDateFilterChange}
@@ -383,7 +409,7 @@ export default function VouchersPage() {
               
               {/* Custom Arrival Date Picker */}
               {arrivalDateFilter === 'custom' && (
-                <div className="w-40">
+                <div className="w-32 sm:w-40">
                   <CustomDatePicker
                     value={customArrivalDate}
                     onChange={setCustomArrivalDate}
@@ -397,7 +423,7 @@ export default function VouchersPage() {
             
             {/* User Filter - Show for admins or when there are multiple users */}
             {(isAdmin || uniqueUsers.length > 1) && (
-              <div className="w-64">
+              <div className="w-full sm:w-64 sm:col-span-2 lg:col-span-1">
                 <SearchableSelect
                   id="userFilter"
                   value={userFilter}
@@ -416,7 +442,7 @@ export default function VouchersPage() {
 
             {/* Clear Filters Button */}
             {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
-              <div className="flex items-start">
+              <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
                 <Button
                   color="gray"
                   size="sm"
@@ -551,6 +577,27 @@ export default function VouchersPage() {
                         </Table.Cell>
                       </Table.Row>
                     ))}
+                    
+                    {/* Totals Row */}
+                    {filteredVouchers.length > 0 && Object.keys(totals).map((currency, index) => (
+                      <Table.Row key={currency} className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
+                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="4">
+                          {index === 0 ? 'TOTALS' : ''} {currency}
+                        </Table.Cell>
+                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
+                          {getCurrencySymbol(currency)}{totals[currency].totalCapital.toFixed(2)}
+                        </Table.Cell>
+                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
+                          {getCurrencySymbol(currency)}{totals[currency].totalAmount.toFixed(2)}
+                        </Table.Cell>
+                        <Table.Cell className="font-bold text-sm text-green-600 dark:text-green-400 px-4 py-3">
+                          {getCurrencySymbol(currency)}{totals[currency].totalProfit.toFixed(2)}
+                        </Table.Cell>
+                        <Table.Cell className="px-4 py-3" colSpan={isAdmin ? "3" : "2"}>
+                          {/* Empty cells for Created, Created By (if admin), Actions */}
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
                   </Table.Body>
                 </Table>
               </CustomScrollbar>
@@ -680,6 +727,40 @@ export default function VouchersPage() {
                 </div>
               </CustomScrollbar>
             </div>
+
+            {/* Mobile Totals Summary */}
+            {filteredVouchers.length > 0 && (
+              <div className="sm:hidden mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Totals Summary</h3>
+                {Object.keys(totals).map((currency) => (
+                  <Card key={currency} className="mb-3 bg-gray-50 dark:bg-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-900 dark:text-white">{currency}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 mt-2">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Capital</div>
+                        <div className="font-bold text-sm text-gray-900 dark:text-white">
+                          {getCurrencySymbol(currency)}{totals[currency].totalCapital.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
+                        <div className="font-bold text-sm text-gray-900 dark:text-white">
+                          {getCurrencySymbol(currency)}{totals[currency].totalAmount.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">Profit</div>
+                        <div className="font-bold text-sm text-green-600 dark:text-green-400">
+                          {getCurrencySymbol(currency)}{totals[currency].totalProfit.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </>
         )}
       </Card>
