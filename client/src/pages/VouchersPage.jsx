@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Modal, Alert, TextInput } from 'flowbite-react';
+import { Card, Button, Table, Modal, Alert, TextInput, Select } from 'flowbite-react';
+import SearchableSelect from '../components/SearchableSelect';
+import CustomDatePicker from '../components/CustomDatePicker';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
@@ -12,6 +14,14 @@ export default function VouchersPage() {
   const [vouchers, setVouchers] = useState([]);
   const [filteredVouchers, setFilteredVouchers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [uniqueUsers, setUniqueUsers] = useState([]);
+  const [dateFilter, setDateFilter] = useState('');
+  const [customDate, setCustomDate] = useState('');
+  const [arrivalDateFilter, setArrivalDateFilter] = useState('');
+  const [customArrivalDate, setCustomArrivalDate] = useState('');
+  const [departureDateFilter, setDepartureDateFilter] = useState('');
+  const [customDepartureDate, setCustomDepartureDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
@@ -59,6 +69,17 @@ export default function VouchersPage() {
       
       setVouchers(response.data.data);
       setFilteredVouchers(response.data.data);
+      
+      // Extract unique users for filter dropdown
+      const users = response.data.data
+        .filter(voucher => voucher.createdBy && voucher.createdBy.username)
+        .map(voucher => voucher.createdBy)
+        .filter((user, index, arr) => 
+          arr.findIndex(u => u._id === user._id) === index
+        )
+        .sort((a, b) => a.username.localeCompare(b.username));
+      
+      setUniqueUsers(users);
       setError('');
     } catch (err) {
       console.error('Error fetching vouchers:', err);
@@ -72,21 +93,112 @@ export default function VouchersPage() {
     fetchVouchers();
   }, []);
 
-  // Filter vouchers based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredVouchers(vouchers);
-      return;
+  // Helper function to check if a date falls within a range
+  const isDateInRange = (dateString, range, customDateValue = null) => {
+    if (!dateString || !range) return true;
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Handle custom date
+    if (range === 'custom' && customDateValue) {
+      const selectedDate = new Date(customDateValue);
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const selectedDateOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      return dateOnly.getTime() === selectedDateOnly.getTime();
     }
     
-    const query = searchQuery.toLowerCase();
-    const filtered = vouchers.filter(voucher => 
-      voucher.clientName.toLowerCase().includes(query) || 
-      voucher.voucherNumber.toString().includes(query)
-    );
+    switch (range) {
+      case 'today': {
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        return dateOnly.getTime() === today.getTime();
+      }
+      
+      case 'yesterday': {
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const dateOnlyYesterday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        return dateOnlyYesterday.getTime() === yesterday.getTime();
+      }
+      
+      case 'this-week': {
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        return date >= weekStart;
+      }
+      
+      case 'last-week': {
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
+        const lastWeekEnd = new Date(today);
+        lastWeekEnd.setDate(today.getDate() - today.getDay() - 1);
+        lastWeekEnd.setHours(23, 59, 59, 999);
+        return date >= lastWeekStart && date <= lastWeekEnd;
+      }
+      
+      case 'this-month': {
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      }
+      
+      case 'last-month': {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        return date >= lastMonth && date <= lastMonthEnd;
+      }
+      
+      case 'this-year': {
+        return date.getFullYear() === now.getFullYear();
+      }
+      
+      default:
+        return true;
+    }
+  };
+
+  // Filter vouchers based on search query, user filter, and date filters
+  useEffect(() => {
+    let filtered = vouchers;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(voucher => 
+        voucher.clientName.toLowerCase().includes(query) || 
+        voucher.voucherNumber.toString().includes(query)
+      );
+    }
+    
+    // Apply user filter
+    if (userFilter) {
+      filtered = filtered.filter(voucher => 
+        voucher.createdBy && voucher.createdBy._id === userFilter
+      );
+    }
+    
+    // Apply creation date filter
+    if (dateFilter) {
+      filtered = filtered.filter(voucher => 
+        isDateInRange(voucher.createdAt, dateFilter, customDate)
+      );
+    }
+    
+    // Apply arrival date filter
+    if (arrivalDateFilter) {
+      filtered = filtered.filter(voucher => 
+        isDateInRange(voucher.arrivalDate, arrivalDateFilter, customArrivalDate)
+      );
+    }
+    
+    // Apply departure date filter
+    if (departureDateFilter) {
+      filtered = filtered.filter(voucher => 
+        isDateInRange(voucher.departureDate, departureDateFilter, customDepartureDate)
+      );
+    }
     
     setFilteredVouchers(filtered);
-  }, [searchQuery, vouchers]);
+  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, departureDateFilter, customDepartureDate, vouchers]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -95,6 +207,49 @@ export default function VouchersPage() {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+
+
+  const handleDateFilterChange = (e) => {
+    const selectedFilter = e.target.value;
+    setDateFilter(selectedFilter);
+    
+    // Clear custom date when switching away from custom
+    if (selectedFilter !== 'custom') {
+      setCustomDate('');
+    }
+  };
+
+  const handleArrivalDateFilterChange = (e) => {
+    const selectedFilter = e.target.value;
+    setArrivalDateFilter(selectedFilter);
+    
+    // Clear custom date when switching away from custom
+    if (selectedFilter !== 'custom') {
+      setCustomArrivalDate('');
+    }
+  };
+
+  const handleDepartureDateFilterChange = (e) => {
+    const selectedFilter = e.target.value;
+    setDepartureDateFilter(selectedFilter);
+    
+    // Clear custom date when switching away from custom
+    if (selectedFilter !== 'custom') {
+      setCustomDepartureDate('');
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setUserFilter('');
+    setDateFilter('');
+    setCustomDate('');
+    setArrivalDateFilter('');
+    setCustomArrivalDate('');
+    setDepartureDateFilter('');
+    setCustomDepartureDate('');
   };
 
   const handleDeleteClick = (voucher) => {
@@ -170,9 +325,10 @@ export default function VouchersPage() {
       </div>
 
       <Card>
-        {/* Search Bar */}
+        {/* Search Bar and Filters */}
         <div className="mb-4">
-          <div className="relative">
+          {/* Search Bar */}
+          <div className="mb-4">
             <TextInput
               type="text"
               placeholder="Search by client name or voucher number..."
@@ -181,6 +337,166 @@ export default function VouchersPage() {
               icon={FaSearch}
             />
           </div>
+
+          {/* Filters Row */}
+          <div className="flex flex-col lg:flex-row gap-4 justify-center">
+            {/* Creation Date Filter */}
+            <div className="flex gap-2">
+              <div className="w-48">
+                <Select
+                  value={dateFilter}
+                  onChange={handleDateFilterChange}
+                >
+                  <option value="">Created - All Time</option>
+                  <option value="today">Created - Today</option>
+                  <option value="yesterday">Created - Yesterday</option>
+                  <option value="this-week">Created - This Week</option>
+                  <option value="last-week">Created - Last Week</option>
+                  <option value="this-month">Created - This Month</option>
+                  <option value="last-month">Created - Last Month</option>
+                  <option value="this-year">Created - This Year</option>
+                  <option value="custom">Created - Custom Date</option>
+                </Select>
+              </div>
+              
+              {/* Custom Creation Date Picker */}
+              {dateFilter === 'custom' && (
+                <div className="w-40">
+                  <CustomDatePicker
+                    value={customDate}
+                    onChange={setCustomDate}
+                    placeholder="DD/MM/YYYY"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Arrival Date Filter */}
+            <div className="flex gap-2">
+              <div className="w-48">
+                <Select
+                  value={arrivalDateFilter}
+                  onChange={handleArrivalDateFilterChange}
+                >
+                  <option value="">Arrival - All Time</option>
+                  <option value="today">Arrival - Today</option>
+                  <option value="yesterday">Arrival - Yesterday</option>
+                  <option value="this-week">Arrival - This Week</option>
+                  <option value="last-week">Arrival - Last Week</option>
+                  <option value="this-month">Arrival - This Month</option>
+                  <option value="last-month">Arrival - Last Month</option>
+                  <option value="this-year">Arrival - This Year</option>
+                  <option value="custom">Arrival - Custom Date</option>
+                </Select>
+              </div>
+              
+              {/* Custom Arrival Date Picker */}
+              {arrivalDateFilter === 'custom' && (
+                <div className="w-40">
+                  <CustomDatePicker
+                    value={customArrivalDate}
+                    onChange={setCustomArrivalDate}
+                    placeholder="DD/MM/YYYY"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Departure Date Filter */}
+            <div className="flex gap-2">
+              <div className="w-48">
+                <Select
+                  value={departureDateFilter}
+                  onChange={handleDepartureDateFilterChange}
+                >
+                  <option value="">Departure - All Time</option>
+                  <option value="today">Departure - Today</option>
+                  <option value="yesterday">Departure - Yesterday</option>
+                  <option value="this-week">Departure - This Week</option>
+                  <option value="last-week">Departure - Last Week</option>
+                  <option value="this-month">Departure - This Month</option>
+                  <option value="last-month">Departure - Last Month</option>
+                  <option value="this-year">Departure - This Year</option>
+                  <option value="custom">Departure - Custom Date</option>
+                </Select>
+              </div>
+              
+              {/* Custom Departure Date Picker */}
+              {departureDateFilter === 'custom' && (
+                <div className="w-40">
+                  <CustomDatePicker
+                    value={customDepartureDate}
+                    onChange={setCustomDepartureDate}
+                    placeholder="DD/MM/YYYY"
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* User Filter - Show for admins or when there are multiple users */}
+            {(isAdmin || uniqueUsers.length > 1) && (
+              <div className="w-64">
+                <SearchableSelect
+                  id="userFilter"
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  options={[
+                    { value: '', label: 'All Users' },
+                    ...uniqueUsers.map(user => ({
+                      value: user._id,
+                      label: user.username
+                    }))
+                  ]}
+                  placeholder="Search users..."
+                />
+              </div>
+            )}
+
+            {/* Clear Filters Button */}
+            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) && (
+              <div className="flex items-start">
+                <Button
+                  color="gray"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="whitespace-nowrap bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Active Filters Display */}
+          {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) && (
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+              {searchQuery && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  Search: "{searchQuery}"
+                </span>
+              )}
+              {userFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  User: {uniqueUsers.find(user => user._id === userFilter)?.username || 'Unknown'}
+                </span>
+              )}
+              {dateFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  Created: {dateFilter === 'custom' ? formatDate(customDate) : dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1).replace('-', ' ')}
+                </span>
+              )}
+              {arrivalDateFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                  Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : arrivalDateFilter.charAt(0).toUpperCase() + arrivalDateFilter.slice(1).replace('-', ' ')}
+                </span>
+              )}
+              {departureDateFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200">
+                  Departure: {departureDateFilter === 'custom' ? formatDate(customDepartureDate) : departureDateFilter.charAt(0).toUpperCase() + departureDateFilter.slice(1).replace('-', ' ')}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         
         {loading ? (
@@ -195,7 +511,7 @@ export default function VouchersPage() {
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            {searchQuery ? 'No vouchers match your search criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
           </div>
         ) : (
           <>

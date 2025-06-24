@@ -36,6 +36,9 @@ export default function EditVoucherPage() {
   // Custom hotel input state
   const [useCustomHotel, setUseCustomHotel] = useState([]);
   
+  // Custom tour input state
+  const [useCustomTour, setUseCustomTour] = useState([]);
+  
   // Date display formatting
   const [displayArrivalDate, setDisplayArrivalDate] = useState('');
   const [displayDepartureDate, setDisplayDepartureDate] = useState('');
@@ -150,6 +153,11 @@ export default function EditVoucherPage() {
         setUseCustomHotel(voucherData.hotels.map(hotel => {
           const hotelExists = hotelsResponse.data.some(h => h.name === hotel.hotelName);
           return !hotelExists && hotel.hotelName !== '';
+        }));
+        
+        setUseCustomTour(voucherData.trips.map(trip => {
+          const tourExists = toursResponse.data.some(t => t.name === trip.tourName);
+          return !tourExists && trip.tourName !== '';
         }));
         
         setHotels(hotelsResponse.data);
@@ -308,8 +316,8 @@ export default function EditVoucherPage() {
     const updatedTrips = [...formData.trips];
     updatedTrips[index][field] = value;
     
-    // If selecting a tour name, populate the city and type
-    if (field === 'tourName') {
+    // If selecting a tour name and not in custom mode, populate the city and type
+    if (field === 'tourName' && !useCustomTour[index]) {
       const selectedTour = tours.find(t => t.name === value);
       if (selectedTour) {
         updatedTrips[index].city = selectedTour.city;
@@ -337,6 +345,8 @@ export default function EditVoucherPage() {
         }
       ]
     }));
+    
+    setUseCustomTour(prev => [...prev, false]);
   };
   
   const handleRemoveTrip = (index) => {
@@ -346,6 +356,27 @@ export default function EditVoucherPage() {
       ...prev,
       trips: updatedTrips
     }));
+    
+    const updatedCustomTours = [...useCustomTour];
+    updatedCustomTours.splice(index, 1);
+    setUseCustomTour(updatedCustomTours);
+  };
+
+  // Toggle custom tour input
+  const toggleCustomTour = (index) => {
+    const newUseCustom = [...useCustomTour];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomTour(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedTrips = [...formData.trips];
+      updatedTrips[index].tourName = '';
+      updatedTrips[index].type = '';
+      setFormData(prev => ({
+        ...prev,
+        trips: updatedTrips
+      }));
+    }
   };
   
   // Helper function to format date for a specific hotel index
@@ -633,6 +664,12 @@ export default function EditVoucherPage() {
       setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
         const hotelExists = hotels.some(h => h.name === hotel.hotelName);
         return !hotelExists && hotel.hotelName !== '';
+      }));
+      
+      // Update custom tour states
+      setUseCustomTour(voucherToDuplicate.trips.map(trip => {
+        const tourExists = tours.some(t => t.name === trip.tourName);
+        return !tourExists && trip.tourName !== '';
       }));
       
       toast.success('Voucher data duplicated successfully! Make changes as needed and save.', {
@@ -1326,19 +1363,38 @@ export default function EditVoucherPage() {
                 </div>
                 
                 <div>
-                  <Label value="Tour Name" className="mb-2 block" />
-                  <SearchableSelect 
-                    id={`tourSelect-${index}`}
-                    value={trip.tourName} 
-                    onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
-                    options={tours
-                      .filter(t => !trip.city || t.city === trip.city)
-                      .map(t => ({
-                        value: t.name,
-                        label: `${t.name} - ${t.tourType} (${t.city})`
-                      }))}
-                    placeholder="Search for a tour..."
-                  />
+                  <div className="flex justify-between items-center mb-2">
+                    <Label value="Tour Name" className="block" />
+                    <div className="flex items-center">
+                      <Checkbox 
+                        id={`customTour-${index}`}
+                        checked={useCustomTour[index]}
+                        onChange={() => toggleCustomTour(index)}
+                      />
+                      <Label htmlFor={`customTour-${index}`} value="Custom Tour" className="ml-2 text-sm" />
+                    </div>
+                  </div>
+                  
+                  {useCustomTour[index] ? (
+                    <TextInput
+                      value={trip.tourName}
+                      onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
+                      placeholder="Enter tour name"
+                    />
+                  ) : (
+                    <SearchableSelect 
+                      id={`tourSelect-${index}`}
+                      value={trip.tourName} 
+                      onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
+                      options={tours
+                        .filter(t => !trip.city || t.city === trip.city)
+                        .map(t => ({
+                          value: t.name,
+                          label: `${t.name} - ${t.tourType} (${t.city})`
+                        }))}
+                      placeholder="Search for a tour..."
+                    />
+                  )}
                 </div>
                 
                 <div>
