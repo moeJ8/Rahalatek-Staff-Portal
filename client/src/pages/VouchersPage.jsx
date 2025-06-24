@@ -20,8 +20,7 @@ export default function VouchersPage() {
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
   const [customArrivalDate, setCustomArrivalDate] = useState('');
-  const [departureDateFilter, setDepartureDateFilter] = useState('');
-  const [customDepartureDate, setCustomDepartureDate] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
@@ -99,7 +98,6 @@ export default function VouchersPage() {
     
     const date = new Date(dateString);
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     // Handle custom date
     if (range === 'custom' && customDateValue) {
@@ -109,46 +107,26 @@ export default function VouchersPage() {
       return dateOnly.getTime() === selectedDateOnly.getTime();
     }
     
+    // Handle month-based filtering
+    const monthNames = [
+      'january', 'february', 'march', 'april', 'may', 'june',
+      'july', 'august', 'september', 'october', 'november', 'december'
+    ];
+    
+    const monthIndex = monthNames.indexOf(range);
+    if (monthIndex !== -1) {
+      // Check if the date is in the specified month of the current year
+      return date.getMonth() === monthIndex && date.getFullYear() === now.getFullYear();
+    }
+    
+    // Handle year-based filtering
     switch (range) {
-      case 'today': {
-        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        return dateOnly.getTime() === today.getTime();
-      }
-      
-      case 'yesterday': {
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const dateOnlyYesterday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        return dateOnlyYesterday.getTime() === yesterday.getTime();
-      }
-      
-      case 'this-week': {
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - today.getDay());
-        return date >= weekStart;
-      }
-      
-      case 'last-week': {
-        const lastWeekStart = new Date(today);
-        lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
-        const lastWeekEnd = new Date(today);
-        lastWeekEnd.setDate(today.getDate() - today.getDay() - 1);
-        lastWeekEnd.setHours(23, 59, 59, 999);
-        return date >= lastWeekStart && date <= lastWeekEnd;
-      }
-      
-      case 'this-month': {
-        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-      }
-      
-      case 'last-month': {
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        return date >= lastMonth && date <= lastMonthEnd;
-      }
-      
       case 'this-year': {
         return date.getFullYear() === now.getFullYear();
+      }
+      
+      case 'last-year': {
+        return date.getFullYear() === now.getFullYear() - 1;
       }
       
       default:
@@ -190,15 +168,8 @@ export default function VouchersPage() {
       );
     }
     
-    // Apply departure date filter
-    if (departureDateFilter) {
-      filtered = filtered.filter(voucher => 
-        isDateInRange(voucher.departureDate, departureDateFilter, customDepartureDate)
-      );
-    }
-    
     setFilteredVouchers(filtered);
-  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, departureDateFilter, customDepartureDate, vouchers]);
+  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, vouchers]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -207,6 +178,14 @@ export default function VouchersPage() {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  // Helper function to format filter labels
+  const formatFilterLabel = (filter) => {
+    if (filter === 'custom') return 'Custom Date';
+    if (filter === 'this-year') return 'This Year';
+    if (filter === 'last-year') return 'Last Year';
+    return filter.charAt(0).toUpperCase() + filter.slice(1);
   };
 
 
@@ -231,16 +210,6 @@ export default function VouchersPage() {
     }
   };
 
-  const handleDepartureDateFilterChange = (e) => {
-    const selectedFilter = e.target.value;
-    setDepartureDateFilter(selectedFilter);
-    
-    // Clear custom date when switching away from custom
-    if (selectedFilter !== 'custom') {
-      setCustomDepartureDate('');
-    }
-  };
-
   const handleClearFilters = () => {
     setSearchQuery('');
     setUserFilter('');
@@ -248,8 +217,6 @@ export default function VouchersPage() {
     setCustomDate('');
     setArrivalDateFilter('');
     setCustomArrivalDate('');
-    setDepartureDateFilter('');
-    setCustomDepartureDate('');
   };
 
   const handleDeleteClick = (voucher) => {
@@ -358,13 +325,20 @@ export default function VouchersPage() {
                   onChange={handleDateFilterChange}
                 >
                   <option value="">Created - All Time</option>
-                  <option value="today">Created - Today</option>
-                  <option value="yesterday">Created - Yesterday</option>
-                  <option value="this-week">Created - This Week</option>
-                  <option value="last-week">Created - Last Week</option>
-                  <option value="this-month">Created - This Month</option>
-                  <option value="last-month">Created - Last Month</option>
+                  <option value="january">Created - January</option>
+                  <option value="february">Created - February</option>
+                  <option value="march">Created - March</option>
+                  <option value="april">Created - April</option>
+                  <option value="may">Created - May</option>
+                  <option value="june">Created - June</option>
+                  <option value="july">Created - July</option>
+                  <option value="august">Created - August</option>
+                  <option value="september">Created - September</option>
+                  <option value="october">Created - October</option>
+                  <option value="november">Created - November</option>
+                  <option value="december">Created - December</option>
                   <option value="this-year">Created - This Year</option>
+                  <option value="last-year">Created - Last Year</option>
                   <option value="custom">Created - Custom Date</option>
                 </Select>
               </div>
@@ -389,13 +363,20 @@ export default function VouchersPage() {
                   onChange={handleArrivalDateFilterChange}
                 >
                   <option value="">Arrival - All Time</option>
-                  <option value="today">Arrival - Today</option>
-                  <option value="yesterday">Arrival - Yesterday</option>
-                  <option value="this-week">Arrival - This Week</option>
-                  <option value="last-week">Arrival - Last Week</option>
-                  <option value="this-month">Arrival - This Month</option>
-                  <option value="last-month">Arrival - Last Month</option>
+                  <option value="january">Arrival - January</option>
+                  <option value="february">Arrival - February</option>
+                  <option value="march">Arrival - March</option>
+                  <option value="april">Arrival - April</option>
+                  <option value="may">Arrival - May</option>
+                  <option value="june">Arrival - June</option>
+                  <option value="july">Arrival - July</option>
+                  <option value="august">Arrival - August</option>
+                  <option value="september">Arrival - September</option>
+                  <option value="october">Arrival - October</option>
+                  <option value="november">Arrival - November</option>
+                  <option value="december">Arrival - December</option>
                   <option value="this-year">Arrival - This Year</option>
+                  <option value="last-year">Arrival - Last Year</option>
                   <option value="custom">Arrival - Custom Date</option>
                 </Select>
               </div>
@@ -412,36 +393,7 @@ export default function VouchersPage() {
               )}
             </div>
 
-            {/* Departure Date Filter */}
-            <div className="flex gap-2">
-              <div className="w-48">
-                <Select
-                  value={departureDateFilter}
-                  onChange={handleDepartureDateFilterChange}
-                >
-                  <option value="">Departure - All Time</option>
-                  <option value="today">Departure - Today</option>
-                  <option value="yesterday">Departure - Yesterday</option>
-                  <option value="this-week">Departure - This Week</option>
-                  <option value="last-week">Departure - Last Week</option>
-                  <option value="this-month">Departure - This Month</option>
-                  <option value="last-month">Departure - Last Month</option>
-                  <option value="this-year">Departure - This Year</option>
-                  <option value="custom">Departure - Custom Date</option>
-                </Select>
-              </div>
-              
-              {/* Custom Departure Date Picker */}
-              {departureDateFilter === 'custom' && (
-                <div className="w-40">
-                  <CustomDatePicker
-                    value={customDepartureDate}
-                    onChange={setCustomDepartureDate}
-                    placeholder="DD/MM/YYYY"
-                  />
-                </div>
-              )}
-            </div>
+
             
             {/* User Filter - Show for admins or when there are multiple users */}
             {(isAdmin || uniqueUsers.length > 1) && (
@@ -463,7 +415,7 @@ export default function VouchersPage() {
             )}
 
             {/* Clear Filters Button */}
-            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) && (
+            {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
               <div className="flex items-start">
                 <Button
                   color="gray"
@@ -478,7 +430,7 @@ export default function VouchersPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) && (
+          {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {searchQuery && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -492,17 +444,12 @@ export default function VouchersPage() {
               )}
               {dateFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                  Created: {dateFilter === 'custom' ? formatDate(customDate) : dateFilter.charAt(0).toUpperCase() + dateFilter.slice(1).replace('-', ' ')}
+                  Created: {dateFilter === 'custom' ? formatDate(customDate) : formatFilterLabel(dateFilter)}
                 </span>
               )}
               {arrivalDateFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                  Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : arrivalDateFilter.charAt(0).toUpperCase() + arrivalDateFilter.slice(1).replace('-', ' ')}
-                </span>
-              )}
-              {departureDateFilter && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200">
-                  Departure: {departureDateFilter === 'custom' ? formatDate(customDepartureDate) : departureDateFilter.charAt(0).toUpperCase() + departureDateFilter.slice(1).replace('-', ' ')}
+                  Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : formatFilterLabel(arrivalDateFilter)}
                 </span>
               )}
             </div>
@@ -521,7 +468,7 @@ export default function VouchersPage() {
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || departureDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+            {(searchQuery || userFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
           </div>
         ) : (
           <>
@@ -536,6 +483,7 @@ export default function VouchersPage() {
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
                     {isAdmin && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
@@ -561,6 +509,12 @@ export default function VouchersPage() {
                         </Table.Cell>
                         <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
                           {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                        </Table.Cell>
+                        <Table.Cell className="text-sm font-medium text-green-600 dark:text-green-400 px-4 py-3">
+                          {voucher.capital ? 
+                            `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
+                            '-'
+                          }
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.createdAt)}</Table.Cell>
                         {isAdmin && (
@@ -653,7 +607,7 @@ export default function VouchersPage() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center col-span-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center">
                           <svg className="mr-2 text-orange-600 dark:text-orange-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                           </svg>
@@ -663,6 +617,21 @@ export default function VouchersPage() {
                               {voucher.capital ? `${getCurrencySymbol(voucher.currency)}${voucher.capital}` : '-'}
                             </div>
                           </div>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <svg className="mr-2 text-emerald-600 dark:text-emerald-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                          </svg>
+                                                     <div>
+                             <div className="text-xs text-gray-600 dark:text-gray-400">Profit</div>
+                             <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                               {voucher.capital ? 
+                                 `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
+                                 '-'
+                               }
+                             </div>
+                           </div>
                         </div>
                         
                         {isAdmin && voucher.createdBy && (
