@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, TextInput, Select, Label, Checkbox, Modal, Alert } from 'flowbite-react';
+import { Card, Button, TextInput, Select, Label, Checkbox, Modal, Alert, Textarea } from 'flowbite-react';
 import axios from 'axios';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
@@ -28,6 +28,8 @@ export default function EditVoucherPage() {
     hotels: [],
     transfers: [],
     trips: [],
+    flights: [],
+    note: '',
     advancedPayment: false,
     advancedAmount: 0,
     remainingAmount: 0
@@ -145,6 +147,12 @@ export default function EditVoucherPage() {
             date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
           })),
           trips: voucherData.trips || [],
+          flights: voucherData.flights ? voucherData.flights.map(flight => ({
+            ...flight,
+            departureDate: flight.departureDate ? new Date(flight.departureDate).toISOString().split('T')[0] : '',
+            arrivalDate: flight.arrivalDate ? new Date(flight.arrivalDate).toISOString().split('T')[0] : ''
+          })) : [],
+          note: voucherData.note || '',
           advancedPayment: voucherData.advancedPayment || false,
           advancedAmount: voucherData.advancedAmount || 0,
           remainingAmount: voucherData.remainingAmount || 0
@@ -378,6 +386,54 @@ export default function EditVoucherPage() {
       }));
     }
   };
+
+  // Flight handlers
+  const handleAddFlight = () => {
+    setFormData(prev => ({
+      ...prev,
+      flights: [...prev.flights, {
+        companyName: '',
+        from: '',
+        to: '',
+        flightNumber: '',
+        departureDate: '',
+        arrivalDate: '',
+        luggage: ''
+      }]
+    }));
+  };
+
+  const handleRemoveFlight = (index) => {
+    const updatedFlights = [...formData.flights];
+    updatedFlights.splice(index, 1);
+    setFormData(prev => ({
+      ...prev,
+      flights: updatedFlights
+    }));
+  };
+
+  const handleFlightChange = (index, field, value) => {
+    const updatedFlights = [...formData.flights];
+    updatedFlights[index][field] = value;
+    setFormData(prev => ({
+      ...prev,
+      flights: updatedFlights
+    }));
+  };
+
+  const formatFlightDateForDisplay = (index, dateType) => {
+    const date = formData.flights[index]?.[dateType];
+    return date ? formatDateForDisplay(date) : '';
+  };
+
+  const updateFlightDate = (index, dateType, isoDate) => {
+    const updatedFlights = [...formData.flights];
+    updatedFlights[index][dateType] = isoDate;
+    setFormData(prev => ({
+      ...prev,
+      flights: updatedFlights
+    }));
+  };
   
   // Helper function to format date for a specific hotel index
   const formatHotelDateForDisplay = (index, dateType) => {
@@ -530,6 +586,8 @@ export default function EditVoucherPage() {
         hotels: formData.hotels,
         transfers: formData.transfers,
         trips: formattedTrips,
+        flights: formData.flights,
+        note: formData.note,
         advancedPayment: formData.advancedPayment,
         advancedAmount: formData.advancedPayment ? Number(formData.advancedAmount) : 0,
         remainingAmount: formData.advancedPayment ? Number(formData.remainingAmount) : 0
@@ -645,6 +703,12 @@ export default function EditVoucherPage() {
         hotels: processedHotels,
         transfers: processedTransfers,
         trips: voucherToDuplicate.trips || [],
+        flights: voucherToDuplicate.flights ? voucherToDuplicate.flights.map(flight => ({
+          ...flight,
+          departureDate: flight.departureDate ? new Date(flight.departureDate).toISOString().split('T')[0] : '',
+          arrivalDate: flight.arrivalDate ? new Date(flight.arrivalDate).toISOString().split('T')[0] : ''
+        })) : [],
+        note: voucherToDuplicate.note || '',
         totalAmount: voucherToDuplicate.totalAmount || 0,
         currency: voucherToDuplicate.currency || 'USD',
         advancedPayment: voucherToDuplicate.advancedPayment || false,
@@ -1001,6 +1065,18 @@ export default function EditVoucherPage() {
                 {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
               </span>
             </div>
+          </div>
+          
+          <div>
+            <Label htmlFor="note" value="Note" className="mb-2 block" />
+            <Textarea
+              id="note"
+              name="note"
+              value={formData.note}
+              onChange={handleInputChange}
+              placeholder="Add any additional notes..."
+              rows={3}
+            />
           </div>
         </div>
         
@@ -1422,6 +1498,141 @@ export default function EditVoucherPage() {
                     value={trip.pax}
                     onChange={(e) => handleTripChange(index, 'pax', parseInt(e.target.value))}
                     min="1"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Flights Section */}
+        <div className="mt-6 mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-xl font-semibold dark:text-white">Flights</h3>
+            <Button size="sm" onClick={handleAddFlight} gradientDuoTone="pinkToOrange">+ Add Flight</Button>
+          </div>
+          
+          {formData.flights.map((flight, index) => (
+            <div key={`flight-${index}`} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+              <div className="flex justify-between mb-3">
+                <h4 className="font-medium dark:text-white">Flight {index + 1}</h4>
+                {formData.flights.length > 1 && (
+                  <Button 
+                    color="failure"
+                    size="xs"
+                    onClick={() => handleRemoveFlight(index)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label value="Company Name" className="mb-2 block" />
+                  <TextInput
+                    value={flight.companyName}
+                    onChange={(e) => handleFlightChange(index, 'companyName', e.target.value)}
+                    placeholder="e.g. Turkish Airlines"
+                  />
+                </div>
+                
+                <div>
+                  <Label value="From" className="mb-2 block" />
+                  <TextInput
+                    value={flight.from}
+                    onChange={(e) => handleFlightChange(index, 'from', e.target.value)}
+                    placeholder="e.g. Istanbul"
+                  />
+                </div>
+                
+                <div>
+                  <Label value="To" className="mb-2 block" />
+                  <TextInput
+                    value={flight.to}
+                    onChange={(e) => handleFlightChange(index, 'to', e.target.value)}
+                    placeholder="e.g. Paris"
+                  />
+                </div>
+                
+                <div>
+                  <Label value="Flight Number" className="mb-2 block" />
+                  <TextInput
+                    value={flight.flightNumber}
+                    onChange={(e) => handleFlightChange(index, 'flightNumber', e.target.value)}
+                    placeholder="e.g. TK1234"
+                  />
+                </div>
+                
+                <div>
+                  <Label value="Departure Date" className="mb-2 block" />
+                  <div className="relative">
+                    <TextInput
+                      type="text"
+                      value={formatFlightDateForDisplay(index, 'departureDate')}
+                      onChange={(e) => {
+                        const newDisplayDate = e.target.value;
+                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                          const newIsoDate = parseDisplayDate(newDisplayDate);
+                          if (newIsoDate) {
+                            updateFlightDate(index, 'departureDate', newIsoDate);
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                    />
+                    <input 
+                      type="date" 
+                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                      value={flight.departureDate}
+                      onChange={(e) => updateFlightDate(index, 'departureDate', e.target.value)}
+                    />
+                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label value="Arrival Date" className="mb-2 block" />
+                  <div className="relative">
+                    <TextInput
+                      type="text"
+                      value={formatFlightDateForDisplay(index, 'arrivalDate')}
+                      onChange={(e) => {
+                        const newDisplayDate = e.target.value;
+                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                          const newIsoDate = parseDisplayDate(newDisplayDate);
+                          if (newIsoDate) {
+                            updateFlightDate(index, 'arrivalDate', newIsoDate);
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/YYYY"
+                    />
+                    <input 
+                      type="date" 
+                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
+                      value={flight.arrivalDate}
+                      min={flight.departureDate || ''}
+                      onChange={(e) => updateFlightDate(index, 'arrivalDate', e.target.value)}
+                    />
+                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label value="Luggage" className="mb-2 block" />
+                  <TextInput
+                    value={flight.luggage}
+                    onChange={(e) => handleFlightChange(index, 'luggage', e.target.value)}
+                    placeholder="e.g. 23kg checked, 8kg cabin"
                   />
                 </div>
               </div>

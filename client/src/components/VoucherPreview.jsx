@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from 'flowbite-react';
-import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDisplayDate } from '../utils/voucherGenerator';
@@ -23,30 +23,131 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   
-  // Visibility state for each section
-  const [showHotels, setShowHotels] = useState(true);
-  const [showTransfers, setShowTransfers] = useState(true);
-  const [showTrips, setShowTrips] = useState(true);
+  const getStorageKey = (section) => {
+    return `voucherPreview_${voucherData?.voucherNumber || 'default'}_${section}`;
+  };
+
+  // Load initial visibility state from localStorage
+  const getInitialVisibility = (section) => {
+    const stored = localStorage.getItem(getStorageKey(section));
+    return stored !== null ? JSON.parse(stored) : true;
+  };
+
+  const [showHotels, setShowHotels] = useState(() => getInitialVisibility('hotels'));
+  const [showTransfers, setShowTransfers] = useState(() => getInitialVisibility('transfers'));
+  const [showTrips, setShowTrips] = useState(() => getInitialVisibility('trips'));
+  const [showFlights, setShowFlights] = useState(() => getInitialVisibility('flights'));
+
+  const saveVisibilityState = (section, value) => {
+    localStorage.setItem(getStorageKey(section), JSON.stringify(value));
+  };
+
+  const setShowHotelsWithStorage = (value) => {
+    setShowHotels(value);
+    saveVisibilityState('hotels', value);
+  };
+
+  const setShowTransfersWithStorage = (value) => {
+    setShowTransfers(value);
+    saveVisibilityState('transfers', value);
+  };
+
+  const setShowTripsWithStorage = (value) => {
+    setShowTrips(value);
+    saveVisibilityState('trips', value);
+  };
+
+  const setShowFlightsWithStorage = (value) => {
+    setShowFlights(value);
+    saveVisibilityState('flights', value);
+  };
   
-  // Determine if all sections are visible
-  const allSectionsVisible = showHotels && showTransfers && showTrips;
+  const [reorderedHotels, setReorderedHotels] = useState([]);
+  const [reorderedTransfers, setReorderedTransfers] = useState([]);
+  const [reorderedTrips, setReorderedTrips] = useState([]);
+  const [reorderedFlights, setReorderedFlights] = useState([]);
   
-  // Toggle all sections visibility
-  const toggleAllSections = () => {
-    if (allSectionsVisible) {
-      // Hide all sections
-      setShowHotels(false);
-      setShowTransfers(false);
-      setShowTrips(false);
-    } else {
-      // Show all sections
-      setShowHotels(true);
-      setShowTransfers(true);
-      setShowTrips(true);
+
+  useEffect(() => {
+    if (voucherData) {
+      setReorderedHotels(voucherData.hotels || []);
+      setReorderedTransfers(voucherData.transfers || []);
+      setReorderedTrips(voucherData.trips || []);
+      setReorderedFlights(voucherData.flights || []);
+    }
+  }, [voucherData]);
+  
+  // Move item up in array
+  const moveUp = (index, type) => {
+    if (index === 0) return;
+    
+    if (type === 'hotels') {
+      const newArray = [...reorderedHotels];
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      setReorderedHotels(newArray);
+    } else if (type === 'transfers') {
+      const newArray = [...reorderedTransfers];
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      setReorderedTransfers(newArray);
+    } else if (type === 'trips') {
+      const newArray = [...reorderedTrips];
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      setReorderedTrips(newArray);
+    } else if (type === 'flights') {
+      const newArray = [...reorderedFlights];
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      setReorderedFlights(newArray);
     }
   };
   
-  // Preload the logo image and convert to data URL
+  // Move item down in array
+  const moveDown = (index, type) => {
+    let arrayLength;
+    if (type === 'hotels') arrayLength = reorderedHotels.length;
+    else if (type === 'transfers') arrayLength = reorderedTransfers.length;
+    else if (type === 'trips') arrayLength = reorderedTrips.length;
+    else if (type === 'flights') arrayLength = reorderedFlights.length;
+    
+    if (index === arrayLength - 1) return;
+    
+    if (type === 'hotels') {
+      const newArray = [...reorderedHotels];
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      setReorderedHotels(newArray);
+    } else if (type === 'transfers') {
+      const newArray = [...reorderedTransfers];
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      setReorderedTransfers(newArray);
+    } else if (type === 'trips') {
+      const newArray = [...reorderedTrips];
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      setReorderedTrips(newArray);
+    } else if (type === 'flights') {
+      const newArray = [...reorderedFlights];
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      setReorderedFlights(newArray);
+    }
+  };
+  
+  // Determine if all sections are visible
+  const allSectionsVisible = showHotels && showTransfers && showTrips && showFlights;
+  
+  const toggleAllSections = () => {
+    if (allSectionsVisible) {
+      
+      setShowHotelsWithStorage(false);
+      setShowTransfersWithStorage(false);
+      setShowTripsWithStorage(false);
+      setShowFlightsWithStorage(false);
+    } else {
+    
+      setShowHotelsWithStorage(true);
+      setShowTransfersWithStorage(true);
+      setShowTripsWithStorage(true);
+      setShowFlightsWithStorage(true);
+    }
+  };
+  
   useEffect(() => {
     const img = new Image();
     img.crossOrigin = "Anonymous";
@@ -63,10 +164,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   }, []);
   
   const generateDesktopVersionForDownload = () => {
-    // Get currency symbol for the voucher
     const currencySymbol = getCurrencySymbol(voucherData.currency);
 
-    // Create a completely new element with desktop-only styling
     const container = document.createElement('div');
     container.style.width = '800px'; // Increased width for better quality
     container.style.backgroundColor = 'white';
@@ -74,7 +173,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     container.style.fontFamily = 'Arial, sans-serif';
     container.style.position = 'absolute';
     container.style.left = '-9999px';
-    container.style.fontWeight = 'bold'; // Make all text bold by default
+    container.style.fontWeight = 'bold';
     
     // Header
     const header = document.createElement('div');
@@ -268,8 +367,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       hotelHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '6px 10px';
-        th.style.border = '1px solid #bfdbfe';
+        th.style.padding = '12px 16px';
+        th.style.border = '1px solid #f8fafc';
         th.style.fontSize = '12px';
         th.style.fontWeight = 'bold';
         hotelHeaderRow.appendChild(th);
@@ -281,7 +380,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       // Create table body
       const hotelTbody = document.createElement('tbody');
       
-      voucherData.hotels.forEach(hotel => {
+              reorderedHotels.forEach(hotel => {
         const row = document.createElement('tr');
         row.style.backgroundColor = 'white';
         row.style.borderBottom = '1px solid #e5e7eb';
@@ -300,8 +399,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         hotelData.forEach(cellData => {
           const td = document.createElement('td');
           td.textContent = cellData;
-          td.style.padding = '6px 10px';
-          td.style.border = '1px solid #bfdbfe';
+          td.style.padding = '12px 16px';
+          td.style.border = '1px solid #f8fafc';
           td.style.fontSize = '12px';
           td.style.fontWeight = 'bold';
           row.appendChild(td);
@@ -360,8 +459,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       transferHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '6px 10px';
-        th.style.border = '1px solid #bfdbfe';
+        th.style.padding = '12px 16px';
+        th.style.border = '1px solid #f8fafc';
         th.style.fontSize = '12px';
         th.style.fontWeight = 'bold';
         th.style.verticalAlign = 'middle';
@@ -374,7 +473,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       // Create table body
       const transferTbody = document.createElement('tbody');
       
-      voucherData.transfers.forEach(transfer => {
+              reorderedTransfers.forEach(transfer => {
         const row = document.createElement('tr');
         row.style.backgroundColor = 'white';
         row.style.borderBottom = '1px solid #e5e7eb';
@@ -393,8 +492,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         transferData.forEach(cellData => {
           const td = document.createElement('td');
           td.textContent = cellData;
-          td.style.padding = '6px 10px';
-          td.style.border = '1px solid #bfdbfe';
+          td.style.padding = '12px 16px';
+          td.style.border = '1px solid #f8fafc';
           td.style.fontSize = '12px';
           td.style.fontWeight = 'bold';
           row.appendChild(td);
@@ -453,8 +552,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       tripsHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '6px 10px';
-        th.style.border = '1px solid #bfdbfe';
+        th.style.padding = '12px 16px';
+        th.style.border = '1px solid #f8fafc';
         th.style.fontSize = '12px';
         th.style.fontWeight = 'bold';
         tripsHeaderRow.appendChild(th);
@@ -466,7 +565,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       // Create table body
       const tripsTbody = document.createElement('tbody');
       
-      voucherData.trips.forEach(trip => {
+              reorderedTrips.forEach(trip => {
         const row = document.createElement('tr');
         row.style.backgroundColor = 'white';
         row.style.borderBottom = '1px solid #e5e7eb';
@@ -481,8 +580,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         tripData.forEach(cellData => {
           const td = document.createElement('td');
           td.textContent = cellData;
-          td.style.padding = '6px 10px';
-          td.style.border = '1px solid #bfdbfe';
+          td.style.padding = '12px 16px';
+          td.style.border = '1px solid #f8fafc';
           td.style.fontSize = '12px';
           td.style.fontWeight = 'bold';
           row.appendChild(td);
@@ -497,6 +596,97 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       tripsSection.appendChild(tripsSectionTitle);
       tripsSection.appendChild(tripsTableWrapper);
       container.appendChild(tripsSection);
+    }
+    
+    // Flights Section
+    if (showFlights && voucherData.flights && voucherData.flights.length > 0) {
+      const flightsSection = document.createElement('div');
+      flightsSection.style.marginBottom = '15px';
+      
+      const flightsSectionTitle = document.createElement('h3');
+      flightsSectionTitle.textContent = 'Flights';
+      flightsSectionTitle.style.backgroundColor = '#0f3785';
+      flightsSectionTitle.style.color = 'white';
+      flightsSectionTitle.style.padding = '6px 15px';
+      flightsSectionTitle.style.paddingBottom = '18px';
+      flightsSectionTitle.style.borderTopLeftRadius = '6px';
+      flightsSectionTitle.style.borderTopRightRadius = '6px';
+      flightsSectionTitle.style.margin = '0';
+      flightsSectionTitle.style.fontSize = '16px';
+      flightsSectionTitle.style.fontWeight = '600';
+      flightsSectionTitle.style.display = 'flex';
+      flightsSectionTitle.style.alignItems = 'center';
+      
+      const flightsTableWrapper = document.createElement('div');
+      flightsTableWrapper.style.overflowX = 'auto';
+      
+      const flightsTable = document.createElement('table');
+      flightsTable.style.width = '100%';
+      flightsTable.style.fontSize = '12px';
+      flightsTable.style.textAlign = 'left';
+      flightsTable.style.color = '#374151';
+      flightsTable.style.borderCollapse = 'collapse';
+      flightsTable.style.border = '1px solid #bfdbfe';
+      flightsTable.style.fontWeight = 'bold';
+      
+      // Create table header
+      const flightsThead = document.createElement('thead');
+      flightsThead.style.backgroundColor = '#dbeafe';
+      flightsThead.style.textTransform = 'uppercase';
+      
+      const flightsHeaderRow = document.createElement('tr');
+      
+      const flightsHeaders = ['COMPANY', 'FROM', 'TO', 'FLIGHT №', 'DEPARTURE', 'ARRIVAL', 'LUGGAGE'];
+      flightsHeaders.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.style.padding = '12px 16px';
+        th.style.border = '1px solid #f8fafc';
+        th.style.fontSize = '12px';
+        th.style.fontWeight = 'bold';
+        flightsHeaderRow.appendChild(th);
+      });
+      
+      flightsThead.appendChild(flightsHeaderRow);
+      flightsTable.appendChild(flightsThead);
+      
+      // Create table body
+      const flightsTbody = document.createElement('tbody');
+      
+      reorderedFlights.forEach(flight => {
+        const row = document.createElement('tr');
+        row.style.backgroundColor = 'white';
+        row.style.borderBottom = '1px solid #e5e7eb';
+        
+        const flightData = [
+          flight.companyName,
+          flight.from,
+          flight.to,
+          flight.flightNumber,
+          formatDisplayDate(flight.departureDate),
+          formatDisplayDate(flight.arrivalDate),
+          flight.luggage || ''
+        ];
+        
+        flightData.forEach(cellData => {
+          const td = document.createElement('td');
+          td.textContent = cellData;
+          td.style.padding = '12px 16px';
+          td.style.border = '1px solid #f8fafc';
+          td.style.fontSize = '12px';
+          td.style.fontWeight = 'bold';
+          row.appendChild(td);
+        });
+        
+        flightsTbody.appendChild(row);
+      });
+      
+      flightsTable.appendChild(flightsTbody);
+      flightsTableWrapper.appendChild(flightsTable);
+      
+      flightsSection.appendChild(flightsSectionTitle);
+      flightsSection.appendChild(flightsTableWrapper);
+      container.appendChild(flightsSection);
     }
     
     // Total Amount Section
@@ -541,15 +731,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const totalLabelCell = document.createElement('td');
       totalLabelCell.textContent = 'Total Amount';
-      totalLabelCell.style.padding = '8px 15px';
-      totalLabelCell.style.border = '1px solid #bfdbfe';
+      totalLabelCell.style.padding = '12px 16px';
+      totalLabelCell.style.border = '1px solid #f8fafc';
       totalLabelCell.style.fontWeight = '900'; // Extra bold
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
       totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
-      totalValueCell.style.padding = '8px 15px';
-      totalValueCell.style.border = '1px solid #bfdbfe';
+      totalValueCell.style.padding = '12px 16px';
+      totalValueCell.style.border = '1px solid #f8fafc';
       totalValueCell.style.fontWeight = '900'; // Extra bold
       totalValueCell.style.textAlign = 'right';
       
@@ -563,14 +753,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const advancedLabelCell = document.createElement('td');
       advancedLabelCell.textContent = 'Advanced Payment';
-      advancedLabelCell.style.padding = '8px 15px';
-      advancedLabelCell.style.border = '1px solid #bfdbfe';
+      advancedLabelCell.style.padding = '12px 16px';
+      advancedLabelCell.style.border = '1px solid #f8fafc';
       advancedLabelCell.style.fontWeight = '900'; // Extra bold to match other rows
       
       const advancedValueCell = document.createElement('td');
       advancedValueCell.textContent = `${currencySymbol}${voucherData.advancedAmount}`;
-      advancedValueCell.style.padding = '8px 15px';
-      advancedValueCell.style.border = '1px solid #bfdbfe';
+      advancedValueCell.style.padding = '12px 16px';
+      advancedValueCell.style.border = '1px solid #f8fafc';
       advancedValueCell.style.textAlign = 'right';
       advancedValueCell.style.fontWeight = '900'; // Extra bold to match other rows
       
@@ -584,14 +774,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const remainingLabelCell = document.createElement('td');
       remainingLabelCell.textContent = 'Balance Due';
-      remainingLabelCell.style.padding = '8px 15px';
-      remainingLabelCell.style.border = '1px solid #bfdbfe';
+      remainingLabelCell.style.padding = '12px 16px';
+      remainingLabelCell.style.border = '1px solid #f8fafc';
       remainingLabelCell.style.fontWeight = '900'; // Extra bold
       
       const remainingValueCell = document.createElement('td');
       remainingValueCell.textContent = `${currencySymbol}${voucherData.remainingAmount}`;
-      remainingValueCell.style.padding = '8px 15px';
-      remainingValueCell.style.border = '1px solid #bfdbfe';
+      remainingValueCell.style.padding = '12px 16px';
+      remainingValueCell.style.border = '1px solid #f8fafc';
       remainingValueCell.style.fontWeight = '900'; // Extra bold
       remainingValueCell.style.textAlign = 'right';
       
@@ -605,15 +795,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const totalLabelCell = document.createElement('td');
       totalLabelCell.textContent = 'Total Amount';
-      totalLabelCell.style.padding = '8px 15px';
-      totalLabelCell.style.border = '1px solid #bfdbfe';
+      totalLabelCell.style.padding = '12px 16px';
+      totalLabelCell.style.border = '1px solid #f8fafc';
       totalLabelCell.style.fontWeight = '900'; // Extra bold
       totalLabelCell.style.width = '70%';
       
       const totalValueCell = document.createElement('td');
       totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
-      totalValueCell.style.padding = '8px 15px';
-      totalValueCell.style.border = '1px solid #bfdbfe';
+      totalValueCell.style.padding = '12px 16px';
+      totalValueCell.style.border = '1px solid #f8fafc';
       totalValueCell.style.fontWeight = '900'; // Extra bold
       totalValueCell.style.textAlign = 'right';
       
@@ -628,6 +818,25 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     totalSection.appendChild(totalSectionTitle);
     totalSection.appendChild(totalTableWrapper);
     container.appendChild(totalSection);
+    
+    // Note Section
+    if (voucherData.note) {
+      const noteSection = document.createElement('div');
+      noteSection.style.marginBottom = '15px';
+      noteSection.style.fontSize = '12px';
+      noteSection.style.color = '#374151';
+      
+      const noteLabel = document.createElement('span');
+      noteLabel.textContent = 'Note: ';
+      noteLabel.style.fontWeight = 'bold';
+      
+      const noteText = document.createElement('span');
+      noteText.textContent = voucherData.note;
+      
+      noteSection.appendChild(noteLabel);
+      noteSection.appendChild(noteText);
+      container.appendChild(noteSection);
+    }
     
     // Contact Info
     const contactSection = document.createElement('div');
@@ -926,7 +1135,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           <Button 
             size="xs" 
             color={showHotels ? "success" : "dark"}
-            onClick={() => setShowHotels(!showHotels)}
+            onClick={() => setShowHotelsWithStorage(!showHotels)}
             className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
           >
             {showHotels ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Hotels
@@ -934,7 +1143,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           <Button 
             size="xs" 
             color={showTransfers ? "success" : "dark"}
-            onClick={() => setShowTransfers(!showTransfers)}
+            onClick={() => setShowTransfersWithStorage(!showTransfers)}
             className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
           >
             {showTransfers ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Transfers
@@ -943,10 +1152,20 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <Button 
               size="xs" 
               color={showTrips ? "success" : "dark"}
-              onClick={() => setShowTrips(!showTrips)}
+              onClick={() => setShowTripsWithStorage(!showTrips)}
               className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
             >
               {showTrips ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Trips
+            </Button>
+          </div>
+          <div className="col-span-1 sm:col-span-auto">
+            <Button 
+              size="xs" 
+              color={showFlights ? "success" : "dark"}
+              onClick={() => setShowFlightsWithStorage(!showFlights)}
+              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
+            >
+              {showFlights ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Flights
             </Button>
           </div>
           <div className="col-span-1 sm:col-span-auto">
@@ -1035,6 +1254,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
+                  <th className="px-2 py-2 border w-16"></th>
                   <th className="px-2 md:px-4 py-2 border">CITY</th>
                   <th className="px-2 md:px-4 py-2 border">Hotel</th>
                   <th className="px-2 md:px-4 py-2 border">Room Type</th>
@@ -1046,8 +1266,26 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                 </tr>
               </thead>
               <tbody>
-                {voucherData.hotels.map((hotel, index) => (
+                {reorderedHotels.map((hotel, index) => (
                   <tr key={`hotel-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-1 py-2 border text-center">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(index, 'hotels')}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronUp size={10} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(index, 'hotels')}
+                          disabled={index === reorderedHotels.length - 1}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronDown size={10} />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.city}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.hotelName}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.roomType}</td>
@@ -1066,7 +1304,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         {!showHotels && voucherData.hotels && voucherData.hotels.length > 0 && (
           <div 
             className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
-            onClick={() => setShowHotels(true)}
+                            onClick={() => setShowHotelsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Hotels section hidden</span>
             <Button size="xs" color="light" className="flex items-center py-1 px-3">
@@ -1082,6 +1320,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
+                  <th className="px-2 py-2 border w-16"></th>
                   <th className="px-2 md:px-4 py-2 border">City</th>
                   <th className="px-2 md:px-4 py-2 border">Date</th>
                   <th className="px-2 md:px-4 py-2 border">Time</th>
@@ -1093,8 +1332,26 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                 </tr>
               </thead>
               <tbody>
-                {voucherData.transfers.map((transfer, index) => (
+                {reorderedTransfers.map((transfer, index) => (
                   <tr key={`transfer-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-1 py-2 border text-center">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(index, 'transfers')}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronUp size={10} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(index, 'transfers')}
+                          disabled={index === reorderedTransfers.length - 1}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronDown size={10} />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.city || ''}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(transfer.date)}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.time || ''}</td>
@@ -1113,7 +1370,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         {!showTransfers && voucherData.transfers && voucherData.transfers.length > 0 && (
           <div 
             className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
-            onClick={() => setShowTransfers(true)}
+                            onClick={() => setShowTransfersWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Transfers section hidden</span>
             <Button size="xs" color="light" className="flex items-center py-1 px-3">
@@ -1129,6 +1386,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
               <thead className="text-xs text-gray-700 uppercase bg-blue-100">
                 <tr>
+                  <th className="px-2 py-2 border w-16"></th>
                   <th className="px-2 md:px-4 py-2 border">City</th>
                   <th className="px-2 md:px-4 py-2 border">Tours</th>
                   <th className="px-2 md:px-4 py-2 border">Type</th>
@@ -1136,8 +1394,26 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                 </tr>
               </thead>
               <tbody>
-                {voucherData.trips.map((trip, index) => (
+                {reorderedTrips.map((trip, index) => (
                   <tr key={`trip-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-1 py-2 border text-center">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(index, 'trips')}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronUp size={10} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(index, 'trips')}
+                          disabled={index === reorderedTrips.length - 1}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronDown size={10} />
+                        </button>
+                      </div>
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.city}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.tourName}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.type}</td>
@@ -1152,9 +1428,73 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         {!showTrips && voucherData.trips && voucherData.trips.length > 0 && (
           <div 
             className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
-            onClick={() => setShowTrips(true)}
+                            onClick={() => setShowTripsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Trips section hidden</span>
+            <Button size="xs" color="light" className="flex items-center py-1 px-3">
+              <FaEye className="mr-1 mt-0.5" /> Show
+            </Button>
+          </div>
+        )}
+        
+        {/* Flights */}
+        <div className="mb-6" style={{ display: showFlights ? 'block' : 'none' }}>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">Flights</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
+              <thead className="text-xs text-gray-700 uppercase bg-blue-100">
+                <tr>
+                  <th className="px-2 py-2 border w-16"></th>
+                  <th className="px-2 md:px-4 py-2 border">Company</th>
+                  <th className="px-2 md:px-4 py-2 border">From</th>
+                  <th className="px-2 md:px-4 py-2 border">To</th>
+                  <th className="px-2 md:px-4 py-2 border">Flight №</th>
+                  <th className="px-2 md:px-4 py-2 border">Departure</th>
+                  <th className="px-2 md:px-4 py-2 border">Arrival</th>
+                  <th className="px-2 md:px-4 py-2 border">Luggage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reorderedFlights.map((flight, index) => (
+                  <tr key={`flight-row-${index}`} className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-1 py-2 border text-center">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(index, 'flights')}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronUp size={10} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(index, 'flights')}
+                          disabled={index === reorderedFlights.length - 1}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronDown size={10} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{flight.companyName}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{flight.from}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{flight.to}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{flight.flightNumber}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(flight.departureDate)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(flight.arrivalDate)}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{flight.luggage}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {!showFlights && voucherData.flights && voucherData.flights.length > 0 && (
+          <div 
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+                            onClick={() => setShowFlightsWithStorage(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">Flights section hidden</span>
             <Button size="xs" color="light" className="flex items-center py-1 px-3">
               <FaEye className="mr-1 mt-0.5" /> Show
             </Button>
@@ -1192,6 +1532,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             </table>
           </div>
         </div>
+        
+        {/* Note */}
+        {voucherData.note && (
+          <div className="mb-6">
+            <div className="text-sm text-gray-700 ">
+              <strong>Note:</strong> {voucherData.note}
+            </div>
+          </div>
+        )}
         
         {/* Contact Info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

@@ -73,6 +73,19 @@ const voucherSchema = new mongoose.Schema({
         vehicleType: String
     }],
     trips: Schema.Types.Mixed,
+    flights: [{
+        companyName: String,
+        from: String,
+        to: String,
+        flightNumber: String,
+        departureDate: Date,
+        arrivalDate: Date,
+        luggage: String
+    }],
+    note: {
+        type: String,
+        default: ''
+    },
     totalAmount: {
         type: Number,
         required: true
