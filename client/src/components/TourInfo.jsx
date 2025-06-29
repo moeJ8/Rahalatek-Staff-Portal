@@ -15,7 +15,7 @@ const TourInfo = ({ tourData }) => {
   const isRTL = containsRTL(tourData.name);
 
   return (
-    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg h-full min-h-[24rem] flex flex-col mb-2">
+    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg h-full min-h-[24rem] flex flex-col mb-2">
       <h5 
         className="text-xl font-bold text-gray-900 dark:text-white mb-4 break-words"
         dir={isRTL ? "rtl" : "ltr"}

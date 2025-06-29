@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TextInput, Label, Button, Card, Alert } from 'flowbite-react';
+import { TextInput, Label, Card, Alert } from 'flowbite-react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import CustomButton from '../components/CustomButton';
 
 export default function SignInPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -210,13 +211,13 @@ export default function SignInPage() {
               />
             </div>
             
-            <Button
+            <CustomButton
               type="submit"
-              gradientDuoTone="purpleToPink"
+              variant="blueToTeal"
               className="w-full"
             >
               Next
-            </Button>
+            </CustomButton>
             
             <div className="mt-4 text-center">
               <button
@@ -237,7 +238,7 @@ export default function SignInPage() {
               <div className="mb-2 block">
                 <Label htmlFor="securityQuestion" value="Security Question" className="dark:text-white" />
               </div>
-              <div className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-lg mb-4 shadow-md">
+              <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg mb-4 shadow-md">
                 {securityQuestion}
               </div>
               
@@ -254,13 +255,13 @@ export default function SignInPage() {
               />
             </div>
             
-            <Button
+            <CustomButton
               type="submit"
-              gradientDuoTone="purpleToPink"
+              variant="blueToTeal"
               className="w-full"
             >
               Verify
-            </Button>
+            </CustomButton>
             
             <div className="mt-4 flex justify-between">
               <button
@@ -327,13 +328,13 @@ export default function SignInPage() {
               />
             </div>
             
-            <Button
+            <CustomButton
               type="submit"
-              gradientDuoTone="purpleToPink"
+              variant="blueToTeal"
               className="w-full"
             >
               Reset Password
-            </Button>
+            </CustomButton>
             
             <div className="mt-4 flex justify-between">
               <button
@@ -361,10 +362,10 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-950 py-8 px-4 flex flex-col">
       {/* Mobile header - visible only on small screens */}
       <div className="md:hidden text-center mb-6">
-        <h1 className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
           Rahalatek Staff Portal
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
@@ -485,13 +486,13 @@ export default function SignInPage() {
                 </>
               )}
               
-              <Button
+              <CustomButton
                 type="submit"
-                gradientDuoTone="purpleToPink"
+                variant="blueToTeal"
                 className="w-full"
               >
                 {isLogin ? 'Sign In' : 'Register'}
-              </Button>
+              </CustomButton>
               
               <div className="mt-4 text-center flex justify-between">
                 <button
@@ -519,7 +520,7 @@ export default function SignInPage() {
         {/* Company Info - Hidden on mobile, visible on md+ screens */}
         <div className="hidden md:block w-full max-w-md">
           <div className="text-left">
-            <h1 className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-4">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-4">
               Rahalatek Staff Portal
             </h1>
             

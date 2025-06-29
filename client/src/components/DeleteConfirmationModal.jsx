@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Button } from 'flowbite-react';
+import CustomButton from './CustomButton';
 import { FaTrash } from 'react-icons/fa';
 
 /**
@@ -56,22 +57,24 @@ export default function DeleteConfirmationModal({
             </div>
           </h3>
           <div className="flex justify-center gap-4">
-            <Button
-              color="failure"
+            <CustomButton
+              variant="red"
               onClick={onConfirm}
-              isProcessing={isLoading}
+              loading={isLoading}
+              disabled={isLoading}
+              icon={FaTrash}
             >
               {itemType.includes('move to trash') ? 'Yes, move to trash' : 
                itemType.includes('permanently') ? 'Yes, delete forever' : 
                `Yes, delete ${itemType}`}
-            </Button>
-            <Button
-              color="gray"
+            </CustomButton>
+            <CustomButton
+              variant="gray"
               onClick={onClose}
               disabled={isLoading}
             >
               Cancel
-            </Button>
+            </CustomButton>
           </div>
         </div>
       </Modal.Body>

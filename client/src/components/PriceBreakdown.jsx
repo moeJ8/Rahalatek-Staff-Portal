@@ -100,7 +100,7 @@ const PriceBreakdown = ({
   
   return (
     <div 
-      className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md"
+      className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-lg shadow-md"
       ref={breakdownRef}
     >
       <div className="flex justify-between items-center mb-4">

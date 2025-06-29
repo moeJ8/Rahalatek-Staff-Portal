@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, Spinner, Alert, TextInput, Select, Modal } from 'flowbite-react';
+import { Card, Button, Badge, Alert, TextInput, Select, Modal } from 'flowbite-react';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
 import TourInfo from '../components/TourInfo';
+import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
 
 export default function ToursPage() {
@@ -156,10 +158,11 @@ export default function ToursPage() {
     }
   };
 
-  const isAdmin = user && user.isAdmin;
+      const isAdmin = user && user.isAdmin;
+    const isAccountant = user && user.isAccountant;
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen pb-8 sm:pb-12 md:pb-20">
+            <div className="bg-gray-50 dark:bg-slate-950 min-h-screen pb-8 sm:pb-12 md:pb-20">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-gray-900 dark:text-white">Available Tours</h1>
         
@@ -212,17 +215,15 @@ export default function ToursPage() {
             </div>
             
             <div className="w-full sm:col-span-2 lg:col-span-1">
-              <Button 
-                color="light" 
+              <CustomButton 
+                variant="gray" 
                 onClick={resetFilters}
                 disabled={!searchTerm && !cityFilter && !durationFilter}
                 className="w-full"
+                icon={FaFilter}
               >
-                <div className="flex items-center justify-center w-full">
-                  <FaFilter className="mr-1.5" />
-                  <span>Reset Filters</span>
-                </div>
-              </Button>
+                Reset Filters
+              </CustomButton>
             </div>
           </div>
           
@@ -237,46 +238,40 @@ export default function ToursPage() {
         </div>
         
         {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <div className="relative w-16 h-16">
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-              <span className="sr-only">Loading...</span>
-            </div>
+          <div className="py-8">
+            <RahalatekLoader size="lg" />
           </div>
         ) : filteredTours.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 px-2 sm:px-4">
             {filteredTours.map((tour) => (
-              <Card key={tour._id} className="overflow-hidden h-full min-h-[26rem] p-0">
+              <Card key={tour._id} className="overflow-hidden h-full min-h-[26rem] p-0 dark:bg-slate-900">
                 <div className="flex flex-col h-full">
                   <div className="flex-grow">
                     <TourInfo tourData={tour} />
                   </div>
                   
-                  {isAdmin && (
+                  {(isAdmin || isAccountant) && (
                     <div className="mt-3 border-t border-gray-200 dark:border-gray-600 flex gap-2 p-3">
-                      <Button 
+                      <CustomButton 
                         as={Link} 
-                        to={`/admin/edit-tour/${tour._id}`}
-                        gradientDuoTone="purpleToPink"
+                        to={`/dashboard/edit-tour/${tour._id}`}
+                        variant="purple"
                         size="sm"
                         className="flex-1"
+                        icon={FaPen}
                       >
-                        <div className="flex items-center justify-center w-full">
-                          <FaPen className="mr-1.5" />
-                          <span>Edit</span>
-                        </div>
-                      </Button>
-                      <Button 
-                        color="failure"
-                        size="sm"
-                        onClick={() => openDeleteModal(tour)}
-                      >
-                        <div className="flex items-center justify-center w-full">
-                          <FaTrash className="mr-1.5" />
-                          <span>Delete</span>
-                        </div>
-                      </Button>
+                        Edit
+                      </CustomButton>
+                      {isAdmin && (
+                        <CustomButton 
+                          variant="red"
+                          size="sm"
+                          onClick={() => openDeleteModal(tour)}
+                          icon={FaTrash}
+                        >
+                          Delete
+                        </CustomButton>
+                      )}
                     </div>
                   )}
                 </div>
@@ -321,20 +316,20 @@ export default function ToursPage() {
               </div>
             </h3>
             <div className="flex justify-center gap-4">
-              <Button
-                color="failure"
+              <CustomButton
+                variant="red"
                 onClick={handleDeleteTour}
-                isProcessing={deleteLoading}
+                loading={deleteLoading}
               >
                 Yes, delete tour
-              </Button>
-              <Button
-                color="gray"
+              </CustomButton>
+              <CustomButton
+                variant="gray"
                 onClick={closeDeleteModal}
                 disabled={deleteLoading}
               >
                 No, cancel
-              </Button>
+              </CustomButton>
             </div>
           </div>
         </Modal.Body>

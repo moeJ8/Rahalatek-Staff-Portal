@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Label, TextInput, Textarea, Select, Spinner } from 'flowbite-react';
+import { Card, Button, Label, TextInput, Textarea, Select } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiPlus, HiX } from 'react-icons/hi';
+import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
 
 
@@ -125,19 +127,15 @@ export default function EditTourPage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-56">
-                <div className="relative w-16 h-16">
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-                    <span className="sr-only">Loading...</span>
-                </div>
+            <div className="py-8">
+                <RahalatekLoader size="lg" />
             </div>
         );
     }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card>
+      <Card className="dark:bg-slate-900">
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Tour</h2>
                     
                     <form onSubmit={handleTourSubmit} className="space-y-4">
@@ -285,16 +283,15 @@ export default function EditTourPage() {
                                     onChange={(e) => setHighlightInput(e.target.value)}
                                     className="flex-1"
                                 />
-                                <Button 
+                                <CustomButton 
+                                    type="button"
                                     onClick={handleAddHighlight} 
-                                    gradientDuoTone="purpleToPink"
+                                    variant="purple"
                                     size="sm"
+                                    icon={HiPlus}
                                 >
-                                    <div className="flex items-center">
-                                        <HiPlus className="h-4 w-4" />
-                                        <span className="ml-1">Add</span>
-                                    </div>
-                                </Button>
+                                    Add
+                                </CustomButton>
                             </div>
                             
                             {tourData.highlights && tourData.highlights.length > 0 && (
@@ -304,14 +301,13 @@ export default function EditTourPage() {
                                         {tourData.highlights.map((highlight, index) => (
                                             <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                                                 <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
-                                                <Button 
-                                                    color="failure" 
+                                                <CustomButton 
+                                                    variant="red" 
                                                     size="xs"
-                                                    pill
                                                     onClick={() => handleRemoveHighlight(index)}
-                                                >
-                                                    <HiX className="h-4 w-4" />
-                                                </Button>
+                                                    icon={HiX}
+                                                    title="Remove highlight"
+                                                />
                                             </li>
                                         ))}
                                     </ul>
@@ -319,9 +315,9 @@ export default function EditTourPage() {
                             )}
                         </div>
                         
-                        <Button type="submit" gradientDuoTone="pinkToOrange">
+                        <CustomButton type="submit" variant="pinkToOrange">
                             Update Tour
-                        </Button>
+                        </CustomButton>
                     </form>
                 </Card>
     </div>

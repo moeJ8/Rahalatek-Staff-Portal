@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Button, TextInput, Select, Label, Card, Checkbox, Alert, Datepicker, Spinner, Modal } from 'flowbite-react'
+import { Button, TextInput, Select, Label, Card, Checkbox, Alert, Datepicker, Modal } from 'flowbite-react'
 import BookingMessage from './BookingMessage'
 import TourSelector from './TourSelector'
 import RoomAllocator from './RoomAllocator'
@@ -8,6 +8,8 @@ import PriceBreakdown from './PriceBreakdown'
 import ChildrenSection from './ChildrenSection'
 import HotelDetailModal from './HotelDetailModal'
 import SearchableSelect from './SearchableSelect'
+import CustomButton from './CustomButton'
+import RahalatekLoader from './RahalatekLoader'
 import { FaInfoCircle, FaUndoAlt } from 'react-icons/fa'
 import { 
   calculateDuration,
@@ -582,24 +584,20 @@ export default function WorkerForm() {
     <div>
       <div className="relative mb-6">
         <h2 className="text-2xl font-bold text-center dark:text-white">Booking Form</h2>
-        <Button 
-          color="dark" 
+        <CustomButton 
+          variant="gray" 
           size="xs" 
           onClick={resetForm}
           className="absolute right-0 top-0"
+          icon={FaUndoAlt}
         >
-          <FaUndoAlt className="mr-1 text-xs mt-0.5" />
           Reset
-        </Button>
+        </CustomButton>
       </div>
       
       {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="relative w-16 h-16">
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="py-8">
+          <RahalatekLoader size="lg" />
         </div>
       ) : (
         <div className="space-y-4">
@@ -766,7 +764,7 @@ export default function WorkerForm() {
           </div>
           
           {/* Guest Information Card */}
-          <Card className="dark:bg-gray-800 overflow-hidden">
+          <Card className="dark:bg-slate-900 overflow-hidden">
             <h4 className="text-lg font-semibold dark:text-white mb-4">Guest Information</h4>
             
             <div className="flex items-center mb-3">
@@ -848,28 +846,28 @@ export default function WorkerForm() {
           <div className="mt-8 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-center dark:text-white">Hotels</h3>
-              <Button 
+              <CustomButton 
                 onClick={handleAddHotel}
-                gradientDuoTone="pinkToOrange"
+                variant="pinkToOrange"
                 size="sm"
                 disabled={!selectedCities.length || !startDate || !endDate}
               >
                 + Add Hotel
-              </Button>
+              </CustomButton>
             </div>
             
             {hotelEntries.map((entry, hotelIndex) => (
-              <Card key={hotelIndex} className="dark:bg-gray-800 overflow-hidden mb-6">
+              <Card key={hotelIndex} className="dark:bg-slate-900 overflow-hidden mb-6">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-lg font-semibold dark:text-white">Hotel #{hotelIndex + 1}</h4>
                   {hotelEntries.length > 1 && (
-                    <Button 
+                    <CustomButton 
                       onClick={() => handleRemoveHotel(hotelIndex)}
-                      color="failure"
+                      variant="red"
                       size="xs"
                     >
                       Remove
-                    </Button>
+                    </CustomButton>
                   )}
                 </div>
                 
@@ -999,21 +997,19 @@ export default function WorkerForm() {
                     <div className="space-y-6 mt-4">
                       {/* Hotel Details Button */}
                       <div className="flex justify-center">
-                        <Button 
-                          gradientDuoTone="pinkToOrange"
+                        <CustomButton 
+                          variant="pinkToOrange"
                           size="md"
                           onClick={() => openHotelDetailModal(entry.hotelData)}
+                          icon={FaInfoCircle}
                         >
-                          <div className="flex items-center justify-center w-full">
-                            <FaInfoCircle className="mr-1.5" />
-                            <span>Show Hotel Details</span>
-                          </div>
-                        </Button>
+                          Show Hotel Details
+                        </CustomButton>
                       </div>
                       
                       {/* Room Allocation Card */}
                       {entry.hotelData.roomTypes && entry.hotelData.roomTypes.length > 0 && (
-                        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mt-4">
+                        <div className="bg-gray-50 dark:bg-slate-900 p-4 rounded-lg border border-gray-200 dark:border-slate-600 mt-4">
                           <h4 className="text-lg font-semibold mb-4 text-center dark:text-white">Room Allocation</h4>
                           <RoomAllocator
                             selectedHotelData={entry.hotelData}
@@ -1035,7 +1031,7 @@ export default function WorkerForm() {
                       )}
                       
                       {/* Airport & Transportation */}
-                      <div className="space-y-4 mt-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <div className="space-y-4 mt-4 p-4 border border-gray-200 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-900">
                         <h6 className="font-medium text-gray-900 dark:text-white">Airport & Transportation</h6>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1162,15 +1158,15 @@ export default function WorkerForm() {
             />
           )}
           
-          <Button 
+          <CustomButton 
             onClick={handleGenerateMessage}
-            gradientDuoTone="purpleToPink"
+            variant="blueToTeal"
             size="lg"
             className="w-full mt-6"
             disabled={!allRoomAllocationsComplete()}
           >
             Generate Booking Message
-          </Button>
+          </CustomButton>
           
           {error && (
             <Alert color="failure" className="mt-4">

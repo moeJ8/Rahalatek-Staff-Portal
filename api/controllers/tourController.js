@@ -66,6 +66,21 @@ exports.updateTour = async (req, res) => {
 // Delete tour
 exports.deleteTour = async (req, res) => {
   try {
+    // Check if user is authorized to delete tours
+    // Only full admins can delete tours, not accountants
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ 
+        message: 'Access denied. Only administrators can delete tours.' 
+      });
+    }
+
+    // Additional check to ensure accountants cannot delete even if they somehow get admin token
+    if (req.user.isAccountant && !req.user.isAdmin) {
+      return res.status(403).json({ 
+        message: 'Accountants are not authorized to delete tours.' 
+      });
+    }
+
     const tour = await Tour.findByIdAndDelete(req.params.id);
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });

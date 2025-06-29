@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, TextInput, Select, Label, Card, Checkbox, Modal, Textarea } from 'flowbite-react';
 import VoucherPreview from './VoucherPreview';
+import CustomButton from './CustomButton';
+import RahalatekLoader from './RahalatekLoader';
 import { toast } from 'react-hot-toast';
 import SearchableSelect from './SearchableSelect';
 import { HiDuplicate } from 'react-icons/hi';
+
+// Helper function to get profit color classes based on value
+const getProfitColorClass = (profit) => {
+  if (profit < 0) {
+    return 'text-red-600 dark:text-red-400';
+  }
+  return 'text-green-600 dark:text-green-400';
+};
 
 export default function VoucherForm({ onSuccess }) {
   // Form data state
@@ -356,6 +366,96 @@ export default function VoucherForm({ onSuccess }) {
     setUseCustomHotel(updatedCustomHotels);
   };
 
+  const moveHotelUp = (index) => {
+    if (index === 0) return;
+    
+    const updatedHotels = [...formData.hotels];
+    const updatedCustomStates = [...useCustomHotel];
+    
+    // Store the original dates before swapping
+    const currentDates = {
+      checkIn: updatedHotels[index].checkIn,
+      checkOut: updatedHotels[index].checkOut
+    };
+    const previousDates = {
+      checkIn: updatedHotels[index - 1].checkIn,
+      checkOut: updatedHotels[index - 1].checkOut
+    };
+    
+    // Swap all hotel data
+    [updatedHotels[index], updatedHotels[index - 1]] = [updatedHotels[index - 1], updatedHotels[index]];
+    [updatedCustomStates[index], updatedCustomStates[index - 1]] = [updatedCustomStates[index - 1], updatedCustomStates[index]];
+    
+    // Restore original dates to their positions
+    updatedHotels[index].checkIn = currentDates.checkIn;
+    updatedHotels[index].checkOut = currentDates.checkOut;
+    updatedHotels[index - 1].checkIn = previousDates.checkIn;
+    updatedHotels[index - 1].checkOut = previousDates.checkOut;
+    
+    // Recalculate nights for both affected hotels
+    [index, index - 1].forEach(hotelIndex => {
+      if (updatedHotels[hotelIndex].checkIn && updatedHotels[hotelIndex].checkOut) {
+        const checkInDate = new Date(updatedHotels[hotelIndex].checkIn);
+        const checkOutDate = new Date(updatedHotels[hotelIndex].checkOut);
+        const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        updatedHotels[hotelIndex].nights = Math.max(1, diffDays);
+      }
+    });
+    
+    setFormData({
+      ...formData,
+      hotels: updatedHotels
+    });
+    
+    setUseCustomHotel(updatedCustomStates);
+  };
+
+  const moveHotelDown = (index) => {
+    if (index === formData.hotels.length - 1) return;
+    
+    const updatedHotels = [...formData.hotels];
+    const updatedCustomStates = [...useCustomHotel];
+    
+    // Store the original dates before swapping
+    const currentDates = {
+      checkIn: updatedHotels[index].checkIn,
+      checkOut: updatedHotels[index].checkOut
+    };
+    const nextDates = {
+      checkIn: updatedHotels[index + 1].checkIn,
+      checkOut: updatedHotels[index + 1].checkOut
+    };
+    
+    // Swap all hotel data
+    [updatedHotels[index], updatedHotels[index + 1]] = [updatedHotels[index + 1], updatedHotels[index]];
+    [updatedCustomStates[index], updatedCustomStates[index + 1]] = [updatedCustomStates[index + 1], updatedCustomStates[index]];
+    
+    // Restore original dates to their positions
+    updatedHotels[index].checkIn = currentDates.checkIn;
+    updatedHotels[index].checkOut = currentDates.checkOut;
+    updatedHotels[index + 1].checkIn = nextDates.checkIn;
+    updatedHotels[index + 1].checkOut = nextDates.checkOut;
+    
+    // Recalculate nights for both affected hotels
+    [index, index + 1].forEach(hotelIndex => {
+      if (updatedHotels[hotelIndex].checkIn && updatedHotels[hotelIndex].checkOut) {
+        const checkInDate = new Date(updatedHotels[hotelIndex].checkIn);
+        const checkOutDate = new Date(updatedHotels[hotelIndex].checkOut);
+        const diffTime = checkOutDate.getTime() - checkInDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        updatedHotels[hotelIndex].nights = Math.max(1, diffDays);
+      }
+    });
+    
+    setFormData({
+      ...formData,
+      hotels: updatedHotels
+    });
+    
+    setUseCustomHotel(updatedCustomStates);
+  };
+
   const handleHotelChange = (index, field, value) => {
     const updatedHotels = [...formData.hotels];
     updatedHotels[index][field] = value;
@@ -451,6 +551,50 @@ export default function VoucherForm({ onSuccess }) {
     });
   };
 
+  const moveTransferUp = (index) => {
+    if (index === 0) return;
+    
+    const updatedTransfers = [...formData.transfers];
+    
+    // Store the original dates before swapping
+    const currentDate = updatedTransfers[index].date;
+    const previousDate = updatedTransfers[index - 1].date;
+    
+    // Swap all transfer data
+    [updatedTransfers[index], updatedTransfers[index - 1]] = [updatedTransfers[index - 1], updatedTransfers[index]];
+    
+    // Restore original dates to their positions
+    updatedTransfers[index].date = currentDate;
+    updatedTransfers[index - 1].date = previousDate;
+    
+    setFormData({
+      ...formData,
+      transfers: updatedTransfers
+    });
+  };
+
+  const moveTransferDown = (index) => {
+    if (index === formData.transfers.length - 1) return;
+    
+    const updatedTransfers = [...formData.transfers];
+    
+    // Store the original dates before swapping
+    const currentDate = updatedTransfers[index].date;
+    const nextDate = updatedTransfers[index + 1].date;
+    
+    // Swap all transfer data
+    [updatedTransfers[index], updatedTransfers[index + 1]] = [updatedTransfers[index + 1], updatedTransfers[index]];
+    
+    // Restore original dates to their positions
+    updatedTransfers[index].date = currentDate;
+    updatedTransfers[index + 1].date = nextDate;
+    
+    setFormData({
+      ...formData,
+      transfers: updatedTransfers
+    });
+  };
+
   const handleTransferChange = (index, field, value) => {
     const updatedTransfers = [...formData.transfers];
     updatedTransfers[index][field] = value;
@@ -509,6 +653,42 @@ export default function VoucherForm({ onSuccess }) {
     setUseCustomTour(updatedCustomTours);
   };
 
+  const moveTripUp = (index) => {
+    if (index === 0) return;
+    
+    const updatedTrips = [...formData.trips];
+    const updatedCustomStates = [...useCustomTour];
+    
+    // Swap all trip data (no date preservation needed)
+    [updatedTrips[index], updatedTrips[index - 1]] = [updatedTrips[index - 1], updatedTrips[index]];
+    [updatedCustomStates[index], updatedCustomStates[index - 1]] = [updatedCustomStates[index - 1], updatedCustomStates[index]];
+    
+    setFormData({
+      ...formData,
+      trips: updatedTrips
+    });
+    
+    setUseCustomTour(updatedCustomStates);
+  };
+
+  const moveTripDown = (index) => {
+    if (index === formData.trips.length - 1) return;
+    
+    const updatedTrips = [...formData.trips];
+    const updatedCustomStates = [...useCustomTour];
+    
+    // Swap all trip data (no date preservation needed)
+    [updatedTrips[index], updatedTrips[index + 1]] = [updatedTrips[index + 1], updatedTrips[index]];
+    [updatedCustomStates[index], updatedCustomStates[index + 1]] = [updatedCustomStates[index + 1], updatedCustomStates[index]];
+    
+    setFormData({
+      ...formData,
+      trips: updatedTrips
+    });
+    
+    setUseCustomTour(updatedCustomStates);
+  };
+
   const handleTripChange = (index, field, value) => {
     const updatedTrips = [...formData.trips];
     updatedTrips[index][field] = value;
@@ -564,6 +744,66 @@ export default function VoucherForm({ onSuccess }) {
   const handleRemoveFlight = (index) => {
     const updatedFlights = [...formData.flights];
     updatedFlights.splice(index, 1);
+    setFormData({
+      ...formData,
+      flights: updatedFlights
+    });
+  };
+
+  const moveFlightUp = (index) => {
+    if (index === 0) return;
+    
+    const updatedFlights = [...formData.flights];
+    
+    // Store the original dates before swapping
+    const currentDates = {
+      departureDate: updatedFlights[index].departureDate,
+      arrivalDate: updatedFlights[index].arrivalDate
+    };
+    const previousDates = {
+      departureDate: updatedFlights[index - 1].departureDate,
+      arrivalDate: updatedFlights[index - 1].arrivalDate
+    };
+    
+    // Swap all flight data
+    [updatedFlights[index], updatedFlights[index - 1]] = [updatedFlights[index - 1], updatedFlights[index]];
+    
+    // Restore original dates to their positions
+    updatedFlights[index].departureDate = currentDates.departureDate;
+    updatedFlights[index].arrivalDate = currentDates.arrivalDate;
+    updatedFlights[index - 1].departureDate = previousDates.departureDate;
+    updatedFlights[index - 1].arrivalDate = previousDates.arrivalDate;
+    
+    setFormData({
+      ...formData,
+      flights: updatedFlights
+    });
+  };
+
+  const moveFlightDown = (index) => {
+    if (index === formData.flights.length - 1) return;
+    
+    const updatedFlights = [...formData.flights];
+    
+    // Store the original dates before swapping
+    const currentDates = {
+      departureDate: updatedFlights[index].departureDate,
+      arrivalDate: updatedFlights[index].arrivalDate
+    };
+    const nextDates = {
+      departureDate: updatedFlights[index + 1].departureDate,
+      arrivalDate: updatedFlights[index + 1].arrivalDate
+    };
+    
+    // Swap all flight data
+    [updatedFlights[index], updatedFlights[index + 1]] = [updatedFlights[index + 1], updatedFlights[index]];
+    
+    // Restore original dates to their positions
+    updatedFlights[index].departureDate = currentDates.departureDate;
+    updatedFlights[index].arrivalDate = currentDates.arrivalDate;
+    updatedFlights[index + 1].departureDate = nextDates.departureDate;
+    updatedFlights[index + 1].arrivalDate = nextDates.arrivalDate;
+    
     setFormData({
       ...formData,
       flights: updatedFlights
@@ -768,29 +1008,24 @@ export default function VoucherForm({ onSuccess }) {
       {/* <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">Voucher Generator</h2> */}
       
       {loading && !showPreview ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="relative w-16 h-16">
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <RahalatekLoader size="lg" />
         </div>
       ) : (
         <div className="space-y-4">
           
           {!showPreview ? (
-            <Card className="dark:bg-gray-800">
+            <Card className="dark:bg-slate-900">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold dark:text-white">Client Information</h3>
-                <Button
-                  color="light"
+                <CustomButton
+                  variant="gray"
                   onClick={openDuplicateModal}
                   title="Duplicate existing voucher data"
-                  className="flex items-center gap-1"
+                  icon={HiDuplicate}
                 >
-                  <HiDuplicate className="mr-1 mt-1" />
-                  <span>Duplicate Voucher</span>
-                </Button>
+                  Duplicate Voucher
+                </CustomButton>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -952,6 +1187,23 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 <div>
+                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <div className="flex">
+                    <TextInput
+                      id="capital"
+                      name="capital"
+                      value={formData.capital}
+                      onChange={handleInputChange}
+                      placeholder="This will only show in preview"
+                      className="flex-grow"
+                    />
+                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                      {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="totalAmount" value="Total Amount" className="mb-2 block" />
                   <div className="flex">
                     <TextInput
@@ -1004,7 +1256,7 @@ export default function VoucherForm({ onSuccess }) {
                             required={formData.advancedPayment}
                             className="flex-grow"
                           />
-                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                             {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
                           </span>
                         </div>
@@ -1021,7 +1273,7 @@ export default function VoucherForm({ onSuccess }) {
                             disabled
                             className="flex-grow"
                           />
-                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                             {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
                           </span>
                         </div>
@@ -1029,19 +1281,15 @@ export default function VoucherForm({ onSuccess }) {
                     </div>
                   )}
                 </div>
-                
+
+                {/* Profit Display */}
                 <div>
-                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <Label value="Profit" className="mb-2 block" />
                   <div className="flex">
-                    <TextInput
-                      id="capital"
-                      name="capital"
-                      value={formData.capital}
-                      onChange={handleInputChange}
-                      placeholder="This will only show in preview"
-                      className="flex-grow"
-                    />
-                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                    <div className={`flex-grow px-3 py-2 text-sm font-medium rounded-l-lg border bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 ${getProfitColorClass((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0))}`}>
+                      {((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0)).toFixed(2)}
+                    </div>
+                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                       {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
                     </span>
                   </div>
@@ -1064,21 +1312,57 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Hotels</h3>
-                  <Button size="sm" onClick={handleAddHotel} gradientDuoTone="pinkToOrange">+ Add Hotel</Button>
+                  <CustomButton size="sm" onClick={handleAddHotel} variant="pinkToOrange">+ Add Hotel</CustomButton>
                 </div>
                 
                 {formData.hotels.map((hotel, index) => (
-                  <div key={`hotel-${index}`} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <div key={`hotel-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Hotel {index + 1}</h4>
-                      {formData.hotels.length > 1 && (
-                        <button 
-                          onClick={() => handleRemoveHotel(index)} 
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {formData.hotels.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveHotelUp(index)}
+                              disabled={index === 0}
+                              className={`p-1 rounded ${index === 0 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move up"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveHotelDown(index)}
+                              disabled={index === formData.hotels.length - 1}
+                              className={`p-1 rounded ${index === formData.hotels.length - 1 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move down"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleRemoveHotel(index)} 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1237,21 +1521,57 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Transfers</h3>
-                  <Button size="sm" onClick={handleAddTransfer} gradientDuoTone="pinkToOrange">+ Add Transfer</Button>
+                  <CustomButton size="sm" onClick={handleAddTransfer} variant="pinkToOrange">+ Add Transfer</CustomButton>
                 </div>
                 
                 {formData.transfers.map((transfer, index) => (
-                  <div key={`transfer-${index}`} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <div key={`transfer-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Transfer {index + 1}</h4>
-                      {formData.transfers.length > 1 && (
-                        <button 
-                          onClick={() => handleRemoveTransfer(index)} 
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {formData.transfers.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveTransferUp(index)}
+                              disabled={index === 0}
+                              className={`p-1 rounded ${index === 0 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move up"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveTransferDown(index)}
+                              disabled={index === formData.transfers.length - 1}
+                              className={`p-1 rounded ${index === formData.transfers.length - 1 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move down"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleRemoveTransfer(index)} 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1375,21 +1695,57 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Trips</h3>
-                  <Button size="sm" onClick={handleAddTrip} gradientDuoTone="pinkToOrange">+ Add Trip</Button>
+                  <CustomButton size="sm" onClick={handleAddTrip} variant="pinkToOrange">+ Add Trip</CustomButton>
                 </div>
                 
                 {formData.trips.map((trip, index) => (
-                  <div key={`trip-${index}`} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <div key={`trip-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Trip {index + 1}</h4>
-                      {formData.trips.length > 1 && (
-                        <button 
-                          onClick={() => handleRemoveTrip(index)} 
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {formData.trips.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveTripUp(index)}
+                              disabled={index === 0}
+                              className={`p-1 rounded ${index === 0 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move up"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveTripDown(index)}
+                              disabled={index === formData.trips.length - 1}
+                              className={`p-1 rounded ${index === formData.trips.length - 1 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move down"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleRemoveTrip(index)} 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1477,21 +1833,57 @@ export default function VoucherForm({ onSuccess }) {
               <div className="mt-6 mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Flights</h3>
-                  <Button size="sm" onClick={handleAddFlight} gradientDuoTone="pinkToOrange">+ Add Flight</Button>
+                  <CustomButton size="sm" onClick={handleAddFlight} variant="pinkToOrange">+ Add Flight</CustomButton>
                 </div>
                 
                 {formData.flights.map((flight, index) => (
-                  <div key={`flight-${index}`} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                  <div key={`flight-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Flight {index + 1}</h4>
-                      {formData.flights.length > 1 && (
-                        <button 
-                          onClick={() => handleRemoveFlight(index)} 
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {formData.flights.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => moveFlightUp(index)}
+                              disabled={index === 0}
+                              className={`p-1 rounded ${index === 0 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move up"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveFlightDown(index)}
+                              disabled={index === formData.flights.length - 1}
+                              className={`p-1 rounded ${index === formData.flights.length - 1 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900'
+                              }`}
+                              title="Move down"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => handleRemoveFlight(index)} 
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1608,32 +2000,26 @@ export default function VoucherForm({ onSuccess }) {
               </div>
               
               <div className="flex justify-end mt-6">
-                <Button gradientDuoTone="purpleToPink" onClick={handlePreview}>
+                <CustomButton variant="blueToTeal" onClick={handlePreview}>
                   Preview Voucher
-                </Button>
+                </CustomButton>
               </div>
             </Card>
           ) : (
             <div>
               <div className="flex justify-between mb-4">
-                <Button color="gray" onClick={() => setShowPreview(false)}>
+                <CustomButton variant="gray" onClick={() => setShowPreview(false)}>
                   Back to Edit
-                </Button>
+                </CustomButton>
               </div>
               
               <VoucherPreview 
                 voucherData={generatedVoucher || { ...formData, voucherNumber: 10000 }}
                 onSave={handleSubmit}
                 saveButton={
-                  <Button gradientDuoTone="purpleToPink" onClick={handleSubmit} disabled={loading} className="w-full sm:w-auto flex justify-center">
-                    {loading ? (
-                      <div className="relative w-5 h-5 mr-2">
-                        <div className="absolute top-0 left-0 w-full h-full border-2 border-white rounded-full opacity-25"></div>
-                        <div className="absolute top-0 left-0 w-full h-full border-2 border-t-white rounded-full animate-spin"></div>
-                      </div>
-                    ) : null}
+                  <CustomButton variant="blueToTeal" onClick={handleSubmit} disabled={loading} loading={loading} className="w-full sm:w-auto flex justify-center">
                     Save Voucher
-                  </Button>
+                  </CustomButton>
                 }
               />
             </div>
@@ -1679,7 +2065,19 @@ export default function VoucherForm({ onSuccess }) {
                 )}
               </div>
             </Modal.Body>
-                        <Modal.Footer className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">              <Button color="gray" onClick={closeDuplicateModal}>                Cancel              </Button>              <Button                color="light"                onClick={handleDuplicateVoucher}                disabled={!selectedVoucherToDuplicate}                className="flex items-center gap-1"              >                <HiDuplicate className="mr-1 mt-1" />                <span>Duplicate</span>              </Button>            </Modal.Footer>
+                        <Modal.Footer className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
+              <CustomButton variant="gray" onClick={closeDuplicateModal}>
+                Cancel
+              </CustomButton>
+              <CustomButton
+                variant="gray"
+                onClick={handleDuplicateVoucher}
+                disabled={!selectedVoucherToDuplicate}
+                icon={HiDuplicate}
+              >
+                Duplicate
+              </CustomButton>
+            </Modal.Footer>
           </Modal>
         </div>
       )}

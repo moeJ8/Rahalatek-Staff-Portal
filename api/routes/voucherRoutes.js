@@ -12,6 +12,8 @@ router.get('/trash', voucherController.getTrashedVouchers);
 router.get('/number/:number', voucherController.getVoucherByNumber);
 router.get('/:id', voucherController.getVoucherById);
 router.put('/:id', voucherController.updateVoucher);
+router.put('/:id/status', voucherController.updateVoucherStatus);
+router.put('/:id/created-by', voucherController.updateVoucherCreatedBy);
 router.delete('/:id', voucherController.deleteVoucher);
 router.post('/:id/restore', voucherController.restoreVoucher);
 router.delete('/:id/permanent', voucherController.permanentlyDeleteVoucher);

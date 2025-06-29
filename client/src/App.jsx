@@ -11,11 +11,13 @@ import VoucherDetailPage from './pages/VoucherDetailPage'
 import EditVoucherPage from './pages/EditVoucherPage'
 import CreateVoucherPage from './pages/CreateVoucherPage'
 import TrashPage from './pages/TrashPage'
+import NotificationsPage from './pages/NotificationsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import StayOnTop from './components/StayOnTop'
 import ScrollToTop from './components/ScrollToTop'
+import RahalatekLoader from './components/RahalatekLoader'
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 
@@ -52,11 +54,15 @@ function App() {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+              <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
+        <RahalatekLoader size="xl" />
+      </div>
+    );
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
+          <div className="bg-gray-50 dark:bg-slate-950 min-h-screen flex flex-col">
       <Toaster position="bottom-center" />
       <BrowserRouter>
         <StayOnTop />
@@ -70,11 +76,11 @@ function App() {
             } />
             <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
             
-            {/* Protected Routes */}
+            {/* Protected Routes - Admin and Accountant access */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/admin/edit-tour/:id" element={<EditTourPage />} />
-              <Route path="/admin/edit-hotel/:id" element={<EditHotelPage />} />
+              <Route path="/dashboard" element={<AdminPage />} />
+              <Route path="/dashboard/edit-tour/:id" element={<EditTourPage />} />
+              <Route path="/dashboard/edit-hotel/:id" element={<EditHotelPage />} />
             </Route>
             
             <Route element={<ProtectedRoute requireAdmin={false} />}>
@@ -86,6 +92,7 @@ function App() {
               <Route path="/trash" element={<TrashPage />} />
               <Route path="/tours" element={<ToursPage />} />
               <Route path="/hotels" element={<HotelsPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
             </Route>
             
             <Route path="*" element={user ? <Navigate to="/home" /> : <Navigate to="/signin" />} />

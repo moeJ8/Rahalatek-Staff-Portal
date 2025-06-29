@@ -132,6 +132,9 @@ exports.createVoucher = async (req, res) => {
 
 exports.getAllVouchers = async (req, res) => {
     try {
+        // First, update statuses for all vouchers based on arrival dates
+        await Voucher.updateAllStatuses();
+        
         // Get non-deleted vouchers (including existing vouchers without isDeleted field)
         const vouchers = await Voucher.find({ 
             $or: [
@@ -140,7 +143,8 @@ exports.getAllVouchers = async (req, res) => {
             ]
         })
             .sort({ createdAt: -1 })
-            .populate('createdBy', 'username');
+            .populate('createdBy', 'username')
+            .populate('statusUpdatedBy', 'username');
         
         res.status(200).json({
             success: true,
@@ -159,13 +163,20 @@ exports.getAllVouchers = async (req, res) => {
 exports.getVoucherById = async (req, res) => {
     try {
         const voucher = await Voucher.findById(req.params.id)
-            .populate('createdBy', 'username');
+            .populate('createdBy', 'username')
+            .populate('statusUpdatedBy', 'username');
         
         if (!voucher) {
             return res.status(404).json({
                 success: false,
                 message: 'Voucher not found'
             });
+        }
+        
+        // Check and update status if needed
+        const statusUpdated = voucher.updateStatusIfNeeded();
+        if (statusUpdated) {
+            await voucher.save();
         }
         
         res.status(200).json({
@@ -236,11 +247,19 @@ exports.deleteVoucher = async (req, res) => {
             });
         }
         
-        // Check if the user is authorized to delete the voucher
-        if (!req.user.isAdmin && voucher.createdBy.toString() !== req.user.userId) {
+        // Only full admins can delete vouchers (not accountants or regular users)
+        if (!req.user.isAdmin) {
             return res.status(403).json({
                 success: false,
-                message: 'You are not authorized to delete this voucher'
+                message: 'Only administrators are authorized to delete vouchers'
+            });
+        }
+        
+        // Accountants cannot delete vouchers even if they created them
+        if (req.user.isAccountant && !req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accountants are not authorized to delete vouchers'
             });
         }
         
@@ -305,11 +324,19 @@ exports.restoreVoucher = async (req, res) => {
             });
         }
         
-        // Check if the user is authorized to restore the voucher
-        if (!req.user.isAdmin && voucher.createdBy.toString() !== req.user.userId) {
+        // Only full admins can restore vouchers (not accountants or regular users)
+        if (!req.user.isAdmin) {
             return res.status(403).json({
                 success: false,
-                message: 'You are not authorized to restore this voucher'
+                message: 'Only administrators are authorized to restore vouchers'
+            });
+        }
+        
+        // Accountants cannot restore vouchers
+        if (req.user.isAccountant && !req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accountants are not authorized to restore vouchers'
             });
         }
         
@@ -352,11 +379,19 @@ exports.permanentlyDeleteVoucher = async (req, res) => {
             });
         }
         
-        // Check if the user is authorized to permanently delete the voucher
-        if (!req.user.isAdmin && voucher.createdBy.toString() !== req.user.userId) {
+        // Only full admins can permanently delete vouchers (not accountants or regular users)
+        if (!req.user.isAdmin) {
             return res.status(403).json({
                 success: false,
-                message: 'You are not authorized to permanently delete this voucher'
+                message: 'Only administrators are authorized to permanently delete vouchers'
+            });
+        }
+        
+        // Accountants cannot permanently delete vouchers even if they created them
+        if (req.user.isAccountant && !req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Accountants are not authorized to permanently delete vouchers'
             });
         }
         
@@ -472,6 +507,144 @@ exports.updateVoucher = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update voucher',
+            error: error.message
+        });
+    }
+};
+
+exports.updateVoucherStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const voucherId = req.params.id;
+        
+        if (!status || !['await', 'arrived', 'canceled'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status. Must be one of: await, arrived, canceled'
+            });
+        }
+
+        const voucher = await Voucher.findById(voucherId);
+        if (!voucher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voucher not found'
+            });
+        }
+
+        if (voucher.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot update status of deleted voucher'
+            });
+        }
+
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only administrators and accountants can update voucher status'
+            });
+        }
+
+        if (status === 'arrived') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const arrivalDate = new Date(voucher.arrivalDate);
+            arrivalDate.setHours(0, 0, 0, 0);
+            
+            if (arrivalDate > today) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot set status to "arrived" before the arrival date'
+                });
+            }
+        }
+        
+        const updatedVoucher = await Voucher.findByIdAndUpdate(
+            voucherId,
+            {
+                status: status,
+                statusUpdatedBy: req.user.userId,
+                statusUpdatedAt: new Date()
+            },
+            { new: true, runValidators: true }
+        )
+        .populate('createdBy', 'username')
+        .populate('statusUpdatedBy', 'username');
+        
+        res.status(200).json({
+            success: true,
+            message: `Voucher status updated to "${status}"`,
+            data: updatedVoucher
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update voucher status',
+            error: error.message
+        });
+    }
+};
+
+// Update voucher's created by user (Admin only)
+exports.updateVoucherCreatedBy = async (req, res) => {
+    try {
+        const { createdBy } = req.body;
+        const voucherId = req.params.id;
+        
+
+        if (!req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only administrators can update voucher ownership'
+            });
+        }
+        if (!createdBy) {
+            return res.status(400).json({
+                success: false,
+                message: 'Created by user ID is required'
+            });
+        }
+        const voucher = await Voucher.findById(voucherId);
+        if (!voucher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voucher not found'
+            });
+        }
+        if (voucher.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot update deleted voucher'
+            });
+        }
+        const User = require('../models/User');
+        const newCreatedByUser = await User.findById(createdBy).select('username');
+        if (!newCreatedByUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Specified user not found'
+            });
+        }
+        const updatedVoucher = await Voucher.findByIdAndUpdate(
+            voucherId,
+            { createdBy: createdBy },
+            { new: true, runValidators: true }
+        )
+        .populate('createdBy', 'username')
+        .populate('statusUpdatedBy', 'username');
+        
+        res.status(200).json({
+            success: true,
+            message: `Voucher ownership transferred to "${newCreatedByUser.username}"`,
+            data: updatedVoucher
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update voucher ownership',
             error: error.message
         });
     }

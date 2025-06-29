@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from 'flowbite-react';
+import CustomButton from './CustomButton';
 import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash, FaChevronUp, FaChevronDown } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -1073,114 +1074,104 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   return (
     <div className="p-2 md:p-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:flex sm:flex-row sm:justify-center">
-        <Button 
+        <CustomButton 
           className="w-full flex justify-center" 
-          color="light" 
+          variant="gray" 
           onClick={handleDownloadImage}
           disabled={isImageLoading}
+          loading={isImageLoading}
+          icon={isImageLoading ? FaSpinner : FaFileImage}
         >
-          {isImageLoading ? (
-            <FaSpinner className="animate-spin sm:mr-2" />
-          ) : (
-            <FaFileImage className="sm:mr-2 m-0.5" />
-          )}
           <span className="hidden sm:inline">
             {isImageLoading ? 'Generating...' : 'Download as Image'}
           </span>
-        </Button>
+        </CustomButton>
         
-        <Button 
+        <CustomButton 
           className="w-full flex justify-center" 
-          gradientDuoTone="purpleToPink" 
+          variant="purple" 
           onClick={handleDownloadPDF}
           disabled={isPdfLoading}
+          loading={isPdfLoading}
+          icon={isPdfLoading ? FaSpinner : FaFilePdf}
         >
-          {isPdfLoading ? (
-            <FaSpinner className="animate-spin sm:mr-2" />
-          ) : (
-            <FaFilePdf className="sm:mr-2 m-0.5" />
-          )}
           <span className="hidden sm:inline">
             {isPdfLoading ? 'Generating...' : 'Download as PDF'}
           </span>
-        </Button>
+        </CustomButton>
         
         {editUrl && (
-          <Button
-            className="w-full flex justify-center"
-            gradientDuoTone="greenToBlue"
-            as={Link}
-            to={editUrl}
-          >
-            <FaPen className="sm:mr-2 sm:mt-0.5" />
-            <span className="hidden sm:inline">Edit Voucher</span>
-          </Button>
+          <Link to={editUrl} className="w-full">
+            <CustomButton
+              className="w-full flex justify-center"
+              variant="teal"
+              icon={FaPen}
+            >
+              <span className="hidden sm:inline">Edit Voucher</span>
+            </CustomButton>
+          </Link>
         )}
         
         {onDelete && (
-          <Button 
+          <CustomButton 
             className="w-full flex justify-center"
-            color="failure" 
+            variant="red" 
             onClick={onDelete}
+            icon={FaTrash}
           >
-            <FaTrash className="sm:mr-2 sm:mt-0.5" />
             <span className="hidden sm:inline">Delete Voucher</span>
-          </Button>
+          </CustomButton>
         )}
       </div>
       
       {/* Section Visibility Controls */}
       <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mb-4">
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
-          <Button 
+          <CustomButton 
             size="xs" 
-            color={showHotels ? "success" : "dark"}
+            variant={showHotels ? "green" : "gray"}
             onClick={() => setShowHotelsWithStorage(!showHotels)}
-            className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
+            icon={showHotels ? FaEye : FaEyeSlash}
+            className="w-full sm:w-auto"
           >
-            {showHotels ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Hotels
-          </Button>
-          <Button 
+            Hotels
+          </CustomButton>
+          <CustomButton 
             size="xs" 
-            color={showTransfers ? "success" : "dark"}
+            variant={showTransfers ? "green" : "gray"}
             onClick={() => setShowTransfersWithStorage(!showTransfers)}
-            className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
+            icon={showTransfers ? FaEye : FaEyeSlash}
+            className="w-full sm:w-auto"
           >
-            {showTransfers ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Transfers
-          </Button>
-          <div className="col-span-1 sm:col-span-auto">
-            <Button 
-              size="xs" 
-              color={showTrips ? "success" : "dark"}
-              onClick={() => setShowTripsWithStorage(!showTrips)}
-              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
-            >
-              {showTrips ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Trips
-            </Button>
-          </div>
-          <div className="col-span-1 sm:col-span-auto">
-            <Button 
-              size="xs" 
-              color={showFlights ? "success" : "dark"}
-              onClick={() => setShowFlightsWithStorage(!showFlights)}
-              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
-            >
-              {showFlights ? <FaEye className="mr-1 mt-0.5" /> : <FaEyeSlash className="mr-1 mt-0.5" />} Flights
-            </Button>
-          </div>
-          <div className="col-span-1 sm:col-span-auto">
-            <Button 
-              size="xs" 
-              color={allSectionsVisible ? "dark" : "purple"}
-              onClick={toggleAllSections}
-              className="w-full sm:w-auto flex items-center justify-center py-1 px-3 shadow-sm border border-gray-300 dark:border-gray-600"
-            >
-              {allSectionsVisible ? 
-                <><FaEyeSlash className="mr-1 mt-0.5" /> Hide All</> : 
-                <><FaEye className="mr-1 mt-0.5" /> Show All</>
-              }
-            </Button>
-          </div>
+            Transfers
+          </CustomButton>
+          <CustomButton 
+            size="xs" 
+            variant={showTrips ? "green" : "gray"}
+            onClick={() => setShowTripsWithStorage(!showTrips)}
+            icon={showTrips ? FaEye : FaEyeSlash}
+            className="w-full sm:w-auto"
+          >
+            Trips
+          </CustomButton>
+          <CustomButton 
+            size="xs" 
+            variant={showFlights ? "green" : "gray"}
+            onClick={() => setShowFlightsWithStorage(!showFlights)}
+            icon={showFlights ? FaEye : FaEyeSlash}
+            className="w-full sm:w-auto"
+          >
+            Flights
+          </CustomButton>
+          <CustomButton 
+            size="xs" 
+            variant={allSectionsVisible ? "gray" : "purple"}
+            onClick={toggleAllSections}
+            icon={allSectionsVisible ? FaEyeSlash : FaEye}
+            className="w-full sm:w-auto"
+          >
+            {allSectionsVisible ? 'Hide All' : 'Show All'}
+          </CustomButton>
         </div>
       </div>
       
@@ -1307,9 +1298,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                             onClick={() => setShowHotelsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Hotels section hidden</span>
-            <Button size="xs" color="light" className="flex items-center py-1 px-3">
-              <FaEye className="mr-1 mt-0.5" /> Show
-            </Button>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
           </div>
         )}
         
@@ -1373,9 +1364,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                             onClick={() => setShowTransfersWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Transfers section hidden</span>
-            <Button size="xs" color="light" className="flex items-center py-1 px-3">
-              <FaEye className="mr-1 mt-0.5" /> Show
-            </Button>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
           </div>
         )}
         
@@ -1431,9 +1422,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                             onClick={() => setShowTripsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Trips section hidden</span>
-            <Button size="xs" color="light" className="flex items-center py-1 px-3">
-              <FaEye className="mr-1 mt-0.5" /> Show
-            </Button>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
           </div>
         )}
         
@@ -1495,9 +1486,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                             onClick={() => setShowFlightsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Flights section hidden</span>
-            <Button size="xs" color="light" className="flex items-center py-1 px-3">
-              <FaEye className="mr-1 mt-0.5" /> Show
-            </Button>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
           </div>
         )}
         

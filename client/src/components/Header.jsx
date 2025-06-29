@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Button } from 'flowbite-react';
 import { useSelector } from 'react-redux';
 import CustomDarkModeToggle from './CustomDarkModeToggle';
+import CustomButton from './CustomButton';
+import UserDropdown from './UserDropdown';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -55,7 +57,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-md mb-6 transition-colors duration-300 sticky top-0 z-10">
+    <header className="bg-white dark:bg-slate-900 shadow-md mb-6 transition-colors duration-300 sticky top-0 z-10">
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div>
@@ -75,55 +77,43 @@ export default function Header() {
               <>
                 <Link 
                   to="/home" 
-                  className={`font-medium ${isActive('/home') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                  className={`font-medium ${isActive('/home') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400'}`}
                 >
                   Home
                 </Link>
                 <Link 
                   to="/hotels" 
-                  className={`font-medium ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                  className={`font-medium ${isActive('/hotels') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400'}`}
                 >
                   Hotels
                 </Link>
                 <Link 
                   to="/tours" 
-                  className={`font-medium ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                  className={`font-medium ${isActive('/tours') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400'}`}
                 >
                   Tours
                 </Link>
                 <Link 
                   to="/vouchers" 
-                  className={`font-medium ${isActive('/vouchers') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
+                  className={`font-medium ${isActive('/vouchers') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400'}`}
                 >
                   Vouchers
                 </Link>
-                {user.isAdmin && (
-                  <Link 
-                    to="/admin" 
-                    className={`font-medium ${isActive('/admin') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400'}`}
-                  >
-                    Admin Dashboard
-                  </Link>
-                )}
                 <CustomDarkModeToggle />
-                
-                <Button
-                  gradientDuoTone="purpleToPink"
-                  outline
-                  size="sm"
-                  onClick={handleLogout}
-                >
-                  Sign out ({user.username})
-                </Button>
+                <NotificationDropdown />
+                <UserDropdown user={user} onLogout={handleLogout} />
               </>
             ) : (
               <>
                 <CustomDarkModeToggle />
-                <Link to="/signin">
-                  <Button gradientDuoTone="purpleToPink" size="sm" outline>
-                    Sign In
-                  </Button>
-                </Link>
+                <CustomButton 
+                  as={Link} 
+                  to="/signin"
+                  variant="blueToTeal" 
+                  size="sm"
+                >
+                  Sign In
+                </CustomButton>
               </>
             )}
             
@@ -133,9 +123,10 @@ export default function Header() {
           {/* Mobile Burger Menu Button */}
           <div className="md:hidden flex items-center gap-2">
             <CustomDarkModeToggle />
+            {user && <NotificationDropdown />}
             <button 
               onClick={toggleMobileMenu}
-              className="text-gray-600 dark:text-gray-300 hover:text-purple-500 dark:hover:text-purple-400 focus:outline-none"
+              className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400 focus:outline-none"
             >
               <svg 
                 className="h-6 w-6" 
@@ -172,7 +163,7 @@ export default function Header() {
                   <Link 
                     to="/home"
                     onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/home') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                    className={`py-2 px-1 ${isActive('/home') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Home
                   </Link>
@@ -180,7 +171,7 @@ export default function Header() {
                   <Link 
                     to="/hotels"
                     onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/hotels') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                    className={`py-2 px-1 ${isActive('/hotels') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Hotels
                   </Link>
@@ -188,7 +179,7 @@ export default function Header() {
                   <Link 
                     to="/tours"
                     onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/tours') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                    className={`py-2 px-1 ${isActive('/tours') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Tours
                   </Link>
@@ -196,43 +187,43 @@ export default function Header() {
                   <Link 
                     to="/vouchers"
                     onClick={closeMobileMenu}
-                    className={`py-2 px-1 ${isActive('/vouchers') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                    className={`py-2 px-1 ${isActive('/vouchers') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Vouchers
                   </Link>
                   
-                  {user.isAdmin && (
+                  {(user.isAdmin || user.isAccountant) && (
                     <Link 
-                      to="/admin"
+                      to="/dashboard"
                       onClick={closeMobileMenu}
-                      className={`py-2 px-1 ${isActive('/admin') ? 'text-purple-600 dark:text-purple-400' : 'text-gray-600 dark:text-gray-300'}`}
+                      className={`py-2 px-1 ${isActive('/dashboard') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                     >
-                      Admin Dashboard
+                      Dashboard
                     </Link>
                   )}
-                  
-                  <button
-                    onClick={handleLogout}
-                    className="py-2 px-1 text-red-500 dark:text-red-400 text-left"
-                  >
-                    Logout ({user.username})
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link 
-                    to="/signin"
-                    onClick={closeMobileMenu}
-                    className="py-2 px-1 text-blue-500 dark:text-blue-400"
-                  >
-                    Sign In
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </header>
-  );
-} 
+                   
+                   <button
+                     onClick={handleLogout}
+                     className="py-2 px-1 text-red-500 dark:text-red-400 text-left"
+                   >
+                     Logout ({user.username})
+                   </button>
+                 </>
+               ) : (
+                 <>
+                   <Link 
+                     to="/signin"
+                     onClick={closeMobileMenu}
+                     className="py-2 px-1 text-blue-500 dark:text-blue-400"
+                   >
+                     Sign In
+                   </Link>
+                 </>
+               )}
+             </div>
+           </div>
+         )}
+       </div>
+     </header>
+   );
+ } 

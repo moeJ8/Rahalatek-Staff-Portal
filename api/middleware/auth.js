@@ -22,7 +22,8 @@ exports.verifyToken = (req, res, next) => {
         // Add user data to request
         req.user = {
             userId: decoded.userId,
-            isAdmin: decoded.isAdmin
+            isAdmin: decoded.isAdmin,
+            isAccountant: decoded.isAccountant
         };
         
         next();

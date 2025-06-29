@@ -75,8 +75,8 @@ const RoomAllocator = ({
       {/* Room allocations - now in a 2-column grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {roomAllocations.map((room, index) => (
-          <div key={index} className="flex flex-col gap-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-full">
-            <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-2">
+          <div key={index} className="flex flex-col gap-2 p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-600 h-full">
+            <div className="flex justify-between items-center border-b border-gray-200 dark:border-slate-600 pb-2 mb-2">
               <span className="font-medium text-gray-800 dark:text-white">Room {index + 1}</span>
               <Button 
                 color="failure" 
@@ -121,7 +121,7 @@ const RoomAllocator = ({
               </div>
               
               {includeChildren && (
-                <div className="flex flex-col gap-3 mt-1 p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                <div className="flex flex-col gap-3 mt-1 p-3 bg-gray-100 dark:bg-slate-900 rounded-md">
                   <div>
                     <Label htmlFor={`children-under-3-${index}`} value="Children (0-3)" className="dark:text-white mb-1 text-xs" />
                     <Select

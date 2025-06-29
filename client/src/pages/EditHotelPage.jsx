@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Label, TextInput, Textarea, Select, Spinner, Checkbox, Tabs, Accordion } from 'flowbite-react';
+import { Card, Button, Label, TextInput, Textarea, Select, Checkbox, Tabs, Accordion } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiPlus, HiX, HiTrash, HiCalendar } from 'react-icons/hi';
+import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
 
 export default function EditHotelPage() {
@@ -419,19 +421,15 @@ export default function EditHotelPage() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-40">
-                <div className="relative w-16 h-16">
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-                    <span className="sr-only">Loading...</span>
-                </div>
+            <div className="py-8">
+                <RahalatekLoader size="lg" />
             </div>
         );
     }
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <Card>
+            <Card className="dark:bg-slate-900">
                 <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Hotel</h2>
                 
                 <form onSubmit={handleHotelSubmit} className="space-y-4">
@@ -511,7 +509,7 @@ export default function EditHotelPage() {
                         </div>
                         <div className="space-y-2 mb-4">
                             {standardRoomTypes.map((roomType) => (
-                                <div key={roomType} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <div key={roomType} className="mb-6 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div className="flex items-center mb-3">
                                         <Checkbox
                                             id={`roomtype-${roomType}`}
@@ -628,7 +626,7 @@ export default function EditHotelPage() {
                             </div>
                             
                             {selectedRoomTypes["CUSTOM"] && (
-                                <div className="flex flex-col w-full gap-3 mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 mx-auto">
+                                <div className="flex flex-col w-full gap-3 mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-800 mx-auto">
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                                         <Label className="text-sm w-40 m-0">Room Type Name:</Label>
                                         <TextInput
@@ -760,21 +758,21 @@ export default function EditHotelPage() {
                         {/* Multiple airport transportation options */}
                         <div className="mb-4">
                             {hotelData.airportTransportation.length === 0 ? (
-                                <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 mb-4">
+                                <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-slate-800 mb-4">
                                     <p className="text-gray-500 dark:text-gray-400 mb-4">No airport transportation options added</p>
-                                    <Button size="sm" onClick={handleAddAirportTransportation} className="mr-2">
-                                        <HiPlus className="mr-1" /> Add Airport Transportation
-                                    </Button>
+                                    <CustomButton size="sm" onClick={handleAddAirportTransportation} variant="blue" icon={HiPlus}>
+                                        Add Airport Transportation
+                                    </CustomButton>
                                 </div>
                             ) : (
                                 <>
                                     {hotelData.airportTransportation.map((item, index) => (
-                                        <div key={index} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <div key={index} className="mb-6 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                             <div className="flex justify-between items-center mb-3">
                                                 <h4 className="font-medium text-gray-900 dark:text-white">Airport #{index + 1}</h4>
-                                                <Button color="failure" size="xs" onClick={() => handleRemoveAirportTransportation(index)}>
-                                                    <HiTrash className="mr-1" size={16} /> Remove
-                                                </Button>
+                                                <CustomButton variant="red" size="xs" onClick={() => handleRemoveAirportTransportation(index)} icon={HiTrash}>
+                                                    Remove
+                                                </CustomButton>
                                             </div>
                                             
                                             <div className="mb-4">
@@ -796,7 +794,7 @@ export default function EditHotelPage() {
                                             
                                             <div>
                                                 <h5 className="font-medium text-gray-900 dark:text-white mb-2">Transportation Pricing (per vehicle)</h5>
-                                                <div className="grid grid-cols-2 gap-4 p-3 bg-white dark:bg-gray-700 rounded-lg">
+                                                <div className="grid grid-cols-2 gap-4 p-3 bg-white dark:bg-slate-800 rounded-lg">
                                                     <div>
                                                         <Label htmlFor={`vito-reception-${index}`} value="Vito Reception Price ($)" size="sm" className="mb-1" />
                                                         <TextInput
@@ -843,9 +841,9 @@ export default function EditHotelPage() {
                                     ))}
                                     
                                     <div className="text-center mt-3">
-                                        <Button size="sm" onClick={handleAddAirportTransportation}>
-                                            <HiPlus className="mr-1" /> Add Another Airport
-                                        </Button>
+                                        <CustomButton size="sm" onClick={handleAddAirportTransportation} variant="blue" icon={HiPlus}>
+                                            Add Another Airport
+                                        </CustomButton>
                                     </div>
                                 </>
                             )}
@@ -854,7 +852,7 @@ export default function EditHotelPage() {
                         {/* For backwards compatibility - keep the old transportation form */}
                         <div className="hidden">
                             <h3 className="font-medium text-gray-900 dark:text-white mb-2">Airport Transportation Pricing (per vehicle)</h3>
-                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                                 <div>
                                     <div className="mb-2 block">
                                         <Label htmlFor="vitoReceptionPrice" value="Vito Reception Price ($)" />
@@ -928,9 +926,9 @@ export default function EditHotelPage() {
                         </p>
                     </div>
                     
-                    <Button type="submit" gradientDuoTone="pinkToOrange">
+                    <CustomButton type="submit" variant="pinkToOrange">
                         Update Hotel
-                    </Button>
+                    </CustomButton>
                 </form>
             </Card>
         </div>

@@ -4,6 +4,7 @@ import { Card, Button } from 'flowbite-react';
 import axios from 'axios';
 import VoucherPreview from '../components/VoucherPreview';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import RahalatekLoader from '../components/RahalatekLoader';
 import { FaArrowLeft, FaTrash, FaPen, FaUser } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
@@ -16,19 +17,27 @@ export default function VoucherDetailPage() {
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccountant, setIsAccountant] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
-    // Check if the current user is an admin
+    // Check if the current user is an admin or accountant
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setIsAdmin(user.isAdmin || false);
+    setIsAccountant(user.isAccountant || false);
     setCurrentUserId(user.id || null);
   }, []);
 
   // Simple helper function to check if user can manage this voucher
   const canManageVoucher = () => {
-    if (isAdmin) return true;
+    if (isAdmin || isAccountant) return true;
     return voucher && voucher.createdBy && voucher.createdBy._id === currentUserId;
+  };
+
+  // Check if user can delete vouchers (only full admins, not accountants or regular users)
+  const canDeleteVoucher = () => {
+    // Only full admins can delete vouchers
+    return isAdmin && !isAccountant;
   };
 
   useEffect(() => {
@@ -122,7 +131,7 @@ export default function VoucherDetailPage() {
         {loading ? 'Loading Voucher...' : `Voucher #${voucher?.voucherNumber}`}
       </h1>
       
-      {isAdmin && voucher && voucher.createdBy && (
+      {(isAdmin || isAccountant) && voucher && voucher.createdBy && (
         <div className="flex items-center mb-5 text-gray-700 dark:text-gray-300">
           <FaUser className="mr-2 text-indigo-600 dark:text-indigo-400" />
           <span className="text-sm">
@@ -132,12 +141,8 @@ export default function VoucherDetailPage() {
       )}
       
       {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="relative w-16 h-16">
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-            <span className="sr-only">Loading...</span>
-          </div>
+        <div className="py-8">
+          <RahalatekLoader size="lg" />
         </div>
       ) : error ? (
         <Card>
@@ -146,7 +151,7 @@ export default function VoucherDetailPage() {
       ) : voucher ? (
         <VoucherPreview 
           voucherData={voucher} 
-          onDelete={canManageVoucher() ? handleDeleteClick : null}
+          onDelete={canDeleteVoucher() ? handleDeleteClick : null}
           editUrl={canManageVoucher() ? `/edit-voucher/${id}` : null}
         />
       ) : (

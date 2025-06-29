@@ -7,7 +7,9 @@ const tourRoutes = require('./routes/tourRoutes');
 const authRoutes = require('./routes/authRoutes');
 const airportRoutes = require('./routes/airports');
 const voucherRoutes = require('./routes/voucherRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const authController = require('./controllers/authController');
+const NotificationService = require('./services/notificationService');
 const path = require('path');
 
 dotenv.config();
@@ -24,6 +26,62 @@ mongoose.connect(process.env.MONGO_URI)
     try {
       await authController.checkAndFixSchema();
       console.log('Schema check completed');
+      
+      // Initialize notification system
+      console.log('Starting notification system...');
+      try {
+        await NotificationService.generateArrivalReminders();
+        await NotificationService.generateDailyArrivalsSummary();
+      } catch (err) {
+        console.error('Notification system error:', err);
+      }
+      
+      // Schedule arrival reminder generation every hour
+      setInterval(async () => {
+        try {
+          await NotificationService.generateArrivalReminders();
+          await NotificationService.cleanupExpiredNotifications();
+        } catch (err) {
+          console.error('Scheduled task error:', err);
+        }
+      }, 1 * 60 * 60 * 1000);
+      
+      // Schedule daily arrivals summary generation every morning at 8 AM
+      const scheduleDailySummary = () => {
+        const now = new Date();
+        const next8AM = new Date();
+        next8AM.setHours(8, 0, 0, 0);
+        
+        // If it's already past 8 AM today, schedule for tomorrow
+        if (now > next8AM) {
+          next8AM.setDate(next8AM.getDate() + 1);
+        }
+        
+        const timeUntil8AM = next8AM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            await NotificationService.generateDailyArrivalsSummary();
+            
+            // Schedule the next one (24 hours later)
+            setInterval(async () => {
+              try {
+                await NotificationService.generateDailyArrivalsSummary();
+              } catch (err) {
+                console.error('⚠️ Daily summary error:', err);
+              }
+            }, 24 * 60 * 60 * 1000); // Run every 24 hours
+            
+          } catch (err) {
+            console.error('⚠️ Daily summary error:', err);
+          }
+        }, timeUntil8AM);
+        
+
+      };
+      
+      scheduleDailySummary();
+      
     } catch (err) {
       console.error('Schema fix error:', err);
     }
@@ -36,6 +94,7 @@ app.use('/api/tours', tourRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/airports', airportRoutes);
 app.use('/api/vouchers', voucherRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

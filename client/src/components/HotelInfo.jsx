@@ -18,7 +18,7 @@ const HotelInfo = ({ hotelData }) => {
   const currentMonthCapitalized = currentMonth ? currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1) : '';
 
   return (
-    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg h-full">
+    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg h-full">
       <div className="flex flex-col mb-4">
         <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate text-center">
           {hotelData.name}

@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Modal, Alert, TextInput, Select } from 'flowbite-react';
 import SearchableSelect from '../components/SearchableSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
+import StatusControls from '../components/StatusControls';
+import CreatedByControls from '../components/CreatedByControls';
+import FloatingTotalsPanel from '../components/FloatingTotalsPanel';
+import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../components/RahalatekLoader';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
-import { FaTrash, FaEye, FaPen, FaCalendarAlt, FaPlane, FaMoneyBill, FaUser, FaSearch, FaPlus } from 'react-icons/fa';
+import { updateVoucherStatus, getAllVouchers } from '../utils/voucherApi';
+import { FaTrash, FaEye, FaPen, FaCalendarAlt, FaPlane, FaMoneyBill, FaUser, FaSearch, FaPlus, FaTimes } from 'react-icons/fa';
 
 export default function VouchersPage() {
   const navigate = useNavigate();
@@ -20,6 +26,7 @@ export default function VouchersPage() {
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
   const [customArrivalDate, setCustomArrivalDate] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,7 +34,9 @@ export default function VouchersPage() {
   const [voucherToDelete, setVoucherToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccountant, setIsAccountant] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
 
   // Helper function to get currency symbol
   const getCurrencySymbol = (currency) => {
@@ -40,37 +49,130 @@ export default function VouchersPage() {
     }
   };
 
+  // Helper function to get profit color classes based on value
+  const getProfitColorClass = (profit, isBold = false) => {
+    const baseClass = isBold ? 'font-bold text-sm' : 'text-sm font-medium';
+    if (profit < 0) {
+      return `${baseClass} text-red-600 dark:text-red-400`;
+    }
+    return `${baseClass} text-green-600 dark:text-green-400`;
+  };
+
   useEffect(() => {
-    // Check if the current user is an admin
+    // Check if the current user is an admin or accountant
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setIsAdmin(user.isAdmin || false);
+    setIsAccountant(user.isAccountant || false);
     setCurrentUserId(user.id || null);
   }, []);
 
+  // Fetch all users for the created by dropdown (admin only)
+  const fetchAllUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/auth/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const usersWithCurrentUser = [...response.data];
+
+      const currentUserExists = usersWithCurrentUser.some(user => user._id === currentUser.id);
+      if (!currentUserExists && currentUser.id && currentUser.username) {
+        usersWithCurrentUser.unshift({
+          _id: currentUser.id,
+          username: currentUser.username,
+          isAdmin: currentUser.isAdmin,
+          isAccountant: currentUser.isAccountant
+        });
+      }
+
+      usersWithCurrentUser.sort((a, b) => a.username.localeCompare(b.username));
+      
+      setAllUsers(usersWithCurrentUser);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handleCreatedByUpdate = async (voucherId, newCreatedBy) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `/api/vouchers/${voucherId}/created-by`,
+        { createdBy: newCreatedBy },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      setVouchers(prevVouchers =>
+        prevVouchers.map(voucher =>
+          voucher._id === voucherId
+            ? { ...voucher, ...response.data.data }
+            : voucher
+        )
+      );
+      
+      toast.success(`Voucher ownership transferred successfully`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+    } catch (err) {
+      console.error('Error updating voucher created by:', err);
+      toast.error(err.response?.data?.message || 'Failed to update voucher ownership', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+      throw err; // Re-throw to let CreatedByControls handle the error
+    }
+  };
+
   // Simple helper function to check if user can manage a voucher
   const canManageVoucher = (voucher) => {
-    if (isAdmin) return true;
+    if (isAdmin || isAccountant) return true;
     return voucher.createdBy && voucher.createdBy._id === currentUserId;
+  };
+  
+  // Check if user can delete vouchers (only full admins, not accountants or regular users)
+  const canDeleteVoucher = () => {
+    // Only full admins can delete vouchers
+    return isAdmin && !isAccountant;
   };
 
   const fetchVouchers = async () => {
     setLoading(true);
     try {
-      // Get the authentication token from localStorage
-      const token = localStorage.getItem('token');
+      const response = await getAllVouchers();
       
-      // Include the token in the request headers
-      const response = await axios.get('/api/vouchers', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      setVouchers(response.data.data);
-      setFilteredVouchers(response.data.data);
+      setVouchers(response.data);
+      setFilteredVouchers(response.data);
       
       // Extract unique users for filter dropdown
-      const users = response.data.data
+      const users = response.data
         .filter(voucher => voucher.createdBy && voucher.createdBy.username)
         .map(voucher => voucher.createdBy)
         .filter((user, index, arr) => 
@@ -88,9 +190,61 @@ export default function VouchersPage() {
     }
   };
 
+  // Handle status update
+  const handleStatusUpdate = async (voucherId, newStatus) => {
+    try {
+      const response = await updateVoucherStatus(voucherId, newStatus);
+      
+      // Update the voucher in the local state
+      setVouchers(prevVouchers =>
+        prevVouchers.map(voucher =>
+          voucher._id === voucherId
+            ? { ...voucher, ...response.data }
+            : voucher
+        )
+      );
+      
+      toast.success(`Voucher status updated to "${newStatus}"`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+    } catch (err) {
+      console.error('Error updating voucher status:', err);
+      toast.error(err.response?.data?.message || 'Failed to update voucher status', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+      throw err; // Re-throw to let StatusControls handle the error
+    }
+  };
+
   useEffect(() => {
     fetchVouchers();
-  }, []);
+    // Fetch all users if admin (for created by dropdown)
+    if (isAdmin) {
+      fetchAllUsers();
+    }
+  }, [isAdmin]);
 
   // Helper function to check if a date falls within a range
   const isDateInRange = (dateString, range, customDateValue = null) => {
@@ -168,8 +322,15 @@ export default function VouchersPage() {
       );
     }
     
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(voucher => 
+        (voucher.status || 'await') === statusFilter
+      );
+    }
+    
     setFilteredVouchers(filtered);
-  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, vouchers]);
+  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -180,7 +341,6 @@ export default function VouchersPage() {
     return `${day}/${month}/${year}`;
   };
 
-  // Helper function to format filter labels
   const formatFilterLabel = (filter) => {
     if (filter === 'custom') return 'Custom Date';
     if (filter === 'this-year') return 'This Year';
@@ -193,8 +353,7 @@ export default function VouchersPage() {
   const handleDateFilterChange = (e) => {
     const selectedFilter = e.target.value;
     setDateFilter(selectedFilter);
-    
-    // Clear custom date when switching away from custom
+
     if (selectedFilter !== 'custom') {
       setCustomDate('');
     }
@@ -204,7 +363,6 @@ export default function VouchersPage() {
     const selectedFilter = e.target.value;
     setArrivalDateFilter(selectedFilter);
     
-    // Clear custom date when switching away from custom
     if (selectedFilter !== 'custom') {
       setCustomArrivalDate('');
     }
@@ -217,9 +375,9 @@ export default function VouchersPage() {
     setCustomDate('');
     setArrivalDateFilter('');
     setCustomArrivalDate('');
+    setStatusFilter('');
   };
 
-  // Calculate totals for the filtered vouchers by currency
   const calculateTotals = () => {
     if (filteredVouchers.length === 0) return {};
     
@@ -261,8 +419,7 @@ export default function VouchersPage() {
           Authorization: `Bearer ${token}`
         }
       });
-      
-      // Remove the deleted voucher from the list
+  
       setVouchers(prevVouchers => 
         prevVouchers.filter(v => v._id !== voucherToDelete._id)
       );
@@ -309,28 +466,25 @@ export default function VouchersPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Vouchers</h1>
         <div className="flex gap-2 sm:gap-3">
-          <Button 
-            color="gray"
+          <CustomButton 
+            variant="gray"
             onClick={() => navigate('/trash')}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
+            icon={FaTrash}
           >
-            <FaTrash className="w-3 h-3 sm:mr-1 sm:mt-1 sm:text-xs" />
             <span className="hidden sm:inline">View Trash</span>
-          </Button>
-          <Button 
-            gradientDuoTone="purpleToPink" 
+          </CustomButton>
+          <CustomButton 
+            variant="blueToTeal" 
             onClick={() => navigate('/vouchers/new')}
+            icon={FaPlus}
           >
-            <FaPlus className="w-3 h-3 sm:mr-1 sm:mt-1 sm:text-xs" />
             <span className="hidden sm:inline">Create New Voucher</span>
-          </Button>
+          </CustomButton>
         </div>
       </div>
 
-      <Card>
-        {/* Search Bar and Filters */}
+      <Card className="dark:bg-slate-900">
         <div className="mb-4">
-          {/* Search Bar */}
           <div className="mb-4">
             <TextInput
               type="text"
@@ -419,10 +573,21 @@ export default function VouchersPage() {
               )}
             </div>
 
-
+            {/* Status Filter */}
+            <div className="w-full sm:w-48">
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="await">Awaiting</option>
+                <option value="arrived">Arrived</option>
+                <option value="canceled">Canceled</option>
+              </Select>
+            </div>
             
             {/* User Filter - Show for admins or when there are multiple users */}
-            {(isAdmin || uniqueUsers.length > 1) && (
+                                    {(isAdmin || isAccountant || uniqueUsers.length > 1) && (
               <div className="w-full sm:w-64 sm:col-span-2 lg:col-span-1">
                 <SearchableSelect
                   id="userFilter"
@@ -441,22 +606,21 @@ export default function VouchersPage() {
             )}
 
             {/* Clear Filters Button */}
-            {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
+            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
-                <Button
-                  color="gray"
-                  size="sm"
+                <button
                   onClick={handleClearFilters}
-                  className="whitespace-nowrap bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300 transition-all duration-200 hover:scale-105 whitespace-nowrap"
                 >
+                  <FaTimes className="w-3 h-3" />
                   Clear Filters
-                </Button>
+                </button>
               </div>
             )}
           </div>
 
           {/* Active Filters Display */}
-          {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
+          {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {searchQuery && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -478,17 +642,18 @@ export default function VouchersPage() {
                   Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : formatFilterLabel(arrivalDateFilter)}
                 </span>
               )}
+              {statusFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                  Status: {statusFilter === 'await' ? 'Awaiting' : statusFilter === 'arrived' ? 'Arrived' : 'Canceled'}
+                </span>
+              )}
             </div>
           )}
         </div>
         
         {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="relative w-16 h-16">
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-              <span className="sr-only">Loading...</span>
-            </div>
+          <div className="py-8">
+            <RahalatekLoader size="lg" />
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
@@ -502,16 +667,17 @@ export default function VouchersPage() {
             <div className="hidden sm:block overflow-x-auto">
               <CustomScrollbar>
                 <Table striped>
-                  <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+                  <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
+                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
-                    {isAdmin && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
+                                            {(isAdmin || isAccountant) && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
                   </Table.Head>
                   <Table.Body>
@@ -528,6 +694,14 @@ export default function VouchersPage() {
                             {voucher.nationality}
                           </div>
                         </Table.Cell>
+                        <Table.Cell className="px-4 py-3">
+                          <StatusControls
+                            currentStatus={voucher.status || 'await'}
+                            onStatusUpdate={(newStatus) => handleStatusUpdate(voucher._id, newStatus)}
+                            canEdit={isAdmin || isAccountant}
+                            arrivalDate={voucher.arrivalDate}
+                          />
+                        </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.departureDate)}</Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
@@ -536,16 +710,22 @@ export default function VouchersPage() {
                         <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
                           {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
                         </Table.Cell>
-                        <Table.Cell className="text-sm font-medium text-green-600 dark:text-green-400 px-4 py-3">
+                        <Table.Cell className={`${getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0)} px-4 py-3`}>
                           {voucher.capital ? 
                             `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
                             '-'
                           }
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.createdAt)}</Table.Cell>
-                        {isAdmin && (
-                          <Table.Cell className="text-sm text-indigo-600 dark:text-indigo-300 px-4 py-3">
-                            {voucher.createdBy ? <span className="font-semibold">{voucher.createdBy.username}</span> : 'N/A'}
+                        {(isAdmin || isAccountant) && (
+                          <Table.Cell className="px-4 py-3">
+                            <CreatedByControls
+                              currentUserId={voucher.createdBy?._id}
+                              currentUsername={voucher.createdBy?.username}
+                              users={allUsers}
+                              onUserUpdate={(newUserId) => handleCreatedByUpdate(voucher._id, newUserId)}
+                              canEdit={isAdmin} // Only full admins can edit, not accountants
+                            />
                           </Table.Cell>
                         )}
                         <Table.Cell className="px-4 py-3">
@@ -565,12 +745,14 @@ export default function VouchersPage() {
                                 >
                                   Edit
                                 </Link>
-                                <button
-                                  className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                  onClick={() => handleDeleteClick(voucher)}
-                                >
-                                  Delete
-                                </button>
+                                {canDeleteVoucher() && (
+                                  <button
+                                    className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                    onClick={() => handleDeleteClick(voucher)}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
                               </>
                             )}
                           </div>
@@ -578,10 +760,10 @@ export default function VouchersPage() {
                       </Table.Row>
                     ))}
                     
-                    {/* Totals Row */}
-                    {filteredVouchers.length > 0 && Object.keys(totals).map((currency, index) => (
+                    {/* Totals Row - Only for Admins and Accountants */}
+                    {(isAdmin || isAccountant) && filteredVouchers.length > 0 && Object.keys(totals).map((currency, index) => (
                       <Table.Row key={currency} className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
-                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="4">
+                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="5">
                           {index === 0 ? 'TOTALS' : ''} {currency}
                         </Table.Cell>
                         <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
@@ -593,11 +775,12 @@ export default function VouchersPage() {
                         <Table.Cell className="font-bold text-sm text-green-600 dark:text-green-400 px-4 py-3">
                           {getCurrencySymbol(currency)}{totals[currency].totalProfit.toFixed(2)}
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3" colSpan={isAdmin ? "3" : "2"}>
+                        <Table.Cell className="px-4 py-3" colSpan={(isAdmin || isAccountant) ? "3" : "2"}>
                           {/* Empty cells for Created, Created By (if admin), Actions */}
                         </Table.Cell>
                       </Table.Row>
                     ))}
+
                   </Table.Body>
                 </Table>
               </CustomScrollbar>
@@ -636,6 +819,24 @@ export default function VouchersPage() {
                           </div>
                         </div>
                         
+                        <div className="flex items-center col-span-2">
+                          <div className="flex items-center">
+                            <svg className="mr-2 text-purple-600 dark:text-purple-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="mr-3">
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Status</div>
+                            </div>
+                          </div>
+                          <StatusControls
+                            currentStatus={voucher.status || 'await'}
+                            onStatusUpdate={(newStatus) => handleStatusUpdate(voucher._id, newStatus)}
+                            canEdit={isAdmin || isAccountant}
+                            arrivalDate={voucher.arrivalDate}
+                            size="xs"
+                          />
+                        </div>
+                        
                         <div className="flex items-center">
                           <FaMoneyBill className="mr-2 text-green-600 dark:text-green-400" />
                           <div>
@@ -672,7 +873,7 @@ export default function VouchersPage() {
                           </svg>
                                                      <div>
                              <div className="text-xs text-gray-600 dark:text-gray-400">Profit</div>
-                             <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                             <div className={getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0)}>
                                {voucher.capital ? 
                                  `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
                                  '-'
@@ -681,14 +882,21 @@ export default function VouchersPage() {
                            </div>
                         </div>
                         
-                        {isAdmin && voucher.createdBy && (
+                        {(isAdmin || isAccountant) && voucher.createdBy && (
                           <div className="flex items-center col-span-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                             <FaUser className="mr-2 text-indigo-600 dark:text-indigo-400" />
-                            <div>
-                              <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
-                              <div className="text-sm text-indigo-700 dark:text-indigo-300">
-                                <span className="font-semibold">{voucher.createdBy.username}</span>
+                            <div className="flex items-center gap-2">
+                              <div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
                               </div>
+                              <CreatedByControls
+                                currentUserId={voucher.createdBy?._id}
+                                currentUsername={voucher.createdBy?.username}
+                                users={allUsers}
+                                onUserUpdate={(newUserId) => handleCreatedByUpdate(voucher._id, newUserId)}
+                                canEdit={isAdmin} // Only full admins can edit, not accountants
+                                size="xs"
+                              />
                             </div>
                           </div>
                         )}
@@ -712,13 +920,15 @@ export default function VouchersPage() {
                               <FaPen className="mr-1" />
                               <span>Edit</span>
                             </Link>
-                            <button
-                              className="flex items-center justify-center text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                              onClick={() => handleDeleteClick(voucher)}
-                            >
-                              <FaTrash className="mr-1" />
-                              <span>Delete</span>
-                            </button>
+                            {canDeleteVoucher() && (
+                              <button
+                                className="flex items-center justify-center text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                onClick={() => handleDeleteClick(voucher)}
+                              >
+                                <FaTrash className="mr-1" />
+                                <span>Delete</span>
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
@@ -728,8 +938,8 @@ export default function VouchersPage() {
               </CustomScrollbar>
             </div>
 
-            {/* Mobile Totals Summary */}
-            {filteredVouchers.length > 0 && (
+            {/* Mobile Totals Summary - Only for Admins and Accountants */}
+            {(isAdmin || isAccountant) && filteredVouchers.length > 0 && (
               <div className="sm:hidden mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Totals Summary</h3>
                 {Object.keys(totals).map((currency) => (
@@ -761,6 +971,7 @@ export default function VouchersPage() {
                 ))}
               </div>
             )}
+
           </>
         )}
       </Card>
@@ -778,6 +989,33 @@ export default function VouchersPage() {
         itemName={`#${voucherToDelete?.voucherNumber || ''}`}
         itemExtra={voucherToDelete?.clientName || ''}
       />
+
+      {/* Floating Totals Panel Component - Only for Admins and Accountants */}
+      {(isAdmin || isAccountant) && (
+        <FloatingTotalsPanel
+          vouchers={vouchers}
+          filteredVouchers={filteredVouchers}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          userFilter={userFilter}
+          setUserFilter={setUserFilter}
+          uniqueUsers={uniqueUsers}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDate={customDate}
+          setCustomDate={setCustomDate}
+          arrivalDateFilter={arrivalDateFilter}
+          setArrivalDateFilter={setArrivalDateFilter}
+          customArrivalDate={customArrivalDate}
+          setCustomArrivalDate={setCustomArrivalDate}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          handleDateFilterChange={handleDateFilterChange}
+          handleArrivalDateFilterChange={handleArrivalDateFilterChange}
+          handleClearFilters={handleClearFilters}
+          formatFilterLabel={formatFilterLabel}
+        />
+      )}
     </div>
   );
 } 

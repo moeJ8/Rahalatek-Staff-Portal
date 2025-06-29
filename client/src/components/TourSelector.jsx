@@ -113,7 +113,7 @@ const TourSelector = ({
         <Label value="Select Tours (Order determines day assignment)" className="dark:text-white" />
       </div>
       
-      <Card className="dark:bg-gray-800">
+      <Card className="dark:bg-slate-900">
         <div className="space-y-3">
           {/* Search Bar */}
           <div className="relative">
@@ -142,7 +142,7 @@ const TourSelector = ({
                   }`}
                 >
                   <span>All Tours</span>
-                  <span className="ml-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs font-medium px-2 py-0.5 rounded">
+                  <span className="ml-2 bg-gray-200 dark:bg-slate-900 text-gray-800 dark:text-gray-300 text-xs font-medium px-2 py-0.5 rounded">
                     {availableTours.length}
                   </span>
                 </button>
@@ -301,7 +301,7 @@ const TourSelector = ({
             </div>
 
             <div 
-              className="flex items-center justify-center w-full h-10 bg-gray-200 dark:bg-gray-600 cursor-ns-resize hover:bg-gray-300 dark:hover:bg-gray-500 rounded-b-lg"
+              className="flex items-center justify-center w-full h-10 bg-gray-200 dark:bg-slate-900 cursor-ns-resize hover:bg-gray-300 dark:hover:bg-slate-800 rounded-b-lg"
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
               style={{ touchAction: 'none' }}

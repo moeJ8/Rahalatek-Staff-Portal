@@ -1,6 +1,5 @@
 const Hotel = require('../models/Hotel');
 
-// Get all hotels
 exports.getAllHotels = async (req, res) => {
     try {
         // Sort by updatedAt in descending order (newest first)
@@ -11,10 +10,8 @@ exports.getAllHotels = async (req, res) => {
     }
 };
 
-// Add new hotel
 exports.addHotel = async (req, res) => {
     try {
-        // Convert string fields to appropriate types
         const hotelData = {
             ...req.body,
             stars: Number(req.body.stars),
@@ -33,7 +30,6 @@ exports.addHotel = async (req, res) => {
     }
 };
 
-// Get hotels by city
 exports.getHotelsByCity = async (req, res) => {
     try {
         const { city } = req.params;
@@ -44,7 +40,6 @@ exports.getHotelsByCity = async (req, res) => {
     }
 };
 
-// Get hotel by ID
 exports.getHotelById = async (req, res) => {
     try {
         const hotel = await Hotel.findById(req.params.id);
@@ -86,6 +81,18 @@ exports.updateHotel = async (req, res) => {
 // Delete hotel
 exports.deleteHotel = async (req, res) => {
     try {
+        // Check if user is authorized to delete hotels
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ 
+                message: 'Access denied. Only administrators can delete hotels.' 
+            });
+        }
+        if (req.user.isAccountant && !req.user.isAdmin) {
+            return res.status(403).json({ 
+                message: 'Accountants are not authorized to delete hotels.' 
+            });
+        }
+
         const hotel = await Hotel.findByIdAndDelete(req.params.id);
         if (!hotel) {
             return res.status(404).json({ message: 'Hotel not found' });

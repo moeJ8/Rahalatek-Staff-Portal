@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const NotificationService = require('../services/notificationService');
 
 // Helper to check and fix database schema
 exports.checkAndFixSchema = async () => {
@@ -28,7 +29,7 @@ exports.checkAndFixSchema = async () => {
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { username, password, isAdmin, securityQuestion, securityAnswer } = req.body;
+        const { username, password, isAdmin, isAccountant, securityQuestion, securityAnswer } = req.body;
         
         // Check if user already exists
         const existingUser = await User.findOne({ username });
@@ -41,6 +42,7 @@ exports.register = async (req, res) => {
             username,
             password,
             isAdmin: isAdmin || false,
+            isAccountant: isAccountant || false,
             isApproved: false, // By default, users are not approved
             securityQuestion,
             securityAnswer
@@ -50,7 +52,7 @@ exports.register = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -61,6 +63,7 @@ exports.register = async (req, res) => {
                 id: user._id,
                 username: user.username,
                 isAdmin: user.isAdmin,
+                isAccountant: user.isAccountant,
                 isApproved: user.isApproved,
                 message: 'Account created successfully. Please wait for admin approval to login.'
             }
@@ -87,7 +90,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
         
-        if (!user.isApproved && !user.isAdmin) {
+        if (!user.isApproved && !user.isAdmin && !user.isAccountant) {
             return res.status(403).json({ 
                 message: 'Your account is pending approval by an administrator.',
                 isPendingApproval: true
@@ -96,7 +99,7 @@ exports.login = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -107,6 +110,7 @@ exports.login = async (req, res) => {
                 id: user._id,
                 username: user.username,
                 isAdmin: user.isAdmin,
+                isAccountant: user.isAccountant,
                 isApproved: user.isApproved
             }
         });
@@ -115,15 +119,15 @@ exports.login = async (req, res) => {
     }
 };
 
-// Get all users - Only admins can access this
+// Get all users - Admins and accountants can access this
 exports.getAllUsers = async (req, res) => {
     try {
-        // Verify that the requester is an admin
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        // Verify that the requester is an admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
         }
         
-        // Get all users except the requesting admin
+        // Get all users except the requesting user
         const users = await User.find({ _id: { $ne: req.user.userId } }).select('-password');
         
         res.status(200).json(users);
@@ -132,30 +136,71 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
-// Update user admin status - Only admins can access this
+// Update user admin status - Only admins can access this (not accountants)
 exports.updateUserRole = async (req, res) => {
     try {
-        // Verify that the requester is an admin
+        // Verify that the requester is an admin (not accountant)
         if (!req.user.isAdmin) {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
         
-        const { userId, isAdmin } = req.body;
+        const { userId, isAdmin, isAccountant } = req.body;
         
         // Make sure you can't modify your own admin status
         if (userId === req.user.userId) {
             return res.status(400).json({ message: 'You cannot modify your own admin status.' });
         }
         
+        // Get the user's current role before updating
+        const oldUser = await User.findById(userId).select('-password');
+        if (!oldUser) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+        
+        // Store old role for comparison
+        const oldRole = {
+            isAdmin: oldUser.isAdmin || false,
+            isAccountant: oldUser.isAccountant || false
+        };
+        
         // Find and update the user
+        const updateData = {};
+        if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
+        if (isAccountant !== undefined) updateData.isAccountant = isAccountant;
+        
         const user = await User.findByIdAndUpdate(
             userId, 
-            { isAdmin }, 
+            updateData, 
             { new: true }
         ).select('-password');
         
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
+        }
+        
+        // Create new role object
+        const newRole = {
+            isAdmin: user.isAdmin || false,
+            isAccountant: user.isAccountant || false
+        };
+        
+        // Check if role actually changed
+        const roleChanged = oldRole.isAdmin !== newRole.isAdmin || 
+                           oldRole.isAccountant !== newRole.isAccountant;
+        
+        // Create notification if role changed
+        if (roleChanged) {
+            try {
+                await NotificationService.createRoleChangeNotification({
+                    targetUserId: userId,
+                    adminUserId: req.user.userId,
+                    newRole,
+                    oldRole
+                });
+            } catch (notificationError) {
+                console.error('Error creating role change notification:', notificationError);
+                // Don't fail the role update if notification fails
+            }
         }
         
         res.status(200).json(user);
@@ -166,6 +211,7 @@ exports.updateUserRole = async (req, res) => {
 
 exports.approveUser = async (req, res) => {
     try {
+        // Only full admins can approve users, not accountants
         if (!req.user.isAdmin) {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
@@ -188,10 +234,10 @@ exports.approveUser = async (req, res) => {
     }
 };
 
-// Delete a user - Only admins can access this
+// Delete a user - Only admins can access this (not accountants)
 exports.deleteUser = async (req, res) => {
     try {
-        // Verify that the requester is an admin
+        // Verify that the requester is an admin (not accountant)
         if (!req.user.isAdmin) {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }

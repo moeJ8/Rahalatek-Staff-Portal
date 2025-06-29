@@ -4,10 +4,8 @@ import { createSlice } from '@reduxjs/toolkit';
 const applyDarkMode = (isDark) => {
   if (isDark) {
     document.documentElement.classList.add('dark');
-    console.log('DEBUG: Applied dark mode class');
   } else {
     document.documentElement.classList.remove('dark');
-    console.log('DEBUG: Removed dark mode class');
   }
 };
 
@@ -15,7 +13,6 @@ const applyDarkMode = (isDark) => {
 const getInitialState = () => {
   try {
     const savedMode = localStorage.getItem('darkMode');
-    console.log('DEBUG: Initial dark mode from localStorage:', savedMode);
     
     if (savedMode !== null) {
       // Apply class immediately on state initialization
@@ -25,7 +22,6 @@ const getInitialState = () => {
     
     // Use system preference as fallback
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    console.log('DEBUG: System prefers dark:', systemPrefersDark);
     
     // Store the system preference
     localStorage.setItem('darkMode', systemPrefersDark.toString());
@@ -48,7 +44,6 @@ const themeSlice = createSlice({
       try {
         // Persist to localStorage
         localStorage.setItem('darkMode', state.darkMode.toString());
-        console.log('DEBUG: Toggled dark mode to:', state.darkMode);
         // Update DOM directly
         applyDarkMode(state.darkMode);
       } catch (error) {
@@ -60,7 +55,6 @@ const themeSlice = createSlice({
       try {
         // Persist to localStorage
         localStorage.setItem('darkMode', state.darkMode.toString());
-        console.log('DEBUG: Set dark mode to:', state.darkMode);
         // Update DOM directly
         applyDarkMode(state.darkMode);
       } catch (error) {

@@ -107,6 +107,20 @@ const voucherSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    status: {
+        type: String,
+        enum: ['await', 'arrived', 'canceled'],
+        default: 'await'
+    },
+    statusUpdatedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    statusUpdatedAt: {
+        type: Date,
+        default: null
+    },
     isDeleted: {
         type: Boolean,
         default: false
@@ -145,6 +159,69 @@ voucherSchema.statics.getNextVoucherNumber = async function() {
         return nextNumber;
     } catch (error) {
         return 10000 + Math.floor(Math.random() * 1000);
+    }
+};
+
+// Method to check and update status based on arrival date
+voucherSchema.methods.updateStatusIfNeeded = function() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const arrivalDate = new Date(this.arrivalDate);
+    arrivalDate.setHours(0, 0, 0, 0);
+    
+    // Set default status if not exists
+    if (!this.status) {
+        this.status = 'await';
+    }
+    
+    // If arrival date has passed and status is still 'await', update to 'arrived'
+    if (arrivalDate <= today && this.status === 'await') {
+        this.status = 'arrived';
+        this.statusUpdatedAt = new Date();
+        return true; // Status was updated
+    }
+    
+    return false; // No status update needed
+};
+
+// Static method to bulk update statuses for all vouchers
+voucherSchema.statics.updateAllStatuses = async function() {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // First, set default status for vouchers that don't have one
+        await this.updateMany(
+            {
+                status: { $exists: false },
+                isDeleted: { $ne: true }
+            },
+            {
+                status: 'await'
+            }
+        );
+        
+        // Then update vouchers that should be 'arrived'
+        const result = await this.updateMany(
+            {
+                arrivalDate: { $lte: today },
+                $or: [
+                    { status: 'await' },
+                    { status: { $exists: false } }
+                ],
+                isDeleted: { $ne: true }
+            },
+            {
+                status: 'arrived',
+                statusUpdatedAt: new Date()
+            }
+        );
+        
+        return result;
+    } catch (error) {
+        console.error('Error updating voucher statuses:', error);
+        throw error;
     }
 };
 

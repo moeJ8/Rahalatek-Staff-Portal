@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Modal, Alert, Badge, Spinner, TextInput, Select } from 'flowbite-react';
+import { Card, Button, Table, Modal, Alert, Badge, TextInput, Select } from 'flowbite-react';
+import RahalatekLoader from '../components/RahalatekLoader';
+import CustomButton from '../components/CustomButton';
 import SearchableSelect from '../components/SearchableSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
 import axios from 'axios';
@@ -7,7 +9,7 @@ import { Link } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
-import { FaTrash, FaTrashRestore, FaEye, FaCalendarAlt, FaSearch, FaUser } from 'react-icons/fa';
+import { FaTrash, FaTrashRestore, FaEye, FaCalendarAlt, FaSearch, FaUser, FaTimes } from 'react-icons/fa';
 
 export default function TrashPage() {
   const [trashedVouchers, setTrashedVouchers] = useState([]);
@@ -25,7 +27,7 @@ export default function TrashPage() {
   const [voucherToDelete, setVoucherToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const [isAccountant, setIsAccountant] = useState(false);
 
   // Helper function to get currency symbol
   const getCurrencySymbol = (currency) => {
@@ -38,17 +40,27 @@ export default function TrashPage() {
     }
   };
 
+  // Helper function to get profit color classes based on value
+  const getProfitColorClass = (profit, isBold = false) => {
+    const baseClass = isBold ? 'font-bold text-sm' : 'text-sm font-medium';
+    if (profit < 0) {
+      return `${baseClass} text-red-600 dark:text-red-400`;
+    }
+    return `${baseClass} text-green-600 dark:text-green-400`;
+  };
+
   useEffect(() => {
-    // Check if the current user is an admin
+    // Check if the current user is an admin or accountant
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setIsAdmin(user.isAdmin || false);
-    setCurrentUserId(user.id || null);
+    setIsAccountant(user.isAccountant || false);
   }, []);
 
   // Simple helper function to check if user can manage a voucher
-  const canManageVoucher = (voucher) => {
-    if (isAdmin) return true;
-    return voucher.createdBy && voucher.createdBy._id === currentUserId;
+  const canManageVoucher = () => {
+    // Only full admins can manage vouchers in trash (restore/delete)
+    // Regular users and accountants cannot restore or permanently delete vouchers
+    return isAdmin && !isAccountant;
   };
 
   const fetchTrashedVouchers = async () => {
@@ -212,8 +224,6 @@ export default function TrashPage() {
     setCustomArrivalDate('');
   };
 
-
-
   const handleRestoreClick = async (voucher) => {
     try {
       const token = localStorage.getItem('token');
@@ -291,16 +301,13 @@ export default function TrashPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Trash</h1>
         <Link to="/vouchers">
-          <Button 
-            color="gray"
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
-          >
+          <CustomButton variant="gray">
             Back to Vouchers
-          </Button>
+          </CustomButton>
         </Link>
       </div>
 
-      <Card>
+      <Card className="dark:bg-slate-900">
         {/* Search Bar and Filters */}
         <div className="mb-4">
           {/* Search Bar */}
@@ -393,7 +400,7 @@ export default function TrashPage() {
             </div>
 
             {/* User Filter - Show for admins or when there are multiple users */}
-            {(isAdmin || uniqueUsers.length > 1) && (
+                          {(isAdmin || isAccountant || uniqueUsers.length > 1) && (
               <div className="w-full sm:w-64 sm:col-span-2 lg:col-span-1">
                 <SearchableSelect
                   id="userFilter"
@@ -414,14 +421,13 @@ export default function TrashPage() {
             {/* Clear Filters Button */}
             {(searchQuery || userFilter || dateFilter || arrivalDateFilter) && (
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
-                <Button
-                  color="gray"
-                  size="sm"
+                <button
                   onClick={handleClearFilters}
-                  className="whitespace-nowrap bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300 transition-all duration-200 hover:scale-105 whitespace-nowrap"
                 >
+                  <FaTimes className="w-3 h-3" />
                   Clear Filters
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -454,12 +460,8 @@ export default function TrashPage() {
         </div>
         
         {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="relative w-16 h-16">
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-200 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-full h-full border-4 border-t-purple-600 rounded-full animate-spin"></div>
-              <span className="sr-only">Loading...</span>
-            </div>
+          <div className="py-8">
+            <RahalatekLoader size="lg" />
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
@@ -483,7 +485,7 @@ export default function TrashPage() {
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Deleted</Table.HeadCell>
-                    {isAdmin && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Deleted By</Table.HeadCell>}
+                                            {(isAdmin || isAccountant) && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Deleted By</Table.HeadCell>}
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
                   </Table.Head>
                   <Table.Body>
@@ -508,7 +510,7 @@ export default function TrashPage() {
                         <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
                           {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
                         </Table.Cell>
-                        <Table.Cell className="text-sm font-medium text-green-600 dark:text-green-400 px-4 py-3">
+                        <Table.Cell className={`${getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0)} px-4 py-3`}>
                           {voucher.capital ? 
                             `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
                             '-'
@@ -518,7 +520,7 @@ export default function TrashPage() {
                           {voucher.createdBy ? voucher.createdBy.username : 'N/A'}
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.deletedAt)}</Table.Cell>
-                        {isAdmin && (
+                        {(isAdmin || isAccountant) && (
                           <Table.Cell className="text-sm text-red-600 dark:text-red-300 px-4 py-3">
                             {voucher.deletedBy ? <span className="font-semibold">{voucher.deletedBy.username}</span> : 'N/A'}
                           </Table.Cell>
@@ -532,7 +534,7 @@ export default function TrashPage() {
                               View
                             </Link>
                             
-                            {canManageVoucher(voucher) && (
+                            {canManageVoucher() && (
                               <>
                                 <button
                                   className="font-medium text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
@@ -563,7 +565,7 @@ export default function TrashPage() {
               <CustomScrollbar className="pr-1">
                 <div className="grid grid-cols-1 gap-4">
                   {filteredVouchers.map(voucher => (
-                    <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700">
+                    <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700 dark:bg-slate-900">
                       <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
                         <div>
                           <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
@@ -627,7 +629,7 @@ export default function TrashPage() {
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        <div className={getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0, true).replace('text-sm', 'text-lg')}>
                           <span className="text-xs text-gray-600 dark:text-gray-400 block">Profit</span>
                           {voucher.capital ? 
                             `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
@@ -637,27 +639,26 @@ export default function TrashPage() {
                         
                         <div className="flex space-x-2">
                           <Link to={`/vouchers/${voucher._id}`}>
-                            <Button size="xs" color="blue">
-                              <FaEye className="w-3 h-3" />
-                            </Button>
+                            <CustomButton size="xs" variant="blue" icon={FaEye}>
+                            </CustomButton>
                           </Link>
                           
-                          {canManageVoucher(voucher) && (
+                          {canManageVoucher() && (
                             <>
-                              <Button 
+                              <CustomButton 
                                 size="xs" 
-                                color="success"
+                                variant="green"
                                 onClick={() => handleRestoreClick(voucher)}
+                                icon={FaTrashRestore}
                               >
-                                <FaTrashRestore className="w-3 h-3" />
-                              </Button>
-                              <Button 
+                              </CustomButton>
+                              <CustomButton 
                                 size="xs" 
-                                color="failure"
+                                variant="red"
                                 onClick={() => handlePermanentDeleteClick(voucher)}
+                                icon={FaTrash}
                               >
-                                <FaTrash className="w-3 h-3" />
-                              </Button>
+                              </CustomButton>
                             </>
                           )}
                         </div>
