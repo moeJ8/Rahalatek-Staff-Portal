@@ -2031,6 +2031,12 @@ export default function VoucherForm({ onSuccess }) {
             onClose={closeDuplicateModal}
             dismissible
             size="md"
+            theme={{
+              content: {
+                base: "relative h-full w-full p-4 h-auto",
+                inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
+              }
+            }}
           >
             <Modal.Header className="border-b border-gray-200 dark:border-gray-700">
               Duplicate Existing Voucher

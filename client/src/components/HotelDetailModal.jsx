@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button } from 'flowbite-react';
 import { FaStar, FaBed, FaUtensils, FaPlane, FaCarSide, FaChild, FaInfo, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
 import { getMonthName } from '../utils/pricingUtils';
+import CustomScrollbar from './CustomScrollbar';
 
 const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
   const [activeTab, setActiveTab] = useState('general');
@@ -287,7 +288,7 @@ const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
         },
         content: {
           base: "relative h-full w-full p-4 md:h-auto",
-          inner: "relative flex flex-col rounded-lg bg-white shadow dark:bg-gray-700 max-h-[90vh]"
+          inner: "relative flex flex-col rounded-lg bg-white shadow dark:bg-slate-900 max-h-[90vh]"
         }
       }}
     >
@@ -339,8 +340,10 @@ const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
         </div>
       </div>
 
-      <Modal.Body className="p-0 overflow-y-auto">
-        {renderTabContent()}
+      <Modal.Body className="p-0">
+        <CustomScrollbar maxHeight="60vh">
+          {renderTabContent()}
+        </CustomScrollbar>
       </Modal.Body>
 
       <Modal.Footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-center">

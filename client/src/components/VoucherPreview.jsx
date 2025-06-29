@@ -1125,7 +1125,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       </div>
       
       {/* Section Visibility Controls */}
-      <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mb-4">
+      <div className="bg-gray-100 dark:bg-slate-900 p-3 rounded-lg mb-4">
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
           <CustomButton 
             size="xs" 

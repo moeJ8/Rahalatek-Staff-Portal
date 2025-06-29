@@ -52,7 +52,7 @@ export default function UserDropdown({ user, onLogout }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 active:bg-white dark:active:bg-gray-800 active:border-gray-300 dark:active:border-gray-600 "
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 active:bg-white dark:active:bg-slate-900 active:border-gray-300 dark:active:border-gray-600 "
       >
         <div className="w-7 h-7 rounded-full overflow-hidden shadow-sm">
           <img 
@@ -74,7 +74,7 @@ export default function UserDropdown({ user, onLogout }) {
 
       {/* Dropdown Menu */}
       {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
+        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
           {/* User Info Header */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export default function UserDropdown({ user, onLogout }) {
             {(user.isAdmin || user.isAccountant) && (
               <button
                 onClick={handleDashboardClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
               >
                 <HiCog className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
                 Dashboard

@@ -42,7 +42,7 @@ export default function DeleteConfirmationModal({
         },
         content: {
           base: "relative h-full w-full p-4 h-auto",
-          inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
+          inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
         }
       }}
     >

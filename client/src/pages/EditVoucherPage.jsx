@@ -2033,20 +2033,18 @@ export default function EditVoucherPage() {
           onClose={closeDuplicateModal}
           dismissible
           size="md"
+          theme={{
+            content: {
+              base: "relative h-full w-full p-4 h-auto",
+              inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
+            }
+          }}
         >
           <Modal.Header className="border-b border-gray-200 dark:border-gray-700">
             Import Data From Another Voucher
           </Modal.Header>
           <Modal.Body>
             <div className="space-y-6">
-              <Alert color="warning">
-                <p className="font-medium">Important</p>
-                <p className="text-sm">
-                  This will replace all current data in the form with data from the selected voucher.
-                  Your changes will not be saved until you click "Save Changes".
-                </p>
-              </Alert>
-              
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Select a voucher to import its data. You can modify the imported data before saving.
               </p>

@@ -2807,6 +2807,12 @@ export default function AdminPanel() {
                                 onClose={closeDuplicateModal}
                                 size="lg"
                                 popup
+                                theme={{
+                                    content: {
+                                        base: "relative h-full w-full p-4 h-auto",
+                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
+                                    }
+                                }}
                             >
                                 <Modal.Header>
                                     <div className="text-center">
@@ -2873,6 +2879,12 @@ export default function AdminPanel() {
                                 onClose={closeTourDuplicateModal}
                                 size="lg"
                                 popup
+                                theme={{
+                                    content: {
+                                        base: "relative h-full w-full p-4 h-auto",
+                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
+                                    }
+                                }}
                             >
                                 <Modal.Header>
                                     <div className="text-center">

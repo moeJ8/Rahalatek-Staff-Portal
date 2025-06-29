@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, Alert, TextInput, Select, Modal } from 'flowbite-react';
+import { Card, Button, Badge, Alert, TextInput, Select } from 'flowbite-react';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
 import TourInfo from '../components/TourInfo';
 import CustomButton from '../components/CustomButton';
 import RahalatekLoader from '../components/RahalatekLoader';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import toast from 'react-hot-toast';
 
 export default function ToursPage() {
@@ -286,54 +287,14 @@ export default function ToursPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <DeleteConfirmationModal
         show={deleteModalOpen}
         onClose={closeDeleteModal}
-        popup
-        size="md"
-        theme={{
-          root: {
-            base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
-            show: {
-              on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
-              off: "hidden"
-            }
-          },
-          content: {
-            base: "relative h-full w-full p-4 h-auto",
-            inner: "relative rounded-lg bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]"
-          }
-        }}
-      >
-        <Modal.Header />
-        <Modal.Body>
-          <div className="text-center">
-            <FaTrash className="mx-auto mb-4 h-12 w-12 text-red-500" />
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to delete the tour
-              <div className="font-bold text-gray-900 dark:text-white mt-1">
-                "{tourToDelete?.name}"?
-              </div>
-            </h3>
-            <div className="flex justify-center gap-4">
-              <CustomButton
-                variant="red"
-                onClick={handleDeleteTour}
-                loading={deleteLoading}
-              >
-                Yes, delete tour
-              </CustomButton>
-              <CustomButton
-                variant="gray"
-                onClick={closeDeleteModal}
-                disabled={deleteLoading}
-              >
-                No, cancel
-              </CustomButton>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
+        onConfirm={handleDeleteTour}
+        isLoading={deleteLoading}
+        itemType="tour"
+        itemName={tourToDelete?.name || 'this tour'}
+      />
     </div>
   );
 }
