@@ -22,6 +22,8 @@ export default function VouchersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState('');
   const [uniqueUsers, setUniqueUsers] = useState([]);
+  const [officeFilter, setOfficeFilter] = useState('');
+  const [uniqueOffices, setUniqueOffices] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
@@ -207,6 +209,15 @@ export default function VouchersPage() {
         .sort((a, b) => a.username.localeCompare(b.username));
       
       setUniqueUsers(users);
+      
+      // Extract unique offices for filter dropdown
+      const offices = vouchersToShow
+        .filter(voucher => voucher.officeName)
+        .map(voucher => voucher.officeName)
+        .filter((office, index, arr) => arr.indexOf(office) === index)
+        .sort();
+      
+      setUniqueOffices(offices);
       setError('');
     } catch (err) {
       console.error('Error fetching vouchers:', err);
@@ -328,6 +339,13 @@ export default function VouchersPage() {
       );
     }
     
+    // Apply office filter
+    if (officeFilter) {
+      filtered = filtered.filter(voucher => 
+        voucher.officeName === officeFilter
+      );
+    }
+    
     // Apply creation date filter
     if (dateFilter) {
       filtered = filtered.filter(voucher => 
@@ -350,7 +368,7 @@ export default function VouchersPage() {
     }
     
     setFilteredVouchers(filtered);
-  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
+  }, [searchQuery, userFilter, officeFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -391,6 +409,7 @@ export default function VouchersPage() {
   const handleClearFilters = () => {
     setSearchQuery('');
     setUserFilter('');
+    setOfficeFilter('');
     setDateFilter('');
     setCustomDate('');
     setArrivalDateFilter('');
@@ -606,8 +625,8 @@ export default function VouchersPage() {
               </Select>
             </div>
             
-            {/* User Filter - Show for admins or when there are multiple users */}
-                                    {(isAdmin || isAccountant || uniqueUsers.length > 1) && (
+                        {/* User Filter - Show for admins or when there are multiple users */}
+            {(isAdmin || isAccountant || uniqueUsers.length > 1) && (
               <div className="w-full sm:w-64 sm:col-span-2 lg:col-span-1">
                 <SearchableSelect
                   id="userFilter"
@@ -624,9 +643,28 @@ export default function VouchersPage() {
                 />
               </div>
             )}
+            
+            {/* Office Filter */}
+            {uniqueOffices.length > 0 && (
+              <div className="w-full sm:w-64 sm:col-span-2 lg:col-span-1">
+                <SearchableSelect
+                  id="officeFilter"
+                  value={officeFilter}
+                  onChange={(e) => setOfficeFilter(e.target.value)}
+                  options={[
+                    { value: '', label: 'All Offices' },
+                    ...uniqueOffices.map(office => ({
+                      value: office,
+                      label: office
+                    }))
+                  ]}
+                  placeholder="Search offices..."
+                />
+              </div>
+            )}
 
             {/* Clear Filters Button */}
-            {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+            {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter) && (
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
                 <button
                   onClick={handleClearFilters}
@@ -640,7 +678,7 @@ export default function VouchersPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+          {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter) && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {searchQuery && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -650,6 +688,11 @@ export default function VouchersPage() {
               {userFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                   User: {uniqueUsers.find(user => user._id === userFilter)?.username || 'Unknown'}
+                </span>
+              )}
+              {officeFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                  Office: {officeFilter}
                 </span>
               )}
               {dateFilter && (
@@ -679,7 +722,7 @@ export default function VouchersPage() {
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            {(searchQuery || userFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+            {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
           </div>
         ) : (
           <>
@@ -688,11 +731,12 @@ export default function VouchersPage() {
               <CustomScrollbar>
                 <Table striped>
                   <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
+                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
@@ -712,6 +756,11 @@ export default function VouchersPage() {
                           </div>
                           <div className="text-xs text-gray-600 dark:text-gray-300">
                             {voucher.nationality}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="px-4 py-3">
+                          <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                            {voucher.officeName || '-'}
                           </div>
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
@@ -783,7 +832,7 @@ export default function VouchersPage() {
                     {/* Totals Row - Only for Admins and Accountants */}
                     {(isAdmin || isAccountant) && filteredVouchers.length > 0 && Object.keys(totals).map((currency, index) => (
                       <Table.Row key={currency} className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
-                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="5">
+                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="6">
                           {index === 0 ? 'TOTALS' : ''} {currency}
                         </Table.Cell>
                         <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
@@ -816,6 +865,9 @@ export default function VouchersPage() {
                         <div>
                           <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
                           <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
+                          {voucher.officeName && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                          )}
                         </div>
                         <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">
                           {voucher.nationality}
@@ -1020,6 +1072,9 @@ export default function VouchersPage() {
           userFilter={userFilter}
           setUserFilter={setUserFilter}
           uniqueUsers={uniqueUsers}
+          officeFilter={officeFilter}
+          setOfficeFilter={setOfficeFilter}
+          uniqueOffices={uniqueOffices}
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
           customDate={customDate}

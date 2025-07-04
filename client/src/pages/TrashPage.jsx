@@ -497,10 +497,11 @@ export default function TrashPage() {
               <CustomScrollbar>
                 <Table striped>
                   <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
+                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
+                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
                     <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
@@ -521,6 +522,11 @@ export default function TrashPage() {
                           </div>
                           <div className="text-xs text-gray-600 dark:text-gray-300">
                             {voucher.nationality}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="px-4 py-3">
+                          <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                            {voucher.officeName || '-'}
                           </div>
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
@@ -591,6 +597,9 @@ export default function TrashPage() {
                         <div>
                           <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
                           <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
+                          {voucher.officeName && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                          )}
                         </div>
                         <div className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded-full">
                           Deleted {formatDate(voucher.deletedAt)}

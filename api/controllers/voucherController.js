@@ -22,7 +22,8 @@ exports.createVoucher = async (req, res) => {
             currency,
             advancedPayment,
             advancedAmount,
-            remainingAmount
+            remainingAmount,
+            payments
         } = req.body;
 
         let processedTrips;
@@ -72,6 +73,12 @@ exports.createVoucher = async (req, res) => {
             advancedPayment: advancedPayment || false,
             advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
             remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0,
+            payments: payments || {
+                hotels: { officeName: '', price: 0 },
+                transfers: { officeName: '', price: 0 },
+                trips: { officeName: '', price: 0 },
+                flights: { officeName: '', price: 0 }
+            },
             createdBy: req.user.userId
         });
         
@@ -108,6 +115,12 @@ exports.createVoucher = async (req, res) => {
                     advancedPayment: advancedPayment || false,
                     advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
                     remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0,
+                    payments: payments || {
+                        hotels: { officeName: '', price: 0 },
+                        transfers: { officeName: '', price: 0 },
+                        trips: { officeName: '', price: 0 },
+                        flights: { officeName: '', price: 0 }
+                    },
                     createdBy: req.user.userId
                 });
                 
@@ -449,7 +462,8 @@ exports.updateVoucher = async (req, res) => {
             currency,
             advancedPayment,
             advancedAmount,
-            remainingAmount
+            remainingAmount,
+            payments
         } = req.body;
 
         // Process trips if needed
@@ -487,7 +501,13 @@ exports.updateVoucher = async (req, res) => {
                 totalAmount: Number(totalAmount) || 0,
                 advancedPayment: advancedPayment || false,
                 advancedAmount: advancedPayment ? Number(advancedAmount) || 0 : 0,
-                remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0
+                remainingAmount: advancedPayment ? Number(remainingAmount) || 0 : 0,
+                payments: payments || {
+                    hotels: { officeName: '', price: 0 },
+                    transfers: { officeName: '', price: 0 },
+                    trips: { officeName: '', price: 0 },
+                    flights: { officeName: '', price: 0 }
+                }
             },
             { new: true, runValidators: true }
         ).populate('createdBy', 'username');
@@ -645,6 +665,65 @@ exports.updateVoucherCreatedBy = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update voucher ownership',
+            error: error.message
+        });
+    }
+};
+
+// Update voucher payment date (Admin/Accountant only)
+exports.updateVoucherPaymentDate = async (req, res) => {
+    try {
+        const { paymentDate } = req.body;
+        const voucherId = req.params.id;
+        
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only administrators and accountants can update payment dates'
+            });
+        }
+
+        if (!paymentDate) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment date is required'
+            });
+        }
+
+        const voucher = await Voucher.findById(voucherId);
+        if (!voucher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voucher not found'
+            });
+        }
+
+        if (voucher.isDeleted) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot update payment date of deleted voucher'
+            });
+        }
+
+        const updatedVoucher = await Voucher.findByIdAndUpdate(
+            voucherId,
+            { paymentDate: new Date(paymentDate) },
+            { new: true, runValidators: true }
+        )
+        .populate('createdBy', 'username')
+        .populate('statusUpdatedBy', 'username');
+        
+        res.status(200).json({
+            success: true,
+            message: 'Payment date updated successfully',
+            data: updatedVoucher
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update payment date',
             error: error.message
         });
     }

@@ -1,14 +1,21 @@
 import React from 'react'
 import axios from 'axios'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button, TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Badge, Table, ToggleSwitch, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
+import StatusBadge from './StatusBadge'
 import CustomButton from './CustomButton'
 import RahalatekLoader from './RahalatekLoader'
+import SearchableSelect from './SearchableSelect'
 import { generateArrivalReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
+import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
+import StatusControls from './StatusControls'
+import PaymentDateControls from './PaymentDateControls'
+import CreatedByControls from './CreatedByControls'
+import { Link } from 'react-router-dom'
 
 export default function AdminPanel() {
     // Check user role
@@ -22,8 +29,8 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
                     const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports']; // Accountants can't access users/requests
+            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'users', 'requests', 'notifications']
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials']; // Accountants can access financials but not users/requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -66,6 +73,27 @@ export default function AdminPanel() {
         if (tabName === 'tours' && tours.length === 0 && dataLoaded) {
             fetchTours();
         }
+        
+        // Fetch offices data when switching to offices tab and data not loaded yet
+        if (tabName === 'offices' && offices.length === 0 && dataLoaded) {
+            fetchOffices();
+        }
+        
+        // Reset office vouchers when switching to office-vouchers tab
+        if (tabName === 'office-vouchers') {
+            setSelectedOfficeForVouchers('');
+            setOfficeVouchers([]);
+            // Fetch users for the dropdown if not already fetched
+            if (allUsers.length === 0) {
+                fetchAllUsersForVouchers();
+            }
+        }
+        
+        // Fetch financial data when switching to financials tab
+        if (tabName === 'financials' && dataLoaded) {
+            fetchFinancialData();
+            fetchDebts();
+        }
     };
 
     const [hotelData, setHotelData] = useState({
@@ -104,7 +132,15 @@ export default function AdminPanel() {
         name: '',
         arabicName: ''
     });
+    const [officeData, setOfficeData] = useState({
+        name: '',
+        location: '',
+        email: '',
+        phoneNumber: '',
+        description: ''
+    });
     const [airports, setAirports] = useState([]);
+    const [offices, setOffices] = useState([]);
     const [users, setUsers] = useState([]);
     const [tours, setTours] = useState([]);
     const [highlightInput, setHighlightInput] = useState('');
@@ -125,6 +161,62 @@ export default function AdminPanel() {
     
     // Add state for notification management
     const [notificationLoading, setNotificationLoading] = useState(false);
+    
+    // Add state for office vouchers functionality
+    const [selectedOfficeForVouchers, setSelectedOfficeForVouchers] = useState('');
+    const [officeVouchers, setOfficeVouchers] = useState([]);
+    const [officeVouchersLoading, setOfficeVouchersLoading] = useState(false);
+    const [allUsers, setAllUsers] = useState([]);
+    
+    // Add state for financials functionality
+    const [financialData, setFinancialData] = useState([]);
+    const [financialLoading, setFinancialLoading] = useState(false);
+    const [financialFilters, setFinancialFilters] = useState({
+        office: '',
+        month: '',
+        year: new Date().getFullYear().toString(),
+        currency: 'USD' // Default to USD
+    });
+    
+    // Add state for debt management
+    const [debts, setDebts] = useState([]);
+    const [debtLoading, setDebtLoading] = useState(false);
+    const [debtFilters, setDebtFilters] = useState({
+        office: '',
+        status: '',
+        type: ''
+    });
+    const [showDebtModal, setShowDebtModal] = useState(false);
+    const [editingDebt, setEditingDebt] = useState(null);
+    const [debtForm, setDebtForm] = useState({
+        officeName: '',
+        amount: '',
+        currency: 'USD',
+        type: 'OWED_TO_OFFICE',
+        description: '',
+        dueDate: '',
+        notes: ''
+    });
+    
+    // Calculate totals by currency
+    const totalsByCurrency = useMemo(() => {
+        if (officeVouchers.length === 0) return {};
+        
+        return officeVouchers.reduce((acc, voucher) => {
+            const currency = voucher.currency || 'USD';
+            const total = parseFloat(voucher.totalAmount) || 0;
+            const advanced = parseFloat(voucher.advancedPayment) || 0;
+
+            if (!acc[currency]) {
+                acc[currency] = { totalAmount: 0, totalAdvanced: 0 };
+            }
+
+            acc[currency].totalAmount += total;
+            acc[currency].totalAdvanced += advanced;
+
+            return acc;
+        }, {});
+    }, [officeVouchers]);
 
     // Standard room types for hotels
     const standardRoomTypes = [
@@ -183,15 +275,17 @@ export default function AdminPanel() {
             const fetchInitialData = async () => {
                 setLoading(true);
                 try {
-                    const [airportsResponse, hotelsResponse, toursResponse] = await Promise.all([
+                    const [airportsResponse, hotelsResponse, toursResponse, officesResponse] = await Promise.all([
                         axios.get('/api/airports'),
                         axios.get('/api/hotels'),
-                        axios.get('/api/tours')
+                        axios.get('/api/tours'),
+                        axios.get('/api/offices')
                     ]);
                     
                     setAirports(airportsResponse.data);
                     setHotels(hotelsResponse.data);
                     setTours(toursResponse.data);
+                    setOffices(officesResponse.data.data);
                     
                     // Only fetch users if starting on users tab or requests tab
                     if (activeTab === 'users') {
@@ -235,6 +329,20 @@ export default function AdminPanel() {
         }
     }, [activeTab]);
 
+    // Auto-fetch debts when filters change
+    useEffect(() => {
+        if (activeTab === 'financials' && dataLoaded) {
+            fetchDebts();
+        }
+    }, [debtFilters, activeTab, dataLoaded]);
+
+    // Auto-fetch financial data when currency filter changes
+    useEffect(() => {
+        if (activeTab === 'financials' && dataLoaded) {
+            fetchFinancialData();
+        }
+    }, [financialFilters.currency, activeTab, dataLoaded]);
+
     const fetchTours = async () => {
         setLoading(true);
         try {
@@ -244,6 +352,20 @@ export default function AdminPanel() {
         } catch (err) {
             console.error('Failed to fetch tours:', err);
             setError(err.response?.data?.message || 'Failed to fetch tours');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchOffices = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/offices');
+            setOffices(response.data.data);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch offices:', err);
+            setError(err.response?.data?.message || 'Failed to fetch offices');
         } finally {
             setLoading(false);
         }
@@ -628,6 +750,14 @@ export default function AdminPanel() {
         });
     };
 
+    const handleOfficeChange = (e) => {
+        const { name, value } = e.target;
+        setOfficeData({
+            ...officeData,
+            [name]: value,
+        });
+    };
+
     const handleAddHighlight = () => {
         if (highlightInput.trim()) {
             setTourData({
@@ -728,6 +858,39 @@ export default function AdminPanel() {
         }
     };
 
+    const handleOfficeSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            const response = await axios.post('/api/offices', officeData);
+            setOffices([...offices, response.data.data]);
+            setOfficeData({
+                name: '',
+                location: '',
+                email: '',
+                phoneNumber: '',
+                description: ''
+            });
+            toast.success('Office added successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+        } catch (err) {
+            setError('Failed to add office');
+            console.log(err);
+        }
+    };
+
     const handleDeleteAirport = async (id) => {
         try {
             await axios.delete(`/api/airports/${id}`);
@@ -748,6 +911,30 @@ export default function AdminPanel() {
             });
         } catch (err) {
             setError('Failed to delete airport');
+            console.log(err);
+        }
+    };
+
+    const handleDeleteOffice = async (id) => {
+        try {
+            await axios.delete(`/api/offices/${id}`);
+            setOffices(offices.filter(office => office._id !== id));
+            toast.success('Office deleted successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+        } catch (err) {
+            setError('Failed to delete office');
             console.log(err);
         }
     };
@@ -986,8 +1173,8 @@ export default function AdminPanel() {
         if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
             e.preventDefault();
             const tabs = isAdmin 
-                ? ['hotels', 'tours', 'airports', 'users', 'requests']
-                : ['hotels', 'tours', 'airports']; // Accountants can't access users/requests
+                ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'users', 'requests']
+                : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials']; // Accountants can access financials but not users/requests
             const currentIndex = tabs.indexOf(activeTab);
             
             let newIndex;
@@ -1351,6 +1538,391 @@ export default function AdminPanel() {
         }
     };
 
+    // Helper functions for vouchers
+    const getCurrencySymbol = (currency) => {
+        if (!currency) return '$';
+        switch (currency) {
+            case 'EUR': return '€';
+            case 'TRY': return '₺';
+            case 'USD':
+            default: return '$';
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    // Fetch vouchers for selected office
+    const fetchOfficeVouchers = async (officeName) => {
+        if (!officeName) return;
+        
+        setOfficeVouchersLoading(true);
+        try {
+            const response = await getAllVouchers();
+            
+            // Filter vouchers by office name
+            const filteredVouchers = response.data.filter(voucher => 
+                voucher.officeName === officeName
+            );
+            
+            setOfficeVouchers(filteredVouchers);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch office vouchers:', err);
+            setError(err.response?.data?.message || 'Failed to fetch office vouchers');
+        } finally {
+            setOfficeVouchersLoading(false);
+        }
+    };
+
+    // Handle office selection for vouchers
+    const handleOfficeSelection = async (eventOrOfficeName) => {
+        // Handle both event objects and direct string values for compatibility
+        const officeName = typeof eventOrOfficeName === 'string' 
+            ? eventOrOfficeName 
+            : eventOrOfficeName?.target?.value || eventOrOfficeName;
+            
+        setSelectedOfficeForVouchers(officeName);
+        if (officeName) {
+            await fetchOfficeVouchers(officeName);
+        } else {
+            setOfficeVouchers([]);
+        }
+    };
+
+    // Handle status update for vouchers
+    const handleVoucherStatusUpdate = async (voucherId, newStatus) => {
+        try {
+            await updateVoucherStatus(voucherId, newStatus);
+            setOfficeVouchers(prevVouchers =>
+                prevVouchers.map(voucher =>
+                    voucher._id === voucherId
+                        ? { ...voucher, status: newStatus }
+                        : voucher
+                )
+            );
+            toast.success('Voucher status updated successfully');
+        } catch (err) {
+            console.error('Error updating voucher status:', err);
+            toast.error('Failed to update voucher status');
+        }
+    };
+
+    // Handle payment date update for vouchers
+    const handlePaymentDateUpdate = async (voucherId, paymentDate) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.patch(`/api/vouchers/${voucherId}/payment-date`, 
+                { paymentDate },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+            
+            setOfficeVouchers(prevVouchers =>
+                prevVouchers.map(voucher =>
+                    voucher._id === voucherId
+                        ? { ...voucher, paymentDate }
+                        : voucher
+                )
+            );
+            toast.success('Payment date updated successfully');
+        } catch (err) {
+            console.error('Error updating payment date:', err);
+            toast.error('Failed to update payment date');
+        }
+    };
+
+    // Check if user can manage a voucher
+    const canManageVoucher = (voucher) => {
+        if (isAdmin || isAccountant) return true;
+        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+        return voucher.createdBy && voucher.createdBy._id === currentUser.id;
+    };
+
+    // Fetch all users for the created by dropdown
+    const fetchAllUsersForVouchers = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('/api/auth/users', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAllUsers(response.data);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    };
+
+    // Fetch and aggregate financial data
+    const fetchFinancialData = async () => {
+        setFinancialLoading(true);
+        try {
+            const response = await getAllVouchers();
+            const vouchers = response.data;
+            
+            // Filter vouchers by selected currency first
+            const filteredVouchers = vouchers.filter(voucher => {
+                const voucherCurrency = voucher.currency || 'USD';
+                return voucherCurrency === financialFilters.currency;
+            });
+            
+            // Aggregate payment data by office and month for selected currency
+            const aggregatedData = {};
+            const voucherTracker = {}; // Track vouchers per office-month to avoid double counting
+            
+            filteredVouchers.forEach(voucher => {
+                if (!voucher.payments) return;
+                
+                const voucherDate = new Date(voucher.createdAt);
+                const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
+                
+                // Process each payment type
+                Object.keys(voucher.payments).forEach(paymentType => {
+                    const payment = voucher.payments[paymentType];
+                    if (payment.officeName && payment.price > 0) {
+                        const key = `${payment.officeName}-${monthYear}`;
+                        
+                        if (!aggregatedData[key]) {
+                            aggregatedData[key] = {
+                                officeName: payment.officeName,
+                                month: monthYear,
+                                year: voucherDate.getFullYear(),
+                                monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                hotels: 0,
+                                transfers: 0,
+                                trips: 0,
+                                flights: 0,
+                                total: 0,
+                                currency: voucher.currency || 'USD',
+                                voucherCount: 0,
+                                voucherIds: new Set()
+                            };
+                            voucherTracker[key] = new Set();
+                        }
+                        
+                        aggregatedData[key][paymentType] += payment.price;
+                        aggregatedData[key].total += payment.price;
+                        
+                        // Track unique vouchers
+                        if (!voucherTracker[key].has(voucher._id)) {
+                            voucherTracker[key].add(voucher._id);
+                            aggregatedData[key].voucherCount++;
+                        }
+                    }
+                });
+            });
+            
+            // Convert to array, clean up, and sort
+            const financialArray = Object.values(aggregatedData).map(item => {
+                // Remove the voucherIds set that was used for tracking
+                const { voucherIds: _voucherIds, ...cleanItem } = item;
+                return cleanItem;
+            }).sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                if (a.month !== b.month) return b.month.localeCompare(a.month);
+                return a.officeName.localeCompare(b.officeName);
+            });
+            
+            setFinancialData(financialArray);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch financial data:', err);
+            setError(err.response?.data?.message || 'Failed to fetch financial data');
+        } finally {
+            setFinancialLoading(false);
+        }
+    };
+
+    // Filter financial data based on current filters
+    const filteredFinancialData = financialData.filter(item => {
+        if (financialFilters.office && item.officeName !== financialFilters.office) return false;
+        if (financialFilters.year && item.year.toString() !== financialFilters.year) return false;
+        if (financialFilters.month && item.month !== `${financialFilters.year}-${financialFilters.month.padStart(2, '0')}`) return false;
+        return true;
+    });
+
+    // Calculate totals for filtered data
+    const financialTotals = filteredFinancialData.reduce((acc, item) => {
+        acc.hotels += item.hotels;
+        acc.transfers += item.transfers;
+        acc.trips += item.trips;
+        acc.flights += item.flights;
+        acc.total += item.total;
+        acc.voucherCount += item.voucherCount;
+        return acc;
+    }, { hotels: 0, transfers: 0, trips: 0, flights: 0, total: 0, voucherCount: 0 });
+
+    // Handle filter changes
+    const handleFinancialFilterChange = (filterType, value) => {
+        setFinancialFilters(prev => ({
+            ...prev,
+            [filterType]: value
+        }));
+    };
+
+    // Clear financial filters
+    const clearFinancialFilters = () => {
+        setFinancialFilters({
+            office: '',
+            month: '',
+            year: new Date().getFullYear().toString(),
+            currency: 'USD'
+        });
+    };
+
+    // Debt management functions
+    const fetchDebts = async () => {
+        setDebtLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams();
+            if (debtFilters.office) params.append('office', debtFilters.office);
+            if (debtFilters.status) params.append('status', debtFilters.status);
+            if (debtFilters.type) params.append('type', debtFilters.type);
+            
+            const response = await axios.get(`/api/debts?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            setDebts(response.data.data);
+            setError('');
+        } catch (err) {
+            console.error('Failed to fetch debts:', err);
+            setError(err.response?.data?.message || 'Failed to fetch debts');
+        } finally {
+            setDebtLoading(false);
+        }
+    };
+
+    const handleDebtSubmit = async (e) => {
+        e.preventDefault();
+        setDebtLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const url = editingDebt ? `/api/debts/${editingDebt._id}` : '/api/debts';
+            const method = editingDebt ? 'PUT' : 'POST';
+            
+            await axios({
+                method,
+                url,
+                data: debtForm,
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            toast.success(`Debt ${editingDebt ? 'updated' : 'created'} successfully!`);
+            setShowDebtModal(false);
+            setEditingDebt(null);
+            resetDebtForm();
+            fetchDebts();
+        } catch (err) {
+            console.error('Failed to save debt:', err);
+            toast.error(err.response?.data?.message || 'Failed to save debt');
+        } finally {
+            setDebtLoading(false);
+        }
+    };
+
+    const handleCloseDebt = async (debtId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.patch(`/api/debts/${debtId}/close`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            toast.success('Debt closed successfully!');
+            fetchDebts();
+        } catch (err) {
+            console.error('Failed to close debt:', err);
+            toast.error(err.response?.data?.message || 'Failed to close debt');
+        }
+    };
+
+    const handleDeleteDebt = async (debtId) => {
+        if (!confirm('Are you sure you want to delete this debt?')) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`/api/debts/${debtId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            toast.success('Debt deleted successfully!');
+            fetchDebts();
+        } catch (err) {
+            console.error('Failed to delete debt:', err);
+            toast.error(err.response?.data?.message || 'Failed to delete debt');
+        }
+    };
+
+    const openDebtModal = (debt = null) => {
+        if (debt) {
+            setEditingDebt(debt);
+            setDebtForm({
+                officeName: debt.officeName,
+                amount: debt.amount.toString(),
+                currency: debt.currency,
+                type: debt.type,
+                description: debt.description || '',
+                dueDate: debt.dueDate ? new Date(debt.dueDate).toISOString().split('T')[0] : '',
+                notes: debt.notes || ''
+            });
+        } else {
+            setEditingDebt(null);
+            resetDebtForm();
+        }
+        setShowDebtModal(true);
+    };
+
+    const resetDebtForm = () => {
+        setDebtForm({
+            officeName: '',
+            amount: '',
+            currency: 'USD',
+            type: 'OWED_TO_OFFICE',
+            description: '',
+            dueDate: '',
+            notes: ''
+        });
+    };
+
+    const handleDebtFilterChange = (filterType, value) => {
+        setDebtFilters(prev => ({
+            ...prev,
+            [filterType]: value
+        }));
+    };
+
+    // Clear debt filters
+    const clearDebtFilters = () => {
+        setDebtFilters({
+            office: '',
+            status: '',
+            type: ''
+        });
+    };
+
+    // Check if financial filters are applied
+    const hasFinancialFiltersApplied = () => {
+        const currentYear = new Date().getFullYear().toString();
+        return financialFilters.office !== '' || 
+               financialFilters.month !== '' || 
+               financialFilters.year !== currentYear || 
+               financialFilters.currency !== 'USD';
+    };
+
+    // Check if debt filters are applied
+    const hasDebtFiltersApplied = () => {
+        return debtFilters.office !== '' || 
+               debtFilters.status !== '' || 
+               debtFilters.type !== '';
+    };
+
     const fetchPendingRequests = async () => {
         setLoading(true);
         try {
@@ -1455,6 +2027,59 @@ export default function AdminPanel() {
                                 >
                                     <FaPlaneDeparture className="h-5 w-5 mr-3" />
                                     Airports
+                                </button>
+                                <button
+                                    id="tab-offices"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'offices' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('offices')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'offices')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'offices'}
+                                    aria-controls="offices-panel"
+                                >
+                                    <FaBuilding className="h-5 w-5 mr-3" />
+                                    Offices
+                                </button>
+                                <button
+                                    id="tab-office-vouchers"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'office-vouchers' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('office-vouchers')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'office-vouchers'}
+                                    aria-controls="office-vouchers-panel"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Office Vouchers
+                                </button>
+                                <button
+                                    id="tab-financials"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'financials' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('financials')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'financials'}
+                                    aria-controls="financials-panel"
+                                >
+                                    <FaDollarSign className="h-5 w-5 mr-3" />
+                                    Financials
                                 </button>
                                 {/* Show Users tab to both admins and accountants */}
                                 <button
@@ -1570,6 +2195,42 @@ export default function AdminPanel() {
                                         aria-controls="airports-panel"
                                     >
                                         Airports
+                                    </button>
+                                    <button
+                                        id="tab-offices-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'offices' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('offices')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'offices')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'offices'}
+                                        aria-controls="offices-panel"
+                                    >
+                                        Offices
+                                    </button>
+                                    <button
+                                        id="tab-office-vouchers-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'office-vouchers' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('office-vouchers')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'office-vouchers'}
+                                        aria-controls="office-vouchers-panel"
+                                    >
+                                        Office Vouchers
+                                    </button>
+                                    <button
+                                        id="tab-financials-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'financials' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('financials')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'financials'}
+                                        aria-controls="financials-panel"
+                                    >
+                                        Financials
                                     </button>
                                     <button
                                         id="tab-users-mobile"
@@ -2511,6 +3172,823 @@ export default function AdminPanel() {
                                 </Card>
                             )}
 
+                            {activeTab === 'offices' && (
+                                <Card className="w-full dark:bg-slate-900" id="offices-panel" role="tabpanel" aria-labelledby="tab-offices">
+                                    <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Office</h2>
+                                    
+                                    <form onSubmit={handleOfficeSubmit} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="officeName" value="Office Name" />
+                                                </div>
+                                                <TextInput
+                                                    id="officeName"
+                                                    name="name"
+                                                    value={officeData.name}
+                                                    onChange={handleOfficeChange}
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="officeLocation" value="Location" />
+                                                </div>
+                                                <TextInput
+                                                    id="officeLocation"
+                                                    name="location"
+                                                    value={officeData.location}
+                                                    onChange={handleOfficeChange}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="officeEmail" value="Email" />
+                                                </div>
+                                                <TextInput
+                                                    id="officeEmail"
+                                                    name="email"
+                                                    type="email"
+                                                    value={officeData.email}
+                                                    onChange={handleOfficeChange}
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="officePhoneNumber" value="Phone Number" />
+                                                </div>
+                                                <TextInput
+                                                    id="officePhoneNumber"
+                                                    name="phoneNumber"
+                                                    value={officeData.phoneNumber}
+                                                    onChange={handleOfficeChange}
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div className="mb-2 block">
+                                                <Label htmlFor="officeDescription" value="Description" />
+                                            </div>
+                                            <Textarea
+                                                id="officeDescription"
+                                                name="description"
+                                                rows={3}
+                                                value={officeData.description}
+                                                onChange={handleOfficeChange}
+                                            />
+                                        </div>
+                                        
+                                        <CustomButton 
+                                            type="submit"
+                                            variant="pinkToOrange"
+                                        >
+                                            Add Office
+                                        </CustomButton>
+                                        
+                                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                                    </form>
+                                    
+                                    <div className="mt-8">
+                                        <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Existing Offices</h3>
+                                        {offices.length > 0 ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {offices.map(office => (
+                                                    <Card key={office._id} className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow duration-200">
+                                                        <div className="flex flex-col gap-4 p-4">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-semibold text-lg text-slate-900 dark:text-white truncate" title={office.name}>
+                                                                        {office.name}
+                                                                    </h4>
+                                                                    <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        </svg>
+                                                                        {office.location}
+                                                                    </p>
+                                                                </div>
+                                                                <CustomButton
+                                                                    variant="red"
+                                                                    size="xs"
+                                                                    onClick={() => handleDeleteOffice(office._id)}
+                                                                    title="Delete office"
+                                                                    icon={({ className }) => (
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                    )}
+                                                                >
+                                                                    Delete
+                                                                </CustomButton>
+                                                            </div>
+                                                            
+                                                            <div className="space-y-3 text-sm">
+                                                                <div className="flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    <span className="text-slate-700 dark:text-slate-300 truncate" title={office.email}>
+                                                                        {office.email}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                    </svg>
+                                                                    <span className="text-slate-700 dark:text-slate-300">
+                                                                        {office.phoneNumber}
+                                                                    </span>
+                                                                </div>
+                                                                {office.description && (
+                                                                    <div className="flex items-start">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                        </svg>
+                                                                        <span className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                                                                            {office.description}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <Alert color="info">No offices found.</Alert>
+                                        )}
+                                    </div>
+                                </Card>
+                            )}
+
+                            {activeTab === 'office-vouchers' && (isAdmin || isAccountant) && (
+                                <Card className="w-full dark:bg-slate-900" id="office-vouchers-panel" role="tabpanel" aria-labelledby="tab-office-vouchers">
+                                    <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Vouchers by Office</h2>
+                                    
+                                    <div className="mb-6">
+                                        <div className="mb-2 block">
+                                            <Label htmlFor="officeSelect" value="Select Office" className="text-lg font-medium" />
+                                        </div>
+                                        <SearchableSelect
+                                            options={offices.map(office => ({
+                                                value: office.name,
+                                                label: `${office.name} - ${office.location}`
+                                            }))}
+                                            value={selectedOfficeForVouchers}
+                                            onChange={handleOfficeSelection}
+                                            placeholder="Choose an office to view vouchers"
+                                            className="w-full"
+                                        />
+                                    </div>
+
+                                    {selectedOfficeForVouchers && (
+                                        <div>
+                                            <h3 className="text-xl font-semibold mb-4 dark:text-white">
+                                                Vouchers for {selectedOfficeForVouchers}
+                                            </h3>
+                                            
+                                            {officeVouchersLoading ? (
+                                                <div className="py-8">
+                                                    <RahalatekLoader size="lg" />
+                                                </div>
+                                            ) : officeVouchers.length > 0 ? (
+                                                <>
+                                                    <div className="overflow-x-auto">
+                                                        <Table striped>
+                                                            <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client Name</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Hotel Name</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Note</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Pax</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Advanced Payment</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total Amount</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Date of Payment</Table.HeadCell>
+                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
+                                                            </Table.Head>
+                                                            <Table.Body>
+                                                                {officeVouchers.map(voucher => (
+                                                                    <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                            {voucher.voucherNumber}
+                                                                        </Table.Cell>
+                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                            {voucher.clientName}
+                                                                        </Table.Cell>
+                                                                                                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        {voucher.hotels && voucher.hotels.length > 0 
+                                                                            ? voucher.hotels.map(hotel => hotel.hotelName).filter(Boolean).join(', ') || 'N/A'
+                                                                            : 'N/A'}
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[150px]">
+                                                                        <div className="truncate" title={voucher.note}>
+                                                                            {voucher.note || 'N/A'}
+                                                                        </div>
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        {voucher.hotels && voucher.hotels.length > 0 
+                                                                            ? voucher.hotels.reduce((total, hotel) => total + (hotel.pax || 0), 0) || 'N/A'
+                                                                            : 'N/A'}
+                                                                    </Table.Cell>
+                                                                                                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        {voucher.advancedPayment && voucher.advancedAmount 
+                                                                            ? `${getCurrencySymbol(voucher.currency)}${voucher.advancedAmount}` 
+                                                                            : 'N/A'}
+                                                                    </Table.Cell>
+                                                                        <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
+                                                                            {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                                                                        </Table.Cell>
+                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                            {formatDate(voucher.arrivalDate)}
+                                                                        </Table.Cell>
+                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                            {formatDate(voucher.departureDate)}
+                                                                        </Table.Cell>
+                                                                        <Table.Cell className="px-4 py-3">
+                                                                            <StatusControls
+                                                                                currentStatus={voucher.status || 'await'}
+                                                                                onStatusUpdate={(newStatus) => handleVoucherStatusUpdate(voucher._id, newStatus)}
+                                                                                canEdit={isAdmin || isAccountant}
+                                                                                arrivalDate={voucher.arrivalDate}
+                                                                            />
+                                                                        </Table.Cell>
+                                                                                                                                            <Table.Cell className="px-4 py-3">
+                                                                        <PaymentDateControls
+                                                                            currentPaymentDate={voucher.paymentDate}
+                                                                            onPaymentDateUpdate={(paymentDate) => handlePaymentDateUpdate(voucher._id, paymentDate)}
+                                                                            canEdit={isAdmin || isAccountant}
+                                                                        />
+                                                                    </Table.Cell>
+                                                                        <Table.Cell className="px-4 py-3">
+                                                                            <div className="flex space-x-2">
+                                                                                <Link 
+                                                                                    to={`/vouchers/${voucher._id}`}
+                                                                                    className="font-medium text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                                                >
+                                                                                    View
+                                                                                </Link>
+                                                                                {canManageVoucher(voucher) && (
+                                                                                    <Link 
+                                                                                        to={`/edit-voucher/${voucher._id}`}
+                                                                                        className="font-medium text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                                                                                    >
+                                                                                        Edit
+                                                                                    </Link>
+                                                                                )}
+                                                                            </div>
+                                                                        </Table.Cell>
+                                                                    </Table.Row>
+                                                                ))}
+                                                            </Table.Body>
+                                                        </Table>
+                                                    </div>
+                                                    
+                                                    {/* Currency Totals */}
+                                                    {Object.keys(totalsByCurrency).length > 0 && (
+                                                        <div className="mt-6">
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                {Object.entries(totalsByCurrency).map(([currency, amounts]) => {
+                                                                    const getCardColor = (curr) => {
+                                                                        switch(curr) {
+                                                                            case 'USD': return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+                                                                            case 'EUR': return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+                                                                            case 'TRY': return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+                                                                            default: return 'bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
+                                                                        }
+                                                                    };
+
+                                                                    const getHeaderColor = (curr) => {
+                                                                        switch(curr) {
+                                                                            case 'USD': return 'text-green-800 dark:text-green-300';
+                                                                            case 'EUR': return 'text-blue-800 dark:text-blue-300';
+                                                                            case 'TRY': return 'text-red-800 dark:text-red-300';
+                                                                            default: return 'text-gray-800 dark:text-gray-300';
+                                                                        }
+                                                                    };
+
+                                                                    const getTextColor = (curr) => {
+                                                                        switch(curr) {
+                                                                            case 'USD': return 'text-green-700 dark:text-green-400';
+                                                                            case 'EUR': return 'text-blue-700 dark:text-blue-400';
+                                                                            case 'TRY': return 'text-red-700 dark:text-red-400';
+                                                                            default: return 'text-gray-700 dark:text-gray-400';
+                                                                        }
+                                                                    };
+
+                                                                    const getBoldTextColor = (curr) => {
+                                                                        switch(curr) {
+                                                                            case 'USD': return 'text-green-900 dark:text-green-200';
+                                                                            case 'EUR': return 'text-blue-900 dark:text-blue-200';
+                                                                            case 'TRY': return 'text-red-900 dark:text-red-200';
+                                                                            default: return 'text-gray-900 dark:text-gray-200';
+                                                                        }
+                                                                    };
+
+                                                                    return (
+                                                                        <div key={currency} className={`p-4 rounded-lg border ${getCardColor(currency)}`}>
+                                                                            <h4 className={`text-lg font-semibold mb-2 ${getHeaderColor(currency)}`}>{currency} Total</h4>
+                                                                            <div className="space-y-1">
+                                                                                <div className="flex justify-between text-sm">
+                                                                                    <span className={getTextColor(currency)}>Total Amount:</span>
+                                                                                    <span className={`font-medium ${getBoldTextColor(currency)}`}>
+                                                                                        {getCurrencySymbol(currency)}{amounts.totalAmount.toFixed(2)}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex justify-between text-sm">
+                                                                                    <span className={getTextColor(currency)}>Advanced Payments:</span>
+                                                                                    <span className={`font-medium ${getBoldTextColor(currency)}`}>
+                                                                                        {getCurrencySymbol(currency)}{amounts.totalAdvanced.toFixed(2)}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                    <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <p className="text-lg font-medium text-gray-700 dark:text-gray-300">No vouchers found for {selectedOfficeForVouchers}</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">This office doesn't have any vouchers yet.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {!selectedOfficeForVouchers && (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                            <p className="text-lg font-medium">Select an office to view vouchers</p>
+                                            <p className="text-sm">Choose an office from the dropdown above to see all vouchers assigned to that office.</p>
+                                        </div>
+                                    )}
+
+                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                                </Card>
+                            )}
+
+                            {activeTab === 'financials' && (isAdmin || isAccountant) && (
+                                <Card className="w-full dark:bg-slate-900" id="financials-panel" role="tabpanel" aria-labelledby="tab-financials">
+                                    <h2 className="text-2xl font-bold mb-6 dark:text-white text-center flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                        </svg>
+                                        Financial Reports
+                                    </h2>
+                                    
+                                    {/* Filters */}
+                                    <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-lg mb-6">
+                                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                                            <div>
+                                                <Label htmlFor="office-filter" value="Office" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="office-filter"
+                                                    options={[
+                                                        { value: '', label: 'All Offices' },
+                                                        ...offices.map(office => ({
+                                                            value: office.name,
+                                                            label: `${office.name} - ${office.location}`
+                                                        }))
+                                                    ]}
+                                                    value={financialFilters.office}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('office', value);
+                                                    }}
+                                                    placeholder="Search offices..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="year-filter" value="Year" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="year-filter"
+                                                    options={[
+                                                        { value: '2030', label: '2030' },
+                                                        { value: '2029', label: '2029' },
+                                                        { value: '2028', label: '2028' },
+                                                        { value: '2027', label: '2027' },
+                                                        { value: '2026', label: '2026' },
+                                                        { value: '2025', label: '2025' }
+                                                    ]}
+                                                    value={financialFilters.year}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('year', value);
+                                                    }}
+                                                    placeholder="Search or select year..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="month-filter" value="Month" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="month-filter"
+                                                    options={[
+                                                        { value: '', label: 'All Months' },
+                                                        ...Array.from({length: 12}, (_, i) => i + 1).map(month => ({
+                                                            value: month.toString(),
+                                                            label: new Date(2024, month - 1).toLocaleString('default', { month: 'long' })
+                                                        }))
+                                                    ]}
+                                                    value={financialFilters.month}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('month', value);
+                                                    }}
+                                                    placeholder="Search or select month..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="currency-filter" value="Currency" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="currency-filter"
+                                                    options={[
+                                                        { value: 'USD', label: 'USD ($)' },
+                                                        { value: 'EUR', label: 'EUR (€)' },
+                                                        { value: 'TRY', label: 'TRY (₺)' }
+                                                    ]}
+                                                    value={financialFilters.currency}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('currency', value);
+                                                    }}
+                                                    placeholder="Search or select currency..."
+                                                />
+                                            </div>
+                                            <div className="flex items-end">
+                                                <CustomButton
+                                                    variant="red"
+                                                    onClick={clearFinancialFilters}
+                                                    disabled={!hasFinancialFiltersApplied()}
+                                                    className="w-full"
+                                                    title={hasFinancialFiltersApplied() ? "Clear all financial filters" : "No filters to clear"}
+                                                    icon={HiX}
+                                                >
+                                                    Clear Filters
+                                                </CustomButton>
+                                            </div>
+                                            <div className="flex items-end">
+                                                <CustomButton
+                                                    variant="blue"
+                                                    onClick={fetchFinancialData}
+                                                    disabled={financialLoading}
+                                                    className="w-full"
+                                                    title="Refresh financial data"
+                                                >
+                                                    {financialLoading ? 'Refreshing...' : 'Refresh Data'}
+                                                </CustomButton>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                                                         {/* Summary Cards */}
+                                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                                             <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Hotels</h4>
+                                             <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
+                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.hotels.toFixed(2)}
+                                             </p>
+                                         </div>
+                                         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                                             <h4 className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Transfers</h4>
+                                             <p className="text-2xl font-bold text-green-900 dark:text-green-200">
+                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.transfers.toFixed(2)}
+                                             </p>
+                                         </div>
+                                         <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                                             <h4 className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-1">Trips</h4>
+                                             <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
+                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.trips.toFixed(2)}
+                                             </p>
+                                         </div>
+                                         <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                                             <h4 className="text-sm font-medium text-orange-800 dark:text-orange-300 mb-1">Flights</h4>
+                                             <p className="text-2xl font-bold text-orange-900 dark:text-orange-200">
+                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.flights.toFixed(2)}
+                                             </p>
+                                         </div>
+                                         <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg border border-gray-200 dark:border-gray-800">
+                                             <h4 className="text-sm font-medium text-gray-800 dark:text-gray-300 mb-1">Total</h4>
+                                             <p className="text-2xl font-bold text-gray-900 dark:text-gray-200">
+                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toFixed(2)}
+                                             </p>
+                                         </div>
+                                     </div>
+
+                                    {/* Financial Data Table */}
+                                    {financialLoading ? (
+                                        <div className="py-8">
+                                            <RahalatekLoader size="lg" />
+                                        </div>
+                                    ) : filteredFinancialData.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <Table striped>
+                                                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Month</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-blue-600 dark:text-blue-400">Hotels</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-green-600 dark:text-green-400">Transfers</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-purple-600 dark:text-purple-400">Trips</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-orange-600 dark:text-orange-400">Flights</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-gray-900 dark:text-white">Total</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Vouchers</Table.HeadCell>
+                                                </Table.Head>
+                                                <Table.Body>
+                                                    {filteredFinancialData.map((item, index) => (
+                                                        <Table.Row key={index} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {item.officeName}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {item.monthName} {item.year}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.hotels.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.transfers.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.trips.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.flights.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.total.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
+                                                                {item.voucherCount}
+                                                            </Table.Cell>
+                                                        </Table.Row>
+                                                    ))}
+                                                </Table.Body>
+                                            </Table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                            <p className="text-lg font-medium">No financial data found</p>
+                                            <p className="text-sm">Create vouchers with payment distributions to see financial reports.</p>
+                                        </div>
+                                    )}
+
+                                    {/* Debt Management Section */}
+                                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Debt Management
+                                            </h3>
+                                            <CustomButton
+                                                variant="green"
+                                                onClick={() => openDebtModal()}
+                                                icon={HiPlus}
+                                                title="Add new debt record"
+                                            >
+                                                Add Debt
+                                            </CustomButton>
+                                        </div>
+
+                                        {/* Debt Filters */}
+                                        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-6">
+                                            <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                                <div>
+                                                    <Label htmlFor="debt-office-filter" value="Office" className="mb-2" />
+                                                    <SearchableSelect
+                                                        id="debt-office-filter"
+                                                        options={[
+                                                            { value: '', label: 'All Offices' },
+                                                            ...offices.map(office => ({
+                                                                value: office.name,
+                                                                label: `${office.name} - ${office.location}`
+                                                            }))
+                                                        ]}
+                                                        value={debtFilters.office}
+                                                        onChange={(eventOrValue) => {
+                                                            const value = typeof eventOrValue === 'string' 
+                                                                ? eventOrValue 
+                                                                : eventOrValue?.target?.value || eventOrValue;
+                                                            handleDebtFilterChange('office', value);
+                                                        }}
+                                                        placeholder="Search offices..."
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor="debt-status-filter" value="Status" className="mb-2" />
+                                                    <Select
+                                                        id="debt-status-filter"
+                                                        value={debtFilters.status}
+                                                        onChange={(e) => handleDebtFilterChange('status', e.target.value)}
+                                                    >
+                                                        <option value="">All Status</option>
+                                                        <option value="OPEN">Open</option>
+                                                        <option value="CLOSED">Closed</option>
+                                                    </Select>
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor="debt-type-filter" value="Type" className="mb-2" />
+                                                    <Select
+                                                        id="debt-type-filter"
+                                                        value={debtFilters.type}
+                                                        onChange={(e) => handleDebtFilterChange('type', e.target.value)}
+                                                    >
+                                                        <option value="">All Types</option>
+                                                        <option value="OWED_TO_OFFICE">We Owe Them</option>
+                                                        <option value="OWED_FROM_OFFICE">They Owe Us</option>
+                                                    </Select>
+                                                </div>
+                                                <div className="flex items-end">
+                                                    <CustomButton
+                                                        variant="red"
+                                                        onClick={clearDebtFilters}
+                                                        disabled={!hasDebtFiltersApplied()}
+                                                        className="w-full"
+                                                        title={hasDebtFiltersApplied() ? "Clear all debt filters" : "No filters to clear"}
+                                                        icon={HiX}
+                                                    >
+                                                        Clear Filters
+                                                    </CustomButton>
+                                                </div>
+                                                <div className="flex items-end">
+                                                    <CustomButton
+                                                        variant="blue"
+                                                        onClick={fetchDebts}
+                                                        disabled={debtLoading}
+                                                        className="w-full"
+                                                        title="Refresh debt data"
+                                                    >
+                                                        {debtLoading ? 'Loading...' : 'Refresh Debts'}
+                                                    </CustomButton>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Debt Table */}
+                                        {debtLoading ? (
+                                            <div className="py-8">
+                                                <RahalatekLoader size="lg" />
+                                            </div>
+                                        ) : debts.length > 0 ? (
+                                            <div className="overflow-x-auto">
+                                                <Table striped>
+                                                    <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Amount</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Type</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Description</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Due Date</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
+                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
+                                                    </Table.Head>
+                                                    <Table.Body>
+                                                        {debts.map((debt) => (
+                                                            <Table.Row key={debt._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    {debt.officeName}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm px-4 py-3">
+                                                                    <span className={`font-medium ${
+                                                                        debt.type === 'OWED_TO_OFFICE' 
+                                                                            ? 'text-red-600 dark:text-red-400' 
+                                                                            : 'text-green-600 dark:text-green-400'
+                                                                    }`}>
+                                                                        {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
+                                                                    </span>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm px-4 py-3">
+                                                                    <span 
+                                                                        className={`
+                                                                            inline-flex items-center justify-center rounded-lg 
+                                                                            ${debt.type === 'OWED_TO_OFFICE' 
+                                                                                ? 'bg-red-500 text-white border border-red-600 shadow-md' 
+                                                                                : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                            }
+                                                                            text-[11px] px-2 py-0.5 font-semibold
+                                                                            transition-all duration-200 
+                                                                            hover:scale-105 hover:shadow-lg
+                                                                            min-w-16
+                                                                        `}
+                                                                    >
+                                                                        {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
+                                                                    </span>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[200px]">
+                                                                    <div className="truncate" title={debt.description}>
+                                                                        {debt.description || 'N/A'}
+                                                                    </div>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="px-4 py-3">
+                                                                    <span 
+                                                                        className={`
+                                                                            inline-flex items-center justify-center rounded-lg 
+                                                                            ${debt.status === 'OPEN' 
+                                                                                ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
+                                                                                : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                            }
+                                                                            text-[11px] px-2 py-0.5 font-semibold
+                                                                            transition-all duration-200 
+                                                                            hover:scale-105 hover:shadow-lg
+                                                                            min-w-16
+                                                                        `}
+                                                                    >
+                                                                        {debt.status}
+                                                                    </span>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    {new Date(debt.createdAt).toLocaleDateString()}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="px-4 py-3">
+                                                                    <div className="flex space-x-2">
+                                                                        {debt.status === 'OPEN' && (
+                                                                            <>
+                                                                                <CustomButton
+                                                                                    variant="purple"
+                                                                                    size="xs"
+                                                                                    onClick={() => openDebtModal(debt)}
+                                                                                    title="Edit debt"
+                                                                                >
+                                                                                    Edit
+                                                                                </CustomButton>
+                                                                                <CustomButton
+                                                                                    variant="green"
+                                                                                    size="xs"
+                                                                                    onClick={() => handleCloseDebt(debt._id)}
+                                                                                    title="Mark as paid/closed"
+                                                                                >
+                                                                                    Close
+                                                                                </CustomButton>
+                                                                            </>
+                                                                        )}
+                                                                        {isAdmin && (
+                                                                            <CustomButton
+                                                                                variant="red"
+                                                                                size="xs"
+                                                                                onClick={() => handleDeleteDebt(debt._id)}
+                                                                                title="Delete debt"
+                                                                            >
+                                                                                Delete
+                                                                            </CustomButton>
+                                                                        )}
+                                                                    </div>
+                                                                </Table.Cell>
+                                                            </Table.Row>
+                                                        ))}
+                                                    </Table.Body>
+                                                </Table>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <p className="text-lg font-medium">No debts found</p>
+                                                <p className="text-sm">Create debt records to track financial obligations with offices.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                                </Card>
+                            )}
+
                             {activeTab === 'users' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-900" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">User Management</h2>
@@ -2997,6 +4475,139 @@ export default function AdminPanel() {
                                             </CustomButton>
                                         </div>
                                     </div>
+                                </Modal.Body>
+                            </Modal>
+
+                            {/* Debt Modal */}
+                            <Modal
+                                show={showDebtModal}
+                                onClose={() => setShowDebtModal(false)}
+                                size="lg"
+                                popup
+                                theme={{
+                                    content: {
+                                        base: "relative h-full w-full p-4 h-auto",
+                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
+                                    }
+                                }}
+                            >
+                                <Modal.Header>
+                                    <div className="text-center">
+                                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+                                            {editingDebt ? 'Edit Debt' : 'Add New Debt'}
+                                        </h3>
+                                    </div>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <form onSubmit={handleDebtSubmit} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="debt-office" value="Office" className="mb-2" />
+                                                <Select
+                                                    id="debt-office"
+                                                    value={debtForm.officeName}
+                                                    onChange={(e) => setDebtForm({ ...debtForm, officeName: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="">Select an office</option>
+                                                    {offices.map(office => (
+                                                        <option key={office._id} value={office.name}>
+                                                            {office.name}
+                                                        </option>
+                                                    ))}
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="debt-type" value="Debt Type" className="mb-2" />
+                                                <Select
+                                                    id="debt-type"
+                                                    value={debtForm.type}
+                                                    onChange={(e) => setDebtForm({ ...debtForm, type: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="OWED_TO_OFFICE">We Owe Them</option>
+                                                    <option value="OWED_FROM_OFFICE">They Owe Us</option>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label htmlFor="debt-amount" value="Amount" className="mb-2" />
+                                                <TextInput
+                                                    id="debt-amount"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={debtForm.amount}
+                                                    onChange={(e) => setDebtForm({ ...debtForm, amount: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="debt-currency" value="Currency" className="mb-2" />
+                                                <Select
+                                                    id="debt-currency"
+                                                    value={debtForm.currency}
+                                                    onChange={(e) => setDebtForm({ ...debtForm, currency: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="USD">USD ($)</option>
+                                                    <option value="EUR">EUR (€)</option>
+                                                    <option value="TRY">TRY (₺)</option>
+                                                </Select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="debt-description" value="Description" className="mb-2" />
+                                            <TextInput
+                                                id="debt-description"
+                                                value={debtForm.description}
+                                                onChange={(e) => setDebtForm({ ...debtForm, description: e.target.value })}
+                                                placeholder="Brief description of the debt"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="debt-due-date" value="Due Date (Optional)" className="mb-2" />
+                                            <TextInput
+                                                id="debt-due-date"
+                                                type="date"
+                                                value={debtForm.dueDate}
+                                                onChange={(e) => setDebtForm({ ...debtForm, dueDate: e.target.value })}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="debt-notes" value="Notes (Optional)" className="mb-2" />
+                                            <Textarea
+                                                id="debt-notes"
+                                                rows={3}
+                                                value={debtForm.notes}
+                                                onChange={(e) => setDebtForm({ ...debtForm, notes: e.target.value })}
+                                                placeholder="Additional notes about this debt"
+                                            />
+                                        </div>
+
+                                        <div className="flex justify-end gap-3 pt-4">
+                                            <CustomButton
+                                                variant="gray"
+                                                onClick={() => setShowDebtModal(false)}
+                                                disabled={debtLoading}
+                                            >
+                                                Cancel
+                                            </CustomButton>
+                                            <CustomButton
+                                                type="submit"
+                                                variant="green"
+                                                disabled={debtLoading}
+                                                icon={editingDebt ? null : HiPlus}
+                                            >
+                                                {debtLoading ? 'Saving...' : (editingDebt ? 'Update Debt' : 'Create Debt')}
+                                            </CustomButton>
+                                        </div>
+                                    </form>
                                 </Modal.Body>
                             </Modal>
                         </div>

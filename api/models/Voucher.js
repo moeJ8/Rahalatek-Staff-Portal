@@ -82,6 +82,48 @@ const voucherSchema = new mongoose.Schema({
         arrivalDate: Date,
         luggage: String
     }],
+    payments: {
+        hotels: {
+            officeName: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            }
+        },
+        transfers: {
+            officeName: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            }
+        },
+        trips: {
+            officeName: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            }
+        },
+        flights: {
+            officeName: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            }
+        }
+    },
     note: {
         type: String,
         default: ''
@@ -101,6 +143,10 @@ const voucherSchema = new mongoose.Schema({
     remainingAmount: {
         type: Number,
         default: 0
+    },
+    paymentDate: {
+        type: Date,
+        default: null
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

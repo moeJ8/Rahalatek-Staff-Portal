@@ -63,6 +63,24 @@ export default function VoucherForm({ onSuccess }) {
       arrivalDate: '',
       luggage: ''
     }],
+    payments: {
+      hotels: {
+        officeName: '',
+        price: 0
+      },
+      transfers: {
+        officeName: '',
+        price: 0
+      },
+      trips: {
+        officeName: '',
+        price: 0
+      },
+      flights: {
+        officeName: '',
+        price: 0
+      }
+    },
     note: '',
     totalAmount: 0,
     currency: 'USD',
@@ -88,6 +106,7 @@ export default function VoucherForm({ onSuccess }) {
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [cities, setCities] = useState([]);
+  const [offices, setOffices] = useState([]);
 
   // Duplicate voucher functionality
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -162,6 +181,24 @@ export default function VoucherForm({ onSuccess }) {
           departureDate: flight.departureDate ? new Date(flight.departureDate).toISOString().split('T')[0] : '',
           arrivalDate: flight.arrivalDate ? new Date(flight.arrivalDate).toISOString().split('T')[0] : ''
         })) : [],
+        payments: {
+          hotels: {
+            officeName: voucherToDuplicate.payments?.hotels?.officeName || '',
+            price: voucherToDuplicate.payments?.hotels?.price || 0
+          },
+          transfers: {
+            officeName: voucherToDuplicate.payments?.transfers?.officeName || '',
+            price: voucherToDuplicate.payments?.transfers?.price || 0
+          },
+          trips: {
+            officeName: voucherToDuplicate.payments?.trips?.officeName || '',
+            price: voucherToDuplicate.payments?.trips?.price || 0
+          },
+          flights: {
+            officeName: voucherToDuplicate.payments?.flights?.officeName || '',
+            price: voucherToDuplicate.payments?.flights?.price || 0
+          }
+        },
         note: voucherToDuplicate.note || '',
         totalAmount: voucherToDuplicate.totalAmount || 0,
         currency: voucherToDuplicate.currency || 'USD',
@@ -245,13 +282,15 @@ export default function VoucherForm({ onSuccess }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [hotelResponse, tourResponse] = await Promise.all([
+        const [hotelResponse, tourResponse, officeResponse] = await Promise.all([
           axios.get('/api/hotels'),
-          axios.get('/api/tours')
+          axios.get('/api/tours'),
+          axios.get('/api/offices')
         ]);
         
         setHotels(hotelResponse.data);
         setTours(tourResponse.data);
+        setOffices(officeResponse.data.data);
         
         // Extract unique cities
         const uniqueCities = [...new Set([
@@ -826,12 +865,45 @@ export default function VoucherForm({ onSuccess }) {
 
   const updateFlightDate = (index, dateType, isoDate) => {
     const updatedFlights = [...formData.flights];
-    updatedFlights[index][dateType] = isoDate;
-    setFormData({
-      ...formData,
-      flights: updatedFlights
-    });
+    updatedFlights[index] = {
+      ...updatedFlights[index],
+      [dateType]: isoDate
+    };
+    setFormData({ ...formData, flights: updatedFlights });
   };
+
+  // Payment handler functions
+  const handlePaymentChange = (section, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      payments: {
+        ...prev.payments,
+        [section]: {
+          ...prev.payments[section],
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  // Auto-calculate capital from payment prices
+  useEffect(() => {
+    const totalPayments = 
+      Number(formData.payments?.hotels?.price || 0) +
+      Number(formData.payments?.transfers?.price || 0) +
+      Number(formData.payments?.trips?.price || 0) +
+      Number(formData.payments?.flights?.price || 0);
+    
+    setFormData(prev => ({
+      ...prev,
+      capital: totalPayments.toString()
+    }));
+  }, [
+    formData.payments?.hotels?.price,
+    formData.payments?.transfers?.price,
+    formData.payments?.trips?.price,
+    formData.payments?.flights?.price
+  ]);
 
   // Preview and submit handlers
   const handlePreview = async () => {
@@ -947,6 +1019,24 @@ export default function VoucherForm({ onSuccess }) {
         transfers: formData.transfers,
         trips: formattedTrips,
         flights: formData.flights,
+        payments: {
+          hotels: {
+            officeName: formData.payments?.hotels?.officeName || '',
+            price: Number(formData.payments?.hotels?.price) || 0
+          },
+          transfers: {
+            officeName: formData.payments?.transfers?.officeName || '',
+            price: Number(formData.payments?.transfers?.price) || 0
+          },
+          trips: {
+            officeName: formData.payments?.trips?.officeName || '',
+            price: Number(formData.payments?.trips?.price) || 0
+          },
+          flights: {
+            officeName: formData.payments?.flights?.officeName || '',
+            price: Number(formData.payments?.flights?.price) || 0
+          }
+        },
         note: formData.note,
         advancedPayment: formData.advancedPayment,
         advancedAmount: formData.advancedPayment ? Number(formData.advancedAmount) : 0,
@@ -1063,14 +1153,21 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 <div>
-                  <Label htmlFor="officeName" value="Office Name" className="mb-2 block" />
-                  <TextInput
+                  <Label htmlFor="officeName" value="Office" className="mb-2 block" />
+                  <Select
                     id="officeName"
                     name="officeName"
                     value={formData.officeName}
                     onChange={handleInputChange}
                     required
-                  />
+                  >
+                    <option value="">Select Office</option>
+                    {offices.map(office => (
+                      <option key={office._id} value={office.name}>
+                        {office.name} - {office.location}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
                 
                 <div>
@@ -1997,6 +2094,165 @@ export default function VoucherForm({ onSuccess }) {
                     </div>
                   </div>
                 ))}
+              </div>
+              
+              {/* Payment Section */}
+              <div className="mt-6 mb-6">
+                <div className="mb-3">
+                  <h3 className="text-xl font-semibold dark:text-white">Payment Distribution</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Assign payment amounts to different offices. Total will be calculated as capital.
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+                  {/* Hotels Payment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label value="Hotels - Office" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
+                      <Select
+                        value={formData.payments.hotels.officeName}
+                        onChange={(e) => handlePaymentChange('hotels', 'officeName', e.target.value)}
+                      >
+                        <option value="">Select Office for Hotels</option>
+                        {offices.map(office => (
+                          <option key={office._id} value={office.name}>
+                            {office.name} - {office.location}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <Label value="Hotels - Price" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
+                      <div className="flex">
+                        <TextInput
+                          type="number"
+                          value={formData.payments.hotels.price}
+                          onChange={(e) => handlePaymentChange('hotels', 'price', e.target.value)}
+                          placeholder="0"
+                          className="flex-grow"
+                        />
+                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transfers Payment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label value="Transfers - Office" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
+                      <Select
+                        value={formData.payments.transfers.officeName}
+                        onChange={(e) => handlePaymentChange('transfers', 'officeName', e.target.value)}
+                      >
+                        <option value="">Select Office for Transfers</option>
+                        {offices.map(office => (
+                          <option key={office._id} value={office.name}>
+                            {office.name} - {office.location}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <Label value="Transfers - Price" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
+                      <div className="flex">
+                        <TextInput
+                          type="number"
+                          value={formData.payments.transfers.price}
+                          onChange={(e) => handlePaymentChange('transfers', 'price', e.target.value)}
+                          placeholder="0"
+                          className="flex-grow"
+                        />
+                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Trips Payment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label value="Trips - Office" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
+                      <Select
+                        value={formData.payments.trips.officeName}
+                        onChange={(e) => handlePaymentChange('trips', 'officeName', e.target.value)}
+                      >
+                        <option value="">Select Office for Trips</option>
+                        {offices.map(office => (
+                          <option key={office._id} value={office.name}>
+                            {office.name} - {office.location}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <Label value="Trips - Price" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
+                      <div className="flex">
+                        <TextInput
+                          type="number"
+                          value={formData.payments.trips.price}
+                          onChange={(e) => handlePaymentChange('trips', 'price', e.target.value)}
+                          placeholder="0"
+                          className="flex-grow"
+                        />
+                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Flights Payment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label value="Flights - Office" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
+                      <Select
+                        value={formData.payments.flights.officeName}
+                        onChange={(e) => handlePaymentChange('flights', 'officeName', e.target.value)}
+                      >
+                        <option value="">Select Office for Flights</option>
+                        {offices.map(office => (
+                          <option key={office._id} value={office.name}>
+                            {office.name} - {office.location}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <Label value="Flights - Price" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
+                      <div className="flex">
+                        <TextInput
+                          type="number"
+                          value={formData.payments.flights.price}
+                          onChange={(e) => handlePaymentChange('flights', 'price', e.target.value)}
+                          placeholder="0"
+                          className="flex-grow"
+                        />
+                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Total Display */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex justify-between items-center">
+                      <Label value="Total Capital" className="text-lg font-semibold text-gray-800 dark:text-gray-200" />
+                      <div className="flex items-center">
+                        <span className="text-xl font-bold text-blue-600 dark:text-blue-400 mr-1">
+                          {formData.capital || '0'}
+                        </span>
+                        <span className="text-lg text-gray-600 dark:text-gray-400">
+                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div className="flex justify-end mt-6">
