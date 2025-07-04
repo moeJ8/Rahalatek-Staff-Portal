@@ -58,14 +58,6 @@ export default function VouchersPage() {
     return `${baseClass} text-green-600 dark:text-green-400`;
   };
 
-  useEffect(() => {
-    // Check if the current user is an admin or accountant
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    setIsAdmin(user.isAdmin || false);
-    setIsAccountant(user.isAccountant || false);
-    setCurrentUserId(user.id || null);
-  }, []);
-
   // Fetch all users for the created by dropdown (admin only)
   const fetchAllUsers = async () => {
     try {
@@ -94,6 +86,31 @@ export default function VouchersPage() {
       console.error('Error fetching users:', error);
     }
   };
+
+  // Initialize user info and fetch data
+  useEffect(() => {
+    const initializeUserAndFetchData = async () => {
+      // Check if the current user is an admin or accountant
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userIsAdmin = user.isAdmin || false;
+      const userIsAccountant = user.isAccountant || false;
+      const userId = user.id || null;
+      
+      setIsAdmin(userIsAdmin);
+      setIsAccountant(userIsAccountant);
+      setCurrentUserId(userId);
+
+      // Now fetch vouchers with the correct user info
+      await fetchVouchers(userIsAdmin, userIsAccountant, userId);
+      
+      // Fetch all users if admin (for created by dropdown)
+      if (userIsAdmin) {
+        fetchAllUsers();
+      }
+    };
+
+    initializeUserAndFetchData();
+  }, []);
 
   const handleCreatedByUpdate = async (voucherId, newCreatedBy) => {
     try {
@@ -163,16 +180,25 @@ export default function VouchersPage() {
     return isAdmin && !isAccountant;
   };
 
-  const fetchVouchers = async () => {
+  const fetchVouchers = async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
     setLoading(true);
     try {
       const response = await getAllVouchers();
       
-      setVouchers(response.data);
-      setFilteredVouchers(response.data);
+      let vouchersToShow = response.data;
+      
+      // Apply role-based filtering: normal users can only see their own vouchers
+      if (!userIsAdmin && !userIsAccountant && userId) {
+        vouchersToShow = response.data.filter(voucher => 
+          voucher.createdBy && voucher.createdBy._id === userId
+        );
+      }
+      
+      setVouchers(vouchersToShow);
+      setFilteredVouchers(vouchersToShow);
       
       // Extract unique users for filter dropdown
-      const users = response.data
+      const users = vouchersToShow
         .filter(voucher => voucher.createdBy && voucher.createdBy.username)
         .map(voucher => voucher.createdBy)
         .filter((user, index, arr) => 
@@ -238,13 +264,7 @@ export default function VouchersPage() {
     }
   };
 
-  useEffect(() => {
-    fetchVouchers();
-    // Fetch all users if admin (for created by dropdown)
-    if (isAdmin) {
-      fetchAllUsers();
-    }
-  }, [isAdmin]);
+
 
   // Helper function to check if a date falls within a range
   const isDateInRange = (dateString, range, customDateValue = null) => {

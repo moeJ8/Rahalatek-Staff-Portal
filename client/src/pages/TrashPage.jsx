@@ -28,6 +28,7 @@ export default function TrashPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAccountant, setIsAccountant] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Helper function to get currency symbol
   const getCurrencySymbol = (currency) => {
@@ -49,11 +50,24 @@ export default function TrashPage() {
     return `${baseClass} text-green-600 dark:text-green-400`;
   };
 
+  // Initialize user info and fetch data
   useEffect(() => {
-    // Check if the current user is an admin or accountant
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    setIsAdmin(user.isAdmin || false);
-    setIsAccountant(user.isAccountant || false);
+    const initializeUserAndFetchData = async () => {
+      // Check if the current user is an admin or accountant
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userIsAdmin = user.isAdmin || false;
+      const userIsAccountant = user.isAccountant || false;
+      const userId = user.id || null;
+      
+      setIsAdmin(userIsAdmin);
+      setIsAccountant(userIsAccountant);
+      setCurrentUserId(userId);
+
+      // Now fetch trashed vouchers with the correct user info
+      await fetchTrashedVouchers(userIsAdmin, userIsAccountant, userId);
+    };
+
+    initializeUserAndFetchData();
   }, []);
 
   // Simple helper function to check if user can manage a voucher
@@ -63,7 +77,7 @@ export default function TrashPage() {
     return isAdmin && !isAccountant;
   };
 
-  const fetchTrashedVouchers = async () => {
+  const fetchTrashedVouchers = async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -73,11 +87,20 @@ export default function TrashPage() {
         }
       });
       
-      setTrashedVouchers(response.data.data);
-      setFilteredVouchers(response.data.data);
+      let vouchersToShow = response.data.data;
+      
+      // Apply role-based filtering: normal users can only see their own vouchers
+      if (!userIsAdmin && !userIsAccountant && userId) {
+        vouchersToShow = response.data.data.filter(voucher => 
+          voucher.createdBy && voucher.createdBy._id === userId
+        );
+      }
+      
+      setTrashedVouchers(vouchersToShow);
+      setFilteredVouchers(vouchersToShow);
       
       // Extract unique users for filter dropdown
-      const users = response.data.data
+      const users = vouchersToShow
         .filter(voucher => voucher.createdBy && voucher.createdBy.username)
         .map(voucher => voucher.createdBy)
         .filter((user, index, arr) => 
@@ -95,9 +118,7 @@ export default function TrashPage() {
     }
   };
 
-  useEffect(() => {
-    fetchTrashedVouchers();
-  }, []);
+
 
   // Helper function to check if a date falls within a range
   const isDateInRange = (dateString, range, customDateValue = null) => {
