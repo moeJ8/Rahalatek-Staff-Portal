@@ -41,6 +41,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [showLogo, setShowLogo] = useState(() => getInitialVisibility('logo'));
   const [showAddress, setShowAddress] = useState(() => getInitialVisibility('address'));
   const [showNumber, setShowNumber] = useState(() => getInitialVisibility('number'));
+  const [showContact, setShowContact] = useState(() => getInitialVisibility('contact'));
 
   const saveVisibilityState = (section, value) => {
     localStorage.setItem(getStorageKey(section), JSON.stringify(value));
@@ -79,6 +80,11 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const setShowNumberWithStorage = (value) => {
     setShowNumber(value);
     saveVisibilityState('number', value);
+  };
+
+  const setShowContactWithStorage = (value) => {
+    setShowContact(value);
+    saveVisibilityState('contact', value);
   };
   
   const [reorderedHotels, setReorderedHotels] = useState([]);
@@ -168,17 +174,19 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   };
 
   // Determine if all header elements are visible
-  const allHeaderElementsVisible = showLogo && showAddress && showNumber;
+  const allHeaderElementsVisible = showLogo && showAddress && showNumber && showContact;
   
   const toggleAllHeaderElements = () => {
     if (allHeaderElementsVisible) {
       setShowLogoWithStorage(false);
       setShowAddressWithStorage(false);
       setShowNumberWithStorage(false);
+      setShowContactWithStorage(false);
     } else {
       setShowLogoWithStorage(true);
       setShowAddressWithStorage(true);
       setShowNumberWithStorage(true);
+      setShowContactWithStorage(true);
     }
   };
   
@@ -968,9 +976,16 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       contactSection.appendChild(addressDiv);
     }
 
-    contactSection.appendChild(phoneDiv);
-    contactSection.appendChild(emailDiv);
-    container.appendChild(contactSection);
+    // Only add contact info if showContact is true
+    if (showContact) {
+      contactSection.appendChild(phoneDiv);
+      contactSection.appendChild(emailDiv);
+    }
+    
+    // Only add contact section if it has content
+    if (contactSection.children.length > 0) {
+      container.appendChild(contactSection);
+    }
     
     // Footer (conditionally included)
     if (showNumber) {
@@ -1200,6 +1215,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               className="w-auto"
             >
               Address
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showContact ? "green" : "gray"}
+              onClick={() => setShowContactWithStorage(!showContact)}
+              icon={showContact ? FaEye : FaEyeSlash}
+              className="w-auto"
+            >
+              Contact
             </CustomButton>
             <CustomButton 
               size="xs" 
@@ -1623,14 +1647,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         
         {/* Contact Info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ display: showContact ? 'flex' : 'none' }}>
             <span className="text-2xl">📱</span>
             <div>
               <div className="text-sm text-gray-500">Phone</div>
               <div className="text-sm">+90 553 924 1644</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ display: showContact ? 'flex' : 'none' }}>
             <span className="text-2xl">✉️</span>
             <div>
               <div className="text-sm text-gray-500">Email</div>

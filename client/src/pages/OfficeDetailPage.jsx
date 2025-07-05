@@ -315,7 +315,13 @@ const OfficeDetailPage = () => {
                                         return (
                                             <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                                                 <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                    #{voucher.voucherNumber}
+                                                    <button
+                                                        onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
+                                                        title="View voucher details"
+                                                    >
+                                                        #{voucher.voucherNumber}
+                                                    </button>
                                                 </Table.Cell>
                                                 <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                                                     {voucher.clientName}
