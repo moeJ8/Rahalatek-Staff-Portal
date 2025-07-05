@@ -38,6 +38,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [showTransfers, setShowTransfers] = useState(() => getInitialVisibility('transfers'));
   const [showTrips, setShowTrips] = useState(() => getInitialVisibility('trips'));
   const [showFlights, setShowFlights] = useState(() => getInitialVisibility('flights'));
+  const [showLogo, setShowLogo] = useState(() => getInitialVisibility('logo'));
+  const [showAddress, setShowAddress] = useState(() => getInitialVisibility('address'));
+  const [showNumber, setShowNumber] = useState(() => getInitialVisibility('number'));
 
   const saveVisibilityState = (section, value) => {
     localStorage.setItem(getStorageKey(section), JSON.stringify(value));
@@ -61,6 +64,21 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const setShowFlightsWithStorage = (value) => {
     setShowFlights(value);
     saveVisibilityState('flights', value);
+  };
+
+  const setShowLogoWithStorage = (value) => {
+    setShowLogo(value);
+    saveVisibilityState('logo', value);
+  };
+
+  const setShowAddressWithStorage = (value) => {
+    setShowAddress(value);
+    saveVisibilityState('address', value);
+  };
+
+  const setShowNumberWithStorage = (value) => {
+    setShowNumber(value);
+    saveVisibilityState('number', value);
   };
   
   const [reorderedHotels, setReorderedHotels] = useState([]);
@@ -148,6 +166,21 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setShowFlightsWithStorage(true);
     }
   };
+
+  // Determine if all header elements are visible
+  const allHeaderElementsVisible = showLogo && showAddress && showNumber;
+  
+  const toggleAllHeaderElements = () => {
+    if (allHeaderElementsVisible) {
+      setShowLogoWithStorage(false);
+      setShowAddressWithStorage(false);
+      setShowNumberWithStorage(false);
+    } else {
+      setShowLogoWithStorage(true);
+      setShowAddressWithStorage(true);
+      setShowNumberWithStorage(true);
+    }
+  };
   
   useEffect(() => {
     const img = new Image();
@@ -185,40 +218,42 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     header.style.paddingBottom = '10px';
     header.style.borderBottom = '2px solid #e5efff';
     
-    // Logo container
-    const logoContainer = document.createElement('div');
-    logoContainer.style.display = 'flex';
-    logoContainer.style.alignItems = 'center';
-    
-    // If we have the logo data URL, use it
-    if (logoDataUrl) {
-      const logoImg = document.createElement('img');
-      logoImg.src = logoDataUrl;
-      logoImg.style.height = '60px';
-      logoImg.style.marginRight = '15px';
-      logoContainer.appendChild(logoImg);
+    // Logo container (conditionally included)
+    if (showLogo) {
+      const logoContainer = document.createElement('div');
+      logoContainer.style.display = 'flex';
+      logoContainer.style.alignItems = 'center';
+      
+      // If we have the logo data URL, use it
+      if (logoDataUrl) {
+        const logoImg = document.createElement('img');
+        logoImg.src = logoDataUrl;
+        logoImg.style.height = '60px';
+        logoImg.style.marginRight = '15px';
+        logoContainer.appendChild(logoImg);
+      }
+      
+      // Logo text
+      const titleContainer = document.createElement('div');
+      
+      const companyTitle = document.createElement('div');
+      companyTitle.textContent = 'RAHALATEK';
+      companyTitle.style.color = '#1e40af';
+      companyTitle.style.fontSize = '28px';
+      companyTitle.style.fontWeight = 'bold';
+      companyTitle.style.lineHeight = '1.2';
+      
+      const companySubtitle = document.createElement('div');
+      companySubtitle.textContent = 'TOURISM';
+      companySubtitle.style.color = '#3b82f6';
+      companySubtitle.style.fontSize = '18px';
+      
+      titleContainer.appendChild(companyTitle);
+      titleContainer.appendChild(companySubtitle);
+      logoContainer.appendChild(titleContainer);
+      
+      header.appendChild(logoContainer);
     }
-    
-    // Logo text
-    const titleContainer = document.createElement('div');
-    
-    const companyTitle = document.createElement('div');
-    companyTitle.textContent = 'RAHALATEK';
-    companyTitle.style.color = '#1e40af';
-    companyTitle.style.fontSize = '28px';
-    companyTitle.style.fontWeight = 'bold';
-    companyTitle.style.lineHeight = '1.2';
-    
-    const companySubtitle = document.createElement('div');
-    companySubtitle.textContent = 'TOURISM';
-    companySubtitle.style.color = '#3b82f6';
-    companySubtitle.style.fontSize = '18px';
-    
-    titleContainer.appendChild(companyTitle);
-    titleContainer.appendChild(companySubtitle);
-    logoContainer.appendChild(titleContainer);
-    
-    header.appendChild(logoContainer);
     container.appendChild(header);
     
     // Client Info
@@ -263,14 +298,17 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       clientPhoneDiv.appendChild(document.createTextNode(voucherData.phoneNumber));
     }
     
-    // Booking Number under nationality/phone
-    const bookingDiv = document.createElement('div');
-    bookingDiv.style.marginTop = '4px';
-    const bookingLabel = document.createElement('span');
-    bookingLabel.textContent = 'Booking №: ';
-    bookingLabel.style.fontWeight = '600';
-    bookingDiv.appendChild(bookingLabel);
-    bookingDiv.appendChild(document.createTextNode(voucherData.voucherNumber || 10000));
+    // Booking Number under nationality/phone (conditionally included)
+    let bookingDiv;
+    if (showNumber) {
+      bookingDiv = document.createElement('div');
+      bookingDiv.style.marginTop = '4px';
+      const bookingLabel = document.createElement('span');
+      bookingLabel.textContent = 'Booking №: ';
+      bookingLabel.style.fontWeight = '600';
+      bookingDiv.appendChild(bookingLabel);
+      bookingDiv.appendChild(document.createTextNode(voucherData.voucherNumber || 10000));
+    }
     
     // Client container
     const clientContainer = document.createElement('div');
@@ -292,7 +330,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     if (clientPhoneDiv) {
       clientContainer.appendChild(clientPhoneDiv);
     }
-    clientContainer.appendChild(bookingDiv);
+    if (bookingDiv) {
+      clientContainer.appendChild(bookingDiv);
+    }
     
     // Dates
     const datesDiv = document.createElement('div');
@@ -898,46 +938,51 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     emailDiv.appendChild(emailIcon);
     emailDiv.appendChild(emailInfo);
     
-    // Address
-    const addressDiv = document.createElement('div');
-    addressDiv.style.display = 'flex';
-    addressDiv.style.alignItems = 'center';
-    addressDiv.style.gap = '10px';
-    
-    const addressIcon = document.createElement('span');
-    addressIcon.textContent = '📍';
-    addressIcon.style.fontSize = '20px';
-    
-    const addressInfo = document.createElement('div');
-    
-    const addressLabel = document.createElement('div');
-    addressLabel.textContent = 'Address';
-    addressLabel.style.fontSize = '12px';
-    addressLabel.style.color = '#6b7280';
-    
-    const addressText = document.createElement('div');
-    addressText.textContent = 'Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye';
-    addressText.style.fontSize = '14px';
-    
-    addressInfo.appendChild(addressLabel);
-    addressInfo.appendChild(addressText);
-    addressDiv.appendChild(addressIcon);
-    addressDiv.appendChild(addressInfo);
-    
+        // Address (conditionally included)
+    if (showAddress) {
+      const addressDiv = document.createElement('div');
+      addressDiv.style.display = 'flex';
+      addressDiv.style.alignItems = 'center';
+      addressDiv.style.gap = '10px';
+
+      const addressIcon = document.createElement('span');
+      addressIcon.textContent = '📍';
+      addressIcon.style.fontSize = '20px';
+
+      const addressInfo = document.createElement('div');
+
+      const addressLabel = document.createElement('div');
+      addressLabel.textContent = 'Address';
+      addressLabel.style.fontSize = '12px';
+      addressLabel.style.color = '#6b7280';
+
+      const addressText = document.createElement('div');
+      addressText.textContent = 'Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye';
+      addressText.style.fontSize = '14px';
+
+      addressInfo.appendChild(addressLabel);
+      addressInfo.appendChild(addressText);
+      addressDiv.appendChild(addressIcon);
+      addressDiv.appendChild(addressInfo);
+      
+      contactSection.appendChild(addressDiv);
+    }
+
     contactSection.appendChild(phoneDiv);
     contactSection.appendChild(emailDiv);
-    contactSection.appendChild(addressDiv);
     container.appendChild(contactSection);
     
-    // Footer
-    const footer = document.createElement('div');
-    footer.style.textAlign = 'center';
-    footer.style.color = '#1e40af';
-    footer.style.fontWeight = 'bold';
-    footer.style.borderTop = '2px solid #e5efff';
-    footer.style.paddingTop = '15px';
-    footer.textContent = `Voucher #${voucherData.voucherNumber || 10000}`;
-    container.appendChild(footer);
+    // Footer (conditionally included)
+    if (showNumber) {
+      const footer = document.createElement('div');
+      footer.style.textAlign = 'center';
+      footer.style.color = '#1e40af';
+      footer.style.fontWeight = 'bold';
+      footer.style.borderTop = '2px solid #e5efff';
+      footer.style.paddingTop = '15px';
+      footer.textContent = `Voucher #${voucherData.voucherNumber || 10000}`;
+      container.appendChild(footer);
+    }
     
     // Add to body temporarily for rendering
     document.body.appendChild(container);
@@ -1126,59 +1171,102 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       {/* Section Visibility Controls */}
       <div className="bg-gray-100 dark:bg-slate-900 p-3 rounded-lg mb-4">
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
-          <CustomButton 
-            size="xs" 
-            variant={showHotels ? "green" : "gray"}
-            onClick={() => setShowHotelsWithStorage(!showHotels)}
-            icon={showHotels ? FaEye : FaEyeSlash}
-            className="w-full sm:w-auto"
-          >
-            Hotels
-          </CustomButton>
-          <CustomButton 
-            size="xs" 
-            variant={showTransfers ? "green" : "gray"}
-            onClick={() => setShowTransfersWithStorage(!showTransfers)}
-            icon={showTransfers ? FaEye : FaEyeSlash}
-            className="w-full sm:w-auto"
-          >
-            Transfers
-          </CustomButton>
-          <CustomButton 
-            size="xs" 
-            variant={showTrips ? "green" : "gray"}
-            onClick={() => setShowTripsWithStorage(!showTrips)}
-            icon={showTrips ? FaEye : FaEyeSlash}
-            className="w-full sm:w-auto"
-          >
-            Trips
-          </CustomButton>
-          <CustomButton 
-            size="xs" 
-            variant={showFlights ? "green" : "gray"}
-            onClick={() => setShowFlightsWithStorage(!showFlights)}
-            icon={showFlights ? FaEye : FaEyeSlash}
-            className="w-full sm:w-auto"
-          >
-            Flights
-          </CustomButton>
-          <CustomButton 
-            size="xs" 
-            variant={allSectionsVisible ? "gray" : "purple"}
-            onClick={toggleAllSections}
-            icon={allSectionsVisible ? FaEyeSlash : FaEye}
-            className="w-full sm:w-auto"
-          >
-            {allSectionsVisible ? 'Hide All' : 'Show All'}
-          </CustomButton>
+        <div className="space-y-2">
+          {/* Header Elements Controls */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <CustomButton 
+              size="xs" 
+              variant={showLogo ? "green" : "gray"}
+              onClick={() => setShowLogoWithStorage(!showLogo)}
+              icon={showLogo ? FaEye : FaEyeSlash}
+              className="w-auto"
+            >
+              Logo
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showNumber ? "green" : "gray"}
+              onClick={() => setShowNumberWithStorage(!showNumber)}
+              icon={showNumber ? FaEye : FaEyeSlash}
+              className="w-auto"
+            >
+              Number
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showAddress ? "green" : "gray"}
+              onClick={() => setShowAddressWithStorage(!showAddress)}
+              icon={showAddress ? FaEye : FaEyeSlash}
+              className="w-auto"
+            >
+              Address
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={allHeaderElementsVisible ? "gray" : "purple"}
+              onClick={toggleAllHeaderElements}
+              icon={allHeaderElementsVisible ? FaEyeSlash : FaEye}
+              className="w-auto"
+            >
+              {allHeaderElementsVisible ? 'Hide All' : 'Show All'}
+            </CustomButton>
+          </div>
+          
+          {/* Table Sections Controls */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2">
+            <CustomButton 
+              size="xs" 
+              variant={showHotels ? "green" : "gray"}
+              onClick={() => setShowHotelsWithStorage(!showHotels)}
+              icon={showHotels ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Hotels
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showTransfers ? "green" : "gray"}
+              onClick={() => setShowTransfersWithStorage(!showTransfers)}
+              icon={showTransfers ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Transfers
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showTrips ? "green" : "gray"}
+              onClick={() => setShowTripsWithStorage(!showTrips)}
+              icon={showTrips ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Trips
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={showFlights ? "green" : "gray"}
+              onClick={() => setShowFlightsWithStorage(!showFlights)}
+              icon={showFlights ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Flights
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
+              variant={allSectionsVisible ? "gray" : "purple"}
+              onClick={toggleAllSections}
+              icon={allSectionsVisible ? FaEyeSlash : FaEye}
+              className="w-full sm:w-auto"
+            >
+              {allSectionsVisible ? 'Hide All' : 'Show All'}
+            </CustomButton>
+          </div>
         </div>
       </div>
       
       <div className="bg-white p-4 md:p-8 rounded-lg shadow-lg max-w-full font-bold" ref={voucherRef}>
         {/* Voucher Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
-          <div className="flex items-center">
+          <div className="flex items-center" style={{ display: showLogo ? 'flex' : 'none' }}>
             <img 
               src="/Logolight.png" 
               alt="Rahalatek Tourism" 
@@ -1212,7 +1300,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                   <span className="font-semibold">Phone Number:</span> {voucherData.phoneNumber}
                 </div>
               )}
-              <div>
+              <div style={{ display: showNumber ? 'block' : 'none' }}>
                 <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
               </div>
               {voucherData.capital && (
@@ -1549,7 +1637,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               <div className="text-sm">rahalatek@gmail.com</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ display: showAddress ? 'flex' : 'none' }}>
             <span className="text-2xl">📍</span>
             <div>
               <div className="text-sm text-gray-500">Address</div>
@@ -1559,7 +1647,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         </div>
         
         {/* Footer */}
-        <div className="text-center text-blue-800 font-bold border-t-2 border-blue-200 pt-4">
+        <div className="text-center text-blue-800 font-bold border-t-2 border-blue-200 pt-4" style={{ display: showNumber ? 'block' : 'none' }}>
           Voucher #{voucherData.voucherNumber || 10000}
         </div>
       </div>

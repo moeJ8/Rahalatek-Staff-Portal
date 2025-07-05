@@ -95,6 +95,12 @@ export default function VoucherForm({ onSuccess }) {
   // Custom tour input state
   const [useCustomTour, setUseCustomTour] = useState([false]);
 
+  // Custom city input state for transfers
+  const [useCustomTransferCity, setUseCustomTransferCity] = useState([false]);
+
+  // Custom city input state for trips
+  const [useCustomTripCity, setUseCustomTripCity] = useState([false]);
+
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [generatedVoucher, setGeneratedVoucher] = useState(null);
@@ -529,6 +535,38 @@ export default function VoucherForm({ onSuccess }) {
     }
   };
 
+  // Toggle custom city input for transfers
+  const toggleCustomTransferCity = (index) => {
+    const newUseCustom = [...useCustomTransferCity];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomTransferCity(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedTransfers = [...formData.transfers];
+      updatedTransfers[index].city = '';
+      setFormData(prev => ({
+        ...prev,
+        transfers: updatedTransfers
+      }));
+    }
+  };
+
+  // Toggle custom city input for trips
+  const toggleCustomTripCity = (index) => {
+    const newUseCustom = [...useCustomTripCity];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomTripCity(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedTrips = [...formData.trips];
+      updatedTrips[index].city = '';
+      setFormData(prev => ({
+        ...prev,
+        trips: updatedTrips
+      }));
+    }
+  };
+
   // Helper function to format date for a specific hotel index
   const formatHotelDateForDisplay = (index, dateType) => {
     const date = formData.hotels[index][dateType];
@@ -579,6 +617,8 @@ export default function VoucherForm({ onSuccess }) {
         }
       ]
     });
+    
+    setUseCustomTransferCity(prev => [...prev, false]);
   };
 
   const handleRemoveTransfer = (index) => {
@@ -588,12 +628,17 @@ export default function VoucherForm({ onSuccess }) {
       ...formData,
       transfers: updatedTransfers
     });
+    
+    const updatedCustomCities = [...useCustomTransferCity];
+    updatedCustomCities.splice(index, 1);
+    setUseCustomTransferCity(updatedCustomCities);
   };
 
   const moveTransferUp = (index) => {
     if (index === 0) return;
     
     const updatedTransfers = [...formData.transfers];
+    const updatedCustomCities = [...useCustomTransferCity];
     
     // Store the original dates before swapping
     const currentDate = updatedTransfers[index].date;
@@ -601,6 +646,7 @@ export default function VoucherForm({ onSuccess }) {
     
     // Swap all transfer data
     [updatedTransfers[index], updatedTransfers[index - 1]] = [updatedTransfers[index - 1], updatedTransfers[index]];
+    [updatedCustomCities[index], updatedCustomCities[index - 1]] = [updatedCustomCities[index - 1], updatedCustomCities[index]];
     
     // Restore original dates to their positions
     updatedTransfers[index].date = currentDate;
@@ -610,12 +656,15 @@ export default function VoucherForm({ onSuccess }) {
       ...formData,
       transfers: updatedTransfers
     });
+    
+    setUseCustomTransferCity(updatedCustomCities);
   };
 
   const moveTransferDown = (index) => {
     if (index === formData.transfers.length - 1) return;
     
     const updatedTransfers = [...formData.transfers];
+    const updatedCustomCities = [...useCustomTransferCity];
     
     // Store the original dates before swapping
     const currentDate = updatedTransfers[index].date;
@@ -623,6 +672,7 @@ export default function VoucherForm({ onSuccess }) {
     
     // Swap all transfer data
     [updatedTransfers[index], updatedTransfers[index + 1]] = [updatedTransfers[index + 1], updatedTransfers[index]];
+    [updatedCustomCities[index], updatedCustomCities[index + 1]] = [updatedCustomCities[index + 1], updatedCustomCities[index]];
     
     // Restore original dates to their positions
     updatedTransfers[index].date = currentDate;
@@ -632,6 +682,8 @@ export default function VoucherForm({ onSuccess }) {
       ...formData,
       transfers: updatedTransfers
     });
+    
+    setUseCustomTransferCity(updatedCustomCities);
   };
 
   const handleTransferChange = (index, field, value) => {
@@ -677,6 +729,7 @@ export default function VoucherForm({ onSuccess }) {
     });
     
     setUseCustomTour(prev => [...prev, false]);
+    setUseCustomTripCity(prev => [...prev, false]);
   };
 
   const handleRemoveTrip = (index) => {
@@ -690,6 +743,10 @@ export default function VoucherForm({ onSuccess }) {
     const updatedCustomTours = [...useCustomTour];
     updatedCustomTours.splice(index, 1);
     setUseCustomTour(updatedCustomTours);
+    
+    const updatedCustomCities = [...useCustomTripCity];
+    updatedCustomCities.splice(index, 1);
+    setUseCustomTripCity(updatedCustomCities);
   };
 
   const moveTripUp = (index) => {
@@ -697,10 +754,12 @@ export default function VoucherForm({ onSuccess }) {
     
     const updatedTrips = [...formData.trips];
     const updatedCustomStates = [...useCustomTour];
+    const updatedCustomCities = [...useCustomTripCity];
     
     // Swap all trip data (no date preservation needed)
     [updatedTrips[index], updatedTrips[index - 1]] = [updatedTrips[index - 1], updatedTrips[index]];
     [updatedCustomStates[index], updatedCustomStates[index - 1]] = [updatedCustomStates[index - 1], updatedCustomStates[index]];
+    [updatedCustomCities[index], updatedCustomCities[index - 1]] = [updatedCustomCities[index - 1], updatedCustomCities[index]];
     
     setFormData({
       ...formData,
@@ -708,6 +767,7 @@ export default function VoucherForm({ onSuccess }) {
     });
     
     setUseCustomTour(updatedCustomStates);
+    setUseCustomTripCity(updatedCustomCities);
   };
 
   const moveTripDown = (index) => {
@@ -715,10 +775,12 @@ export default function VoucherForm({ onSuccess }) {
     
     const updatedTrips = [...formData.trips];
     const updatedCustomStates = [...useCustomTour];
+    const updatedCustomCities = [...useCustomTripCity];
     
     // Swap all trip data (no date preservation needed)
     [updatedTrips[index], updatedTrips[index + 1]] = [updatedTrips[index + 1], updatedTrips[index]];
     [updatedCustomStates[index], updatedCustomStates[index + 1]] = [updatedCustomStates[index + 1], updatedCustomStates[index]];
+    [updatedCustomCities[index], updatedCustomCities[index + 1]] = [updatedCustomCities[index + 1], updatedCustomCities[index]];
     
     setFormData({
       ...formData,
@@ -726,6 +788,7 @@ export default function VoucherForm({ onSuccess }) {
     });
     
     setUseCustomTour(updatedCustomStates);
+    setUseCustomTripCity(updatedCustomCities);
   };
 
   const handleTripChange = (index, field, value) => {
@@ -1154,20 +1217,18 @@ export default function VoucherForm({ onSuccess }) {
                 
                 <div>
                   <Label htmlFor="officeName" value="Office" className="mb-2 block" />
-                  <Select
+                  <SearchableSelect
                     id="officeName"
                     name="officeName"
                     value={formData.officeName}
-                    onChange={handleInputChange}
+                    onChange={(e) => setFormData({...formData, officeName: e.target.value})}
+                    options={offices.map(office => ({
+                      value: office.name,
+                      label: `${office.name} - ${office.location}`
+                    }))}
+                    placeholder="Search for an office..."
                     required
-                  >
-                    <option value="">Select Office</option>
-                    {offices.map(office => (
-                      <option key={office._id} value={office.name}>
-                        {office.name} - {office.location}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                 </div>
                 
                 <div>
@@ -1734,16 +1795,35 @@ export default function VoucherForm({ onSuccess }) {
                       </div>
                       
                       <div>
-                        <Label value="City" className="mb-2 block" />
-                        <Select
-                          value={transfer.city}
-                          onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
-                        >
-                          <option value="">Select a city</option>
-                          {cities.map((city, i) => (
-                            <option key={`transfer-city-opt-${i}`} value={city}>{city}</option>
-                          ))}
-                        </Select>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label value="City" className="block" />
+                          <div className="flex items-center">
+                            <Checkbox 
+                              id={`customTransferCity-${index}`}
+                              checked={useCustomTransferCity[index]}
+                              onChange={() => toggleCustomTransferCity(index)}
+                            />
+                            <Label htmlFor={`customTransferCity-${index}`} value="Custom City" className="ml-2 text-sm" />
+                          </div>
+                        </div>
+                        
+                        {useCustomTransferCity[index] ? (
+                          <TextInput
+                            value={transfer.city}
+                            onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
+                            placeholder="Enter city name"
+                          />
+                        ) : (
+                          <Select
+                            value={transfer.city}
+                            onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
+                          >
+                            <option value="">Select a city</option>
+                            {cities.map((city, i) => (
+                              <option key={`transfer-city-opt-${i}`} value={city}>{city}</option>
+                            ))}
+                          </Select>
+                        )}
                       </div>
                       
                       <div>
@@ -1847,16 +1927,35 @@ export default function VoucherForm({ onSuccess }) {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label value="City" className="mb-2 block" />
-                        <Select 
-                          value={trip.city} 
-                          onChange={(e) => handleTripChange(index, 'city', e.target.value)}
-                        >
-                          <option value="">Select City</option>
-                          {cities.map(city => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                        </Select>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label value="City" className="block" />
+                          <div className="flex items-center">
+                            <Checkbox 
+                              id={`customTripCity-${index}`}
+                              checked={useCustomTripCity[index]}
+                              onChange={() => toggleCustomTripCity(index)}
+                            />
+                            <Label htmlFor={`customTripCity-${index}`} value="Custom City" className="ml-2 text-sm" />
+                          </div>
+                        </div>
+                        
+                        {useCustomTripCity[index] ? (
+                          <TextInput
+                            value={trip.city}
+                            onChange={(e) => handleTripChange(index, 'city', e.target.value)}
+                            placeholder="Enter city name"
+                          />
+                        ) : (
+                          <Select 
+                            value={trip.city} 
+                            onChange={(e) => handleTripChange(index, 'city', e.target.value)}
+                          >
+                            <option value="">Select City</option>
+                            {cities.map(city => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </Select>
+                        )}
                       </div>
                       
                       <div>
@@ -2108,20 +2207,18 @@ export default function VoucherForm({ onSuccess }) {
                 <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
                   {/* Hotels Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label value="Hotels - Office" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
-                      <Select
-                        value={formData.payments.hotels.officeName}
-                        onChange={(e) => handlePaymentChange('hotels', 'officeName', e.target.value)}
-                      >
-                        <option value="">Select Office for Hotels</option>
-                        {offices.map(office => (
-                          <option key={office._id} value={office.name}>
-                            {office.name} - {office.location}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+                                    <div>
+                  <Label value="Hotels - Office" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
+                  <SearchableSelect
+                    value={formData.payments.hotels.officeName}
+                    onChange={(e) => handlePaymentChange('hotels', 'officeName', e.target.value)}
+                    options={offices.map(office => ({
+                      value: office.name,
+                      label: `${office.name} - ${office.location}`
+                    }))}
+                    placeholder="Search for an office..."
+                  />
+                </div>
                     <div>
                       <Label value="Hotels - Price" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
                       <div className="flex">
@@ -2131,6 +2228,7 @@ export default function VoucherForm({ onSuccess }) {
                           onChange={(e) => handlePaymentChange('hotels', 'price', e.target.value)}
                           placeholder="0"
                           className="flex-grow"
+                          disabled={!formData.payments.hotels.officeName}
                         />
                         <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                           {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
@@ -2141,20 +2239,18 @@ export default function VoucherForm({ onSuccess }) {
 
                   {/* Transfers Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label value="Transfers - Office" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
-                      <Select
-                        value={formData.payments.transfers.officeName}
-                        onChange={(e) => handlePaymentChange('transfers', 'officeName', e.target.value)}
-                      >
-                        <option value="">Select Office for Transfers</option>
-                        {offices.map(office => (
-                          <option key={office._id} value={office.name}>
-                            {office.name} - {office.location}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+                                    <div>
+                  <Label value="Transfers - Office" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
+                  <SearchableSelect
+                    value={formData.payments.transfers.officeName}
+                    onChange={(e) => handlePaymentChange('transfers', 'officeName', e.target.value)}
+                    options={offices.map(office => ({
+                      value: office.name,
+                      label: `${office.name} - ${office.location}`
+                    }))}
+                    placeholder="Search for an office..."
+                  />
+                </div>
                     <div>
                       <Label value="Transfers - Price" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
                       <div className="flex">
@@ -2164,6 +2260,7 @@ export default function VoucherForm({ onSuccess }) {
                           onChange={(e) => handlePaymentChange('transfers', 'price', e.target.value)}
                           placeholder="0"
                           className="flex-grow"
+                          disabled={!formData.payments.transfers.officeName}
                         />
                         <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                           {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
@@ -2174,20 +2271,18 @@ export default function VoucherForm({ onSuccess }) {
 
                   {/* Trips Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label value="Trips - Office" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
-                      <Select
-                        value={formData.payments.trips.officeName}
-                        onChange={(e) => handlePaymentChange('trips', 'officeName', e.target.value)}
-                      >
-                        <option value="">Select Office for Trips</option>
-                        {offices.map(office => (
-                          <option key={office._id} value={office.name}>
-                            {office.name} - {office.location}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+                                    <div>
+                  <Label value="Trips - Office" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
+                  <SearchableSelect
+                    value={formData.payments.trips.officeName}
+                    onChange={(e) => handlePaymentChange('trips', 'officeName', e.target.value)}
+                    options={offices.map(office => ({
+                      value: office.name,
+                      label: `${office.name} - ${office.location}`
+                    }))}
+                    placeholder="Search for an office..."
+                  />
+                </div>
                     <div>
                       <Label value="Trips - Price" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
                       <div className="flex">
@@ -2197,6 +2292,7 @@ export default function VoucherForm({ onSuccess }) {
                           onChange={(e) => handlePaymentChange('trips', 'price', e.target.value)}
                           placeholder="0"
                           className="flex-grow"
+                          disabled={!formData.payments.trips.officeName}
                         />
                         <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                           {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
@@ -2207,20 +2303,18 @@ export default function VoucherForm({ onSuccess }) {
 
                   {/* Flights Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label value="Flights - Office" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
-                      <Select
-                        value={formData.payments.flights.officeName}
-                        onChange={(e) => handlePaymentChange('flights', 'officeName', e.target.value)}
-                      >
-                        <option value="">Select Office for Flights</option>
-                        {offices.map(office => (
-                          <option key={office._id} value={office.name}>
-                            {office.name} - {office.location}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
+                                    <div>
+                  <Label value="Flights - Office" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
+                  <SearchableSelect
+                    value={formData.payments.flights.officeName}
+                    onChange={(e) => handlePaymentChange('flights', 'officeName', e.target.value)}
+                    options={offices.map(office => ({
+                      value: office.name,
+                      label: `${office.name} - ${office.location}`
+                    }))}
+                    placeholder="Search for an office..."
+                  />
+                </div>
                     <div>
                       <Label value="Flights - Price" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
                       <div className="flex">
@@ -2230,6 +2324,7 @@ export default function VoucherForm({ onSuccess }) {
                           onChange={(e) => handlePaymentChange('flights', 'price', e.target.value)}
                           placeholder="0"
                           className="flex-grow"
+                          disabled={!formData.payments.flights.officeName}
                         />
                         <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                           {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}

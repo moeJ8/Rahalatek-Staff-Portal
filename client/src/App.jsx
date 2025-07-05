@@ -6,12 +6,14 @@ import ToursPage from './pages/ToursPage'
 import EditTourPage from './pages/EditTourPage'
 import HotelsPage from './pages/HotelsPage'
 import EditHotelPage from './pages/EditHotelPage'
+import EditOfficePage from './pages/EditOfficePage'
 import VouchersPage from './pages/VouchersPage'
 import VoucherDetailPage from './pages/VoucherDetailPage'
 import EditVoucherPage from './pages/EditVoucherPage'
 import CreateVoucherPage from './pages/CreateVoucherPage'
 import TrashPage from './pages/TrashPage'
 import NotificationsPage from './pages/NotificationsPage'
+import OfficeDetailPage from './pages/OfficeDetailPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -81,6 +83,8 @@ function App() {
               <Route path="/dashboard" element={<AdminPage />} />
               <Route path="/dashboard/edit-tour/:id" element={<EditTourPage />} />
               <Route path="/dashboard/edit-hotel/:id" element={<EditHotelPage />} />
+              <Route path="/edit-office/:id" element={<EditOfficePage />} />
+              <Route path="/office/:officeName" element={<OfficeDetailPage />} />
             </Route>
             
             <Route element={<ProtectedRoute requireAdmin={false} />}>

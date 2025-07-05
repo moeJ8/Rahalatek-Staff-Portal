@@ -6,7 +6,6 @@ import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
-import StatusBadge from './StatusBadge'
 import CustomButton from './CustomButton'
 import RahalatekLoader from './RahalatekLoader'
 import SearchableSelect from './SearchableSelect'
@@ -14,10 +13,12 @@ import { generateArrivalReminders, cleanupExpiredNotifications } from '../utils/
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
-import CreatedByControls from './CreatedByControls'
-import { Link } from 'react-router-dom'
+import DeleteConfirmationModal from './DeleteConfirmationModal'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
+    const navigate = useNavigate();
+    
     // Check user role
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = user.isAdmin || false;
@@ -29,8 +30,8 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
                     const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials']; // Accountants can access financials but not users/requests
+            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'users', 'requests', 'notifications']
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts']; // Accountants can access financials and debts but not users/requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -92,6 +93,10 @@ export default function AdminPanel() {
         // Fetch financial data when switching to financials tab
         if (tabName === 'financials' && dataLoaded) {
             fetchFinancialData();
+        }
+        
+        // Fetch debt data when switching to debts tab
+        if (tabName === 'debts' && dataLoaded) {
             fetchDebts();
         }
     };
@@ -197,6 +202,14 @@ export default function AdminPanel() {
         dueDate: '',
         notes: ''
     });
+
+    // Add state for debt deletion modal
+    const [deleteDebtModalOpen, setDeleteDebtModalOpen] = useState(false);
+    const [debtToDelete, setDebtToDelete] = useState(null);
+    const [deleteDebtLoading, setDeleteDebtLoading] = useState(false);
+    
+    // Add state for office search
+    const [officeSearchQuery, setOfficeSearchQuery] = useState('');
     
     // Calculate totals by currency
     const totalsByCurrency = useMemo(() => {
@@ -217,6 +230,21 @@ export default function AdminPanel() {
             return acc;
         }, {});
     }, [officeVouchers]);
+
+    // Filter offices based on search query
+    const filteredOffices = useMemo(() => {
+        if (!officeSearchQuery.trim()) {
+            return offices;
+        }
+        
+        const searchLower = officeSearchQuery.toLowerCase();
+        return offices.filter(office => 
+            office.name.toLowerCase().includes(searchLower) ||
+            office.location.toLowerCase().includes(searchLower) ||
+            office.email.toLowerCase().includes(searchLower) ||
+            office.phoneNumber.toLowerCase().includes(searchLower)
+        );
+    }, [offices, officeSearchQuery]);
 
     // Standard room types for hotels
     const standardRoomTypes = [
@@ -1815,7 +1843,20 @@ export default function AdminPanel() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            toast.success(`Debt ${editingDebt ? 'updated' : 'created'} successfully!`);
+            toast.success(`Debt ${editingDebt ? 'updated' : 'created'} successfully!`, {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             setShowDebtModal(false);
             setEditingDebt(null);
             resetDebtForm();
@@ -1835,7 +1876,20 @@ export default function AdminPanel() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            toast.success('Debt closed successfully!');
+            toast.success('Debt closed successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             fetchDebts();
         } catch (err) {
             console.error('Failed to close debt:', err);
@@ -1843,21 +1897,50 @@ export default function AdminPanel() {
         }
     };
 
-    const handleDeleteDebt = async (debtId) => {
-        if (!confirm('Are you sure you want to delete this debt?')) return;
+    const handleDeleteDebt = async () => {
+        if (!debtToDelete) return;
         
+        setDeleteDebtLoading(true);
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`/api/debts/${debtId}`, {
+            await axios.delete(`/api/debts/${debtToDelete._id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            toast.success('Debt deleted successfully!');
+            toast.success('Debt deleted successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+            
             fetchDebts();
+            closeDeleteDebtModal();
         } catch (err) {
             console.error('Failed to delete debt:', err);
             toast.error(err.response?.data?.message || 'Failed to delete debt');
+        } finally {
+            setDeleteDebtLoading(false);
         }
+    };
+
+    // Add functions to open and close the delete debt modal
+    const openDeleteDebtModal = (debt) => {
+        setDebtToDelete(debt);
+        setDeleteDebtModalOpen(true);
+    };
+
+    const closeDeleteDebtModal = () => {
+        setDeleteDebtModalOpen(false);
+        setDebtToDelete(null);
     };
 
     const openDebtModal = (debt = null) => {
@@ -2081,6 +2164,25 @@ export default function AdminPanel() {
                                     <FaDollarSign className="h-5 w-5 mr-3" />
                                     Financials
                                 </button>
+                                <button
+                                    id="tab-debts"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'debts' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('debts')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'debts'}
+                                    aria-controls="debts-panel"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Debt Management
+                                </button>
                                 {/* Show Users tab to both admins and accountants */}
                                 <button
                                     id="tab-users"
@@ -2231,6 +2333,18 @@ export default function AdminPanel() {
                                         aria-controls="financials-panel"
                                     >
                                         Financials
+                                    </button>
+                                    <button
+                                        id="tab-debts-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'debts' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('debts')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'debts'}
+                                        aria-controls="debts-panel"
+                                    >
+                                        Debts
                                     </button>
                                     <button
                                         id="tab-users-mobile"
@@ -3259,38 +3373,82 @@ export default function AdminPanel() {
                                     
                                     <div className="mt-8">
                                         <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Existing Offices</h3>
-                                        {offices.length > 0 ? (
+                                        
+                                        {/* Search Bar */}
+                                        <div className="mb-6">
+                                            <TextInput
+                                                placeholder="Search offices by name, location, email, or phone number..."
+                                                value={officeSearchQuery}
+                                                onChange={(e) => setOfficeSearchQuery(e.target.value)}
+                                                icon={() => (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                )}
+                                            />
+                                        </div>
+                                        
+                                        {filteredOffices.length > 0 ? (
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {offices.map(office => (
+                                                {filteredOffices.map(office => (
                                                     <Card key={office._id} className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow duration-200">
                                                         <div className="flex flex-col gap-4 p-4">
-                                                            <div className="flex justify-between items-start">
-                                                                <div className="flex-1">
-                                                                    <h4 className="font-semibold text-lg text-slate-900 dark:text-white truncate" title={office.name}>
-                                                                        {office.name}
-                                                                    </h4>
-                                                                    <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                        </svg>
-                                                                        {office.location}
-                                                                    </p>
+                                                                                                                            <div className="flex justify-between items-start">
+                                                                    <div className="flex-1">
+                                                                        <h4 className="font-semibold text-lg text-slate-900 dark:text-white truncate" title={office.name}>
+                                                                            {office.name}
+                                                                        </h4>
+                                                                        <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                            </svg>
+                                                                            {office.location}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="flex space-x-2">
+                                                                        <CustomButton
+                                                                            variant="green"
+                                                                            size="xs"
+                                                                            onClick={() => navigate(`/office/${encodeURIComponent(office.name)}`)}
+                                                                            title="View office details"
+                                                                            icon={({ className }) => (
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                                </svg>
+                                                                            )}
+                                                                        >
+                                                                            View
+                                                                        </CustomButton>
+                                                                        <CustomButton
+                                                                            variant="blue"
+                                                                            size="xs"
+                                                                            onClick={() => navigate(`/edit-office/${office._id}`)}
+                                                                            title="Edit office"
+                                                                            icon={({ className }) => (
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                                </svg>
+                                                                            )}
+                                                                        >
+                                                                            Edit
+                                                                        </CustomButton>
+                                                                        <CustomButton
+                                                                            variant="red"
+                                                                            size="xs"
+                                                                            onClick={() => handleDeleteOffice(office._id)}
+                                                                            title="Delete office"
+                                                                            icon={({ className }) => (
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                                </svg>
+                                                                            )}
+                                                                        >
+                                                                            Delete
+                                                                        </CustomButton>
+                                                                    </div>
                                                                 </div>
-                                                                <CustomButton
-                                                                    variant="red"
-                                                                    size="xs"
-                                                                    onClick={() => handleDeleteOffice(office._id)}
-                                                                    title="Delete office"
-                                                                    icon={({ className }) => (
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                        </svg>
-                                                                    )}
-                                                                >
-                                                                    Delete
-                                                                </CustomButton>
-                                                            </div>
                                                             
                                                             <div className="space-y-3 text-sm">
                                                                 <div className="flex items-center">
@@ -3325,7 +3483,28 @@ export default function AdminPanel() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <Alert color="info">No offices found.</Alert>
+                                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0">
+                                                        <svg className="h-5 w-5 text-blue-400 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <p className="text-sm text-blue-700 dark:text-blue-200">
+                                                            {officeSearchQuery.trim() 
+                                                                ? `No offices found matching "${officeSearchQuery}".`
+                                                                : "No offices found."
+                                                            }
+                                                        </p>
+                                                        {officeSearchQuery.trim() && (
+                                                            <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                                                                Try adjusting your search terms or clearing the search to see all offices.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </Card>
@@ -3725,7 +3904,12 @@ export default function AdminPanel() {
                                                     {filteredFinancialData.map((item, index) => (
                                                         <Table.Row key={index} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
                                                             <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {item.officeName}
+                                                                <Link 
+                                                                    to={`/office/${encodeURIComponent(item.officeName)}`}
+                                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                                                >
+                                                                    {item.officeName}
+                                                                </Link>
                                                             </Table.Cell>
                                                             <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                                                                 {item.monthName} {item.year}
@@ -3763,227 +3947,236 @@ export default function AdminPanel() {
                                         </div>
                                     )}
 
-                                    {/* Debt Management Section */}
-                                    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                                Debt Management
-                                            </h3>
-                                            <CustomButton
-                                                variant="green"
-                                                onClick={() => openDebtModal()}
-                                                icon={HiPlus}
-                                                title="Add new debt record"
-                                            >
-                                                Add Debt
-                                            </CustomButton>
-                                        </div>
 
-                                        {/* Debt Filters */}
-                                        <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-6">
-                                            <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                                                <div>
-                                                    <Label htmlFor="debt-office-filter" value="Office" className="mb-2" />
-                                                    <SearchableSelect
-                                                        id="debt-office-filter"
-                                                        options={[
-                                                            { value: '', label: 'All Offices' },
-                                                            ...offices.map(office => ({
-                                                                value: office.name,
-                                                                label: `${office.name} - ${office.location}`
-                                                            }))
-                                                        ]}
-                                                        value={debtFilters.office}
-                                                        onChange={(eventOrValue) => {
-                                                            const value = typeof eventOrValue === 'string' 
-                                                                ? eventOrValue 
-                                                                : eventOrValue?.target?.value || eventOrValue;
-                                                            handleDebtFilterChange('office', value);
-                                                        }}
-                                                        placeholder="Search offices..."
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="debt-status-filter" value="Status" className="mb-2" />
-                                                    <Select
-                                                        id="debt-status-filter"
-                                                        value={debtFilters.status}
-                                                        onChange={(e) => handleDebtFilterChange('status', e.target.value)}
-                                                    >
-                                                        <option value="">All Status</option>
-                                                        <option value="OPEN">Open</option>
-                                                        <option value="CLOSED">Closed</option>
-                                                    </Select>
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="debt-type-filter" value="Type" className="mb-2" />
-                                                    <Select
-                                                        id="debt-type-filter"
-                                                        value={debtFilters.type}
-                                                        onChange={(e) => handleDebtFilterChange('type', e.target.value)}
-                                                    >
-                                                        <option value="">All Types</option>
-                                                        <option value="OWED_TO_OFFICE">We Owe Them</option>
-                                                        <option value="OWED_FROM_OFFICE">They Owe Us</option>
-                                                    </Select>
-                                                </div>
-                                                <div className="flex items-end">
-                                                    <CustomButton
-                                                        variant="red"
-                                                        onClick={clearDebtFilters}
-                                                        disabled={!hasDebtFiltersApplied()}
-                                                        className="w-full"
-                                                        title={hasDebtFiltersApplied() ? "Clear all debt filters" : "No filters to clear"}
-                                                        icon={HiX}
-                                                    >
-                                                        Clear Filters
-                                                    </CustomButton>
-                                                </div>
-                                                <div className="flex items-end">
-                                                    <CustomButton
-                                                        variant="blue"
-                                                        onClick={fetchDebts}
-                                                        disabled={debtLoading}
-                                                        className="w-full"
-                                                        title="Refresh debt data"
-                                                    >
-                                                        {debtLoading ? 'Loading...' : 'Refresh Debts'}
-                                                    </CustomButton>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        {/* Debt Table */}
-                                        {debtLoading ? (
-                                            <div className="py-8">
-                                                <RahalatekLoader size="lg" />
-                                            </div>
-                                        ) : debts.length > 0 ? (
-                                            <div className="overflow-x-auto">
-                                                <Table striped>
-                                                    <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Amount</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Type</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Description</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Due Date</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
-                                                        <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                                                    </Table.Head>
-                                                    <Table.Body>
-                                                        {debts.map((debt) => (
-                                                            <Table.Row key={debt._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                    {debt.officeName}
-                                                                </Table.Cell>
-                                                                <Table.Cell className="text-sm px-4 py-3">
-                                                                    <span className={`font-medium ${
-                                                                        debt.type === 'OWED_TO_OFFICE' 
-                                                                            ? 'text-red-600 dark:text-red-400' 
-                                                                            : 'text-green-600 dark:text-green-400'
-                                                                    }`}>
-                                                                        {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
-                                                                    </span>
-                                                                </Table.Cell>
-                                                                <Table.Cell className="text-sm px-4 py-3">
-                                                                    <span 
-                                                                        className={`
-                                                                            inline-flex items-center justify-center rounded-lg 
-                                                                            ${debt.type === 'OWED_TO_OFFICE' 
-                                                                                ? 'bg-red-500 text-white border border-red-600 shadow-md' 
-                                                                                : 'bg-green-500 text-white border border-green-600 shadow-md'
-                                                                            }
-                                                                            text-[11px] px-2 py-0.5 font-semibold
-                                                                            transition-all duration-200 
-                                                                            hover:scale-105 hover:shadow-lg
-                                                                            min-w-16
-                                                                        `}
-                                                                    >
-                                                                        {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
-                                                                    </span>
-                                                                </Table.Cell>
-                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[200px]">
-                                                                    <div className="truncate" title={debt.description}>
-                                                                        {debt.description || 'N/A'}
-                                                                    </div>
-                                                                </Table.Cell>
-                                                                <Table.Cell className="px-4 py-3">
-                                                                    <span 
-                                                                        className={`
-                                                                            inline-flex items-center justify-center rounded-lg 
-                                                                            ${debt.status === 'OPEN' 
-                                                                                ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
-                                                                                : 'bg-green-500 text-white border border-green-600 shadow-md'
-                                                                            }
-                                                                            text-[11px] px-2 py-0.5 font-semibold
-                                                                            transition-all duration-200 
-                                                                            hover:scale-105 hover:shadow-lg
-                                                                            min-w-16
-                                                                        `}
-                                                                    >
-                                                                        {debt.status}
-                                                                    </span>
-                                                                </Table.Cell>
-                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                    {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
-                                                                </Table.Cell>
-                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                    {new Date(debt.createdAt).toLocaleDateString()}
-                                                                </Table.Cell>
-                                                                <Table.Cell className="px-4 py-3">
-                                                                    <div className="flex space-x-2">
-                                                                        {debt.status === 'OPEN' && (
-                                                                            <>
-                                                                                <CustomButton
-                                                                                    variant="purple"
-                                                                                    size="xs"
-                                                                                    onClick={() => openDebtModal(debt)}
-                                                                                    title="Edit debt"
-                                                                                >
-                                                                                    Edit
-                                                                                </CustomButton>
-                                                                                <CustomButton
-                                                                                    variant="green"
-                                                                                    size="xs"
-                                                                                    onClick={() => handleCloseDebt(debt._id)}
-                                                                                    title="Mark as paid/closed"
-                                                                                >
-                                                                                    Close
-                                                                                </CustomButton>
-                                                                            </>
-                                                                        )}
-                                                                        {isAdmin && (
-                                                                            <CustomButton
-                                                                                variant="red"
-                                                                                size="xs"
-                                                                                onClick={() => handleDeleteDebt(debt._id)}
-                                                                                title="Delete debt"
-                                                                            >
-                                                                                Delete
-                                                                            </CustomButton>
-                                                                        )}
-                                                                    </div>
-                                                                </Table.Cell>
-                                                            </Table.Row>
-                                                        ))}
-                                                    </Table.Body>
-                                                </Table>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                                <p className="text-lg font-medium">No debts found</p>
-                                                <p className="text-sm">Create debt records to track financial obligations with offices.</p>
-                                            </div>
-                                        )}
+                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                                </Card>
+                            )}
+
+                            {activeTab === 'debts' && (isAdmin || isAccountant) && (
+                                <Card className="w-full dark:bg-slate-900" id="debts-panel" role="tabpanel" aria-labelledby="tab-debts">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Debt Management
+                                        </h2>
+                                        <CustomButton
+                                            variant="green"
+                                            onClick={() => openDebtModal()}
+                                            icon={HiPlus}
+                                            title="Add new debt record"
+                                        >
+                                            Add Debt
+                                        </CustomButton>
                                     </div>
+
+                                    {/* Debt Filters */}
+                                    <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-6">
+                                        <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                            <div>
+                                                <Label htmlFor="debt-office-filter" value="Office" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="debt-office-filter"
+                                                    options={[
+                                                        { value: '', label: 'All Offices' },
+                                                        ...offices.map(office => ({
+                                                            value: office.name,
+                                                            label: `${office.name} - ${office.location}`
+                                                        }))
+                                                    ]}
+                                                    value={debtFilters.office}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleDebtFilterChange('office', value);
+                                                    }}
+                                                    placeholder="Search offices..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="debt-status-filter" value="Status" className="mb-2" />
+                                                <Select
+                                                    id="debt-status-filter"
+                                                    value={debtFilters.status}
+                                                    onChange={(e) => handleDebtFilterChange('status', e.target.value)}
+                                                >
+                                                    <option value="">All Status</option>
+                                                    <option value="OPEN">Open</option>
+                                                    <option value="CLOSED">Closed</option>
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="debt-type-filter" value="Type" className="mb-2" />
+                                                <Select
+                                                    id="debt-type-filter"
+                                                    value={debtFilters.type}
+                                                    onChange={(e) => handleDebtFilterChange('type', e.target.value)}
+                                                >
+                                                    <option value="">All Types</option>
+                                                    <option value="OWED_TO_OFFICE">We Owe Them</option>
+                                                    <option value="OWED_FROM_OFFICE">They Owe Us</option>
+                                                </Select>
+                                            </div>
+                                            <div className="flex items-end">
+                                                <CustomButton
+                                                    variant="red"
+                                                    onClick={clearDebtFilters}
+                                                    disabled={!hasDebtFiltersApplied()}
+                                                    className="w-full"
+                                                    title={hasDebtFiltersApplied() ? "Clear all debt filters" : "No filters to clear"}
+                                                    icon={HiX}
+                                                >
+                                                    Clear Filters
+                                                </CustomButton>
+                                            </div>
+                                            <div className="flex items-end">
+                                                <CustomButton
+                                                    variant="blue"
+                                                    onClick={fetchDebts}
+                                                    disabled={debtLoading}
+                                                    className="w-full"
+                                                    title="Refresh debt data"
+                                                >
+                                                    {debtLoading ? 'Loading...' : 'Refresh Debts'}
+                                                </CustomButton>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Debt Table */}
+                                    {debtLoading ? (
+                                        <div className="py-8">
+                                            <RahalatekLoader size="lg" />
+                                        </div>
+                                    ) : debts.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <Table striped>
+                                                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Amount</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Type</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Description</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Due Date</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>
+                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
+                                                </Table.Head>
+                                                <Table.Body>
+                                                    {debts.map((debt) => (
+                                                        <Table.Row key={debt._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.officeName}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm px-4 py-3">
+                                                                <span className={`font-medium ${
+                                                                    debt.type === 'OWED_TO_OFFICE' 
+                                                                        ? 'text-red-600 dark:text-red-400' 
+                                                                        : 'text-green-600 dark:text-green-400'
+                                                                }`}>
+                                                                    {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
+                                                                </span>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm px-4 py-3">
+                                                                <span 
+                                                                    className={`
+                                                                        inline-flex items-center justify-center rounded-lg 
+                                                                        ${debt.type === 'OWED_TO_OFFICE' 
+                                                                            ? 'bg-red-500 text-white border border-red-600 shadow-md' 
+                                                                            : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                        }
+                                                                        text-[11px] px-2 py-0.5 font-semibold
+                                                                        transition-all duration-200 
+                                                                        hover:scale-105 hover:shadow-lg
+                                                                        min-w-16
+                                                                    `}
+                                                                >
+                                                                    {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
+                                                                </span>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[200px]">
+                                                                <div className="truncate" title={debt.description}>
+                                                                    {debt.description || 'N/A'}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="px-4 py-3">
+                                                                <span 
+                                                                    className={`
+                                                                        inline-flex items-center justify-center rounded-lg 
+                                                                        ${debt.status === 'OPEN' 
+                                                                            ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
+                                                                            : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                        }
+                                                                        text-[11px] px-2 py-0.5 font-semibold
+                                                                        transition-all duration-200 
+                                                                        hover:scale-105 hover:shadow-lg
+                                                                        min-w-16
+                                                                    `}
+                                                                >
+                                                                    {debt.status}
+                                                                </span>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {new Date(debt.createdAt).toLocaleDateString()}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.createdBy?.username || 'Unknown'}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="px-4 py-3">
+                                                                <div className="flex space-x-2">
+                                                                    {debt.status === 'OPEN' && (
+                                                                        <>
+                                                                            <CustomButton
+                                                                                variant="purple"
+                                                                                size="xs"
+                                                                                onClick={() => openDebtModal(debt)}
+                                                                                title="Edit debt"
+                                                                            >
+                                                                                Edit
+                                                                            </CustomButton>
+                                                                            <CustomButton
+                                                                                variant="green"
+                                                                                size="xs"
+                                                                                onClick={() => handleCloseDebt(debt._id)}
+                                                                                title="Mark as paid/closed"
+                                                                            >
+                                                                                Close
+                                                                            </CustomButton>
+                                                                        </>
+                                                                    )}
+                                                                    {isAdmin && (
+                                                                        <CustomButton
+                                                                            variant="red"
+                                                                            size="xs"
+                                                                            onClick={() => openDeleteDebtModal(debt)}
+                                                                            title="Delete debt"
+                                                                        >
+                                                                            Delete
+                                                                        </CustomButton>
+                                                                    )}
+                                                                </div>
+                                                            </Table.Cell>
+                                                        </Table.Row>
+                                                    ))}
+                                                </Table.Body>
+                                            </Table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <p className="text-lg font-medium">No debts found</p>
+                                            <p className="text-sm">Create debt records to track financial obligations with offices.</p>
+                                        </div>
+                                    )}
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                 </Card>
@@ -4610,6 +4803,17 @@ export default function AdminPanel() {
                                     </form>
                                 </Modal.Body>
                             </Modal>
+
+                            {/* Delete Debt Confirmation Modal */}
+                            <DeleteConfirmationModal
+                                show={deleteDebtModalOpen}
+                                onClose={closeDeleteDebtModal}
+                                onConfirm={handleDeleteDebt}
+                                isLoading={deleteDebtLoading}
+                                itemType="debt record"
+                                itemName={debtToDelete ? `${getCurrencySymbol(debtToDelete.currency)}${debtToDelete.amount.toFixed(2)} for ${debtToDelete.officeName}` : ''}
+                                itemExtra={debtToDelete ? debtToDelete.description : ''}
+                            />
                         </div>
                     </div>
                 </div>
