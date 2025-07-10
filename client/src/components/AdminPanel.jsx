@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
-import { Button, TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Badge, Table, ToggleSwitch, Accordion, Modal } from 'flowbite-react'
+import { TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -210,6 +210,9 @@ export default function AdminPanel() {
     
     // Add state for office search
     const [officeSearchQuery, setOfficeSearchQuery] = useState('');
+    
+    // Custom city input state for hotels
+    const [useCustomHotelCity, setUseCustomHotelCity] = useState(false);
     
     // Calculate totals by currency
     const totalsByCurrency = useMemo(() => {
@@ -452,6 +455,15 @@ export default function AdminPanel() {
         setHotelData({
             ...hotelData,
             [name]: type === 'checkbox' ? checked : value,
+        });
+    };
+
+    const toggleCustomHotelCity = () => {
+        setUseCustomHotelCity(!useCustomHotelCity);
+        // Reset city value when toggling
+        setHotelData({
+            ...hotelData,
+            city: ''
         });
     };
 
@@ -2425,27 +2437,47 @@ export default function AdminPanel() {
                                                 />
                                             </div>
                                             
-                                            <div className="md:col-span-1">
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="hotelCity" value="City" />
-                                                </div>
-                                                <Select
-                                                    id="hotelCity"
-                                                    name="city"
-                                                    value={hotelData.city}
-                                                    onChange={handleHotelChange}
-                                                    required
-                                                >
-                                                    <option value="">Select City</option>
-                                                    <option value="Antalya">Antalya</option>
-                                                    <option value="Bodrum">Bodrum</option>
-                                                    <option value="Bursa">Bursa</option>
-                                                    <option value="Cappadocia">Cappadocia</option>
-                                                    <option value="Fethiye">Fethiye</option>
-                                                    <option value="Istanbul">Istanbul</option>
-                                                    <option value="Trabzon">Trabzon</option>
-                                                </Select>
-                                            </div>
+                            <div className="md:col-span-1">
+                                <div className="flex justify-between items-center mb-3">
+                                    <Label htmlFor="hotelCity" value="City" />
+                                    <div className="flex items-center">
+                                        <Checkbox 
+                                            id="customHotelCity"
+                                            checked={useCustomHotelCity}
+                                            onChange={toggleCustomHotelCity}
+                                        />
+                                        <Label htmlFor="customHotelCity" value="Custom City" className="ml-2 text-sm" />
+                                    </div>
+                                </div>
+                                
+                                {useCustomHotelCity ? (
+                                    <TextInput
+                                        id="hotelCity"
+                                        name="city"
+                                        value={hotelData.city}
+                                        onChange={handleHotelChange}
+                                        placeholder="Enter city name"
+                                        required
+                                    />
+                                ) : (
+                                    <Select
+                                        id="hotelCity"
+                                        name="city"
+                                        value={hotelData.city}
+                                        onChange={handleHotelChange}
+                                        required
+                                    >
+                                        <option value="">Select City</option>
+                                        <option value="Antalya">Antalya</option>
+                                        <option value="Bodrum">Bodrum</option>
+                                        <option value="Bursa">Bursa</option>
+                                        <option value="Cappadocia">Cappadocia</option>
+                                        <option value="Fethiye">Fethiye</option>
+                                        <option value="Istanbul">Istanbul</option>
+                                        <option value="Trabzon">Trabzon</option>
+                                    </Select>
+                                )}
+                            </div>
                                             
                                             <div className="md:col-span-1">
                                                 <div className="mb-2 block">

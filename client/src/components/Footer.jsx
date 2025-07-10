@@ -6,7 +6,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-white dark:bg-slate-900 shadow-md mt-auto transition-colors duration-300">
+    <footer className="bg-white dark:bg-slate-950 shadow-md mt-auto transition-colors duration-300">
       <div className="container mx-auto p-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">

@@ -40,8 +40,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [showFlights, setShowFlights] = useState(() => getInitialVisibility('flights'));
   const [showLogo, setShowLogo] = useState(() => getInitialVisibility('logo'));
   const [showAddress, setShowAddress] = useState(() => getInitialVisibility('address'));
-  const [showNumber, setShowNumber] = useState(() => getInitialVisibility('number'));
   const [showContact, setShowContact] = useState(() => getInitialVisibility('contact'));
+  const [showTotalAmount, setShowTotalAmount] = useState(() => getInitialVisibility('totalAmount'));
 
   const saveVisibilityState = (section, value) => {
     localStorage.setItem(getStorageKey(section), JSON.stringify(value));
@@ -77,14 +77,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     saveVisibilityState('address', value);
   };
 
-  const setShowNumberWithStorage = (value) => {
-    setShowNumber(value);
-    saveVisibilityState('number', value);
-  };
-
   const setShowContactWithStorage = (value) => {
     setShowContact(value);
     saveVisibilityState('contact', value);
+  };
+
+  const setShowTotalAmountWithStorage = (value) => {
+    setShowTotalAmount(value);
+    saveVisibilityState('totalAmount', value);
   };
   
   const [reorderedHotels, setReorderedHotels] = useState([]);
@@ -155,7 +155,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   };
   
   // Determine if all sections are visible
-  const allSectionsVisible = showHotels && showTransfers && showTrips && showFlights;
+  const allSectionsVisible = showHotels && showTransfers && showTrips && showFlights && showTotalAmount;
   
   const toggleAllSections = () => {
     if (allSectionsVisible) {
@@ -164,28 +164,28 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setShowTransfersWithStorage(false);
       setShowTripsWithStorage(false);
       setShowFlightsWithStorage(false);
+      setShowTotalAmountWithStorage(false);
     } else {
     
       setShowHotelsWithStorage(true);
       setShowTransfersWithStorage(true);
       setShowTripsWithStorage(true);
       setShowFlightsWithStorage(true);
+      setShowTotalAmountWithStorage(true);
     }
   };
 
   // Determine if all header elements are visible
-  const allHeaderElementsVisible = showLogo && showAddress && showNumber && showContact;
+  const allHeaderElementsVisible = showLogo && showAddress && showContact;
   
   const toggleAllHeaderElements = () => {
     if (allHeaderElementsVisible) {
       setShowLogoWithStorage(false);
       setShowAddressWithStorage(false);
-      setShowNumberWithStorage(false);
       setShowContactWithStorage(false);
     } else {
       setShowLogoWithStorage(true);
       setShowAddressWithStorage(true);
-      setShowNumberWithStorage(true);
       setShowContactWithStorage(true);
     }
   };
@@ -306,17 +306,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       clientPhoneDiv.appendChild(document.createTextNode(voucherData.phoneNumber));
     }
     
-    // Booking Number under nationality/phone (conditionally included)
-    let bookingDiv;
-    if (showNumber) {
-      bookingDiv = document.createElement('div');
-      bookingDiv.style.marginTop = '4px';
-      const bookingLabel = document.createElement('span');
-      bookingLabel.textContent = 'Booking №: ';
-      bookingLabel.style.fontWeight = '600';
-      bookingDiv.appendChild(bookingLabel);
-      bookingDiv.appendChild(document.createTextNode(voucherData.voucherNumber || 10000));
-    }
+    // Booking Number under nationality/phone
+    const bookingDiv = document.createElement('div');
+    bookingDiv.style.marginTop = '4px';
+    const bookingLabel = document.createElement('span');
+    bookingLabel.textContent = 'Booking №: ';
+    bookingLabel.style.fontWeight = '600';
+    bookingDiv.appendChild(bookingLabel);
+    bookingDiv.appendChild(document.createTextNode(voucherData.voucherNumber || 10000));
     
     // Client container
     const clientContainer = document.createElement('div');
@@ -738,135 +735,137 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       container.appendChild(flightsSection);
     }
     
-    // Total Amount Section
-    const totalSection = document.createElement('div');
-    totalSection.style.marginBottom = '15px';
-    
-    // Total Amount Header
-    const totalSectionTitle = document.createElement('h3');
-    totalSectionTitle.textContent = 'Total amount';
-    totalSectionTitle.style.backgroundColor = '#0f3785';
-    totalSectionTitle.style.color = 'white';
-    totalSectionTitle.style.padding = '6px 15px';
-    totalSectionTitle.style.paddingBottom = '18px';
-    totalSectionTitle.style.borderTopLeftRadius = '6px';
-    totalSectionTitle.style.borderTopRightRadius = '6px';
-    totalSectionTitle.style.margin = '0';
-    totalSectionTitle.style.fontSize = '16px';
-    totalSectionTitle.style.fontWeight = '900'; // Extra bold for header
-    totalSectionTitle.style.display = 'flex';
-    totalSectionTitle.style.alignItems = 'center';
-    
-    // Value container - Now using a table like other sections
-    const totalTableWrapper = document.createElement('div');
-    totalTableWrapper.style.overflowX = 'auto';
-    
-    const totalTable = document.createElement('table');
-    totalTable.style.width = '100%';
-    totalTable.style.fontSize = '12px';
-    totalTable.style.textAlign = 'left';
-    totalTable.style.color = '#374151';
-    totalTable.style.borderCollapse = 'collapse';
-    totalTable.style.border = '1px solid #bfdbfe';
-    totalTable.style.fontWeight = 'bold';
-    
-    // Create table body
-    const totalTbody = document.createElement('tbody');
-    
-    if (voucherData.advancedPayment) {
-      // Row for total amount
-      const totalRow = document.createElement('tr');
-      totalRow.style.backgroundColor = 'white';
+    // Total Amount Section (conditionally included)
+    if (showTotalAmount) {
+      const totalSection = document.createElement('div');
+      totalSection.style.marginBottom = '15px';
       
-      const totalLabelCell = document.createElement('td');
-      totalLabelCell.textContent = 'Total Amount';
-      totalLabelCell.style.padding = '12px 16px';
-      totalLabelCell.style.border = '1px solid #f8fafc';
-      totalLabelCell.style.fontWeight = '900'; // Extra bold
-      totalLabelCell.style.width = '70%';
+      // Total Amount Header
+      const totalSectionTitle = document.createElement('h3');
+      totalSectionTitle.textContent = 'Total Amount';
+      totalSectionTitle.style.backgroundColor = '#0f3785';
+      totalSectionTitle.style.color = 'white';
+      totalSectionTitle.style.padding = '6px 15px';
+      totalSectionTitle.style.paddingBottom = '18px';
+      totalSectionTitle.style.borderTopLeftRadius = '6px';
+      totalSectionTitle.style.borderTopRightRadius = '6px';
+      totalSectionTitle.style.margin = '0';
+      totalSectionTitle.style.fontSize = '16px';
+      totalSectionTitle.style.fontWeight = '900'; // Extra bold for header
+      totalSectionTitle.style.display = 'flex';
+      totalSectionTitle.style.alignItems = 'center';
       
-      const totalValueCell = document.createElement('td');
-      totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
-      totalValueCell.style.padding = '12px 16px';
-      totalValueCell.style.border = '1px solid #f8fafc';
-      totalValueCell.style.fontWeight = '900'; // Extra bold
-      totalValueCell.style.textAlign = 'right';
+      // Value container - Now using a table like other sections
+      const totalTableWrapper = document.createElement('div');
+      totalTableWrapper.style.overflowX = 'auto';
       
-      totalRow.appendChild(totalLabelCell);
-      totalRow.appendChild(totalValueCell);
-      totalTbody.appendChild(totalRow);
+      const totalTable = document.createElement('table');
+      totalTable.style.width = '100%';
+      totalTable.style.fontSize = '12px';
+      totalTable.style.textAlign = 'left';
+      totalTable.style.color = '#374151';
+      totalTable.style.borderCollapse = 'collapse';
+      totalTable.style.border = '1px solid #bfdbfe';
+      totalTable.style.fontWeight = 'bold';
       
-      // Row for advanced payment
-      const advancedRow = document.createElement('tr');
-      advancedRow.style.backgroundColor = 'white';
+      // Create table body
+      const totalTbody = document.createElement('tbody');
       
-      const advancedLabelCell = document.createElement('td');
-      advancedLabelCell.textContent = 'Advanced Payment';
-      advancedLabelCell.style.padding = '12px 16px';
-      advancedLabelCell.style.border = '1px solid #f8fafc';
-      advancedLabelCell.style.fontWeight = '900'; // Extra bold to match other rows
+      if (voucherData.advancedPayment) {
+        // Row for total amount
+        const totalRow = document.createElement('tr');
+        totalRow.style.backgroundColor = 'white';
+        
+        const totalLabelCell = document.createElement('td');
+        totalLabelCell.textContent = 'Total Amount';
+        totalLabelCell.style.padding = '12px 16px';
+        totalLabelCell.style.border = '1px solid #f8fafc';
+        totalLabelCell.style.fontWeight = '900'; // Extra bold
+        totalLabelCell.style.width = '70%';
+        
+        const totalValueCell = document.createElement('td');
+        totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
+        totalValueCell.style.padding = '12px 16px';
+        totalValueCell.style.border = '1px solid #f8fafc';
+        totalValueCell.style.fontWeight = '900'; // Extra bold
+        totalValueCell.style.textAlign = 'right';
+        
+        totalRow.appendChild(totalLabelCell);
+        totalRow.appendChild(totalValueCell);
+        totalTbody.appendChild(totalRow);
+        
+        // Row for advanced payment
+        const advancedRow = document.createElement('tr');
+        advancedRow.style.backgroundColor = 'white';
+        
+        const advancedLabelCell = document.createElement('td');
+        advancedLabelCell.textContent = 'Advanced Payment';
+        advancedLabelCell.style.padding = '12px 16px';
+        advancedLabelCell.style.border = '1px solid #f8fafc';
+        advancedLabelCell.style.fontWeight = '900'; // Extra bold to match other rows
+        
+        const advancedValueCell = document.createElement('td');
+        advancedValueCell.textContent = `${currencySymbol}${voucherData.advancedAmount}`;
+        advancedValueCell.style.padding = '12px 16px';
+        advancedValueCell.style.border = '1px solid #f8fafc';
+        advancedValueCell.style.textAlign = 'right';
+        advancedValueCell.style.fontWeight = '900'; // Extra bold to match other rows
+        
+        advancedRow.appendChild(advancedLabelCell);
+        advancedRow.appendChild(advancedValueCell);
+        totalTbody.appendChild(advancedRow);
+        
+        // Row for remaining amount
+        const remainingRow = document.createElement('tr');
+        remainingRow.style.backgroundColor = '#f0f7ff'; // Light blue background to highlight
+        
+        const remainingLabelCell = document.createElement('td');
+        remainingLabelCell.textContent = 'Balance Due';
+        remainingLabelCell.style.padding = '12px 16px';
+        remainingLabelCell.style.border = '1px solid #f8fafc';
+        remainingLabelCell.style.fontWeight = '900'; // Extra bold
+        
+        const remainingValueCell = document.createElement('td');
+        remainingValueCell.textContent = `${currencySymbol}${voucherData.remainingAmount}`;
+        remainingValueCell.style.padding = '12px 16px';
+        remainingValueCell.style.border = '1px solid #f8fafc';
+        remainingValueCell.style.fontWeight = '900'; // Extra bold
+        remainingValueCell.style.textAlign = 'right';
+        
+        remainingRow.appendChild(remainingLabelCell);
+        remainingRow.appendChild(remainingValueCell);
+        totalTbody.appendChild(remainingRow);
+      } else {
+        // Just a single row for total when no advanced payment
+        const singleRow = document.createElement('tr');
+        singleRow.style.backgroundColor = 'white';
+        
+        const totalLabelCell = document.createElement('td');
+        totalLabelCell.textContent = 'Total Amount';
+        totalLabelCell.style.padding = '12px 16px';
+        totalLabelCell.style.border = '1px solid #f8fafc';
+        totalLabelCell.style.fontWeight = '900'; // Extra bold
+        totalLabelCell.style.width = '70%';
+        
+        const totalValueCell = document.createElement('td');
+        totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
+        totalValueCell.style.padding = '12px 16px';
+        totalValueCell.style.border = '1px solid #f8fafc';
+        totalValueCell.style.fontWeight = '900'; // Extra bold
+        totalValueCell.style.textAlign = 'right';
+        
+        singleRow.appendChild(totalLabelCell);
+        singleRow.appendChild(totalValueCell);
+        totalTbody.appendChild(singleRow);
+      }
       
-      const advancedValueCell = document.createElement('td');
-      advancedValueCell.textContent = `${currencySymbol}${voucherData.advancedAmount}`;
-      advancedValueCell.style.padding = '12px 16px';
-      advancedValueCell.style.border = '1px solid #f8fafc';
-      advancedValueCell.style.textAlign = 'right';
-      advancedValueCell.style.fontWeight = '900'; // Extra bold to match other rows
+      totalTable.appendChild(totalTbody);
+      totalTableWrapper.appendChild(totalTable);
       
-      advancedRow.appendChild(advancedLabelCell);
-      advancedRow.appendChild(advancedValueCell);
-      totalTbody.appendChild(advancedRow);
-      
-      // Row for remaining amount
-      const remainingRow = document.createElement('tr');
-      remainingRow.style.backgroundColor = '#f0f7ff'; // Light blue background to highlight
-      
-      const remainingLabelCell = document.createElement('td');
-      remainingLabelCell.textContent = 'Balance Due';
-      remainingLabelCell.style.padding = '12px 16px';
-      remainingLabelCell.style.border = '1px solid #f8fafc';
-      remainingLabelCell.style.fontWeight = '900'; // Extra bold
-      
-      const remainingValueCell = document.createElement('td');
-      remainingValueCell.textContent = `${currencySymbol}${voucherData.remainingAmount}`;
-      remainingValueCell.style.padding = '12px 16px';
-      remainingValueCell.style.border = '1px solid #f8fafc';
-      remainingValueCell.style.fontWeight = '900'; // Extra bold
-      remainingValueCell.style.textAlign = 'right';
-      
-      remainingRow.appendChild(remainingLabelCell);
-      remainingRow.appendChild(remainingValueCell);
-      totalTbody.appendChild(remainingRow);
-    } else {
-      // Just a single row for total when no advanced payment
-      const singleRow = document.createElement('tr');
-      singleRow.style.backgroundColor = 'white';
-      
-      const totalLabelCell = document.createElement('td');
-      totalLabelCell.textContent = 'Total Amount';
-      totalLabelCell.style.padding = '12px 16px';
-      totalLabelCell.style.border = '1px solid #f8fafc';
-      totalLabelCell.style.fontWeight = '900'; // Extra bold
-      totalLabelCell.style.width = '70%';
-      
-      const totalValueCell = document.createElement('td');
-      totalValueCell.textContent = `${currencySymbol}${voucherData.totalAmount}`;
-      totalValueCell.style.padding = '12px 16px';
-      totalValueCell.style.border = '1px solid #f8fafc';
-      totalValueCell.style.fontWeight = '900'; // Extra bold
-      totalValueCell.style.textAlign = 'right';
-      
-      singleRow.appendChild(totalLabelCell);
-      singleRow.appendChild(totalValueCell);
-      totalTbody.appendChild(singleRow);
+      totalSection.appendChild(totalSectionTitle);
+      totalSection.appendChild(totalTableWrapper);
+      container.appendChild(totalSection);
     }
-    
-    totalTable.appendChild(totalTbody);
-    totalTableWrapper.appendChild(totalTable);
-    
-    totalSection.appendChild(totalSectionTitle);
-    totalSection.appendChild(totalTableWrapper);
-    container.appendChild(totalSection);
     
     // Note Section
     if (voucherData.note) {
@@ -987,17 +986,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       container.appendChild(contactSection);
     }
     
-    // Footer (conditionally included)
-    if (showNumber) {
-      const footer = document.createElement('div');
-      footer.style.textAlign = 'center';
-      footer.style.color = '#1e40af';
-      footer.style.fontWeight = 'bold';
-      footer.style.borderTop = '2px solid #e5efff';
-      footer.style.paddingTop = '15px';
-      footer.textContent = `Voucher #${voucherData.voucherNumber || 10000}`;
-      container.appendChild(footer);
-    }
+    // Footer
+    const footer = document.createElement('div');
+    footer.style.textAlign = 'center';
+    footer.style.color = '#1e40af';
+    footer.style.fontWeight = 'bold';
+    footer.style.borderTop = '2px solid #e5efff';
+    footer.style.paddingTop = '15px';
+    footer.textContent = `Voucher #${voucherData.voucherNumber || 10000}`;
+    container.appendChild(footer);
     
     // Add to body temporarily for rendering
     document.body.appendChild(container);
@@ -1198,15 +1195,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             >
               Logo
             </CustomButton>
-            <CustomButton 
-              size="xs" 
-              variant={showNumber ? "green" : "gray"}
-              onClick={() => setShowNumberWithStorage(!showNumber)}
-              icon={showNumber ? FaEye : FaEyeSlash}
-              className="w-auto"
-            >
-              Number
-            </CustomButton>
+
             <CustomButton 
               size="xs" 
               variant={showAddress ? "green" : "gray"}
@@ -1276,6 +1265,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             </CustomButton>
             <CustomButton 
               size="xs" 
+              variant={showTotalAmount ? "green" : "gray"}
+              onClick={() => setShowTotalAmountWithStorage(!showTotalAmount)}
+              icon={showTotalAmount ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Total Amount
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
               variant={allSectionsVisible ? "gray" : "purple"}
               onClick={toggleAllSections}
               icon={allSectionsVisible ? FaEyeSlash : FaEye}
@@ -1324,7 +1322,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                   <span className="font-semibold">Phone Number:</span> {voucherData.phoneNumber}
                 </div>
               )}
-              <div style={{ display: showNumber ? 'block' : 'none' }}>
+              <div>
                 <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
               </div>
               {voucherData.capital && (
@@ -1605,8 +1603,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         )}
         
         {/* Total Amount */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total amount</h3>
+        <div className="mb-6" style={{ display: showTotalAmount ? 'block' : 'none' }}>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md flex items-center">Total Amount</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 border-t-0 font-bold">
               <tbody>
@@ -1635,6 +1633,18 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             </table>
           </div>
         </div>
+
+        {!showTotalAmount && (
+          <div 
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+            onClick={() => setShowTotalAmountWithStorage(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">Total Amount section hidden</span>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
+          </div>
+        )}
         
         {/* Note */}
         {voucherData.note && (
@@ -1671,7 +1681,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
         </div>
         
         {/* Footer */}
-        <div className="text-center text-blue-800 font-bold border-t-2 border-blue-200 pt-4" style={{ display: showNumber ? 'block' : 'none' }}>
+        <div className="text-center text-blue-800 font-bold border-t-2 border-blue-200 pt-4">
           Voucher #{voucherData.voucherNumber || 10000}
         </div>
       </div>

@@ -92,6 +92,9 @@ export default function VoucherForm({ onSuccess }) {
   // Custom hotel input state
   const [useCustomHotel, setUseCustomHotel] = useState([false]);
 
+  // Custom hotel city input state
+  const [useCustomHotelCity, setUseCustomHotelCity] = useState([false]);
+
   // Custom tour input state
   const [useCustomTour, setUseCustomTour] = useState([false]);
 
@@ -225,6 +228,12 @@ export default function VoucherForm({ onSuccess }) {
       setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
         const hotelExists = hotels.some(h => h.name === hotel.hotelName);
         return !hotelExists && hotel.hotelName !== '';
+      }));
+      
+      // Update custom hotel city states
+      setUseCustomHotelCity(voucherToDuplicate.hotels.map(hotel => {
+        const cityExists = cities.includes(hotel.city);
+        return !cityExists && hotel.city !== '';
       }));
       
       // Update custom tour states
@@ -378,10 +387,10 @@ export default function VoucherForm({ onSuccess }) {
 
   // Hotel fields handlers
   const handleAddHotel = () => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       hotels: [
-        ...formData.hotels,
+        ...prev.hotels,
         { 
           city: '', 
           hotelName: '', 
@@ -393,22 +402,29 @@ export default function VoucherForm({ onSuccess }) {
           confirmationNumber: '' 
         }
       ]
-    });
+    }));
     
     setUseCustomHotel(prev => [...prev, false]);
+    setUseCustomHotelCity(prev => [...prev, false]);
   };
 
   const handleRemoveHotel = (index) => {
     const updatedHotels = [...formData.hotels];
     updatedHotels.splice(index, 1);
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       hotels: updatedHotels
-    });
+    }));
     
-    const updatedCustomHotels = [...useCustomHotel];
-    updatedCustomHotels.splice(index, 1);
-    setUseCustomHotel(updatedCustomHotels);
+    // Remove entry from useCustomHotel array
+    const updatedUseCustom = [...useCustomHotel];
+    updatedUseCustom.splice(index, 1);
+    setUseCustomHotel(updatedUseCustom);
+    
+    // Remove entry from useCustomHotelCity array
+    const updatedUseCustomCity = [...useCustomHotelCity];
+    updatedUseCustomCity.splice(index, 1);
+    setUseCustomHotelCity(updatedUseCustomCity);
   };
 
   const moveHotelUp = (index) => {
@@ -416,6 +432,7 @@ export default function VoucherForm({ onSuccess }) {
     
     const updatedHotels = [...formData.hotels];
     const updatedCustomStates = [...useCustomHotel];
+    const updatedCustomCityStates = [...useCustomHotelCity];
     
     // Store the original dates before swapping
     const currentDates = {
@@ -430,6 +447,7 @@ export default function VoucherForm({ onSuccess }) {
     // Swap all hotel data
     [updatedHotels[index], updatedHotels[index - 1]] = [updatedHotels[index - 1], updatedHotels[index]];
     [updatedCustomStates[index], updatedCustomStates[index - 1]] = [updatedCustomStates[index - 1], updatedCustomStates[index]];
+    [updatedCustomCityStates[index], updatedCustomCityStates[index - 1]] = [updatedCustomCityStates[index - 1], updatedCustomCityStates[index]];
     
     // Restore original dates to their positions
     updatedHotels[index].checkIn = currentDates.checkIn;
@@ -448,12 +466,13 @@ export default function VoucherForm({ onSuccess }) {
       }
     });
     
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       hotels: updatedHotels
-    });
+    }));
     
     setUseCustomHotel(updatedCustomStates);
+    setUseCustomHotelCity(updatedCustomCityStates);
   };
 
   const moveHotelDown = (index) => {
@@ -461,6 +480,7 @@ export default function VoucherForm({ onSuccess }) {
     
     const updatedHotels = [...formData.hotels];
     const updatedCustomStates = [...useCustomHotel];
+    const updatedCustomCityStates = [...useCustomHotelCity];
     
     // Store the original dates before swapping
     const currentDates = {
@@ -475,6 +495,7 @@ export default function VoucherForm({ onSuccess }) {
     // Swap all hotel data
     [updatedHotels[index], updatedHotels[index + 1]] = [updatedHotels[index + 1], updatedHotels[index]];
     [updatedCustomStates[index], updatedCustomStates[index + 1]] = [updatedCustomStates[index + 1], updatedCustomStates[index]];
+    [updatedCustomCityStates[index], updatedCustomCityStates[index + 1]] = [updatedCustomCityStates[index + 1], updatedCustomCityStates[index]];
     
     // Restore original dates to their positions
     updatedHotels[index].checkIn = currentDates.checkIn;
@@ -493,12 +514,13 @@ export default function VoucherForm({ onSuccess }) {
       }
     });
     
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       hotels: updatedHotels
-    });
+    }));
     
     setUseCustomHotel(updatedCustomStates);
+    setUseCustomHotelCity(updatedCustomCityStates);
   };
 
   const handleHotelChange = (index, field, value) => {
@@ -528,6 +550,22 @@ export default function VoucherForm({ onSuccess }) {
     if (!newUseCustom[index]) {
       const updatedHotels = [...formData.hotels];
       updatedHotels[index].hotelName = '';
+      setFormData(prev => ({
+        ...prev,
+        hotels: updatedHotels
+      }));
+    }
+  };
+
+  // Toggle custom city input for hotels
+  const toggleCustomHotelCity = (index) => {
+    const newUseCustom = [...useCustomHotelCity];
+    newUseCustom[index] = !newUseCustom[index];
+    setUseCustomHotelCity(newUseCustom);
+    
+    if (!newUseCustom[index]) {
+      const updatedHotels = [...formData.hotels];
+      updatedHotels[index].city = '';
       setFormData(prev => ({
         ...prev,
         hotels: updatedHotels
@@ -1168,7 +1206,7 @@ export default function VoucherForm({ onSuccess }) {
         <div className="space-y-4">
           
           {!showPreview ? (
-            <Card className="dark:bg-slate-900">
+            <Card className="dark:bg-slate-950">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold dark:text-white">Client Information</h3>
                 <CustomButton
@@ -1343,127 +1381,6 @@ export default function VoucherForm({ onSuccess }) {
                     </span>
                   </div>
                 </div>
-                
-                <div>
-                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
-                  <div className="flex">
-                    <TextInput
-                      id="capital"
-                      name="capital"
-                      value={formData.capital}
-                      onChange={handleInputChange}
-                      placeholder="This will only show in preview"
-                      className="flex-grow"
-                    />
-                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                      {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="totalAmount" value="Total Amount" className="mb-2 block" />
-                  <div className="flex">
-                    <TextInput
-                      id="totalAmount"
-                      name="totalAmount"
-                      type="number"
-                      value={formData.totalAmount}
-                      onChange={handleInputChange}
-                      className="flex-grow"
-                      required
-                    />
-                    <Select
-                      id="currency"
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleInputChange}
-                      className="ml-2 w-24"
-                    >
-                      <option value="USD">$ USD</option>
-                      <option value="EUR">€ EUR</option>
-                      <option value="TRY">₺ TRY</option>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-2">
-                    <Checkbox
-                      id="advancedPayment"
-                      checked={formData.advancedPayment}
-                      onChange={handleAdvancedPaymentChange}
-                    />
-                    <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
-                  </div>
-                  
-                  {formData.advancedPayment && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="flex">
-                          <TextInput
-                            id="advancedAmount"
-                            name="advancedAmount"
-                            type="number"
-                            placeholder="Advanced Amount"
-                            value={formData.advancedAmount}
-                            onChange={(e) => {
-                              handleInputChange(e);
-                              handleAdvancedAmountChange(e);
-                            }}
-                            required={formData.advancedPayment}
-                            className="flex-grow"
-                          />
-                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex">
-                          <TextInput
-                            id="remainingAmount"
-                            name="remainingAmount"
-                            type="number"
-                            placeholder="Remaining Amount"
-                            value={formData.remainingAmount}
-                            readOnly
-                            disabled
-                            className="flex-grow"
-                          />
-                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Profit Display */}
-                <div>
-                  <Label value="Profit" className="mb-2 block" />
-                  <div className="flex">
-                    <div className={`flex-grow px-3 py-2 text-sm font-medium rounded-l-lg border bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 ${getProfitColorClass((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0))}`}>
-                      {((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0)).toFixed(2)}
-                    </div>
-                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                      {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="note" value="Note" className="mb-2 block" />
-                  <Textarea
-                    id="note"
-                    name="note"
-                    value={formData.note}
-                    onChange={handleInputChange}
-                    placeholder="Add any additional notes..."
-                    rows={3}
-                  />
-                </div>
               </div>
               
               {/* Hotels Section */}
@@ -1474,7 +1391,7 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 {formData.hotels.map((hotel, index) => (
-                  <div key={`hotel-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
+                  <div key={`hotel-${index}`} className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Hotel {index + 1}</h4>
                       <div className="flex items-center space-x-2">
@@ -1508,16 +1425,13 @@ export default function VoucherForm({ onSuccess }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleRemoveHotel(index)} 
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
-                              title="Remove"
+                            <CustomButton 
+                              variant="red"
+                              size="xs"
+                              onClick={() => handleRemoveHotel(index)}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                              Remove
+                            </CustomButton>
                           </>
                         )}
                       </div>
@@ -1525,16 +1439,35 @@ export default function VoucherForm({ onSuccess }) {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label value="City" className="mb-2 block" />
-                        <Select 
-                          value={hotel.city} 
-                          onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
-                        >
-                          <option value="">Select City</option>
-                          {cities.map(city => (
-                            <option key={city} value={city}>{city}</option>
-                          ))}
-                        </Select>
+                        <div className="flex justify-between items-center mb-2">
+                          <Label value="City" className="block" />
+                          <div className="flex items-center">
+                            <Checkbox 
+                              id={`customHotelCity-${index}`}
+                              checked={useCustomHotelCity[index]}
+                              onChange={() => toggleCustomHotelCity(index)}
+                            />
+                            <Label htmlFor={`customHotelCity-${index}`} value="Custom City" className="ml-2 text-sm" />
+                          </div>
+                        </div>
+                        
+                        {useCustomHotelCity[index] ? (
+                          <TextInput
+                            value={hotel.city}
+                            onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
+                            placeholder="Enter city name"
+                          />
+                        ) : (
+                          <Select 
+                            value={hotel.city} 
+                            onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
+                          >
+                            <option value="">Select City</option>
+                            {cities.map(city => (
+                              <option key={city} value={city}>{city}</option>
+                            ))}
+                          </Select>
+                        )}
                       </div>
                       
                       <div>
@@ -1683,7 +1616,7 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 {formData.transfers.map((transfer, index) => (
-                  <div key={`transfer-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
+                  <div key={`transfer-${index}`} className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Transfer {index + 1}</h4>
                       <div className="flex items-center space-x-2">
@@ -1717,16 +1650,13 @@ export default function VoucherForm({ onSuccess }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleRemoveTransfer(index)} 
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
-                              title="Remove"
+                            <CustomButton 
+                              variant="red"
+                              size="xs"
+                              onClick={() => handleRemoveTransfer(index)}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                              Remove
+                            </CustomButton>
                           </>
                         )}
                       </div>
@@ -1876,7 +1806,7 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 {formData.trips.map((trip, index) => (
-                  <div key={`trip-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
+                  <div key={`trip-${index}`} className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Trip {index + 1}</h4>
                       <div className="flex items-center space-x-2">
@@ -1910,16 +1840,13 @@ export default function VoucherForm({ onSuccess }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleRemoveTrip(index)} 
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
-                              title="Remove"
+                            <CustomButton 
+                              variant="red"
+                              size="xs"
+                              onClick={() => handleRemoveTrip(index)}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                              Remove
+                            </CustomButton>
                           </>
                         )}
                       </div>
@@ -2033,7 +1960,7 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 {formData.flights.map((flight, index) => (
-                  <div key={`flight-${index}`} className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-4">
+                  <div key={`flight-${index}`} className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg mb-4">
                     <div className="flex justify-between mb-3">
                       <h4 className="font-medium dark:text-white">Flight {index + 1}</h4>
                       <div className="flex items-center space-x-2">
@@ -2067,16 +1994,13 @@ export default function VoucherForm({ onSuccess }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            <button 
-                              type="button"
-                              onClick={() => handleRemoveFlight(index)} 
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900 p-1 rounded"
-                              title="Remove"
+                            <CustomButton 
+                              variant="red"
+                              size="xs"
+                              onClick={() => handleRemoveFlight(index)}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                              Remove
+                            </CustomButton>
                           </>
                         )}
                       </div>
@@ -2204,7 +2128,23 @@ export default function VoucherForm({ onSuccess }) {
                   </p>
                 </div>
                 
-                <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg space-y-4">
+                <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg space-y-4">
+                  {/* Currency Selection */}
+                  <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                    <div className="flex justify-center">
+                      <Select
+                        id="currency"
+                        name="currency"
+                        value={formData.currency}
+                        onChange={handleInputChange}
+                        className="w-22 text-center"
+                      >
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="TRY">₺ TRY</option>
+                      </Select>
+                    </div>
+                  </div>
                   {/* Hotels Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -2344,6 +2284,126 @@ export default function VoucherForm({ onSuccess }) {
                         <span className="text-lg text-gray-600 dark:text-gray-400">
                           {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
                         </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Financial Overview */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                        <div className="flex">
+                          <TextInput
+                            id="capital"
+                            name="capital"
+                            value={formData.capital}
+                            onChange={handleInputChange}
+                            placeholder="This will only show in preview"
+                            className="flex-grow"
+                          />
+                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+
+                                             <div>
+                         <Label htmlFor="totalAmount" value="Total Amount" className="mb-2 block" />
+                         <div className="flex">
+                           <TextInput
+                             id="totalAmount"
+                             name="totalAmount"
+                             type="number"
+                             value={formData.totalAmount}
+                             onChange={handleInputChange}
+                             className="flex-grow"
+                             required
+                           />
+                           <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                             {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                           </span>
+                         </div>
+                       </div>
+                      
+                      <div>
+                        <div className="flex items-center mb-2">
+                          <Checkbox
+                            id="advancedPayment"
+                            checked={formData.advancedPayment}
+                            onChange={handleAdvancedPaymentChange}
+                          />
+                          <Label htmlFor="advancedPayment" value="Advanced Payment" className="ml-2" />
+                        </div>
+                        
+                        {formData.advancedPayment && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <div className="flex">
+                                <TextInput
+                                  id="advancedAmount"
+                                  name="advancedAmount"
+                                  type="number"
+                                  placeholder="Advanced Amount"
+                                  value={formData.advancedAmount}
+                                  onChange={(e) => {
+                                    handleInputChange(e);
+                                    handleAdvancedAmountChange(e);
+                                  }}
+                                  required={formData.advancedPayment}
+                                  className="flex-grow"
+                                />
+                                <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex">
+                                <TextInput
+                                  id="remainingAmount"
+                                  name="remainingAmount"
+                                  type="number"
+                                  placeholder="Remaining Amount"
+                                  value={formData.remainingAmount}
+                                  readOnly
+                                  disabled
+                                  className="flex-grow"
+                                />
+                                <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Profit Display */}
+                      <div>
+                        <Label value="Profit" className="mb-2 block" />
+                        <div className="flex">
+                          <div className={`flex-grow px-3 py-2 text-sm font-medium rounded-l-lg border bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-slate-600 ${getProfitColorClass((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0))}`}>
+                            {((Number(formData.totalAmount) || 0) - (Number(formData.capital) || 0)).toFixed(2)}
+                          </div>
+                          <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div>
+                        <Label htmlFor="note" value="Note" className="mb-2 block" />
+                        <Textarea
+                          id="note"
+                          name="note"
+                          value={formData.note}
+                          onChange={handleInputChange}
+                          placeholder="Add any additional notes..."
+                          rows={3}
+                        />
                       </div>
                     </div>
                   </div>
