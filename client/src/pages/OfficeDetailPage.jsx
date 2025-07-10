@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Table, Label, Alert } from 'flowbite-react';
-import { HiArrowLeft, HiCalendar, HiOfficeBuilding, HiX } from 'react-icons/hi';
+import { Card, Label, Alert, Table } from 'flowbite-react';
+import { HiArrowLeft, HiOfficeBuilding, HiX } from 'react-icons/hi';
 import { toast } from 'react-hot-toast';
 import { getAllVouchers } from '../utils/voucherApi';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomButton from '../components/CustomButton';
 import SearchableSelect from '../components/SearchableSelect';
 import PaymentManager from '../components/PaymentManager';
+import CustomTable from '../components/CustomTable';
 
 const OfficeDetailPage = () => {
     const { officeName } = useParams();
@@ -224,9 +225,9 @@ const OfficeDetailPage = () => {
                 </div>
                 
                 {/* Filters and Voucher Table */}
-                <Card className="w-full dark:bg-slate-900 mb-6">
+                <Card className="w-full dark:bg-slate-950 mb-6">
                     {/* Filters */}
-                    <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-lg mb-6">
+                    <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-6 rounded-lg mb-6">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
@@ -296,66 +297,59 @@ const OfficeDetailPage = () => {
                         </div>
                     ) : error ? (
                         <Alert color="failure" className="mb-4">{error}</Alert>
-                    ) : filteredVouchers.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <Table striped>
-                                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Date</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-blue-600 dark:text-blue-400">Hotels</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-green-600 dark:text-green-400">Transfers</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-purple-600 dark:text-purple-400">Trips</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-orange-600 dark:text-orange-400">Flights</Table.HeadCell>
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-gray-900 dark:text-white">Total</Table.HeadCell>
-                                </Table.Head>
-                                <Table.Body>
-                                    {filteredVouchers.map((voucher) => {
-                                        const services = calculateServicePayments(voucher);
-                                        return (
-                                            <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                    <button
-                                                        onClick={() => navigate(`/vouchers/${voucher._id}`)}
-                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
-                                                        title="View voucher details"
-                                                    >
-                                                        #{voucher.voucherNumber}
-                                                    </button>
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                    {voucher.clientName}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                    {formatDate(voucher.createdAt)}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
-                                                    {getCurrencySymbol(voucher.currency)}{services.hotels.toFixed(2)}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                                    {getCurrencySymbol(voucher.currency)}{services.transfers.toFixed(2)}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
-                                                    {getCurrencySymbol(voucher.currency)}{services.trips.toFixed(2)}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
-                                                    {getCurrencySymbol(voucher.currency)}{services.flights.toFixed(2)}
-                                                </Table.Cell>
-                                                <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
-                                                    {getCurrencySymbol(voucher.currency)}{services.total.toFixed(2)}
-                                                </Table.Cell>
-                                            </Table.Row>
-                                        );
-                                    })}
-                                </Table.Body>
-                            </Table>
-                        </div>
-                    ) : (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <HiOfficeBuilding className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                            <p className="text-lg font-medium">No vouchers found</p>
-                            <p className="text-sm">No vouchers have payments assigned to this office with the current filters.</p>
-                        </div>
+                                        ) : (
+                        <CustomTable
+                            headers={[
+                                { label: "Voucher #", className: "" },
+                                { label: "Client", className: "" },
+                                { label: "Date", className: "" },
+                                { label: "Hotels", className: "text-blue-600 dark:text-blue-400" },
+                                { label: "Transfers", className: "text-green-600 dark:text-green-400" },
+                                { label: "Trips", className: "text-purple-600 dark:text-purple-400" },
+                                { label: "Flights", className: "text-orange-600 dark:text-orange-400" },
+                                { label: "Total", className: "text-gray-900 dark:text-white" }
+                            ]}
+                            data={filteredVouchers}
+                            renderRow={(voucher) => {
+                                const services = calculateServicePayments(voucher);
+                                return (
+                                    <>
+                                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                            <button
+                                                onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
+                                                title="View voucher details"
+                                            >
+                                                #{voucher.voucherNumber}
+                                            </button>
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                            {voucher.clientName}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                            {formatDate(voucher.createdAt)}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                            {getCurrencySymbol(voucher.currency)}{services.hotels.toFixed(2)}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                            {getCurrencySymbol(voucher.currency)}{services.transfers.toFixed(2)}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
+                                            {getCurrencySymbol(voucher.currency)}{services.trips.toFixed(2)}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
+                                            {getCurrencySymbol(voucher.currency)}{services.flights.toFixed(2)}
+                                        </Table.Cell>
+                                        <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
+                                            {getCurrencySymbol(voucher.currency)}{services.total.toFixed(2)}
+                                        </Table.Cell>
+                                    </>
+                                );
+                            }}
+                            emptyMessage="No vouchers have payments assigned to this office with the current filters."
+                            emptyIcon={HiOfficeBuilding}
+                        />
                     )}
                 </Card>
                 
@@ -385,7 +379,7 @@ const OfficeDetailPage = () => {
                             {getCurrencySymbol(filters.currency)}{totals.flights.toFixed(2)}
                         </p>
                     </Card>
-                    <Card className="text-center bg-gray-50 dark:bg-gray-700">
+                    <Card className="text-center bg-gray-50 dark:bg-slate-900">
                         <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400">Total</h3>
                         <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
                             {getCurrencySymbol(filters.currency)}{totals.total.toFixed(2)}
@@ -395,7 +389,7 @@ const OfficeDetailPage = () => {
                 
                 {/* Payment Manager */}
                 <div className="mb-6">
-                    <Card className="w-full dark:bg-slate-900">
+                    <Card className="w-full dark:bg-slate-950">
                         <div className="p-6">
                             <PaymentManager
                                 officeName={officeName}

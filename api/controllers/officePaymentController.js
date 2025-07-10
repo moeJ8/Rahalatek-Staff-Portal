@@ -17,6 +17,7 @@ exports.getOfficePayments = async (req, res) => {
 
         const payments = await OfficePayment.find(query)
             .populate('createdBy', 'name')
+            .populate('relatedVoucher', 'voucherNumber clientName')
             .sort({ createdAt: -1 });
 
         res.json(payments);
@@ -60,7 +61,8 @@ exports.createOfficePayment = async (req, res) => {
 
         const savedPayment = await payment.save();
         const populatedPayment = await OfficePayment.findById(savedPayment._id)
-            .populate('createdBy', 'name');
+            .populate('createdBy', 'name')
+            .populate('relatedVoucher', 'voucherNumber clientName');
 
         res.status(201).json(populatedPayment);
     } catch (error) {
