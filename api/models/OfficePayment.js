@@ -38,6 +38,24 @@ const officePaymentSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    paymentDate: {
+        type: Date,
+        default: null
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'approved'],
+        default: 'pending'
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    approvedAt: {
+        type: Date,
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

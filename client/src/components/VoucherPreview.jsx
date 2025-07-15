@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Button } from 'flowbite-react';
 import CustomButton from './CustomButton';
-import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash, FaChevronUp, FaChevronDown } from 'react-icons/fa';
+import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash, FaChevronUp, FaChevronDown, FaBuilding } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDisplayDate } from '../utils/voucherGenerator';
@@ -23,6 +23,8 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccountant, setIsAccountant] = useState(false);
   
   const getStorageKey = (section) => {
     return `voucherPreview_${voucherData?.voucherNumber || 'default'}_${section}`;
@@ -203,6 +205,13 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setLogoDataUrl(dataUrl);
     };
     img.src = '/Logolight.png';
+  }, []);
+
+  // Check user role for office detail button visibility
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setIsAdmin(user.isAdmin || false);
+    setIsAccountant(user.isAccountant || false);
   }, []);
   
   const generateDesktopVersionForDownload = () => {
@@ -1165,6 +1174,19 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
               icon={FaPen}
             >
               <span className="hidden sm:inline">Edit Voucher</span>
+            </CustomButton>
+          </Link>
+        )}
+        
+        {/* Office Detail Button - Only for admins and accountants */}
+        {(isAdmin || isAccountant) && voucherData?.officeName && (
+          <Link to={`/office/${encodeURIComponent(voucherData.officeName)}`} className="w-full">
+            <CustomButton
+              className="w-full flex justify-center"
+              variant="blue"
+              icon={FaBuilding}
+            >
+              <span className="hidden sm:inline">View Office Details</span>
             </CustomButton>
           </Link>
         )}

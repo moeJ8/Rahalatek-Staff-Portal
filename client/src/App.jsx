@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import WorkerPage from './pages/WorkerPage'
 import SignInPage from './pages/SignInPage'
@@ -22,6 +22,18 @@ import ScrollToTop from './components/ScrollToTop'
 import RahalatekLoader from './components/RahalatekLoader'
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
+
+// Component to conditionally render ScrollToTop based on current route
+const ConditionalScrollToTop = () => {
+  const location = useLocation();
+  const isOfficeDetailPage = location.pathname.startsWith('/office/');
+  
+  return (
+    <ScrollToTop 
+      className={isOfficeDetailPage ? 'md:hidden' : ''} 
+    />
+  );
+};
 
 function App() {
   const [user, setUser] = useState(null);
@@ -68,7 +80,7 @@ function App() {
       <Toaster position="bottom-center" />
       <BrowserRouter>
         <StayOnTop />
-        <ScrollToTop />
+        <ConditionalScrollToTop />
         <Header />
         
         <main className="flex-grow">

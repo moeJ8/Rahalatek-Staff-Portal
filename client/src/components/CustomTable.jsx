@@ -36,11 +36,46 @@ const CustomTable = ({
     };
 
     return (
-        <div className={`overflow-x-auto ${className}`}>
-            <Table 
-                striped={striped}
-                theme={customTheme}
-            >
+        <>
+            <style>{`
+                .custom-table-scrollbar::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+                
+                /* Light mode scrollbar */
+                .custom-table-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                }
+                
+                .custom-table-scrollbar::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 4px;
+                }
+                
+                .custom-table-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+                
+                /* Dark mode scrollbar */
+                .dark .custom-table-scrollbar::-webkit-scrollbar-track {
+                    background: #1e293b;
+                }
+                
+                .dark .custom-table-scrollbar::-webkit-scrollbar-thumb {
+                    background: #475569;
+                    border-radius: 4px;
+                }
+                
+                .dark .custom-table-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #64748b;
+                }
+            `}</style>
+            <div className={`overflow-auto custom-table-scrollbar ${className}`} style={{ maxHeight: '70vh' }}>
+                <Table 
+                    striped={striped}
+                    theme={customTheme}
+                >
                 {headers.length > 0 && (
                     <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-700">
                         {headers.map((header, index) => (
@@ -80,7 +115,8 @@ const CustomTable = ({
                     )}
                 </Table.Body>
             </Table>
-        </div>
+            </div>
+        </>
     );
 };
 

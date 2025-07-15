@@ -9,6 +9,9 @@ import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
 import RahalatekLoader from './RahalatekLoader'
 import SearchableSelect from './SearchableSelect'
+import CustomTable from './CustomTable'
+import CustomScrollbar from './CustomScrollbar'
+import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
 import StatusControls from './StatusControls'
@@ -176,12 +179,16 @@ export default function AdminPanel() {
     // Add state for financials functionality
     const [financialData, setFinancialData] = useState([]);
     const [financialLoading, setFinancialLoading] = useState(false);
+    const [allVouchers, setAllVouchers] = useState([]);
     const [financialFilters, setFinancialFilters] = useState({
-        office: '',
-        month: '',
+        month: (new Date().getMonth() + 1).toString(), // Current month (1-12)
         year: new Date().getFullYear().toString(),
-        currency: 'USD' // Default to USD
+        currency: 'USD', // Default to USD
+        viewType: 'providers' // 'providers' or 'clients'
     });
+    
+    // Add state for financial search
+    const [financialSearchQuery, setFinancialSearchQuery] = useState('');
     
     // Add state for debt management
     const [debts, setDebts] = useState([]);
@@ -1706,6 +1713,9 @@ export default function AdminPanel() {
             const response = await getAllVouchers();
             const vouchers = response.data;
             
+            // Store all vouchers for client office calculations
+            setAllVouchers(vouchers);
+            
             // Filter vouchers by selected currency first
             const filteredVouchers = vouchers.filter(voucher => {
                 const voucherCurrency = voucher.currency || 'USD';
@@ -1781,9 +1791,20 @@ export default function AdminPanel() {
 
     // Filter financial data based on current filters
     const filteredFinancialData = financialData.filter(item => {
-        if (financialFilters.office && item.officeName !== financialFilters.office) return false;
         if (financialFilters.year && item.year.toString() !== financialFilters.year) return false;
-        if (financialFilters.month && item.month !== `${financialFilters.year}-${financialFilters.month.padStart(2, '0')}`) return false;
+        
+        // Only apply month filter if a specific month is selected (not "All Months")
+        if (financialFilters.month && typeof financialFilters.month === 'string' && financialFilters.month.trim() !== '') {
+            const expectedMonth = `${financialFilters.year}-${financialFilters.month.padStart(2, '0')}`;
+            if (item.month !== expectedMonth) return false;
+        }
+        
+        // Apply search filter
+        if (financialSearchQuery.trim()) {
+            const searchLower = financialSearchQuery.toLowerCase();
+            if (!item.officeName.toLowerCase().includes(searchLower)) return false;
+        }
+        
         return true;
     });
 
@@ -1798,6 +1819,78 @@ export default function AdminPanel() {
         return acc;
     }, { hotels: 0, transfers: 0, trips: 0, flights: 0, total: 0, voucherCount: 0 });
 
+    // Calculate client office data when viewType is 'clients'
+    const clientOfficeData = useMemo(() => {
+        if (financialFilters.viewType !== 'clients') return [];
+
+        // Filter vouchers by currency and filters
+        const filteredVouchers = allVouchers.filter(voucher => {
+            const voucherCurrency = voucher.currency || 'USD';
+            if (voucherCurrency !== financialFilters.currency) return false;
+            
+            // Apply date filters
+            const voucherDate = new Date(voucher.createdAt);
+            const voucherYear = voucherDate.getFullYear();
+            const voucherMonth = voucherDate.getMonth() + 1;
+            
+            if (financialFilters.year && voucherYear.toString() !== financialFilters.year) return false;
+            
+            // Only apply month filter if a specific month is selected (not "All Months")
+            if (financialFilters.month && typeof financialFilters.month === 'string' && financialFilters.month.trim() !== '') {
+                if (voucherMonth.toString() !== financialFilters.month) return false;
+            }
+            
+            return true;
+        });
+
+        // Group vouchers by office and month (like service providers)
+        const clientOfficesMap = new Map();
+        
+        filteredVouchers.forEach(voucher => {
+            if (!voucher.officeName) return;
+            
+            const voucherDate = new Date(voucher.createdAt);
+            const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
+            const monthName = voucherDate.toLocaleString('default', { month: 'long' });
+            const year = voucherDate.getFullYear();
+            
+            const key = `${voucher.officeName}-${monthYear}`;
+            
+            if (!clientOfficesMap.has(key)) {
+                clientOfficesMap.set(key, {
+                    officeName: voucher.officeName,
+                    month: monthYear,
+                    monthName,
+                    year,
+                    totalAmount: 0,
+                    voucherCount: 0,
+                    vouchers: []
+                });
+            }
+            
+            const officeData = clientOfficesMap.get(key);
+            officeData.totalAmount += parseFloat(voucher.totalAmount) || 0;
+            officeData.voucherCount += 1;
+            officeData.vouchers.push(voucher);
+        });
+        
+        // Convert to array and sort by year desc, month desc, then total amount desc
+        return Array.from(clientOfficesMap.values())
+            .filter(office => {
+                // Apply search filter
+                if (financialSearchQuery.trim()) {
+                    const searchLower = financialSearchQuery.toLowerCase();
+                    return office.officeName.toLowerCase().includes(searchLower);
+                }
+                return true;
+            })
+            .sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                if (a.month !== b.month) return b.month.localeCompare(a.month);
+                return b.totalAmount - a.totalAmount;
+            });
+    }, [financialFilters, allVouchers, financialSearchQuery]);
+
     // Handle filter changes
     const handleFinancialFilterChange = (filterType, value) => {
         setFinancialFilters(prev => ({
@@ -1809,10 +1902,10 @@ export default function AdminPanel() {
     // Clear financial filters
     const clearFinancialFilters = () => {
         setFinancialFilters({
-            office: '',
-            month: '',
+            month: (new Date().getMonth() + 1).toString(), // Current month (1-12)
             year: new Date().getFullYear().toString(),
-            currency: 'USD'
+            currency: 'USD',
+            viewType: 'providers'
         });
     };
 
@@ -2005,10 +2098,11 @@ export default function AdminPanel() {
     // Check if financial filters are applied
     const hasFinancialFiltersApplied = () => {
         const currentYear = new Date().getFullYear().toString();
-        return financialFilters.office !== '' || 
-               financialFilters.month !== '' || 
+        const currentMonth = (new Date().getMonth() + 1).toString();
+        return financialFilters.month !== currentMonth || 
                financialFilters.year !== currentYear || 
-               financialFilters.currency !== 'USD';
+               financialFilters.currency !== 'USD' ||
+               financialFilters.viewType !== 'providers';
     };
 
     // Check if debt filters are applied
@@ -2408,7 +2502,7 @@ export default function AdminPanel() {
                             
                             {/* Tab panels */}
                             {activeTab === 'hotels' && (
-                                <Card className="w-full dark:bg-slate-900" id="hotels-panel" role="tabpanel" aria-labelledby="tab-hotels">
+                                <Card className="w-full dark:bg-slate-950" id="hotels-panel" role="tabpanel" aria-labelledby="tab-hotels">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Hotel</h2>
                                     
                                     <div className="flex justify-end mb-4">
@@ -3035,7 +3129,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'tours' && (
-                                <Card className="w-full dark:bg-slate-900" id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
+                                <Card className="w-full dark:bg-slate-950" id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
                                     
                                     <div className="flex justify-end mb-4">
@@ -3239,7 +3333,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'airports' && (
-                                <Card className="w-full dark:bg-slate-900" id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
+                                <Card className="w-full dark:bg-slate-950" id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Airport</h2>
                                     
                                     <form onSubmit={handleAirportSubmit} className="space-y-4">
@@ -3317,7 +3411,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'offices' && (
-                                <Card className="w-full dark:bg-slate-900" id="offices-panel" role="tabpanel" aria-labelledby="tab-offices">
+                                <Card className="w-full dark:bg-slate-950" id="offices-panel" role="tabpanel" aria-labelledby="tab-offices">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Office</h2>
                                     
                                     <form onSubmit={handleOfficeSubmit} className="space-y-4">
@@ -3548,7 +3642,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'office-vouchers' && (isAdmin || isAccountant) && (
-                                <Card className="w-full dark:bg-slate-900" id="office-vouchers-panel" role="tabpanel" aria-labelledby="tab-office-vouchers">
+                                <Card className="w-full dark:bg-slate-950" id="office-vouchers-panel" role="tabpanel" aria-labelledby="tab-office-vouchers">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Vouchers by Office</h2>
                                     
                                     <div className="mb-6">
@@ -3579,38 +3673,57 @@ export default function AdminPanel() {
                                                 </div>
                                             ) : officeVouchers.length > 0 ? (
                                                 <>
-                                                    <div className="overflow-x-auto">
-                                                        <Table striped>
-                                                            <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client Name</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Hotel Name</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Note</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Pax</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Advanced Payment</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total Amount</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Date of Payment</Table.HeadCell>
-                                                                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                                                            </Table.Head>
-                                                            <Table.Body>
-                                                                {officeVouchers.map(voucher => (
-                                                                    <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                            {voucher.voucherNumber}
-                                                                        </Table.Cell>
-                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                            {voucher.clientName}
-                                                                        </Table.Cell>
-                                                                                                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                        {voucher.hotels && voucher.hotels.length > 0 
-                                                                            ? voucher.hotels.map(hotel => hotel.hotelName).filter(Boolean).join(', ') || 'N/A'
-                                                                            : 'N/A'}
+                                                    <CustomScrollbar maxHeight="70vh">
+                                                        <CustomTable
+                                                            headers={[
+                                                                { label: "Voucher #", className: "" },
+                                                                { label: "Client Name", className: "" },
+                                                                { label: "Status", className: "" },
+                                                                { label: "Hotel Name", className: "" },
+                                                                { label: "Note", className: "" },
+                                                                { label: "Pax", className: "" },
+                                                                { label: "Advanced Payment", className: "" },
+                                                                { label: "Total Amount", className: "text-blue-600 dark:text-blue-400" },
+                                                                { label: "Arrival", className: "" },
+                                                                { label: "Departure", className: "" },
+                                                                { label: "Payment Status", className: "" },
+                                                                { label: "Date of Payment", className: "" },
+                                                                { label: "Actions", className: "" }
+                                                            ]}
+                                                            data={officeVouchers}
+                                                            renderRow={(voucher) => (
+                                                                <>
+                                                                    <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        <button
+                                                                            onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
+                                                                            title="View voucher details"
+                                                                        >
+                                                                            #{voucher.voucherNumber}
+                                                                        </button>
                                                                     </Table.Cell>
-                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[150px]">
-                                                                        <div className="truncate" title={voucher.note}>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        <div className="truncate max-w-[150px]" title={voucher.clientName}>
+                                                                            {voucher.clientName}
+                                                                        </div>
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="px-4 py-3">
+                                                                        <StatusControls
+                                                                            currentStatus={voucher.status || 'await'}
+                                                                            onStatusUpdate={(newStatus) => handleVoucherStatusUpdate(voucher._id, newStatus)}
+                                                                            canEdit={isAdmin || isAccountant}
+                                                                            arrivalDate={voucher.arrivalDate}
+                                                                        />
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        <div className="truncate max-w-[150px]" title={voucher.hotels && voucher.hotels.length > 0 ? voucher.hotels.map(hotel => hotel.hotelName).filter(Boolean).join(', ') || 'N/A' : 'N/A'}>
+                                                                            {voucher.hotels && voucher.hotels.length > 0 
+                                                                                ? voucher.hotels.map(hotel => hotel.hotelName).filter(Boolean).join(', ') || 'N/A'
+                                                                                : 'N/A'}
+                                                                        </div>
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        <div className="truncate max-w-[120px]" title={voucher.note || 'N/A'}>
                                                                             {voucher.note || 'N/A'}
                                                                         </div>
                                                                     </Table.Cell>
@@ -3619,58 +3732,89 @@ export default function AdminPanel() {
                                                                             ? voucher.hotels.reduce((total, hotel) => total + (hotel.pax || 0), 0) || 'N/A'
                                                                             : 'N/A'}
                                                                     </Table.Cell>
-                                                                                                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                                                                         {voucher.advancedPayment && voucher.advancedAmount 
                                                                             ? `${getCurrencySymbol(voucher.currency)}${voucher.advancedAmount}` 
                                                                             : 'N/A'}
                                                                     </Table.Cell>
-                                                                        <Table.Cell className="text-sm font-medium text-gray-900 dark:text-white px-4 py-3">
-                                                                            {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
-                                                                        </Table.Cell>
-                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                            {formatDate(voucher.arrivalDate)}
-                                                                        </Table.Cell>
-                                                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                            {formatDate(voucher.departureDate)}
-                                                                        </Table.Cell>
-                                                                        <Table.Cell className="px-4 py-3">
-                                                                            <StatusControls
-                                                                                currentStatus={voucher.status || 'await'}
-                                                                                onStatusUpdate={(newStatus) => handleVoucherStatusUpdate(voucher._id, newStatus)}
-                                                                                canEdit={isAdmin || isAccountant}
-                                                                                arrivalDate={voucher.arrivalDate}
-                                                                            />
-                                                                        </Table.Cell>
-                                                                                                                                            <Table.Cell className="px-4 py-3">
+                                                                    <Table.Cell className="text-sm font-medium text-blue-600 dark:text-blue-400 px-4 py-3">
+                                                                        {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        {formatDate(voucher.arrivalDate)}
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                        {formatDate(voucher.departureDate)}
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="px-4 py-3">
+                                                                        {(() => {
+                                                                            // Check if voucher has any office payments and their status
+                                                                            const hasApprovedPayments = voucher.officePayments && voucher.officePayments.some(payment => payment.status === 'approved');
+                                                                            const hasPendingPayments = voucher.officePayments && voucher.officePayments.some(payment => payment.status === 'pending');
+                                                                            const hasPayments = voucher.payments && Object.values(voucher.payments).some(payment => payment.officeName === selectedOfficeForVouchers && payment.price > 0);
+                                                                            
+                                                                            if (hasApprovedPayments) {
+                                                                                return (
+                                                                                    <span className="inline-flex items-center justify-center rounded-lg bg-green-500 text-white border border-green-600 shadow-md text-[11px] px-2 py-0.5 font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-16">
+                                                                                        Approved
+                                                                                    </span>
+                                                                                );
+                                                                            } else if (hasPendingPayments) {
+                                                                                return (
+                                                                                    <span className="inline-flex items-center justify-center rounded-lg bg-yellow-500 text-white border border-yellow-600 shadow-md text-[11px] px-2 py-0.5 font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-16">
+                                                                                        Pending
+                                                                                    </span>
+                                                                                );
+                                                                            } else if (hasPayments) {
+                                                                                return (
+                                                                                    <span className="inline-flex items-center justify-center rounded-lg bg-gray-500 text-white border border-gray-600 shadow-md text-[11px] px-2 py-0.5 font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-16">
+                                                                                        No Payment
+                                                                                    </span>
+                                                                                );
+                                                                            } else {
+                                                                                return (
+                                                                                    <span className="inline-flex items-center justify-center rounded-lg bg-gray-400 text-white border border-gray-500 shadow-md text-[11px] px-2 py-0.5 font-semibold transition-all duration-200 hover:scale-105 hover:shadow-lg min-w-16">
+                                                                                        N/A
+                                                                                    </span>
+                                                                                );
+                                                                            }
+                                                                        })()}
+                                                                    </Table.Cell>
+                                                                    <Table.Cell className="px-4 py-3">
                                                                         <PaymentDateControls
                                                                             currentPaymentDate={voucher.paymentDate}
                                                                             onPaymentDateUpdate={(paymentDate) => handlePaymentDateUpdate(voucher._id, paymentDate)}
                                                                             canEdit={isAdmin || isAccountant}
                                                                         />
                                                                     </Table.Cell>
-                                                                        <Table.Cell className="px-4 py-3">
-                                                                            <div className="flex space-x-2">
+                                                                    <Table.Cell className="px-4 py-3">
+                                                                        <div className="flex space-x-2">
+                                                                            <Link 
+                                                                                to={`/vouchers/${voucher._id}`}
+                                                                                className="font-medium text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                                            >
+                                                                                View
+                                                                            </Link>
+                                                                            {canManageVoucher(voucher) && (
                                                                                 <Link 
-                                                                                    to={`/vouchers/${voucher._id}`}
-                                                                                    className="font-medium text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                                                                    to={`/edit-voucher/${voucher._id}`}
+                                                                                    className="font-medium text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
                                                                                 >
-                                                                                    View
+                                                                                    Edit
                                                                                 </Link>
-                                                                                {canManageVoucher(voucher) && (
-                                                                                    <Link 
-                                                                                        to={`/edit-voucher/${voucher._id}`}
-                                                                                        className="font-medium text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
-                                                                                    >
-                                                                                        Edit
-                                                                                    </Link>
-                                                                                )}
-                                                                            </div>
-                                                                        </Table.Cell>
-                                                                    </Table.Row>
-                                                                ))}
-                                                            </Table.Body>
-                                                        </Table>
-                                                    </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </Table.Cell>
+                                                                </>
+                                                            )}
+                                                            emptyMessage="No vouchers found for this office"
+                                                            emptyIcon={() => (
+                                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                </svg>
+                                                            )}
+                                                        />
+                                                    </CustomScrollbar>
                                                     
                                                     {/* Currency Totals */}
                                                     {Object.keys(totalsByCurrency).length > 0 && (
@@ -3764,7 +3908,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'financials' && (isAdmin || isAccountant) && (
-                                <Card className="w-full dark:bg-slate-900" id="financials-panel" role="tabpanel" aria-labelledby="tab-financials">
+                                <Card className="w-full dark:bg-slate-950" id="financials-panel" role="tabpanel" aria-labelledby="tab-financials">
                                     <h2 className="text-2xl font-bold mb-6 dark:text-white text-center flex items-center justify-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -3772,72 +3916,163 @@ export default function AdminPanel() {
                                         Financial Reports
                                     </h2>
                                     
+                                    {/* Overview Cards */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                        {financialFilters.viewType === 'providers' ? (
+                                            <>
+                                                {/* Total Revenue */}
+                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Revenue</p>
+                                                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                                                                {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center">
+                                                            <FaDollarSign className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Active Service Providers */}
+                                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-xl border border-green-200 dark:border-green-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Providers</p>
+                                                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                                                                {[...new Set(filteredFinancialData.map(item => item.officeName))].length}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-green-500 dark:bg-green-600 rounded-lg flex items-center justify-center">
+                                                            <FaBuilding className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Total Vouchers */}
+                                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-xl border border-purple-200 dark:border-purple-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Vouchers</p>
+                                                            <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                                                                {financialTotals.voucherCount.toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center">
+                                                            <FaFileInvoiceDollar className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Average Revenue per Provider */}
+                                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Provider</p>
+                                                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                                                                {getCurrencySymbol(financialFilters.currency)}{
+                                                                    [...new Set(filteredFinancialData.map(item => item.officeName))].length > 0 
+                                                                        ? (financialTotals.total / [...new Set(filteredFinancialData.map(item => item.officeName))].length).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                                                                        : '0'
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
+                                                            <FaCalendarDay className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {/* Total Client Revenue */}
+                                                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 p-6 rounded-xl border border-cyan-200 dark:border-cyan-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-cyan-600 dark:text-cyan-400">Total Revenue</p>
+                                                            <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">
+                                                                {getCurrencySymbol(financialFilters.currency)}{clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-cyan-500 dark:bg-cyan-600 rounded-lg flex items-center justify-center">
+                                                            <FaDollarSign className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Unique Client Offices */}
+                                                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 p-6 rounded-xl border border-indigo-200 dark:border-indigo-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Client Offices</p>
+                                                            <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                                                                {[...new Set(clientOfficeData.map(office => office.officeName))].length}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-indigo-500 dark:bg-indigo-600 rounded-lg flex items-center justify-center">
+                                                            <FaBuilding className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Total Client Vouchers */}
+                                                <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 p-6 rounded-xl border border-teal-200 dark:border-teal-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-teal-600 dark:text-teal-400">Total Vouchers</p>
+                                                            <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">
+                                                                {clientOfficeData.reduce((sum, office) => sum + office.voucherCount, 0).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center">
+                                                            <FaFileInvoiceDollar className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Average Revenue per Client */}
+                                                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 p-6 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Avg per Client</p>
+                                                            <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                                                                {getCurrencySymbol(financialFilters.currency)}{
+                                                                    [...new Set(clientOfficeData.map(office => office.officeName))].length > 0 
+                                                                        ? (clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0) / [...new Set(clientOfficeData.map(office => office.officeName))].length).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                                                                        : '0'
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-emerald-500 dark:bg-emerald-600 rounded-lg flex items-center justify-center">
+                                                            <FaCalendarDay className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                    
                                     {/* Filters */}
-                                    <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-lg mb-6">
+                                    <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-6 rounded-lg mb-6">
                                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                                             <div>
-                                                <Label htmlFor="office-filter" value="Office" className="mb-2" />
+                                                <Label htmlFor="view-type-filter" value="View Type" className="mb-2" />
                                                 <SearchableSelect
-                                                    id="office-filter"
+                                                    id="view-type-filter"
                                                     options={[
-                                                        { value: '', label: 'All Offices' },
-                                                        ...offices.map(office => ({
-                                                            value: office.name,
-                                                            label: `${office.name} - ${office.location}`
-                                                        }))
+                                                        { value: 'providers', label: 'Service Providers' },
+                                                        { value: 'clients', label: 'Client Offices' }
                                                     ]}
-                                                    value={financialFilters.office}
+                                                    value={financialFilters.viewType}
                                                     onChange={(eventOrValue) => {
                                                         const value = typeof eventOrValue === 'string' 
                                                             ? eventOrValue 
                                                             : eventOrValue?.target?.value || eventOrValue;
-                                                        handleFinancialFilterChange('office', value);
+                                                        handleFinancialFilterChange('viewType', value);
                                                     }}
-                                                    placeholder="Search offices..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor="year-filter" value="Year" className="mb-2" />
-                                                <SearchableSelect
-                                                    id="year-filter"
-                                                    options={[
-                                                        { value: '2030', label: '2030' },
-                                                        { value: '2029', label: '2029' },
-                                                        { value: '2028', label: '2028' },
-                                                        { value: '2027', label: '2027' },
-                                                        { value: '2026', label: '2026' },
-                                                        { value: '2025', label: '2025' }
-                                                    ]}
-                                                    value={financialFilters.year}
-                                                    onChange={(eventOrValue) => {
-                                                        const value = typeof eventOrValue === 'string' 
-                                                            ? eventOrValue 
-                                                            : eventOrValue?.target?.value || eventOrValue;
-                                                        handleFinancialFilterChange('year', value);
-                                                    }}
-                                                    placeholder="Search or select year..."
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor="month-filter" value="Month" className="mb-2" />
-                                                <SearchableSelect
-                                                    id="month-filter"
-                                                    options={[
-                                                        { value: '', label: 'All Months' },
-                                                        ...Array.from({length: 12}, (_, i) => i + 1).map(month => ({
-                                                            value: month.toString(),
-                                                            label: new Date(2024, month - 1).toLocaleString('default', { month: 'long' })
-                                                        }))
-                                                    ]}
-                                                    value={financialFilters.month}
-                                                    onChange={(eventOrValue) => {
-                                                        const value = typeof eventOrValue === 'string' 
-                                                            ? eventOrValue 
-                                                            : eventOrValue?.target?.value || eventOrValue;
-                                                        handleFinancialFilterChange('month', value);
-                                                    }}
-                                                    placeholder="Search or select month..."
+                                                    placeholder="Select view type..."
                                                 />
                                             </div>
                                             <div>
@@ -3857,6 +4092,86 @@ export default function AdminPanel() {
                                                         handleFinancialFilterChange('currency', value);
                                                     }}
                                                     placeholder="Search or select currency..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="month-filter" value="Month" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="month-filter"
+                                                    options={(() => {
+                                                        // Get months that have data for the selected year
+                                                        const selectedYear = parseInt(financialFilters.year);
+                                                        const dataMonths = [...new Set(
+                                                            financialData
+                                                                .filter(item => item.year === selectedYear)
+                                                                .map(item => {
+                                                                    // Extract month from "YYYY-MM" format
+                                                                    const monthPart = item.month.split('-')[1];
+                                                                    return parseInt(monthPart);
+                                                                })
+                                                        )];
+                                                        
+                                                        // If viewing current year, always include current month
+                                                        const currentYear = new Date().getFullYear();
+                                                        const currentMonth = new Date().getMonth() + 1;
+                                                        let allMonths = dataMonths;
+                                                        
+                                                        if (selectedYear === currentYear) {
+                                                            allMonths = [...new Set([currentMonth, ...dataMonths])];
+                                                        }
+                                                        
+                                                        // Create options with "All Months" first, then sorted months
+                                                        const monthOptions = [{ value: '', label: 'All Months' }];
+                                                        
+                                                        allMonths
+                                                            .sort((a, b) => a - b)
+                                                            .forEach(month => {
+                                                                monthOptions.push({
+                                                                    value: month.toString(),
+                                                                    label: new Date(2024, month - 1).toLocaleString('default', { month: 'long' })
+                                                                });
+                                                            });
+                                                        
+                                                        return monthOptions;
+                                                    })()}
+                                                    value={financialFilters.month}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('month', value);
+                                                    }}
+                                                    placeholder="Select month..."
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="year-filter" value="Year" className="mb-2" />
+                                                <SearchableSelect
+                                                    id="year-filter"
+                                                    options={(() => {
+                                                        // Get unique years from financial data
+                                                        const dataYears = [...new Set(financialData.map(item => item.year))];
+                                                        
+                                                        // Always include current year even if no data exists
+                                                        const currentYear = new Date().getFullYear();
+                                                        const allYears = [...new Set([currentYear, ...dataYears])];
+                                                        
+                                                        // Sort in descending order (newest first) and create options
+                                                        return allYears
+                                                            .sort((a, b) => b - a)
+                                                            .map(year => ({
+                                                                value: year.toString(),
+                                                                label: year.toString()
+                                                            }));
+                                                    })()}
+                                                    value={financialFilters.year}
+                                                    onChange={(eventOrValue) => {
+                                                        const value = typeof eventOrValue === 'string' 
+                                                            ? eventOrValue 
+                                                            : eventOrValue?.target?.value || eventOrValue;
+                                                        handleFinancialFilterChange('year', value);
+                                                    }}
+                                                    placeholder="Select year..."
                                                 />
                                             </div>
                                             <div className="flex items-end">
@@ -3885,113 +4200,150 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-                                                                         {/* Summary Cards */}
-                                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                                             <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Hotels</h4>
-                                             <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
-                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.hotels.toFixed(2)}
-                                             </p>
-                                         </div>
-                                         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                                             <h4 className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Transfers</h4>
-                                             <p className="text-2xl font-bold text-green-900 dark:text-green-200">
-                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.transfers.toFixed(2)}
-                                             </p>
-                                         </div>
-                                         <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-                                             <h4 className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-1">Trips</h4>
-                                             <p className="text-2xl font-bold text-purple-900 dark:text-purple-200">
-                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.trips.toFixed(2)}
-                                             </p>
-                                         </div>
-                                         <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
-                                             <h4 className="text-sm font-medium text-orange-800 dark:text-orange-300 mb-1">Flights</h4>
-                                             <p className="text-2xl font-bold text-orange-900 dark:text-orange-200">
-                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.flights.toFixed(2)}
-                                             </p>
-                                         </div>
-                                         <div className="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg border border-gray-200 dark:border-gray-800">
-                                             <h4 className="text-sm font-medium text-gray-800 dark:text-gray-300 mb-1">Total</h4>
-                                             <p className="text-2xl font-bold text-gray-900 dark:text-gray-200">
-                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toFixed(2)}
-                                             </p>
-                                         </div>
-                                     </div>
+                                    {/* Search Bar */}
+                                    <div className="mb-6 -ml-2">
+                                        <div className="relative w-80">
+                                            <TextInput
+                                                placeholder="Search offices by name..."
+                                                value={financialSearchQuery}
+                                                onChange={(e) => setFinancialSearchQuery(e.target.value)}
+                                                icon={() => (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                )}
+                                                className="pl-5 w-full"
+                                            />
+                                            {financialSearchQuery && (
+                                                <button
+                                                    onClick={() => setFinancialSearchQuery('')}
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                    title="Clear search"
+                                                >
+                                                    <HiX className="h-4 w-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     {/* Financial Data Table */}
-                                    {financialLoading ? (
-                                        <div className="py-8">
-                                            <RahalatekLoader size="lg" />
-                                        </div>
-                                    ) : filteredFinancialData.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <Table striped>
-                                                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Month</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-blue-600 dark:text-blue-400">Hotels</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-green-600 dark:text-green-400">Transfers</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-purple-600 dark:text-purple-400">Trips</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-orange-600 dark:text-orange-400">Flights</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3 text-gray-900 dark:text-white">Total</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Vouchers</Table.HeadCell>
-                                                </Table.Head>
-                                                <Table.Body>
-                                                    {filteredFinancialData.map((item, index) => (
-                                                        <Table.Row key={index} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                <Link 
-                                                                    to={`/office/${encodeURIComponent(item.officeName)}`}
-                                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
-                                                                >
-                                                                    {item.officeName}
-                                                                </Link>
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {item.monthName} {item.year}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
-                                                                {getCurrencySymbol(financialFilters.currency)}{item.hotels.toFixed(2)}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                                                {getCurrencySymbol(financialFilters.currency)}{item.transfers.toFixed(2)}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
-                                                                {getCurrencySymbol(financialFilters.currency)}{item.trips.toFixed(2)}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
-                                                                {getCurrencySymbol(financialFilters.currency)}{item.flights.toFixed(2)}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
-                                                                {getCurrencySymbol(financialFilters.currency)}{item.total.toFixed(2)}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
-                                                                {item.voucherCount}
-                                                            </Table.Cell>
-                                                        </Table.Row>
-                                                    ))}
-                                                </Table.Body>
-                                            </Table>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                            </svg>
-                                            <p className="text-lg font-medium">No financial data found</p>
-                                            <p className="text-sm">Create vouchers with payment distributions to see financial reports.</p>
-                                        </div>
+                    {financialLoading ? (
+                        <div className="py-8">
+                            <RahalatekLoader size="lg" />
+                        </div>
+                                        ) : (
+                        <CustomScrollbar maxHeight="400px">
+                            {financialFilters.viewType === 'providers' ? (
+                                <CustomTable
+                                    headers={[
+                                        { label: 'Office', className: '' },
+                                        { label: 'Month', className: '' },
+                                        { label: 'Hotels', className: 'text-blue-600 dark:text-blue-400' },
+                                        { label: 'Transfers', className: 'text-green-600 dark:text-green-400' },
+                                        { label: 'Trips', className: 'text-purple-600 dark:text-purple-400' },
+                                        { label: 'Flights', className: 'text-orange-600 dark:text-orange-400' },
+                                        { label: 'Total', className: 'text-gray-900 dark:text-white' },
+                                        { label: 'Vouchers', className: '' }
+                                    ]}
+                                    data={filteredFinancialData}
+                                    renderRow={(item) => (
+                                        <>
+                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                <Link 
+                                                    to={`/office/${encodeURIComponent(item.officeName)}`}
+                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                                >
+                                                    {item.officeName}
+                                                </Link>
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                {item.monthName} {item.year}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{item.hotels.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{item.transfers.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{item.trips.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{item.flights.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{item.total.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
+                                                {item.voucherCount}
+                                            </Table.Cell>
+                                        </>
                                     )}
-
-
+                                    emptyMessage="No financial data found for the selected period"
+                                    emptyIcon={() => (
+                                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                    )}
+                                />
+                            ) : (
+                                <CustomTable
+                                    headers={[
+                                        { label: 'Office', className: '' },
+                                        { label: 'Month', className: '' },
+                                        { label: 'Total Amount', className: 'text-blue-600 dark:text-blue-400' },
+                                        { label: 'Vouchers', className: 'text-gray-900 dark:text-white' }
+                                    ]}
+                                    data={clientOfficeData}
+                                    renderRow={(office) => (
+                                        <>
+                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                <Link 
+                                                    to={`/office/${encodeURIComponent(office.officeName)}`}
+                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                                >
+                                                    {office.officeName}
+                                                </Link>
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                {office.monthName} {office.year}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
+                                            </Table.Cell>
+                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
+                                                {office.voucherCount}
+                                            </Table.Cell>
+                                        </>
+                                    )}
+                                    emptyMessage="No client offices found"
+                                    emptyIcon={() => (
+                                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                    )}
+                                />
+                            )}
+                        </CustomScrollbar>
+                    )}
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                 </Card>
                             )}
 
+                            {/* Financial Floating Totals Panel */}
+                            {activeTab === 'financials' && (isAdmin || isAccountant) && (
+                                <FinancialFloatingTotalsPanel
+                                    viewType={financialFilters.viewType}
+                                    totals={financialTotals}
+                                    clientOfficeData={clientOfficeData}
+                                    currency={financialFilters.currency}
+                                    getCurrencySymbol={getCurrencySymbol}
+                                />
+                            )}
+
                             {activeTab === 'debts' && (isAdmin || isAccountant) && (
-                                <Card className="w-full dark:bg-slate-900" id="debts-panel" role="tabpanel" aria-labelledby="tab-debts">
+                                <Card className="w-full dark:bg-slate-950" id="debts-panel" role="tabpanel" aria-labelledby="tab-debts">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex-1"></div>
                                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-center">
@@ -4011,7 +4363,7 @@ export default function AdminPanel() {
                                     </div>
 
                                     {/* Debt Filters */}
-                                    <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-lg mb-6">
+                                    <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-4 rounded-lg mb-6">
                                         <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                             <div>
@@ -4221,121 +4573,114 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'users' && (isAdmin || isAccountant) && (
-                                <Card className="w-full dark:bg-slate-900" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
+                                <Card className="w-full dark:bg-slate-950" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">User Management</h2>
                                     
                                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
-                                    {users.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <Table>
-                                                <Table.Head>
-                                                    <Table.HeadCell>Username</Table.HeadCell>
-                                                    <Table.HeadCell className="text-center">Role</Table.HeadCell>
-                                                    {isAdmin && (
-                                                        <>
-                                                            <Table.HeadCell>Admin Actions</Table.HeadCell>
-                                                            <Table.HeadCell>Accountant Actions</Table.HeadCell>
-                                                            <Table.HeadCell>Delete</Table.HeadCell>
-                                                        </>
-                                                    )}
-                                                </Table.Head>
-                                                <Table.Body className="divide-y">
-                                                    {users
-                                                        .sort((a, b) => {
-                                                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
-                                                            const getRolePriority = (user) => {
-                                                                if (user.isAdmin) return 3;
-                                                                if (user.isAccountant) return 2;
-                                                                return 1;
-                                                            };
-                                                            return getRolePriority(b) - getRolePriority(a);
-                                                        })
-                                                        .map(user => (
-                                                        <Table.Row key={user._id} className="bg-white dark:border-gray-700 dark:bg-slate-900">
-                                                            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                                                {user.username}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="flex items-center justify-center">
-                                                                <UserBadge 
-                                                                    user={user}
-                                                                />
-                                                            </Table.Cell>
-                                                            {isAdmin && (
-                                                                <>
-                                                                    <Table.Cell>
-                                                                        <div className="flex items-center">
-                                                                            {user.isAdmin ? (
-                                                                                <CustomButton
-                                                                                    variant="orange"
-                                                                                    onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                                    title="Revoke admin privileges"
-                                                                                >
-                                                                                    Revoke
-                                                                                </CustomButton>
-                                                                            ) : (
-                                                                                <CustomButton
-                                                                                    variant="blue"
-                                                                                    onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                                    disabled={user.isAccountant}
-                                                                                    title="Assign admin privileges"
-                                                                                >
-                                                                                    Assign
-                                                                                </CustomButton>
-                                                                            )}
-                                                                        </div>
-                                                                    </Table.Cell>
-                                                                    <Table.Cell>
-                                                                        <div className="flex items-center">
-                                                                            {user.isAccountant ? (
-                                                                                <CustomButton
-                                                                                    variant="orange"
-                                                                                    onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                                    title="Revoke accountant privileges"
-                                                                                >
-                                                                                    Revoke
-                                                                                </CustomButton>
-                                                                            ) : (
-                                                                                <CustomButton
-                                                                                    variant="teal"
-                                                                                    onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                                    disabled={user.isAdmin}
-                                                                                    title="Assign accountant privileges"
-                                                                                >
-                                                                                    Assign
-                                                                                </CustomButton>
-                                                                            )}
-                                                                        </div>
-                                                                    </Table.Cell>
-                                                                    <Table.Cell>
-                                                                        <CustomButton
-                                                                            variant="red"
-                                                                            onClick={() => openDeleteUserModal(user)}
-                                                                            title="Delete user"
-                                                                            icon={({ className }) => (
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                                </svg>
-                                                                            )}
-                                                                        >
-                                                                            Delete
-                                                                        </CustomButton>
-                                                                    </Table.Cell>
-                                                                </>
-                                                            )}
-                                                        </Table.Row>
-                                                    ))}
-                                                </Table.Body>
-                                            </Table>
-                                        </div>
-                                    ) : (
-                                        <Alert color="info">No users found. Admin users can manage other users here.</Alert>
-                                    )}
+                                    <CustomTable
+                                        headers={[
+                                            { label: 'Username', className: '' },
+                                            { label: 'Role', className: 'text-center' },
+                                            ...(isAdmin ? [
+                                                { label: 'Admin Actions', className: '' },
+                                                { label: 'Accountant Actions', className: '' },
+                                                { label: 'Delete', className: '' }
+                                            ] : [])
+                                        ]}
+                                        data={users.sort((a, b) => {
+                                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
+                                            const getRolePriority = (user) => {
+                                                if (user.isAdmin) return 3;
+                                                if (user.isAccountant) return 2;
+                                                return 1;
+                                            };
+                                            return getRolePriority(b) - getRolePriority(a);
+                                        })}
+                                        renderRow={(user) => (
+                                            <>
+                                                <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
+                                                    {user.username}
+                                                </Table.Cell>
+                                                <Table.Cell className="flex items-center justify-center px-4 py-3">
+                                                    <UserBadge user={user} />
+                                                </Table.Cell>
+                                                {isAdmin && (
+                                                    <>
+                                                        <Table.Cell className="px-4 py-3">
+                                                            <div className="flex items-center">
+                                                                {user.isAdmin ? (
+                                                                    <CustomButton
+                                                                        variant="orange"
+                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
+                                                                        title="Revoke admin privileges"
+                                                                    >
+                                                                        Revoke
+                                                                    </CustomButton>
+                                                                ) : (
+                                                                    <CustomButton
+                                                                        variant="blue"
+                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
+                                                                        disabled={user.isAccountant}
+                                                                        title="Assign admin privileges"
+                                                                    >
+                                                                        Assign
+                                                                    </CustomButton>
+                                                                )}
+                                                            </div>
+                                                        </Table.Cell>
+                                                        <Table.Cell className="px-4 py-3">
+                                                            <div className="flex items-center">
+                                                                {user.isAccountant ? (
+                                                                    <CustomButton
+                                                                        variant="orange"
+                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
+                                                                        title="Revoke accountant privileges"
+                                                                    >
+                                                                        Revoke
+                                                                    </CustomButton>
+                                                                ) : (
+                                                                    <CustomButton
+                                                                        variant="teal"
+                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
+                                                                        disabled={user.isAdmin}
+                                                                        title="Assign accountant privileges"
+                                                                    >
+                                                                        Assign
+                                                                    </CustomButton>
+                                                                )}
+                                                            </div>
+                                                        </Table.Cell>
+                                                        <Table.Cell className="px-4 py-3">
+                                                            <CustomButton
+                                                                variant="red"
+                                                                onClick={() => openDeleteUserModal(user)}
+                                                                title="Delete user"
+                                                                icon={({ className }) => (
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                )}
+                                                            >
+                                                                Delete
+                                                            </CustomButton>
+                                                        </Table.Cell>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                        emptyMessage="No users found. Admin users can manage other users here."
+                                        emptyIcon={() => (
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
+                                        )}
+                                    />
                                 </Card>
                             )}
                             
                             {activeTab === 'requests' && isAdmin && (
-                                <Card className="w-full dark:bg-slate-900" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
+                                <Card className="w-full dark:bg-slate-950" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Pending User Approval Requests</h2>
                                     
                                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
@@ -4407,7 +4752,7 @@ export default function AdminPanel() {
                             
                             {/* Notifications Panel */}
                             {activeTab === 'notifications' && isAdmin && (
-                                <Card className="w-full dark:bg-slate-900" id="notifications-panel" role="tabpanel" aria-labelledby="tab-notifications">
+                                <Card className="w-full dark:bg-slate-950" id="notifications-panel" role="tabpanel" aria-labelledby="tab-notifications">
                                     <h2 className="text-2xl font-bold mb-6 dark:text-white text-center flex items-center justify-center">
                                         <FaBell className="mr-3 text-teal-600 dark:text-teal-400" />
                                         Notification Management

@@ -53,7 +53,7 @@ export default function DeleteConfirmationModal({
           <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
             Are you sure you want to delete the {itemType}
             <div className="font-bold text-gray-900 dark:text-white mt-1">
-              {itemName}{itemExtra ? ` for ${itemExtra}` : ''}?
+              {itemName}{itemExtra ? ` for ${itemExtra}` : ''}
             </div>
           </h3>
           <div className="flex justify-center gap-4">

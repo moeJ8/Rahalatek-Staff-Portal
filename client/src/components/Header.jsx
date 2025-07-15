@@ -5,6 +5,7 @@ import CustomDarkModeToggle from './CustomDarkModeToggle';
 import CustomButton from './CustomButton';
 import UserDropdown from './UserDropdown';
 import NotificationDropdown from './NotificationDropdown';
+import OfficeSearchDropdown from './OfficeSearchDropdown';
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -60,7 +61,7 @@ export default function Header() {
     <header className="bg-white dark:bg-slate-950 shadow-md mb-6 transition-colors duration-300 sticky top-0 z-10">
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
-          <div>
+          <div className="flex items-center gap-20">
             <Link to="/home" className="flex items-center">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"} 
@@ -68,10 +69,13 @@ export default function Header() {
                 className="h-11 object-contain"
               />
             </Link>
+            
+            {/* Office Search - Left side, only for admin/accountant */}
+            {user && (user?.isAdmin || user?.isAccountant) && <OfficeSearchDropdown />}
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex gap-6 items-center">
+          <nav className="hidden lg:flex gap-6 items-center">
             
             {user ? (
               <>
@@ -121,7 +125,7 @@ export default function Header() {
           </nav>
           
           {/* Mobile Burger Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-2">
             <CustomDarkModeToggle />
             {user && <NotificationDropdown />}
             <button 
@@ -156,7 +160,7 @@ export default function Header() {
         
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 py-2 border-t dark:border-gray-700">
+          <div className="lg:hidden mt-4 py-2 border-t dark:border-gray-700">
             <div className="flex flex-col space-y-3">
               {user ? (
                 <>

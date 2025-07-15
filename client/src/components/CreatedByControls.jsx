@@ -45,7 +45,7 @@ const CreatedByControls = ({
 
   const getUserDisplayName = () => {
     if (!currentUsername) return 'N/A';
-    return currentUsername;
+    return currentUsername.length > 12 ? currentUsername.substring(0, 12) + '...' : currentUsername;
   };
 
   if (!canEdit) {

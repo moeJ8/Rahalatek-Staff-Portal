@@ -100,6 +100,7 @@ const SearchableSelect = ({
           onFocus={handleInputFocus}
           onClick={handleInputClick}
           onKeyDown={handleKeyDown}
+          autoComplete="off"
           className={`w-full cursor-pointer pr-8 ${required && !value ? 'border-red-500 dark:border-red-400' : ''}`}
           icon={FaSearch}
         />

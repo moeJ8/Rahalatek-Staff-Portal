@@ -6,6 +6,7 @@ import StatusControls from '../components/StatusControls';
 import CreatedByControls from '../components/CreatedByControls';
 import FloatingTotalsPanel from '../components/FloatingTotalsPanel';
 import CustomButton from '../components/CustomButton';
+import CustomTable from '../components/CustomTable';
 import RahalatekLoader from '../components/RahalatekLoader';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
@@ -522,7 +523,7 @@ export default function VouchersPage() {
         </div>
       </div>
 
-      <Card className="dark:bg-slate-900">
+      <Card className="dark:bg-slate-950">
         <div className="mb-4">
           <div className="mb-4">
             <TextInput
@@ -727,26 +728,83 @@ export default function VouchersPage() {
         ) : (
           <>
             {/* Desktop Table View (visible on sm screens and up) */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
               <CustomScrollbar>
-                <Table striped>
-                  <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
-                                            {(isAdmin || isAccountant) && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>}
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                  </Table.Head>
-                  <Table.Body>
-                    {filteredVouchers.map(voucher => (
-                      <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <CustomTable
+                  headers={[
+                    { label: 'Voucher\u00A0#' },
+                    { label: 'Client' },
+                    { label: 'Office' },
+                    { label: 'Status' },
+                    { label: 'Arrival' },
+                    { label: 'Departure' },
+                    { label: 'Capital' },
+                    { label: 'Total' },
+                    { label: 'Profit' },
+                    { label: 'Created' },
+                    ...(isAdmin || isAccountant ? [{ label: 'Created By' }] : []),
+                    { label: 'Actions' }
+                  ]}
+                  data={[
+                    ...filteredVouchers,
+                    ...(isAdmin || isAccountant && filteredVouchers.length > 0 ? 
+                      Object.keys(totals).map((currency, index) => ({
+                        _id: `totals-${currency}`,
+                        isTotal: true,
+                        currency,
+                        isFirstTotal: index === 0,
+                        ...totals[currency]
+                      })) : []
+                    )
+                  ]}
+                  renderRow={(item) => {
+                    if (item.isTotal) {
+                      return (
+                        <>
+                          {/* Voucher # */}
+                          <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600">
+                            {item.isFirstTotal ? 'TOTALS' : ''}
+                          </Table.Cell>
+                          {/* Client */}
+                          <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600">
+                            {item.currency}
+                          </Table.Cell>
+                          {/* Office */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          {/* Status */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          {/* Arrival */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          {/* Departure */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          {/* Capital */}
+                          <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600">
+                            {getCurrencySymbol(item.currency)}{item.totalCapital.toFixed(2)}
+                          </Table.Cell>
+                          {/* Total */}
+                          <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600">
+                            {getCurrencySymbol(item.currency)}{item.totalAmount.toFixed(2)}
+                          </Table.Cell>
+                          {/* Profit */}
+                          <Table.Cell className="font-bold text-sm text-green-600 dark:text-green-400 px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600">
+                            {getCurrencySymbol(item.currency)}{item.totalProfit.toFixed(2)}
+                          </Table.Cell>
+                          {/* Created */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          {/* Created By (if admin/accountant) */}
+                          {(isAdmin || isAccountant) && (
+                            <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                          )}
+                          {/* Actions */}
+                          <Table.Cell className="px-4 py-3 bg-gray-100 dark:bg-slate-900 border-t-2 border-gray-300 dark:border-gray-600"></Table.Cell>
+                        </>
+                      );
+                    }
+                    
+                    // Regular voucher row
+                    const voucher = item;
+                    return (
+                      <>
                         <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
                           {voucher.voucherNumber}
                         </Table.Cell>
@@ -759,9 +817,25 @@ export default function VouchersPage() {
                           </div>
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
-                          <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
-                            {voucher.officeName || '-'}
-                          </div>
+                          {voucher.officeName ? (
+                            (isAdmin || isAccountant) ? (
+                              <Link 
+                                to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline truncate max-w-[150px] block"
+                                title={`View ${voucher.officeName} office details`}
+                              >
+                                {voucher.officeName}
+                              </Link>
+                            ) : (
+                              <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                                {voucher.officeName}
+                              </div>
+                            )
+                          ) : (
+                            <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                              -
+                            </div>
+                          )}
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <StatusControls
@@ -826,32 +900,11 @@ export default function VouchersPage() {
                             )}
                           </div>
                         </Table.Cell>
-                      </Table.Row>
-                    ))}
-                    
-                    {/* Totals Row - Only for Admins and Accountants */}
-                    {(isAdmin || isAccountant) && filteredVouchers.length > 0 && Object.keys(totals).map((currency, index) => (
-                      <Table.Row key={currency} className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
-                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3" colSpan="6">
-                          {index === 0 ? 'TOTALS' : ''} {currency}
-                        </Table.Cell>
-                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {getCurrencySymbol(currency)}{totals[currency].totalCapital.toFixed(2)}
-                        </Table.Cell>
-                        <Table.Cell className="font-bold text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {getCurrencySymbol(currency)}{totals[currency].totalAmount.toFixed(2)}
-                        </Table.Cell>
-                        <Table.Cell className="font-bold text-sm text-green-600 dark:text-green-400 px-4 py-3">
-                          {getCurrencySymbol(currency)}{totals[currency].totalProfit.toFixed(2)}
-                        </Table.Cell>
-                        <Table.Cell className="px-4 py-3" colSpan={(isAdmin || isAccountant) ? "3" : "2"}>
-                          {/* Empty cells for Created, Created By (if admin), Actions */}
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-
-                  </Table.Body>
-                </Table>
+                      </>
+                    );
+                  }}
+                  emptyMessage={(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+                />
               </CustomScrollbar>
             </div>
 
@@ -866,7 +919,19 @@ export default function VouchersPage() {
                           <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
                           <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
                           {voucher.officeName && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                            (isAdmin || isAccountant) ? (
+                              <Link 
+                                to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                                title={`View ${voucher.officeName} office details`}
+                              >
+                                {voucher.officeName}
+                              </Link>
+                            ) : (
+                              <div className="text-xs text-gray-800 dark:text-gray-200">
+                                {voucher.officeName}
+                              </div>
+                            )
                           )}
                         </div>
                         <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">

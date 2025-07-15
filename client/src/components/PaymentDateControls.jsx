@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { FaEdit, FaTimes, FaCheck } from 'react-icons/fa';
-import { TextInput } from 'flowbite-react';
+import CustomDatePicker from './CustomDatePicker';
 
 const PaymentDateControls = ({ 
   currentPaymentDate, 
   onPaymentDateUpdate, 
   canEdit = false,
-  size = 'sm',
   className = '' 
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -24,8 +23,7 @@ const PaymentDateControls = ({
 
   const formatInputDate = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
+    return dateString; // CustomDatePicker expects ISO string
   };
 
   const handleStartEdit = () => {
@@ -86,13 +84,11 @@ const PaymentDateControls = ({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <TextInput
-        type="date"
-        size="sm"
+      <CustomDatePicker
         value={selectedDate}
-        onChange={(e) => setSelectedDate(e.target.value)}
-        disabled={isLoading}
-        className="min-w-[120px]"
+        onChange={setSelectedDate}
+        placeholder="DD/MM/YYYY"
+        className="w-32 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-xs"
       />
       
       <div className="flex gap-1">

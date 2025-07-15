@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Modal, Alert, Badge, TextInput, Select } from 'flowbite-react';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomButton from '../components/CustomButton';
+import CustomTable from '../components/CustomTable';
 import SearchableSelect from '../components/SearchableSelect';
 import CustomDatePicker from '../components/CustomDatePicker';
 import axios from 'axios';
@@ -9,7 +10,7 @@ import { Link } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
-import { FaTrash, FaTrashRestore, FaEye, FaCalendarAlt, FaSearch, FaUser, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaTrashRestore, FaEye, FaCalendarAlt, FaSearch, FaUser, FaTimes, FaCheck } from 'react-icons/fa';
 
 export default function TrashPage() {
   const [trashedVouchers, setTrashedVouchers] = useState([]);
@@ -21,6 +22,13 @@ export default function TrashPage() {
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
   const [customArrivalDate, setCustomArrivalDate] = useState('');
+
+  // Multi-select states
+  const [selectedVouchers, setSelectedVouchers] = useState(new Set());
+  const [bulkRestoreModal, setBulkRestoreModal] = useState(false);
+  const [bulkPermanentDeleteModal, setBulkPermanentDeleteModal] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [permanentDeleteModal, setPermanentDeleteModal] = useState(false);
@@ -50,6 +58,153 @@ export default function TrashPage() {
     return `${baseClass} text-green-600 dark:text-green-400`;
   };
 
+  // Multi-select helper functions
+  const handleSelectVoucher = (voucherId, isSelected) => {
+    const newSelected = new Set(selectedVouchers);
+    if (isSelected) {
+      newSelected.add(voucherId);
+    } else {
+      newSelected.delete(voucherId);
+    }
+    setSelectedVouchers(newSelected);
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      // Only allow selection if user can manage vouchers
+      if (canManageVoucher()) {
+        setSelectedVouchers(new Set(filteredVouchers.map(voucher => voucher._id)));
+      }
+    } else {
+      setSelectedVouchers(new Set());
+    }
+  };
+
+  const isAllSelected = () => {
+    if (!canManageVoucher() || filteredVouchers.length === 0) return false;
+    return filteredVouchers.every(voucher => selectedVouchers.has(voucher._id));
+  };
+
+  const handleBulkRestore = () => {
+    if (selectedVouchers.size === 0) return;
+    setBulkRestoreModal(true);
+  };
+
+  const handleBulkPermanentDelete = () => {
+    if (selectedVouchers.size === 0) return;
+    setBulkPermanentDeleteModal(true);
+  };
+
+  const handleBulkRestoreConfirm = async () => {
+    setBulkActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const voucherIds = Array.from(selectedVouchers);
+      
+      // Restore all selected vouchers
+      await Promise.all(
+        voucherIds.map(voucherId =>
+          axios.post(`/api/vouchers/${voucherId}/restore`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        )
+      );
+
+      setSelectedVouchers(new Set());
+      setBulkRestoreModal(false);
+      
+      toast.success(`${voucherIds.length} voucher${voucherIds.length > 1 ? 's' : ''} restored successfully.`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
+      fetchTrashedVouchers(); // Refresh the list
+    } catch (err) {
+      console.error('Error bulk restoring vouchers:', err);
+      toast.error('Failed to restore some vouchers. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkPermanentDeleteConfirm = async () => {
+    setBulkActionLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const voucherIds = Array.from(selectedVouchers);
+      
+      // Permanently delete all selected vouchers
+      await Promise.all(
+        voucherIds.map(voucherId =>
+          axios.delete(`/api/vouchers/${voucherId}/permanent`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        )
+      );
+
+      setSelectedVouchers(new Set());
+      setBulkPermanentDeleteModal(false);
+      
+      toast.success(`${voucherIds.length} voucher${voucherIds.length > 1 ? 's' : ''} permanently deleted.`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      
+      fetchTrashedVouchers(); // Refresh the list
+    } catch (err) {
+      console.error('Error bulk permanently deleting vouchers:', err);
+      toast.error('Failed to permanently delete some vouchers. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   // Initialize user info and fetch data
   useEffect(() => {
     const initializeUserAndFetchData = async () => {
@@ -69,6 +224,11 @@ export default function TrashPage() {
 
     initializeUserAndFetchData();
   }, []);
+
+  // Clear selected vouchers when filters change
+  useEffect(() => {
+    setSelectedVouchers(new Set());
+  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate]);
 
   // Simple helper function to check if user can manage a voucher
   const canManageVoucher = () => {
@@ -321,14 +481,37 @@ export default function TrashPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Trash</h1>
-        <Link to="/vouchers">
-          <CustomButton variant="gray">
-            Back to Vouchers
-          </CustomButton>
-        </Link>
+        <div className="flex gap-2 sm:gap-3">
+          {/* Bulk Action Buttons - Show when vouchers are selected */}
+          {selectedVouchers.size > 0 && canManageVoucher() && (
+            <>
+              <CustomButton 
+                variant="green"
+                onClick={handleBulkRestore}
+                icon={FaTrashRestore}
+              >
+                <span className="hidden sm:inline">Restore Selected ({selectedVouchers.size})</span>
+                <span className="sm:hidden">Restore ({selectedVouchers.size})</span>
+              </CustomButton>
+              <CustomButton 
+                variant="red"
+                onClick={handleBulkPermanentDelete}
+                icon={FaTrash}
+              >
+                <span className="hidden sm:inline">Delete Forever ({selectedVouchers.size})</span>
+                <span className="sm:hidden">Delete ({selectedVouchers.size})</span>
+              </CustomButton>
+            </>
+          )}
+          <Link to="/vouchers">
+            <CustomButton variant="gray">
+              Back to Vouchers
+            </CustomButton>
+          </Link>
+        </div>
       </div>
 
-      <Card className="dark:bg-slate-900">
+      <Card className="dark:bg-slate-950">
         {/* Search Bar and Filters */}
         <div className="mb-4">
           {/* Search Bar */}
@@ -493,32 +676,57 @@ export default function TrashPage() {
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block">
               <CustomScrollbar>
-                <Table striped>
-                  <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
-                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Voucher #</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Client</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Arrival</Table.HeadCell>
-                <Table.HeadCell className="text-sm font-semibold px-4 py-3">Departure</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Capital</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Total</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Profit</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Deleted</Table.HeadCell>
-                                            {(isAdmin || isAccountant) && <Table.HeadCell className="text-sm font-semibold px-4 py-3">Deleted By</Table.HeadCell>}
-                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                  </Table.Head>
-                  <Table.Body>
-                    {filteredVouchers.map(voucher => (
-                      <Table.Row key={voucher._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                <CustomTable
+                  headers={[
+                    ...(canManageVoucher() ? [{ 
+                      label: (
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected()}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                        />
+                      ),
+                      className: "w-12"
+                    }] : []),
+                    { label: 'Voucher\u00A0#' },
+                    { label: 'Client' },
+                    { label: 'Office' },
+                    { label: 'Arrival' },
+                    { label: 'Departure' },
+                    { label: 'Capital' },
+                    { label: 'Total' },
+                    { label: 'Profit' },
+                    { label: 'Created\u00A0By' },
+                    { label: 'Deleted' },
+                    ...(isAdmin || isAccountant ? [{ label: 'Deleted\u00A0By' }] : []),
+                    { label: 'Actions' }
+                  ]}
+                  data={filteredVouchers}
+                  renderRow={(voucher) => {
+                    const isSelected = selectedVouchers.has(voucher._id);
+                    
+                    return (
+                      <>
+                        {/* Checkbox column */}
+                        {canManageVoucher() && (
+                          <Table.Cell className="px-4 py-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => handleSelectVoucher(voucher._id, e.target.checked)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                            />
+                          </Table.Cell>
+                        )}
                         <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
                           {voucher.voucherNumber}
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <div className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
-                            {voucher.clientName}
+                            {voucher.clientName.length > 20 ? voucher.clientName.substring(0, 20) + '...' : voucher.clientName}
                           </div>
                           <div className="text-xs text-gray-600 dark:text-gray-300">
                             {voucher.nationality}
@@ -544,19 +752,19 @@ export default function TrashPage() {
                           }
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {voucher.createdBy ? voucher.createdBy.username : 'N/A'}
+                          {voucher.createdBy ? (voucher.createdBy.username.length > 10 ? voucher.createdBy.username.substring(0, 10) + '...' : voucher.createdBy.username) : 'N/A'}
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.deletedAt)}</Table.Cell>
                         {(isAdmin || isAccountant) && (
                           <Table.Cell className="text-sm text-red-600 dark:text-red-300 px-4 py-3">
-                            {voucher.deletedBy ? <span className="font-semibold">{voucher.deletedBy.username}</span> : 'N/A'}
+                            {voucher.deletedBy ? <span className="font-semibold">{voucher.deletedBy.username.length > 12 ? voucher.deletedBy.username.substring(0, 12) + '...' : voucher.deletedBy.username}</span> : 'N/A'}
                           </Table.Cell>
                         )}
                         <Table.Cell className="px-4 py-3">
-                          <div className="flex space-x-4">
+                          <div className="flex items-center gap-3 min-w-[200px]">
                             <Link 
                               to={`/vouchers/${voucher._id}`}
-                              className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 whitespace-nowrap"
                             >
                               View
                             </Link>
@@ -564,13 +772,13 @@ export default function TrashPage() {
                             {canManageVoucher() && (
                               <>
                                 <button
-                                  className="font-medium text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                  className="font-medium text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 whitespace-nowrap"
                                   onClick={() => handleRestoreClick(voucher)}
                                 >
                                   Restore
                                 </button>
                                 <button
-                                  className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 whitespace-nowrap"
                                   onClick={() => handlePermanentDeleteClick(voucher)}
                                 >
                                   Delete Forever
@@ -579,11 +787,11 @@ export default function TrashPage() {
                             )}
                           </div>
                         </Table.Cell>
-                      </Table.Row>
-                    ))}
-
-                  </Table.Body>
-                </Table>
+                      </>
+                    );
+                  }}
+                  emptyMessage={(searchQuery || userFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers in trash.'}
+                />
               </CustomScrollbar>
             </div>
 
@@ -591,119 +799,155 @@ export default function TrashPage() {
             <div className="sm:hidden">
               <CustomScrollbar className="pr-1">
                 <div className="grid grid-cols-1 gap-4">
-                  {filteredVouchers.map(voucher => (
-                    <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700 dark:bg-slate-900">
-                      <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
-                        <div>
-                          <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
-                          <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
-                          {voucher.officeName && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
-                          )}
-                        </div>
-                        <div className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded-full">
-                          Deleted {formatDate(voucher.deletedAt)}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="flex items-center">
-                          <FaCalendarAlt className="mr-2 text-blue-600 dark:text-blue-400" />
-                          <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Arrival</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.arrivalDate)}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
-                          <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Departure</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.departureDate)}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <FaUser className="mr-2 text-blue-600 dark:text-blue-400" />
-                          <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">
-                              {voucher.createdBy ? voucher.createdBy.username : 'N/A'}
+                  {filteredVouchers.map(voucher => {
+                    const isSelected = selectedVouchers.has(voucher._id);
+                    
+                    return (
+                      <Card key={voucher._id} className={`overflow-hidden shadow-sm hover:shadow dark:border-gray-700 dark:bg-slate-900 ${isSelected ? 'ring-2 ring-blue-500 dark:ring-blue-400' : ''}`}>
+                        <div className="flex justify-between items-start border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
+                          <div className="flex items-start gap-3 flex-1">
+                            {/* Mobile Checkbox */}
+                            {canManageVoucher() && (
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleSelectVoucher(voucher._id, e.target.checked)}
+                                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
+                              <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
+                              {voucher.officeName && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                              )}
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <svg className="mr-2 text-orange-600 dark:text-orange-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                          </svg>
-                          <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Capital</div>
-                            <div className="text-sm text-gray-900 dark:text-gray-100">
-                              {voucher.capital ? `${getCurrencySymbol(voucher.currency)}${voucher.capital}` : '-'}
-                            </div>
+                          <div className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded-full">
+                            Deleted {formatDate(voucher.deletedAt)}
                           </div>
                         </div>
                         
-                        <div className="flex items-center">
-                          <svg className="mr-2 text-green-600 dark:text-green-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                          </svg>
-                          <div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="flex items-center">
+                            <FaCalendarAlt className="mr-2 text-blue-600 dark:text-blue-400" />
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Arrival</div>
+                              <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.arrivalDate)}</div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <div className={getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0, true).replace('text-sm', 'text-lg')}>
-                          <span className="text-xs text-gray-600 dark:text-gray-400 block">Profit</span>
-                          {voucher.capital ? 
-                            `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
-                            '-'
-                          }
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <Link to={`/vouchers/${voucher._id}`}>
-                            <CustomButton size="xs" variant="blue" icon={FaEye}>
-                            </CustomButton>
-                          </Link>
                           
-                          {canManageVoucher() && (
-                            <>
-                              <CustomButton 
-                                size="xs" 
-                                variant="green"
-                                onClick={() => handleRestoreClick(voucher)}
-                                icon={FaTrashRestore}
-                              >
-                              </CustomButton>
-                              <CustomButton 
-                                size="xs" 
-                                variant="red"
-                                onClick={() => handlePermanentDeleteClick(voucher)}
-                                icon={FaTrash}
-                              >
-                              </CustomButton>
-                            </>
-                          )}
+                          <div className="flex items-center">
+                            <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Departure</div>
+                              <div className="text-sm text-gray-900 dark:text-gray-100">{formatDate(voucher.departureDate)}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <FaUser className="mr-2 text-blue-600 dark:text-blue-400" />
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
+                              <div className="text-sm text-gray-900 dark:text-gray-100">
+                                {voucher.createdBy ? voucher.createdBy.username : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <svg className="mr-2 text-orange-600 dark:text-orange-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Capital</div>
+                              <div className="text-sm text-gray-900 dark:text-gray-100">
+                                {voucher.capital ? `${getCurrencySymbol(voucher.currency)}${voucher.capital}` : '-'}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <svg className="mr-2 text-green-600 dark:text-green-400 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                            </svg>
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
 
+                        <div className="flex justify-between items-center">
+                          <div className={getProfitColorClass(voucher.capital ? voucher.totalAmount - voucher.capital : 0, true).replace('text-sm', 'text-lg')}>
+                            <span className="text-xs text-gray-600 dark:text-gray-400 block">Profit</span>
+                            {voucher.capital ? 
+                              `${getCurrencySymbol(voucher.currency)}${(voucher.totalAmount - voucher.capital).toFixed(2)}` : 
+                              '-'
+                            }
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <Link to={`/vouchers/${voucher._id}`}>
+                              <CustomButton size="xs" variant="blue" icon={FaEye}>
+                              </CustomButton>
+                            </Link>
+                            
+                            {canManageVoucher() && (
+                              <>
+                                <CustomButton 
+                                  size="xs" 
+                                  variant="green"
+                                  onClick={() => handleRestoreClick(voucher)}
+                                  icon={FaTrashRestore}
+                                >
+                                </CustomButton>
+                                <CustomButton 
+                                  size="xs" 
+                                  variant="red"
+                                  onClick={() => handlePermanentDeleteClick(voucher)}
+                                  icon={FaTrash}
+                                >
+                                </CustomButton>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
               </CustomScrollbar>
             </div>
           </>
         )}
       </Card>
 
-      {/* Permanent Delete Confirmation Modal */}
+      {/* Bulk Restore Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={bulkRestoreModal}
+        onClose={() => setBulkRestoreModal(false)}
+        onConfirm={handleBulkRestoreConfirm}
+        isLoading={bulkActionLoading}
+        itemType={`${selectedVouchers.size} voucher${selectedVouchers.size > 1 ? 's' : ''} (restore)`}
+        itemName=""
+        itemExtra=""
+      />
+
+      {/* Bulk Permanent Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={bulkPermanentDeleteModal}
+        onClose={() => setBulkPermanentDeleteModal(false)}
+        onConfirm={handleBulkPermanentDeleteConfirm}
+        isLoading={bulkActionLoading}
+        itemType={`${selectedVouchers.size} voucher${selectedVouchers.size > 1 ? 's' : ''} (permanently delete)`}
+        itemName=""
+        itemExtra=""
+      />
+
+      {/* Single Permanent Delete Confirmation Modal */}
       <DeleteConfirmationModal
         show={permanentDeleteModal}
         onClose={() => setPermanentDeleteModal(false)}
