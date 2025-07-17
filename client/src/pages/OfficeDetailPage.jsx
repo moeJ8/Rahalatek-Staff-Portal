@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Label, Alert, Table, TextInput } from 'flowbite-react';
 import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch } from 'react-icons/hi';
 import { toast } from 'react-hot-toast';
@@ -14,8 +14,13 @@ import OfficeFloatingTotalsPanel from '../components/OfficeFloatingTotalsPanel';
 import ScrollToTop from '../components/ScrollToTop';
 
 const OfficeDetailPage = () => {
-    const { officeName } = useParams();
+    const { officeName, clientName } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Determine if this is a direct client or office
+    const isDirectClient = location.pathname.startsWith('/client/');
+    const displayName = isDirectClient ? clientName : officeName;
     
     const [vouchers, setVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -106,17 +111,20 @@ const OfficeDetailPage = () => {
     };
     
     // Get vouchers that have services for this office (for the services table)
+    // Direct clients don't provide services, so return empty array for them
     const serviceVouchers = useMemo(() => {
+        if (isDirectClient) return [];
+        
         return vouchers.filter(voucher => {
             const payments = voucher.payments || {};
-            const hasHotelPayment = payments.hotels?.officeName === officeName;
-            const hasTransferPayment = payments.transfers?.officeName === officeName;
-            const hasTripPayment = payments.trips?.officeName === officeName;
-            const hasFlightPayment = payments.flights?.officeName === officeName;
+            const hasHotelPayment = payments.hotels?.officeName === displayName;
+            const hasTransferPayment = payments.transfers?.officeName === displayName;
+            const hasTripPayment = payments.trips?.officeName === displayName;
+            const hasFlightPayment = payments.flights?.officeName === displayName;
             
             return hasHotelPayment || hasTransferPayment || hasTripPayment || hasFlightPayment;
         });
-    }, [vouchers, officeName]);
+    }, [vouchers, displayName, isDirectClient]);
 
     // Filter service vouchers based on filters and search (for the services table)
     const filteredVouchers = useMemo(() => {
@@ -169,12 +177,17 @@ const OfficeDetailPage = () => {
         setVoucherPayments(payments);
     };
 
-    // Get client vouchers that belong to this office with search functionality
+    // Get client vouchers that belong to this office/client with search functionality
     const getClientVouchers = useMemo(() => {
-        // Filter vouchers that belong to this office (voucher.officeName === officeName)
+        // Filter vouchers based on whether this is a direct client or office
         return vouchers.filter(voucher => {
-            // Only show vouchers that belong to this office
-            if (voucher.officeName !== officeName) return false;
+            // For direct clients: show vouchers with matching clientName and no officeName
+            // For offices: show vouchers with matching officeName
+            if (isDirectClient) {
+                if (voucher.officeName || voucher.clientName !== displayName) return false;
+            } else {
+                if (voucher.officeName !== displayName) return false;
+            }
             
             // Search filter
             if (clientTableSearch.trim()) {
@@ -205,7 +218,7 @@ const OfficeDetailPage = () => {
             
             return true;
         });
-    }, [vouchers, filters, officeName, clientTableSearch]);
+    }, [vouchers, filters, displayName, clientTableSearch, isDirectClient]);
 
     // Calculate client voucher details
     const calculateClientVoucherDetails = (voucher) => {
@@ -294,7 +307,7 @@ const OfficeDetailPage = () => {
     
     useEffect(() => {
         fetchOfficeVouchers();
-    }, [officeName]);
+    }, [displayName]);
     
     const handleFilterChange = (filterType, value) => {
         setFilters(prev => ({
@@ -408,10 +421,10 @@ const OfficeDetailPage = () => {
                             <HiOfficeBuilding className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {officeName}
+                                    {displayName}
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Office Details
+                                    {isDirectClient ? 'Direct Client Details' : 'Office Details'}
                                 </p>
                             </div>
                         </div>
@@ -661,8 +674,8 @@ const OfficeDetailPage = () => {
                     <Card className="w-full dark:bg-slate-950">
                         <div className="p-6">
                             <PaymentManager
-                                officeName={officeName}
-                                originalTotal={totals.servicesProvided}
+                                officeName={displayName}
+                                originalTotal={isDirectClient ? totals.clientTotalAmount : totals.servicesProvided}
                                 currency={filters.currency}
                                 onPaymentsChange={handlePaymentsChange}
                                 serviceVouchers={filteredVouchers}
@@ -683,7 +696,7 @@ const OfficeDetailPage = () => {
                 hasFiltersApplied={hasFiltersApplied}
                 filteredVouchers={filteredVouchers.length}
                 totalVouchers={vouchers.length}
-                officeName={officeName}
+                officeName={displayName}
                 getCurrencySymbol={getCurrencySymbol}
             />
 

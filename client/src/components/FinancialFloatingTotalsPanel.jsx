@@ -32,6 +32,7 @@ const FinancialFloatingTotalsPanel = ({
   // Calculate client office summary stats
   const clientStats = {
     uniqueOffices: [...new Set(clientOfficeData.map(office => office.officeName))].length,
+    directClients: [...new Set(clientOfficeData.filter(office => office.isDirectClient).map(office => office.officeName))].length,
     totalVouchers: clientOfficeData.reduce((sum, office) => sum + office.voucherCount, 0),
     totalRevenue: clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0)
   };
@@ -87,7 +88,7 @@ const FinancialFloatingTotalsPanel = ({
             <div className="space-y-3">
               {viewType === 'providers' ? (
                 <>
-                  {/* Service Breakdown */}
+                  {/* Supplier Breakdown */}
                   <div className="grid grid-cols-2 gap-2">
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                       <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400">Hotels</h4>
@@ -126,11 +127,17 @@ const FinancialFloatingTotalsPanel = ({
               ) : (
                 <>
                   {/* Client Office Stats */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400">Offices</h4>
+                      <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400">Clients</h4>
                       <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
                         {clientStats.uniqueOffices}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-700">
+                      <h4 className="text-xs font-semibold text-rose-600 dark:text-rose-400">Direct</h4>
+                      <p className="text-sm font-bold text-rose-700 dark:text-rose-300">
+                        {clientStats.directClients}
                       </p>
                     </div>
                     <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
@@ -179,7 +186,7 @@ const FinancialFloatingTotalsPanel = ({
               <div className="space-y-4">
                 {viewType === 'providers' ? (
                   <>
-                    {/* Service Breakdown */}
+                    {/* Supplier Breakdown */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                         <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Hotels</h4>
@@ -218,11 +225,17 @@ const FinancialFloatingTotalsPanel = ({
                 ) : (
                   <>
                     {/* Client Office Stats */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Client Offices</h4>
+                        <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Total Clients</h4>
                         <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
                           {clientStats.uniqueOffices}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-700">
+                        <h4 className="text-sm font-semibold text-rose-600 dark:text-rose-400">Direct Clients</h4>
+                        <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
+                          {clientStats.directClients}
                         </p>
                       </div>
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">

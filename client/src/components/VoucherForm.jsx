@@ -116,6 +116,8 @@ export default function VoucherForm({ onSuccess }) {
   const [tours, setTours] = useState([]);
   const [cities, setCities] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [isExistingClient, setIsExistingClient] = useState(false);
+  const [existingClients, setExistingClients] = useState([]);
 
   // Duplicate voucher functionality
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -297,15 +299,23 @@ export default function VoucherForm({ onSuccess }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [hotelResponse, tourResponse, officeResponse] = await Promise.all([
+        const [hotelResponse, tourResponse, officeResponse, voucherResponse] = await Promise.all([
           axios.get('/api/hotels'),
           axios.get('/api/tours'),
-          axios.get('/api/offices')
+          axios.get('/api/offices'),
+          axios.get('/api/vouchers')
         ]);
         
         setHotels(hotelResponse.data);
         setTours(tourResponse.data);
         setOffices(officeResponse.data.data);
+        
+        // Extract unique client names from existing vouchers
+        const clientNames = [...new Set(voucherResponse.data.data
+          .map(voucher => voucher.clientName)
+          .filter(name => name && name.trim() !== '')
+        )].sort();
+        setExistingClients(clientNames);
         
         // Extract unique cities
         const uniqueCities = [...new Set([
@@ -1221,14 +1231,47 @@ export default function VoucherForm({ onSuccess }) {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <Label htmlFor="clientName" value="Client Name" className="mb-2 block" />
-                  <TextInput
-                    id="clientName"
-                    name="clientName"
-                    value={formData.clientName}
-                    onChange={handleInputChange}
-                    required
-                  />
+                  <div className="flex justify-between items-center mb-2">
+                    <Label htmlFor="clientName" value="Client Name" className="block" />
+                    <div className="flex items-center">
+                      <Checkbox
+                        id="existingClient"
+                        checked={isExistingClient}
+                        onChange={(e) => {
+                          setIsExistingClient(e.target.checked);
+                          if (!e.target.checked) {
+                            // Clear client name when switching to manual input
+                            setFormData({...formData, clientName: ''});
+                          }
+                        }}
+                      />
+                      <Label htmlFor="existingClient" value="Existing Client" className="ml-2 text-sm" />
+                    </div>
+                  </div>
+                  
+                  {isExistingClient ? (
+                    <SearchableSelect
+                      id="clientName"
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={(e) => setFormData({...formData, clientName: e.target.value})}
+                      options={existingClients.map(client => ({
+                        value: client,
+                        label: client
+                      }))}
+                      placeholder="Select existing client..."
+                      required
+                    />
+                  ) : (
+                    <TextInput
+                      id="clientName"
+                      name="clientName"
+                      value={formData.clientName}
+                      onChange={handleInputChange}
+                      placeholder="Enter new client name..."
+                      required
+                    />
+                  )}
                 </div>
                 
                 <div>
@@ -1260,12 +1303,14 @@ export default function VoucherForm({ onSuccess }) {
                     name="officeName"
                     value={formData.officeName}
                     onChange={(e) => setFormData({...formData, officeName: e.target.value})}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
+                    options={[
+                      { value: '', label: 'Direct Client (No Office)' },
+                      ...offices.map(office => ({
+                        value: office.name,
+                        label: `${office.name} - ${office.location}`
+                      }))
+                    ]}
                     placeholder="Search for an office..."
-                    required
                   />
                 </div>
                 

@@ -97,6 +97,7 @@ function App() {
               <Route path="/dashboard/edit-hotel/:id" element={<EditHotelPage />} />
               <Route path="/edit-office/:id" element={<EditOfficePage />} />
               <Route path="/office/:officeName" element={<OfficeDetailPage />} />
+              <Route path="/client/:clientName" element={<OfficeDetailPage />} />
             </Route>
             
             <Route element={<ProtectedRoute requireAdmin={false} />}>

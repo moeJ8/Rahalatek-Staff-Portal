@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
 import { TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -189,6 +189,7 @@ export default function AdminPanel() {
     
     // Add state for financial search
     const [financialSearchQuery, setFinancialSearchQuery] = useState('');
+    const [clientTypeFilter, setClientTypeFilter] = useState('all');
     
     // Add state for debt management
     const [debts, setDebts] = useState([]);
@@ -1819,6 +1820,49 @@ export default function AdminPanel() {
         return acc;
     }, { hotels: 0, transfers: 0, trips: 0, flights: 0, total: 0, voucherCount: 0 });
 
+    // Calculate total client revenue (independent of view filter)
+    const totalClientRevenue = useMemo(() => {
+        // Filter vouchers by currency and date filters only
+        const filteredVouchers = allVouchers.filter(voucher => {
+            const voucherCurrency = voucher.currency || 'USD';
+            if (voucherCurrency !== financialFilters.currency) return false;
+            
+            // Apply date filters
+            const voucherDate = new Date(voucher.createdAt);
+            const voucherYear = voucherDate.getFullYear();
+            const voucherMonth = voucherDate.getMonth() + 1;
+            
+            if (financialFilters.year && voucherYear.toString() !== financialFilters.year) return false;
+            
+            // Only apply month filter if a specific month is selected
+            if (financialFilters.month && typeof financialFilters.month === 'string' && financialFilters.month.trim() !== '') {
+                if (voucherMonth.toString() !== financialFilters.month) return false;
+            }
+            
+            return true;
+        });
+
+        return filteredVouchers.reduce((total, voucher) => total + (voucher.totalAmount || 0), 0);
+    }, [allVouchers, financialFilters.currency, financialFilters.year, financialFilters.month]);
+
+    // Calculate total supplier revenue (independent of view filter)
+    const totalSupplierRevenue = useMemo(() => {
+        // Filter financial data by currency and date filters only
+        const filteredSupplierData = financialData.filter(item => {
+            if (financialFilters.year && item.year.toString() !== financialFilters.year) return false;
+            
+            // Only apply month filter if a specific month is selected
+            if (financialFilters.month && typeof financialFilters.month === 'string' && financialFilters.month.trim() !== '') {
+                const expectedMonth = `${financialFilters.year}-${financialFilters.month.padStart(2, '0')}`;
+                if (item.month !== expectedMonth) return false;
+            }
+            
+            return true;
+        });
+
+        return filteredSupplierData.reduce((total, item) => total + (item.total || 0), 0);
+    }, [financialData, financialFilters.year, financialFilters.month]);
+
     // Calculate client office data when viewType is 'clients'
     const clientOfficeData = useMemo(() => {
         if (financialFilters.viewType !== 'clients') return [];
@@ -1843,22 +1887,27 @@ export default function AdminPanel() {
             return true;
         });
 
-        // Group vouchers by office and month (like service providers)
+        // Group vouchers by office and month (like suppliers)
         const clientOfficesMap = new Map();
         
         filteredVouchers.forEach(voucher => {
-            if (!voucher.officeName) return;
+            // Include both office-based clients and direct clients
+            const clientName = voucher.officeName || voucher.clientName;
+            const isDirectClient = !voucher.officeName;
+            
+            if (!clientName) return; // Skip if no client identifier
             
             const voucherDate = new Date(voucher.createdAt);
             const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
             const monthName = voucherDate.toLocaleString('default', { month: 'long' });
             const year = voucherDate.getFullYear();
             
-            const key = `${voucher.officeName}-${monthYear}`;
+            const key = `${clientName}-${monthYear}`;
             
             if (!clientOfficesMap.has(key)) {
                 clientOfficesMap.set(key, {
-                    officeName: voucher.officeName,
+                    officeName: clientName, // Use clientName for direct clients
+                    isDirectClient: isDirectClient,
                     month: monthYear,
                     monthName,
                     year,
@@ -1880,8 +1929,13 @@ export default function AdminPanel() {
                 // Apply search filter
                 if (financialSearchQuery.trim()) {
                     const searchLower = financialSearchQuery.toLowerCase();
-                    return office.officeName.toLowerCase().includes(searchLower);
+                    if (!office.officeName.toLowerCase().includes(searchLower)) return false;
                 }
+                
+                // Apply client type filter
+                if (clientTypeFilter === 'office' && office.isDirectClient) return false;
+                if (clientTypeFilter === 'direct' && !office.isDirectClient) return false;
+                
                 return true;
             })
             .sort((a, b) => {
@@ -1889,7 +1943,7 @@ export default function AdminPanel() {
                 if (a.month !== b.month) return b.month.localeCompare(a.month);
                 return b.totalAmount - a.totalAmount;
             });
-    }, [financialFilters, allVouchers, financialSearchQuery]);
+    }, [financialFilters, allVouchers, financialSearchQuery, clientTypeFilter]);
 
     // Handle filter changes
     const handleFinancialFilterChange = (filterType, value) => {
@@ -1897,9 +1951,12 @@ export default function AdminPanel() {
             ...prev,
             [filterType]: value
         }));
+        
+        if (filterType === 'viewType') {
+            setClientTypeFilter('all');
+        }
     };
 
-    // Clear financial filters
     const clearFinancialFilters = () => {
         setFinancialFilters({
             month: (new Date().getMonth() + 1).toString(), // Current month (1-12)
@@ -1907,6 +1964,7 @@ export default function AdminPanel() {
             currency: 'USD',
             viewType: 'providers'
         });
+        setClientTypeFilter('all');
     };
 
     // Debt management functions
@@ -3917,7 +3975,7 @@ export default function AdminPanel() {
                                     </h2>
                                     
                                     {/* Overview Cards */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-4 mb-6`}>
                                         {financialFilters.viewType === 'providers' ? (
                                             <>
                                                 {/* Total Revenue */}
@@ -3935,11 +3993,11 @@ export default function AdminPanel() {
                                                     </div>
                                                 </div>
 
-                                                {/* Active Service Providers */}
+                                                {/* Active Suppliers */}
                                                 <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-xl border border-green-200 dark:border-green-700">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Providers</p>
+                                                            <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Suppliers</p>
                                                             <p className="text-2xl font-bold text-green-900 dark:text-green-100">
                                                                 {[...new Set(filteredFinancialData.map(item => item.officeName))].length}
                                                             </p>
@@ -3965,11 +4023,11 @@ export default function AdminPanel() {
                                                     </div>
                                                 </div>
 
-                                                {/* Average Revenue per Provider */}
+                                                {/* Average Revenue per Supplier */}
                                                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Provider</p>
+                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Supplier</p>
                                                             <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
                                                                 {getCurrencySymbol(financialFilters.currency)}{
                                                                     [...new Set(filteredFinancialData.map(item => item.officeName))].length > 0 
@@ -3980,6 +4038,37 @@ export default function AdminPanel() {
                                                         </div>
                                                         <div className="w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
                                                             <FaCalendarDay className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Profit */}
+                                                <div className={`bg-gradient-to-br p-6 rounded-xl border ${
+                                                    (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                        ? 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                                                        : 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                                                }`}>
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className={`text-sm font-medium ${
+                                                                (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                                    ? 'text-green-600 dark:text-green-400'
+                                                                    : 'text-red-600 dark:text-red-400'
+                                                            }`}>Profit</p>
+                                                            <p className={`text-2xl font-bold ${
+                                                                (totalClientRevenue - totalSupplierRevenue) >= 0 
+                                                                    ? 'text-green-900 dark:text-green-100' 
+                                                                    : 'text-red-900 dark:text-red-100'
+                                                            }`}>
+                                                                {getCurrencySymbol(financialFilters.currency)}{(totalClientRevenue - totalSupplierRevenue).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                                            (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                                ? 'bg-green-500 dark:bg-green-600'
+                                                                : 'bg-red-500 dark:bg-red-600'
+                                                        }`}>
+                                                            <FaChartLine className="w-6 h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4001,17 +4090,32 @@ export default function AdminPanel() {
                                                     </div>
                                                 </div>
 
-                                                {/* Unique Client Offices */}
+                                                {/* Unique Clients */}
                                                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 p-6 rounded-xl border border-indigo-200 dark:border-indigo-700">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Client Offices</p>
+                                                            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Clients</p>
                                                             <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
                                                                 {[...new Set(clientOfficeData.map(office => office.officeName))].length}
                                                             </p>
                                                         </div>
                                                         <div className="w-12 h-12 bg-indigo-500 dark:bg-indigo-600 rounded-lg flex items-center justify-center">
                                                             <FaBuilding className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Direct Clients Count */}
+                                                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 p-6 rounded-xl border border-rose-200 dark:border-rose-700">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">Direct Clients</p>
+                                                            <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">
+                                                                {[...new Set(clientOfficeData.filter(office => office.isDirectClient).map(office => office.officeName))].length}
+                                                            </p>
+                                                        </div>
+                                                        <div className="w-12 h-12 bg-rose-500 dark:bg-rose-600 rounded-lg flex items-center justify-center">
+                                                            <FaUser className="w-6 h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4032,11 +4136,11 @@ export default function AdminPanel() {
                                                 </div>
 
                                                 {/* Average Revenue per Client */}
-                                                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 p-6 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Avg per Client</p>
-                                                            <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Client</p>
+                                                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
                                                                 {getCurrencySymbol(financialFilters.currency)}{
                                                                     [...new Set(clientOfficeData.map(office => office.officeName))].length > 0 
                                                                         ? (clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0) / [...new Set(clientOfficeData.map(office => office.officeName))].length).toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -4044,8 +4148,39 @@ export default function AdminPanel() {
                                                                 }
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-emerald-500 dark:bg-emerald-600 rounded-lg flex items-center justify-center">
+                                                        <div className="w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
                                                             <FaCalendarDay className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Profit */}
+                                                <div className={`bg-gradient-to-br p-6 rounded-xl border ${
+                                                    (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                        ? 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                                                        : 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                                                }`}>
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className={`text-sm font-medium ${
+                                                                (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                                    ? 'text-green-600 dark:text-green-400'
+                                                                    : 'text-red-600 dark:text-red-400'
+                                                            }`}>Profit</p>
+                                                            <p className={`text-2xl font-bold ${
+                                                                (totalClientRevenue - totalSupplierRevenue) >= 0 
+                                                                    ? 'text-green-900 dark:text-green-100' 
+                                                                    : 'text-red-900 dark:text-red-100'
+                                                            }`}>
+                                                                {getCurrencySymbol(financialFilters.currency)}{(totalClientRevenue - totalSupplierRevenue).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                                            (totalClientRevenue - totalSupplierRevenue) >= 0
+                                                                ? 'bg-green-500 dark:bg-green-600'
+                                                                : 'bg-red-500 dark:bg-red-600'
+                                                        }`}>
+                                                            <FaChartLine className="w-6 h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -4062,8 +4197,8 @@ export default function AdminPanel() {
                                                 <SearchableSelect
                                                     id="view-type-filter"
                                                     options={[
-                                                        { value: 'providers', label: 'Service Providers' },
-                                                        { value: 'clients', label: 'Client Offices' }
+                                                        { value: 'providers', label: 'Suppliers' },
+                                                        { value: 'clients', label: 'Clients' }
                                                     ]}
                                                     value={financialFilters.viewType}
                                                     onChange={(eventOrValue) => {
@@ -4200,28 +4335,69 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-                                    {/* Search Bar */}
+                                    {/* Search Bar and Filters */}
                                     <div className="mb-6 -ml-2">
-                                        <div className="relative w-80">
-                                            <TextInput
-                                                placeholder="Search offices by name..."
-                                                value={financialSearchQuery}
-                                                onChange={(e) => setFinancialSearchQuery(e.target.value)}
-                                                icon={() => (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                    </svg>
+                                        <div className="flex gap-4 items-center">
+                                            <div className="relative w-80">
+                                                <TextInput
+                                                    placeholder={financialFilters.viewType === 'clients' ? "Search clients by name..." : "Search offices by name..."}
+                                                    value={financialSearchQuery}
+                                                    onChange={(e) => setFinancialSearchQuery(e.target.value)}
+                                                    icon={() => (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                        </svg>
+                                                    )}
+                                                    className="pl-5 w-full"
+                                                />
+                                                {financialSearchQuery && (
+                                                    <button
+                                                        onClick={() => setFinancialSearchQuery('')}
+                                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                                        title="Clear search"
+                                                    >
+                                                        <HiX className="h-4 w-4" />
+                                                    </button>
                                                 )}
-                                                className="pl-5 w-full"
-                                            />
-                                            {financialSearchQuery && (
-                                                <button
-                                                    onClick={() => setFinancialSearchQuery('')}
-                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                                    title="Clear search"
+                                            </div>
+                                            
+                                            {/* Client Type Filter - Only show in clients section */}
+                                            {financialFilters.viewType === 'clients' && (
+                                                <div className="w-48">
+                                                    <SearchableSelect
+                                                        value={clientTypeFilter}
+                                                        onChange={(eventOrValue) => {
+                                                            const value = typeof eventOrValue === 'string' 
+                                                                ? eventOrValue 
+                                                                : eventOrValue?.target?.value || eventOrValue;
+                                                            setClientTypeFilter(value);
+                                                        }}
+                                                        options={[
+                                                            { value: 'all', label: 'All Clients' },
+                                                            { value: 'office', label: 'Office Clients' },
+                                                            { value: 'direct', label: 'Direct Clients' }
+                                                        ]}
+                                                        placeholder="Client Type..."
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            {/* Reset Button */}
+                                            {(financialSearchQuery || (financialFilters.viewType === 'clients' && clientTypeFilter !== 'all')) && (
+                                                <CustomButton
+                                                    variant="red"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setFinancialSearchQuery('');
+                                                        if (financialFilters.viewType === 'clients') {
+                                                            setClientTypeFilter('all');
+                                                        }
+                                                    }}
+                                                    className="whitespace-nowrap"
                                                 >
-                                                    <HiX className="h-4 w-4" />
-                                                </button>
+                                                    <HiX className="h-4 w-4 mr-1" />
+                                                    Clear
+                                                </CustomButton>
                                             )}
                                         </div>
                                     </div>
@@ -4289,26 +4465,34 @@ export default function AdminPanel() {
                             ) : (
                                 <CustomTable
                                     headers={[
-                                        { label: 'Office', className: '' },
+                                        { label: 'Client', className: '' },
                                         { label: 'Month', className: '' },
-                                        { label: 'Total Amount', className: 'text-blue-600 dark:text-blue-400' },
+                                        { label: 'Total Amount', className: 'text-gray-900 dark:text-white' },
                                         { label: 'Vouchers', className: 'text-gray-900 dark:text-white' }
                                     ]}
                                     data={clientOfficeData}
                                     renderRow={(office) => (
                                         <>
                                             <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                <Link 
-                                                    to={`/office/${encodeURIComponent(office.officeName)}`}
-                                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
-                                                >
-                                                    {office.officeName}
-                                                </Link>
+                                                <div className="flex items-center gap-2">
+                                                    <Link 
+                                                        to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
+                                                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                                    >
+                                                        {office.officeName}
+                                                    </Link>
+                                                    {office.isDirectClient && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
+                                                            <FaUser className="w-3 h-3 mr-1" />
+                                                            Direct
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </Table.Cell>
                                             <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                                                 {office.monthName} {office.year}
                                             </Table.Cell>
-                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                            <Table.Cell className="text-sm text-gray-900 dark:text-white font-medium px-4 py-3">
                                                 {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
                                             </Table.Cell>
                                             <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
@@ -4316,7 +4500,7 @@ export default function AdminPanel() {
                                             </Table.Cell>
                                         </>
                                     )}
-                                    emptyMessage="No client offices found"
+                                    emptyMessage="No clients found"
                                     emptyIcon={() => (
                                         <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -4438,135 +4622,131 @@ export default function AdminPanel() {
                                     </div>
 
                                     {/* Debt Table */}
-                                    {debtLoading ? (
-                                        <div className="py-8">
-                                            <RahalatekLoader size="lg" />
+                                                        {debtLoading ? (
+                        <div className="py-8">
+                            <RahalatekLoader size="lg" />
+                        </div>
+                    ) : (
+                        <CustomTable
+                            headers={[
+                                { label: 'Office', className: '' },
+                                { label: 'Amount', className: '' },
+                                { label: 'Type', className: '' },
+                                { label: 'Description', className: '' },
+                                { label: 'Status', className: '' },
+                                { label: 'Due Date', className: '' },
+                                { label: 'Created', className: '' },
+                                { label: 'Created By', className: '' },
+                                { label: 'Actions', className: '' }
+                            ]}
+                            data={debts}
+                            renderRow={(debt) => (
+                                <>
+                                    <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                        {debt.officeName}
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm px-4 py-3">
+                                        <span className={`font-medium ${
+                                            debt.type === 'OWED_TO_OFFICE' 
+                                                ? 'text-red-600 dark:text-red-400' 
+                                                : 'text-green-600 dark:text-green-400'
+                                        }`}>
+                                            {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
+                                        </span>
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm px-4 py-3">
+                                        <span 
+                                            className={`
+                                                inline-flex items-center justify-center rounded-lg 
+                                                ${debt.type === 'OWED_TO_OFFICE' 
+                                                    ? 'bg-red-500 text-white border border-red-600 shadow-md' 
+                                                    : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                }
+                                                text-[11px] px-2 py-0.5 font-semibold
+                                                transition-all duration-200 
+                                                hover:scale-105 hover:shadow-lg
+                                                min-w-16
+                                            `}
+                                        >
+                                            {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
+                                        </span>
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[200px]">
+                                        <div className="truncate" title={debt.description}>
+                                            {debt.description || 'N/A'}
                                         </div>
-                                    ) : debts.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <Table striped>
-                                                <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700">
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Office</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Amount</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Type</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Description</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Status</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Due Date</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Created By</Table.HeadCell>
-                                                    <Table.HeadCell className="text-sm font-semibold px-4 py-3">Actions</Table.HeadCell>
-                                                </Table.Head>
-                                                <Table.Body>
-                                                    {debts.map((debt) => (
-                                                        <Table.Row key={debt._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {debt.officeName}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm px-4 py-3">
-                                                                <span className={`font-medium ${
-                                                                    debt.type === 'OWED_TO_OFFICE' 
-                                                                        ? 'text-red-600 dark:text-red-400' 
-                                                                        : 'text-green-600 dark:text-green-400'
-                                                                }`}>
-                                                                    {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
-                                                                </span>
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm px-4 py-3">
-                                                                <span 
-                                                                    className={`
-                                                                        inline-flex items-center justify-center rounded-lg 
-                                                                        ${debt.type === 'OWED_TO_OFFICE' 
-                                                                            ? 'bg-red-500 text-white border border-red-600 shadow-md' 
-                                                                            : 'bg-green-500 text-white border border-green-600 shadow-md'
-                                                                        }
-                                                                        text-[11px] px-2 py-0.5 font-semibold
-                                                                        transition-all duration-200 
-                                                                        hover:scale-105 hover:shadow-lg
-                                                                        min-w-16
-                                                                    `}
-                                                                >
-                                                                    {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
-                                                                </span>
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-[200px]">
-                                                                <div className="truncate" title={debt.description}>
-                                                                    {debt.description || 'N/A'}
-                                                                </div>
-                                                            </Table.Cell>
-                                                            <Table.Cell className="px-4 py-3">
-                                                                <span 
-                                                                    className={`
-                                                                        inline-flex items-center justify-center rounded-lg 
-                                                                        ${debt.status === 'OPEN' 
-                                                                            ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
-                                                                            : 'bg-green-500 text-white border border-green-600 shadow-md'
-                                                                        }
-                                                                        text-[11px] px-2 py-0.5 font-semibold
-                                                                        transition-all duration-200 
-                                                                        hover:scale-105 hover:shadow-lg
-                                                                        min-w-16
-                                                                    `}
-                                                                >
-                                                                    {debt.status}
-                                                                </span>
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {new Date(debt.createdAt).toLocaleDateString()}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                                {debt.createdBy?.username || 'Unknown'}
-                                                            </Table.Cell>
-                                                            <Table.Cell className="px-4 py-3">
-                                                                <div className="flex space-x-2">
-                                                                    {debt.status === 'OPEN' && (
-                                                                        <>
-                                                                            <CustomButton
-                                                                                variant="purple"
-                                                                                size="xs"
-                                                                                onClick={() => openDebtModal(debt)}
-                                                                                title="Edit debt"
-                                                                            >
-                                                                                Edit
-                                                                            </CustomButton>
-                                                                            <CustomButton
-                                                                                variant="green"
-                                                                                size="xs"
-                                                                                onClick={() => handleCloseDebt(debt._id)}
-                                                                                title="Mark as paid/closed"
-                                                                            >
-                                                                                Close
-                                                                            </CustomButton>
-                                                                        </>
-                                                                    )}
-                                                                    {isAdmin && (
-                                                                        <CustomButton
-                                                                            variant="red"
-                                                                            size="xs"
-                                                                            onClick={() => openDeleteDebtModal(debt)}
-                                                                            title="Delete debt"
-                                                                        >
-                                                                            Delete
-                                                                        </CustomButton>
-                                                                    )}
-                                                                </div>
-                                                            </Table.Cell>
-                                                        </Table.Row>
-                                                    ))}
-                                                </Table.Body>
-                                            </Table>
+                                    </Table.Cell>
+                                    <Table.Cell className="px-4 py-3">
+                                        <span 
+                                            className={`
+                                                inline-flex items-center justify-center rounded-lg 
+                                                ${debt.status === 'OPEN' 
+                                                    ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
+                                                    : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                }
+                                                text-[11px] px-2 py-0.5 font-semibold
+                                                transition-all duration-200 
+                                                hover:scale-105 hover:shadow-lg
+                                                min-w-16
+                                            `}
+                                        >
+                                            {debt.status}
+                                        </span>
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                        {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                        {new Date(debt.createdAt).toLocaleDateString()}
+                                    </Table.Cell>
+                                    <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                        {debt.createdBy?.username || 'Unknown'}
+                                    </Table.Cell>
+                                    <Table.Cell className="px-4 py-3">
+                                        <div className="flex space-x-2">
+                                            {debt.status === 'OPEN' && (
+                                                <>
+                                                    <CustomButton
+                                                        variant="purple"
+                                                        size="xs"
+                                                        onClick={() => openDebtModal(debt)}
+                                                        title="Edit debt"
+                                                    >
+                                                        Edit
+                                                    </CustomButton>
+                                                    <CustomButton
+                                                        variant="green"
+                                                        size="xs"
+                                                        onClick={() => handleCloseDebt(debt._id)}
+                                                        title="Mark as paid/closed"
+                                                    >
+                                                        Close
+                                                    </CustomButton>
+                                                </>
+                                            )}
+                                            {isAdmin && (
+                                                <CustomButton
+                                                    variant="red"
+                                                    size="xs"
+                                                    onClick={() => openDeleteDebtModal(debt)}
+                                                    title="Delete debt"
+                                                >
+                                                    Delete
+                                                </CustomButton>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <p className="text-lg font-medium">No debts found</p>
-                                            <p className="text-sm">Create debt records to track financial obligations with offices.</p>
-                                        </div>
-                                    )}
+                                    </Table.Cell>
+                                </>
+                            )}
+                            emptyMessage="No debts found"
+                            emptyDescription="Create debt records to track financial obligations with offices."
+                            emptyIcon={() => (
+                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            )}
+                        />
+                    )}
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                 </Card>
@@ -4685,68 +4865,61 @@ export default function AdminPanel() {
                                     
                                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
-                                    {pendingRequests.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <Table>
-                                                <Table.Head>
-                                                    <Table.HeadCell>Username</Table.HeadCell>
-                                                    <Table.HeadCell>Registration Date</Table.HeadCell>
-                                                    <Table.HeadCell>Actions</Table.HeadCell>
-                                                </Table.Head>
-                                                <Table.Body className="divide-y">
-                                                    {pendingRequests.map(user => (
-                                                        <Table.Row key={user._id} className="bg-white dark:border-gray-700 dark:bg-slate-900">
-                                                            <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                                                {user.username}
-                                                            </Table.Cell>
-                                                            <Table.Cell>
-                                                                {new Date(user.createdAt).toLocaleDateString()}
-                                                            </Table.Cell>
-                                                            <Table.Cell>
-                                                                <div className="flex items-center space-x-2">
-                                                                    <CustomButton
-                                                                        variant="green"
-                                                                        onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
-                                                                        title="Approve user account"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Approve
-                                                                    </CustomButton>
-                                                                    <CustomButton
-                                                                        variant="red"
-                                                                        onClick={() => openDeleteUserModal(user)}
-                                                                        title="Reject user account"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Reject
-                                                                    </CustomButton>
-                                                                </div>
-                                                            </Table.Cell>
-                                                        </Table.Row>
-                                                    ))}
-                                                </Table.Body>
-                                            </Table>
-                                        </div>
-                                    ) : (
-                                        <div className="py-8 px-4 mx-auto text-center rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 bg-white dark:bg-slate-900">
-                                            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full">
-                                                <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                        <CustomTable
+                        headers={[
+                            { label: 'Username', className: '' },
+                            { label: 'Registration Date', className: '' },
+                            { label: 'Actions', className: '' }
+                        ]}
+                        data={pendingRequests}
+                        renderRow={(user) => (
+                            <>
+                                <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
+                                    {user.username}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                    {new Date(user.createdAt).toLocaleDateString()}
+                                </Table.Cell>
+                                <Table.Cell className="px-4 py-3">
+                                    <div className="flex items-center space-x-2">
+                                        <CustomButton
+                                            variant="green"
+                                            onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
+                                            title="Approve user account"
+                                            icon={({ className }) => (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                                 </svg>
-                                            </div>
-                                            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No pending requests</h3>
-                                            <p className="mb-4 text-gray-500 dark:text-gray-400">There are no new user accounts awaiting approval at this time.</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">New registration requests will appear here when users sign up.</p>
-                                        </div>
-                                    )}
+                                            )}
+                                        >
+                                            Approve
+                                        </CustomButton>
+                                        <CustomButton
+                                            variant="red"
+                                            onClick={() => openDeleteUserModal(user)}
+                                            title="Reject user account"
+                                            icon={({ className }) => (
+                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            )}
+                                        >
+                                            Reject
+                                        </CustomButton>
+                                    </div>
+                                </Table.Cell>
+                            </>
+                        )}
+                        emptyMessage="No pending requests"
+                        emptyDescription="There are no new user accounts awaiting approval at this time. New registration requests will appear here when users sign up."
+                        emptyIcon={() => (
+                            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full">
+                                <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                </svg>
+                            </div>
+                        )}
+                    />
                                 </Card>
                             )}
                             

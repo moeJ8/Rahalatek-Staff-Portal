@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaSearch, FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaSearch, FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CustomScrollbar from './CustomScrollbar';
 
 const OfficeSearchDropdown = () => {
   const [offices, setOffices] = useState([]);
-  const [filteredOffices, setFilteredOffices] = useState([]);
+  const [directClients, setDirectClients] = useState([]);
+  const [filteredResults, setFilteredResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,9 +32,9 @@ const OfficeSearchDropdown = () => {
     };
   }, [showMobileModal]);
 
-  // Fetch offices on mount
+  // Fetch offices and direct clients on mount
   useEffect(() => {
-    fetchOffices();
+    fetchData();
   }, []);
 
   // Handle escape key for mobile modal
@@ -51,24 +52,31 @@ const OfficeSearchDropdown = () => {
     }
   }, [showMobileModal]);
 
-  // Filter offices based on search query
+  // Filter offices and direct clients based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setFilteredOffices([]);
+      setFilteredResults([]);
       return;
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = offices.filter(office => 
+    
+    // Filter offices
+    const filteredOffices = offices.filter(office => 
       office.name.toLowerCase().includes(query) ||
       office.location.toLowerCase().includes(query)
-    );
-    setFilteredOffices(filtered);
-  }, [searchQuery, offices]);
+    ).map(office => ({ ...office, type: 'office' }));
+    
+    // Filter direct clients
+    const filteredClients = directClients.filter(client => 
+      client.name.toLowerCase().includes(query)
+    ).map(client => ({ ...client, type: 'client' }));
+    
+    setFilteredResults([...filteredOffices, ...filteredClients]);
+  }, [searchQuery, offices, directClients]);
 
   const fetchOffices = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get('/api/offices', {
         headers: { Authorization: `Bearer ${token}` }
@@ -76,6 +84,40 @@ const OfficeSearchDropdown = () => {
       setOffices(response.data.data);
     } catch (error) {
       console.error('Error fetching offices:', error);
+    }
+  };
+
+  const fetchDirectClients = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/vouchers', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Extract unique direct clients (vouchers without office)
+      const directClientSet = new Set();
+      response.data.data.forEach(voucher => {
+        if (!voucher.officeName && voucher.clientName) {
+          directClientSet.add(voucher.clientName.trim());
+        }
+      });
+      
+      // Convert to array of objects
+      const directClientsList = Array.from(directClientSet).map(clientName => ({
+        _id: `client-${clientName}`,
+        name: clientName
+      }));
+      
+      setDirectClients(directClientsList);
+    } catch (error) {
+      console.error('Error fetching direct clients:', error);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([fetchOffices(), fetchDirectClients()]);
     } finally {
       setLoading(false);
     }
@@ -90,8 +132,12 @@ const OfficeSearchDropdown = () => {
     setShowDropdown(true);
   };
 
-  const handleOfficeClick = (officeName) => {
-    navigate(`/office/${encodeURIComponent(officeName)}`);
+  const handleResultClick = (result) => {
+    if (result.type === 'office') {
+      navigate(`/office/${encodeURIComponent(result.name)}`);
+    } else if (result.type === 'client') {
+      navigate(`/client/${encodeURIComponent(result.name)}`);
+    }
     setShowDropdown(false);
     setSearchQuery('');
     inputRef.current?.blur();
@@ -113,7 +159,7 @@ const OfficeSearchDropdown = () => {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search offices..."
+            placeholder="Search offices & clients..."
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
@@ -135,7 +181,7 @@ const OfficeSearchDropdown = () => {
             }, 100);
           }}
           className="lg:hidden flex items-center justify-center p-2 text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
-          title="Search offices"
+          title="Search offices & clients"
         >
           <FaSearch className="w-5 h-5" />
         </button>
@@ -146,13 +192,13 @@ const OfficeSearchDropdown = () => {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <FaBuilding className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
-              Offices
+              <FaSearch className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
+              Search Results
             </h3>
             
             {searchQuery && (
               <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-teal-600 bg-teal-50 border border-teal-200 rounded-md dark:text-teal-400 dark:bg-teal-900/20 dark:border-teal-800">
-                {filteredOffices.length} found
+                {filteredResults.length} found
               </span>
             )}
           </div>
@@ -163,74 +209,99 @@ const OfficeSearchDropdown = () => {
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading offices...</span>
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading...</span>
                 </div>
               ) : !searchQuery ? (
                 <div className="px-4 py-8 text-center">
                   <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500 dark:text-gray-400">Start typing to search offices</p>
+                  <p className="text-gray-500 dark:text-gray-400">Start typing to search</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                    Search by office name or location
+                    Search by office name, location, or client name
                   </p>
                 </div>
-              ) : filteredOffices.length === 0 ? (
+              ) : filteredResults.length === 0 ? (
                 <div className="px-4 py-8 text-center">
-                  <FaBuilding className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500 dark:text-gray-400">No offices found</p>
+                  <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-500 dark:text-gray-400">No results found</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                     Try searching with different keywords
                   </p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {filteredOffices.map((office) => (
+                  {filteredResults.map((result) => (
                     <div
-                      key={office._id}
-                      onClick={() => handleOfficeClick(office.name)}
+                      key={result._id}
+                      onClick={() => handleResultClick(result)}
                       className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 cursor-pointer"
                     >
                       <div className="flex items-start space-x-3">
                         {/* Icon */}
                         <div className="flex-shrink-0 mt-1">
-                          <FaBuilding className="w-4 h-4 text-teal-500" />
+                          {result.type === 'office' ? (
+                            <FaBuilding className="w-4 h-4 text-teal-500" />
+                          ) : (
+                            <FaUser className="w-4 h-4 text-rose-500" />
+                          )}
                         </div>
                         
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {office.name}
-                              </p>
-                              
-                              {/* Location */}
-                              <div className="flex items-center mt-1">
-                                <FaMapMarkerAlt className="w-3 h-3 text-gray-400 mr-1" />
-                                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                                  {office.location}
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {result.type === 'client' && result.name.length > 20 
+                                    ? `${result.name.substring(0, 20)}...` 
+                                    : result.name}
                                 </p>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                  result.type === 'office' 
+                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                                }`}>
+                                  {result.type === 'office' ? 'Office' : 'Direct Client'}
+                                </span>
                               </div>
                               
-                              {/* Contact Info */}
-                              <div className="flex items-center space-x-4 mt-2">
-                                {office.email && (
-                                  <div className="flex items-center">
-                                    <FaEnvelope className="w-3 h-3 text-gray-400 mr-1" />
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
-                                      {office.email}
-                                    </span>
+                              {result.type === 'office' ? (
+                                <>
+                                  {/* Location for offices */}
+                                  <div className="flex items-center mt-1">
+                                    <FaMapMarkerAlt className="w-3 h-3 text-gray-400 mr-1" />
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                      {result.location}
+                                    </p>
                                   </div>
-                                )}
-                                
-                                {office.phoneNumber && (
-                                  <div className="flex items-center">
-                                    <FaPhone className="w-3 h-3 text-gray-400 mr-1" />
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                      {office.phoneNumber}
-                                    </span>
+                                  
+                                  {/* Contact Info for offices */}
+                                  <div className="flex items-center space-x-4 mt-2">
+                                    {result.email && (
+                                      <div className="flex items-center">
+                                        <FaEnvelope className="w-3 h-3 text-gray-400 mr-1" />
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
+                                          {result.email}
+                                        </span>
+                                      </div>
+                                    )}
+                                    
+                                    {result.phoneNumber && (
+                                      <div className="flex items-center">
+                                        <FaPhone className="w-3 h-3 text-gray-400 mr-1" />
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                          {result.phoneNumber}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+                                </>
+                              ) : (
+                                <div className="mt-1">
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Individual client with vouchers
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -268,7 +339,7 @@ const OfficeSearchDropdown = () => {
             <input
               ref={mobileInputRef}
               type="text"
-              placeholder="Search offices..."
+              placeholder="Search offices & clients..."
               value={searchQuery}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
@@ -284,31 +355,31 @@ const OfficeSearchDropdown = () => {
             {loading ? (
               <div className="flex items-center justify-center px-4 py-8">
                 <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading offices...</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading...</span>
               </div>
             ) : !searchQuery ? (
               <div className="px-4 py-8 text-center">
                 <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="text-gray-500 dark:text-gray-400">Start typing to search offices</p>
+                <p className="text-gray-500 dark:text-gray-400">Start typing to search</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                  Search by office name or location
+                  Search by office name, location, or client name
                 </p>
               </div>
-            ) : filteredOffices.length === 0 ? (
+            ) : filteredResults.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <FaBuilding className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="text-gray-500 dark:text-gray-400">No offices found</p>
+                <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-gray-500 dark:text-gray-400">No results found</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                   Try searching with different keywords
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-slate-700">
-                {filteredOffices.map((office) => (
+                {filteredResults.map((result) => (
                   <div
-                    key={office._id}
+                    key={result._id}
                     onClick={() => {
-                      handleOfficeClick(office.name);
+                      handleResultClick(result);
                       setShowMobileModal(false);
                       setSearchQuery('');
                     }}
@@ -316,40 +387,64 @@ const OfficeSearchDropdown = () => {
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
-                        <FaBuilding className="w-5 h-5 text-teal-500" />
+                        {result.type === 'office' ? (
+                          <FaBuilding className="w-5 h-5 text-teal-500" />
+                        ) : (
+                          <FaUser className="w-5 h-5 text-rose-500" />
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-medium text-gray-900 dark:text-white">
-                          {office.name}
-                        </p>
-                        
-                        <div className="flex items-center mt-1">
-                          <FaMapMarkerAlt className="w-4 h-4 text-gray-400 mr-2" />
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {office.location}
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-base font-medium text-gray-900 dark:text-white">
+                            {result.type === 'client' && result.name.length > 20 
+                              ? `${result.name.substring(0, 20)}...` 
+                              : result.name}
                           </p>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            result.type === 'office' 
+                              ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                              : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                          }`}>
+                            {result.type === 'office' ? 'Office' : 'Direct Client'}
+                          </span>
                         </div>
                         
-                        <div className="flex items-center space-x-4 mt-2">
-                          {office.email && (
-                            <div className="flex items-center">
-                              <FaEnvelope className="w-3 h-3 text-gray-400 mr-1" />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {office.email}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {office.phoneNumber && (
-                            <div className="flex items-center">
-                              <FaPhone className="w-3 h-3 text-gray-400 mr-1" />
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {office.phoneNumber}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                        {result.type === 'office' ? (
+                          <div className="flex items-center mt-1">
+                            <FaMapMarkerAlt className="w-4 h-4 text-gray-400 mr-2" />
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {result.location}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              Individual client with vouchers
+                            </p>
+                          </div>
+                        )}
+                        
+                        {result.type === 'office' && (result.email || result.phoneNumber) && (
+                          <div className="flex items-center space-x-4 mt-2">
+                            {result.email && (
+                              <div className="flex items-center">
+                                <FaEnvelope className="w-3 h-3 text-gray-400 mr-1" />
+                                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                  {result.email}
+                                </span>
+                              </div>
+                            )}
+                            {result.phoneNumber && (
+                              <div className="flex items-center">
+                                <FaPhone className="w-3 h-3 text-gray-400 mr-1" />
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {result.phoneNumber}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
