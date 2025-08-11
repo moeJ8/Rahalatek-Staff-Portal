@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { TextInput, Label, Card, Alert } from 'flowbite-react';
+import { Label, Card, Alert } from 'flowbite-react';
+import TextInput from '../components/TextInput';
+import CustomSelect from '../components/Select';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import CustomButton from '../components/CustomButton';
 
@@ -446,26 +448,21 @@ export default function SignInPage() {
               {!isLogin && (
                 <>
                   <div>
-                    <div className="mb-2 block">
-                      <Label htmlFor="securityQuestion" value="Security Question" className="dark:text-white" />
-                    </div>
-                    <select
+                    <CustomSelect
                       id="securityQuestion"
+                      label="Security Question"
                       value={securityQuestion}
-                      onChange={(e) => setSecurityQuestion(e.target.value)}
+                      onChange={(value) => setSecurityQuestion(value)}
+                      options={[
+                        { value: "What was your childhood nickname?", label: "What was your childhood nickname?" },
+                        { value: "What is the name of your first pet?", label: "What is the name of your first pet?" },
+                        { value: "What is your mother's maiden name?", label: "What is your mother's maiden name?" },
+                        { value: "What was the model of your first car?", label: "What was the model of your first car?" },
+                        { value: "In what city were you born?", label: "In what city were you born?" }
+                      ]}
+                      placeholder="Select a security question"
                       required
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
-                      focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 
-                      dark:border-gray-600 dark:placeholder-gray-400 dark:text-white 
-                      dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    >
-                      <option value="">Select a security question</option>
-                      <option value="What was your childhood nickname?">What was your childhood nickname?</option>
-                      <option value="What is the name of your first pet?">What is the name of your first pet?</option>
-                      <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
-                      <option value="What was the model of your first car?">What was the model of your first car?</option>
-                      <option value="In what city were you born?">In what city were you born?</option>
-                    </select>
+                    />
                   </div>
                   <div>
                     <div className="mb-2 block">

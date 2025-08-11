@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Spinner, Badge, Alert, Modal, Select, TextInput } from 'flowbite-react';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
-import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
+import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
@@ -210,6 +210,8 @@ const NotificationsPage = () => {
     switch (type) {
       case 'voucher_arrival_reminder':
         return <FaPlane className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
+      case 'voucher_departure_reminder':
+        return <FaPlaneDeparture className="w-5 h-5 text-red-500 dark:text-red-400" />;
       case 'daily_arrivals_summary':
         return <FaCalendarDay className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
       case 'user_role_change':
@@ -243,6 +245,7 @@ const NotificationsPage = () => {
   const getTypeDisplayName = (type) => {
     const types = {
       voucher_arrival_reminder: 'Arrival Reminder',
+      voucher_departure_reminder: 'Departure Reminder',
       daily_arrivals_summary: 'Daily Summary',
       user_role_change: 'Role Change'
     };
@@ -331,6 +334,7 @@ const NotificationsPage = () => {
               >
                 <option value="">All Types</option>
                 <option value="voucher_arrival_reminder">Arrival Reminders</option>
+                <option value="voucher_departure_reminder">Departure Reminders</option>
                 {(isAdmin || isAccountant) && (
                   <option value="daily_arrivals_summary">Daily Summaries</option>
                 )}

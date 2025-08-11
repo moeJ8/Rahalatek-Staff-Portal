@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Card, Button, TextInput, Select, Label, Checkbox, Modal, Alert, Textarea } from 'flowbite-react';
+import { Card, Button, Select as FlowbiteSelect, Label, Checkbox, Modal, Alert } from 'flowbite-react';
 import CustomButton from '../components/CustomButton';
 import RahalatekLoader from '../components/RahalatekLoader';
+import TextInput from '../components/TextInput';
+import Select from '../components/Select';
+import CustomDatePicker from '../components/CustomDatePicker';
 import axios from 'axios';
 import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
@@ -79,8 +82,7 @@ export default function EditVoucherPage() {
   const [useCustomTripCity, setUseCustomTripCity] = useState([]);
   
   // Date display formatting
-  const [displayArrivalDate, setDisplayArrivalDate] = useState('');
-  const [displayDepartureDate, setDisplayDepartureDate] = useState('');
+
   
   // Hotels, Cities, and Tours data
   const [hotels, setHotels] = useState([]);
@@ -105,22 +107,6 @@ export default function EditVoucherPage() {
     return `${day}/${month}/${year}`;
   };
   
-  const parseDisplayDate = (displayDate) => {
-    if (!displayDate || !displayDate.includes('/')) return '';
-    const [day, month, year] = displayDate.split('/');
-    if (!day || !month || !year) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  };
-  
-  // Update display dates when ISO dates change
-  useEffect(() => {
-    if (formData.arrivalDate) {
-      setDisplayArrivalDate(formatDateForDisplay(formData.arrivalDate));
-    }
-    if (formData.departureDate) {
-      setDisplayDepartureDate(formatDateForDisplay(formData.departureDate));
-    }
-  }, [formData.arrivalDate, formData.departureDate]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -180,20 +166,30 @@ export default function EditVoucherPage() {
           capital: voucherData.capital || '',
           totalAmount: voucherData.totalAmount || 0,
           currency: voucherData.currency || 'USD',
-          hotels: voucherData.hotels.map(hotel => ({
+          hotels: (voucherData.hotels || []).map(hotel => ({
             ...hotel,
             checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
-            checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : ''
+            checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : '',
+            officeName: hotel.officeName || '',
+            price: hotel.price || 0
           })),
-          transfers: voucherData.transfers.map(transfer => ({
+          transfers: (voucherData.transfers || []).map(transfer => ({
             ...transfer,
-            date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
+            date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : '',
+            officeName: transfer.officeName || '',
+            price: transfer.price || 0
           })),
-          trips: voucherData.trips || [],
+          trips: Array.isArray(voucherData.trips) ? voucherData.trips.map(trip => ({
+            ...trip,
+            officeName: trip.officeName || '',
+            price: trip.price || 0
+          })) : [],
           flights: voucherData.flights ? voucherData.flights.map(flight => ({
             ...flight,
             departureDate: flight.departureDate ? new Date(flight.departureDate).toISOString().split('T')[0] : '',
-            arrivalDate: flight.arrivalDate ? new Date(flight.arrivalDate).toISOString().split('T')[0] : ''
+            arrivalDate: flight.arrivalDate ? new Date(flight.arrivalDate).toISOString().split('T')[0] : '',
+            officeName: flight.officeName || '',
+            price: flight.price || 0
           })) : [],
           payments: {
             hotels: {
@@ -219,15 +215,15 @@ export default function EditVoucherPage() {
           remainingAmount: voucherData.remainingAmount || 0
         });
         
-        setUseCustomHotel(voucherData.hotels.map(hotel => {
+        setUseCustomHotel((voucherData.hotels || []).map(hotel => {
           const hotelExists = hotelsResponse.data.some(h => h.name === hotel.hotelName);
           return !hotelExists && hotel.hotelName !== '';
         }));
         
-                setUseCustomTour(voucherData.trips.map(trip => {
+                setUseCustomTour(Array.isArray(voucherData.trips) ? voucherData.trips.map(trip => {
           const tourExists = toursResponse.data.some(t => t.name === trip.tourName);
           return !tourExists && trip.tourName !== '';
-        }));
+        }) : []);
 
         setHotels(hotelsResponse.data);
         setTours(toursResponse.data);
@@ -247,20 +243,20 @@ export default function EditVoucherPage() {
         
         setCities(uniqueCities);
 
-        setUseCustomHotelCity(voucherData.hotels.map(hotel => {
+        setUseCustomHotelCity((voucherData.hotels || []).map(hotel => {
           const cityExists = uniqueCities.includes(hotel.city);
           return !cityExists && hotel.city !== '';
         }));
 
-        setUseCustomTransferCity(voucherData.transfers.map(transfer => {
+        setUseCustomTransferCity((voucherData.transfers || []).map(transfer => {
           const cityExists = uniqueCities.includes(transfer.city);
           return !cityExists && transfer.city !== '';
         }));
 
-        setUseCustomTripCity(voucherData.trips.map(trip => {
+        setUseCustomTripCity(Array.isArray(voucherData.trips) ? voucherData.trips.map(trip => {
           const cityExists = uniqueCities.includes(trip.city);
           return !cityExists && trip.city !== '';
-        }));
+        }) : []);
       } catch (err) {
         console.error('Error fetching data:', err);
         toast.error('Failed to load voucher data. Please try again.', {
@@ -819,11 +815,6 @@ export default function EditVoucherPage() {
     }));
   };
 
-  const formatFlightDateForDisplay = (index, dateType) => {
-    const date = formData.flights[index]?.[dateType];
-    return date ? formatDateForDisplay(date) : '';
-  };
-
   const updateFlightDate = (index, dateType, isoDate) => {
     const updatedFlights = [...formData.flights];
     updatedFlights[index][dateType] = isoDate;
@@ -832,12 +823,7 @@ export default function EditVoucherPage() {
       flights: updatedFlights
     }));
   };
-  
-  // Helper function to format date for a specific hotel index
-  const formatHotelDateForDisplay = (index, dateType) => {
-    const date = formData.hotels[index][dateType];
-    return formatDateForDisplay(date);
-  };
+ 
 
   // Helper function to update hotel date
   const updateHotelDate = (index, dateType, isoDate) => {
@@ -861,12 +847,6 @@ export default function EditVoucherPage() {
       ...prev,
       hotels: updatedHotels
     }));
-  };
-
-  // Helper function to format date for a specific transfer index
-  const formatTransferDateForDisplay = (index) => {
-    const date = formData.transfers[index].date;
-    return formatDateForDisplay(date);
   };
 
   const updateTransferDate = (index, isoDate) => {
@@ -960,12 +940,14 @@ export default function EditVoucherPage() {
       
       const token = localStorage.getItem('token');
       
-      const formattedTrips = formData.trips.map(trip => ({
+      const formattedTrips = (formData.trips || []).map(trip => ({
         city: trip.city,
         tourName: trip.tourName,
         count: Number(trip.count),
         type: trip.type,
-        pax: Number(trip.pax)
+        pax: Number(trip.pax),
+        officeName: trip.officeName || '',
+        price: Number(trip.price) || 0
       }));
       
       const payload = {
@@ -1093,14 +1075,14 @@ export default function EditVoucherPage() {
       const voucherToDuplicate = response.data.data;
       
       // Process hotel dates to ensure they're in the correct format
-      const processedHotels = voucherToDuplicate.hotels.map(hotel => ({
+      const processedHotels = (voucherToDuplicate.hotels || []).map(hotel => ({
         ...hotel,
         checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
         checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : ''
       }));
       
       // Process transfer dates
-      const processedTransfers = voucherToDuplicate.transfers.map(transfer => ({
+      const processedTransfers = (voucherToDuplicate.transfers || []).map(transfer => ({
         ...transfer,
         date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : ''
       }));
@@ -1148,31 +1130,25 @@ export default function EditVoucherPage() {
         remainingAmount: voucherToDuplicate.remainingAmount || 0
       });
       
-      // Update display dates
-      if (voucherToDuplicate.arrivalDate) {
-        setDisplayArrivalDate(formatDateForDisplay(new Date(voucherToDuplicate.arrivalDate).toISOString()));
-      }
-      if (voucherToDuplicate.departureDate) {
-        setDisplayDepartureDate(formatDateForDisplay(new Date(voucherToDuplicate.departureDate).toISOString()));
-      }
+
       
       // Update custom hotel states
-      setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
+      setUseCustomHotel((voucherToDuplicate.hotels || []).map(hotel => {
         const hotelExists = hotels.some(h => h.name === hotel.hotelName);
         return !hotelExists && hotel.hotelName !== '';
       }));
       
       // Update custom hotel city states
-      setUseCustomHotelCity(voucherToDuplicate.hotels.map(hotel => {
+      setUseCustomHotelCity((voucherToDuplicate.hotels || []).map(hotel => {
         const cityExists = cities.includes(hotel.city);
         return !cityExists && hotel.city !== '';
       }));
       
       // Update custom tour states
-      setUseCustomTour(voucherToDuplicate.trips.map(trip => {
+      setUseCustomTour(Array.isArray(voucherToDuplicate.trips) ? voucherToDuplicate.trips.map(trip => {
         const tourExists = tours.some(t => t.name === trip.tourName);
         return !tourExists && trip.tourName !== '';
-      }));
+      }) : []);
       
       toast.success('Voucher data duplicated successfully! Make changes as needed and save.', {
         duration: 3000,
@@ -1198,38 +1174,27 @@ export default function EditVoucherPage() {
     }
   };
   
-  // Payment handler functions
-  const handlePaymentChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      payments: {
-        ...prev.payments,
-        [section]: {
-          ...prev.payments[section],
-          [field]: value
-        }
-      }
-    }));
-  };
-
-  // Auto-calculate capital from payment prices
+  // Auto-calculate capital from both individual service payments and global payments
   useEffect(() => {
-    const totalPayments = 
-      Number(formData.payments?.hotels?.price || 0) +
-      Number(formData.payments?.transfers?.price || 0) +
-      Number(formData.payments?.trips?.price || 0) +
-      Number(formData.payments?.flights?.price || 0);
+    const hotelPayments = formData.hotels.reduce((sum, hotel) => sum + (Number(hotel.price) || 0), 0);
+    const transferPayments = formData.transfers.reduce((sum, transfer) => sum + (Number(transfer.price) || 0), 0);
+    const tripPayments = formData.trips.reduce((sum, trip) => sum + (Number(trip.price) || 0), 0);
+    const flightPayments = formData.flights.reduce((sum, flight) => sum + (Number(flight.price) || 0), 0);
+    
+    // Add global payments for services that don't have individual payments
+    const globalHotelPayment = hotelPayments === 0 ? (Number(formData.payments.hotels.price) || 0) : 0;
+    const globalTransferPayment = transferPayments === 0 ? (Number(formData.payments.transfers.price) || 0) : 0;
+    const globalTripPayment = tripPayments === 0 ? (Number(formData.payments.trips.price) || 0) : 0;
+    const globalFlightPayment = flightPayments === 0 ? (Number(formData.payments.flights.price) || 0) : 0;
+    
+    const totalPayments = hotelPayments + transferPayments + tripPayments + flightPayments +
+                         globalHotelPayment + globalTransferPayment + globalTripPayment + globalFlightPayment;
     
     setFormData(prev => ({
       ...prev,
       capital: totalPayments.toString()
     }));
-  }, [
-    formData.payments?.hotels?.price,
-    formData.payments?.transfers?.price,
-    formData.payments?.trips?.price,
-    formData.payments?.flights?.price
-  ]);
+  }, [formData.hotels, formData.transfers, formData.trips, formData.flights, formData.payments]);
   
   if (loading) {
     return (
@@ -1365,114 +1330,40 @@ export default function EditVoucherPage() {
                 </div>
           
           <div>
-            <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
-            <div className="relative">
-              <TextInput
-                id="displayArrivalDate"
-                type="text"
-                value={displayArrivalDate}
-                onChange={(e) => {
-                  const newDisplayDate = e.target.value;
-                  setDisplayArrivalDate(newDisplayDate);
-                  
-                  // Only update the ISO date if we have a valid format
-                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                    const newIsoDate = parseDisplayDate(newDisplayDate);
-                    if (newIsoDate) {
-                      setFormData({
-                        ...formData,
-                        arrivalDate: newIsoDate
-                      });
-                      
-                      // If departure date is before the new arrival date, update it
-                      if (formData.departureDate && formData.departureDate < newIsoDate) {
-                        setFormData(prev => ({
-                          ...prev,
-                          departureDate: newIsoDate
-                        }));
-                        setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                      }
-                    }
-                  }
-                }}
-                placeholder="DD/MM/YYYY"
-                required
-              />
-              <input 
-                type="date" 
-                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                value={formData.arrivalDate}
-                onChange={(e) => {
-                  const newIsoDate = e.target.value;
-                  setFormData({
-                    ...formData,
-                    arrivalDate: newIsoDate
-                  });
-                  setDisplayArrivalDate(formatDateForDisplay(newIsoDate));
-                  
-                  // If departure date is before the new arrival date, update it
-                  if (formData.departureDate && formData.departureDate < newIsoDate) {
-                    setFormData(prev => ({
-                      ...prev,
-                      departureDate: newIsoDate
-                    }));
-                    setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                  }
-                }}
-              />
-              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </span>
-            </div>
+            <CustomDatePicker
+              label="Arrival Date"
+              value={formData.arrivalDate}
+              onChange={(newIsoDate) => {
+                setFormData({
+                  ...formData,
+                  arrivalDate: newIsoDate
+                });
+                
+                // If departure date is before the new arrival date, update it
+                if (formData.departureDate && formData.departureDate < newIsoDate) {
+                  setFormData(prev => ({
+                    ...prev,
+                    departureDate: newIsoDate
+                  }));
+                }
+              }}
+              required
+            />
           </div>
           
           <div>
-            <Label htmlFor="departureDate" value="Departure Date" className="mb-2 block" />
-            <div className="relative">
-              <TextInput
-                id="displayDepartureDate"
-                type="text"
-                value={displayDepartureDate}
-                onChange={(e) => {
-                  const newDisplayDate = e.target.value;
-                  setDisplayDepartureDate(newDisplayDate);
-                  
-                  // Only update the ISO date if we have a valid format
-                  if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                    const newIsoDate = parseDisplayDate(newDisplayDate);
-                    if (newIsoDate && (!formData.arrivalDate || newIsoDate >= formData.arrivalDate)) {
-                      setFormData({
-                        ...formData,
-                        departureDate: newIsoDate
-                      });
-                    }
-                  }
-                }}
-                placeholder="DD/MM/YYYY"
-                required
-              />
-              <input 
-                type="date" 
-                className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                value={formData.departureDate}
-                min={formData.arrivalDate || ''}
-                onChange={(e) => {
-                  const newIsoDate = e.target.value;
-                  setFormData({
-                    ...formData,
-                    departureDate: newIsoDate
-                  });
-                  setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                }}
-              />
-              <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </span>
-            </div>
+            <CustomDatePicker
+              label="Departure Date"
+              value={formData.departureDate}
+              min={formData.arrivalDate || ''}
+              onChange={(newIsoDate) => {
+                setFormData({
+                  ...formData,
+                  departureDate: newIsoDate
+                });
+              }}
+              required
+            />
           </div>
           
 
@@ -1555,13 +1446,13 @@ export default function EditVoucherPage() {
                   ) : (
                     <Select 
                       value={hotel.city} 
-                      onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
-                    >
-                      <option value="">Select City</option>
-                      {cities.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </Select>
+                      onChange={(value) => handleHotelChange(index, 'city', value)}
+                      options={[
+                        { value: '', label: 'Select City' },
+                        ...cities.map(city => ({ value: city, label: city }))
+                      ]}
+                      placeholder="Select City"
+                    />
                   )}
                 </div>
                 
@@ -1619,68 +1510,22 @@ export default function EditVoucherPage() {
                 </div>
                 
                 <div>
-                  <Label value="Check In" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      type="text"
-                      value={formatHotelDateForDisplay(index, 'checkIn')}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        // Only update if valid format
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate) {
-                            updateHotelDate(index, 'checkIn', newIsoDate);
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                    />
-                    <input 
-                      type="date" 
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={formData.hotels[index].checkIn}
-                      onChange={(e) => updateHotelDate(index, 'checkIn', e.target.value)}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Check In"
+                    value={formData.hotels[index].checkIn}
+                    onChange={(newIsoDate) => updateHotelDate(index, 'checkIn', newIsoDate)}
+                    required
+                  />
                 </div>
                 
                 <div>
-                  <Label value="Check Out" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      type="text"
-                      value={formatHotelDateForDisplay(index, 'checkOut')}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        // Only update if valid format and after check-in
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate && (!formData.hotels[index].checkIn || newIsoDate >= formData.hotels[index].checkIn)) {
-                            updateHotelDate(index, 'checkOut', newIsoDate);
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                    />
-                    <input 
-                      type="date" 
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={formData.hotels[index].checkOut}
-                      min={formData.hotels[index].checkIn}
-                      onChange={(e) => updateHotelDate(index, 'checkOut', e.target.value)}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Check Out"
+                    value={formData.hotels[index].checkOut}
+                    min={formData.hotels[index].checkIn || ''}
+                    onChange={(newIsoDate) => updateHotelDate(index, 'checkOut', newIsoDate)}
+                    required
+                  />
                 </div>
                 
                 <div>
@@ -1761,51 +1606,26 @@ export default function EditVoucherPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <Label htmlFor={`transferType-${index}`} value="Type" className="mb-2 block" />
                   <Select 
-                    id={`transferType-${index}`}
+                    label="Type"
                     value={transfer.type}
-                    onChange={(e) => handleTransferChange(index, 'type', e.target.value)}
+                    onChange={(value) => handleTransferChange(index, 'type', value)}
+                    options={[
+                      { value: 'ARV', label: 'Arrival' },
+                      { value: 'DEP', label: 'Departure' }
+                    ]}
+                    placeholder="Select Type"
                     required
-                  >
-                    <option value="ARV">Arrival</option>
-                    <option value="DEP">Departure</option>
-                  </Select>
+                  />
                 </div>
                 
                 <div>
-                  <Label htmlFor={`transferDate-${index}`} value="Date" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      type="text"
-                      value={formatTransferDateForDisplay(index)}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        // Only update if valid format
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate) {
-                            updateTransferDate(index, newIsoDate);
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                      required
-                    />
-                    <input 
-                      type="date" 
-                      id={`transferDate-${index}`}
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={formData.transfers[index].date}
-                      onChange={(e) => updateTransferDate(index, e.target.value)}
-                      required
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Date"
+                    value={formData.transfers[index].date}
+                    onChange={(newIsoDate) => updateTransferDate(index, newIsoDate)}
+                    required
+                  />
                 </div>
                 
                 <div>
@@ -1830,13 +1650,13 @@ export default function EditVoucherPage() {
                   ) : (
                     <Select
                       value={transfer.city || ''}
-                      onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
-                    >
-                      <option value="">Select a city</option>
-                      {cities.map((city, i) => (
-                        <option key={`transfer-city-opt-${i}`} value={city}>{city}</option>
-                      ))}
-                    </Select>
+                      onChange={(value) => handleTransferChange(index, 'city', value)}
+                      options={[
+                        { value: '', label: 'Select a city' },
+                        ...cities.map(city => ({ value: city, label: city }))
+                      ]}
+                      placeholder="Select a city"
+                    />
                   )}
                 </div>
                 
@@ -1887,15 +1707,18 @@ export default function EditVoucherPage() {
                 </div>
                 
                 <div>
-                  <Label value="Vehicle Type" className="mb-2 block" />
                   <Select 
+                    label="Vehicle Type"
                     value={transfer.vehicleType} 
-                    onChange={(e) => handleTransferChange(index, 'vehicleType', e.target.value)}
-                  >
-                    <option value="VAN">VAN</option>
-                    <option value="VITO">VITO</option>
-                    <option value="SPRINTER">SPRINTER</option>
-                  </Select>
+                    onChange={(value) => handleTransferChange(index, 'vehicleType', value)}
+                    options={[
+                      { value: 'VAN', label: 'VAN' },
+                      { value: 'VITO', label: 'VITO' },
+                      { value: 'SPRINTER', label: 'SPRINTER' },
+                      { value: 'BUS', label: 'BUS' }
+                    ]}
+                    placeholder="Select Vehicle Type"
+                  />
                 </div>
               </div>
             </div>
@@ -1979,13 +1802,13 @@ export default function EditVoucherPage() {
                   ) : (
                     <Select 
                       value={trip.city} 
-                      onChange={(e) => handleTripChange(index, 'city', e.target.value)}
-                    >
-                      <option value="">Select City</option>
-                      {cities.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </Select>
+                      onChange={(value) => handleTripChange(index, 'city', value)}
+                      options={[
+                        { value: '', label: 'Select City' },
+                        ...cities.map(city => ({ value: city, label: city }))
+                      ]}
+                      placeholder="Select City"
+                    />
                   )}
                 </div>
                 
@@ -2148,66 +1971,22 @@ export default function EditVoucherPage() {
                 </div>
                 
                 <div>
-                  <Label value="Departure Date" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      type="text"
-                      value={formatFlightDateForDisplay(index, 'departureDate')}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate) {
-                            updateFlightDate(index, 'departureDate', newIsoDate);
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                    />
-                    <input 
-                      type="date" 
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={flight.departureDate}
-                      onChange={(e) => updateFlightDate(index, 'departureDate', e.target.value)}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Departure Date"
+                    value={flight.departureDate}
+                    onChange={(newIsoDate) => updateFlightDate(index, 'departureDate', newIsoDate)}
+                    required
+                  />
                 </div>
                 
                 <div>
-                  <Label value="Arrival Date" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      type="text"
-                      value={formatFlightDateForDisplay(index, 'arrivalDate')}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate) {
-                            updateFlightDate(index, 'arrivalDate', newIsoDate);
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                    />
-                    <input 
-                      type="date" 
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={flight.arrivalDate}
-                      min={flight.departureDate || ''}
-                      onChange={(e) => updateFlightDate(index, 'arrivalDate', e.target.value)}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Arrival Date"
+                    value={flight.arrivalDate}
+                    min={flight.departureDate || ''}
+                    onChange={(newIsoDate) => updateFlightDate(index, 'arrivalDate', newIsoDate)}
+                    required
+                  />
                 </div>
                 
                 <div>
@@ -2232,150 +2011,260 @@ export default function EditVoucherPage() {
             </p>
           </div>
           
-          <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg space-y-4">
+          <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg space-y-6">
             {/* Currency Selection */}
             <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
               <div className="flex justify-center">
-                <Select
-                  id="currency"
-                  name="currency"
-                  value={formData.currency}
-                  onChange={handleInputChange}
-                  className="w-22 text-center"
-                >
-                  <option value="USD">$ USD</option>
-                  <option value="EUR">€ EUR</option>
-                  <option value="TRY">₺ TRY</option>
-                </Select>
-              </div>
-            </div>
-            {/* Hotels Payment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                  <Label value="Hotels - Office" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
-                  <SearchableSelect
-                    value={formData.payments.hotels.officeName}
-                    onChange={(e) => handlePaymentChange('hotels', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
+                <div className="w-32">
+                  <Select
+                    value={formData.currency}
+                    onChange={(value) => {
+                      setFormData({
+                        ...formData,
+                        currency: value
+                      });
+                    }}
+                    options={[
+                      { value: 'USD', label: '$ USD' },
+                      { value: 'EUR', label: '€ EUR' },
+                      { value: 'TRY', label: '₺ TRY' }
+                    ]}
+                    placeholder="Select Currency"
                   />
-                </div>
-              <div>
-                <Label value="Hotels - Price" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
-                <div className="flex">
-                  <TextInput
-                    type="number"
-                    value={formData.payments.hotels.price}
-                    onChange={(e) => handlePaymentChange('hotels', 'price', e.target.value)}
-                    placeholder="0"
-                    className="flex-grow"
-                    disabled={!formData.payments.hotels.officeName}
-                  />
-                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                    {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Transfers Payment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                  <Label value="Transfers - Office" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
-                  <SearchableSelect
-                    value={formData.payments.transfers.officeName}
-                    onChange={(e) => handlePaymentChange('transfers', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
+            {/* Hotels Payment - Individual Items */}
+            {formData.hotels.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Hotels Payment Assignment
+                  </h4>
                 </div>
-              <div>
-                <Label value="Transfers - Price" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
-                <div className="flex">
-                  <TextInput
-                    type="number"
-                    value={formData.payments.transfers.price}
-                    onChange={(e) => handlePaymentChange('transfers', 'price', e.target.value)}
-                    placeholder="0"
-                    className="flex-grow"
-                    disabled={!formData.payments.transfers.officeName}
-                  />
-                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                    {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                  </span>
-                </div>
+                {formData.hotels.map((hotel, index) => (
+                  <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full">
+                            {index + 1}
+                          </span>
+                          <Label value={hotel.hotelName || 'Unnamed Hotel'} className="text-sm font-medium text-gray-800 dark:text-gray-200" />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 pl-8 flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          {hotel.city}
+                        </p>
+                      </div>
+                      <div>
+                        <Label value="Office" className="mb-1 block text-xs" />
+                        <SearchableSelect
+                          value={hotel.officeName || ''}
+                          onChange={(e) => handleHotelChange(index, 'officeName', e.target.value)}
+                          options={offices.map(office => ({
+                            value: office.name,
+                            label: `${office.name} - ${office.location}`
+                          }))}
+                          placeholder="Select office..."
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label value="Price" className="mb-1 block text-xs" />
+                        <div className="flex">
+                          <TextInput
+                            type="number"
+                            value={hotel.price || 0}
+                            onChange={(e) => handleHotelChange(index, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                            className="flex-grow text-sm"
+                            disabled={!hotel.officeName}
+                          />
+                          <span className="inline-flex items-center px-2 text-xs text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
-            {/* Trips Payment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                  <Label value="Trips - Office" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
-                  <SearchableSelect
-                    value={formData.payments.trips.officeName}
-                    onChange={(e) => handlePaymentChange('trips', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
+            {/* Transfers Payment - Individual Items */}
+            {formData.transfers.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Transfers Payment Assignment
+                  </h4>
                 </div>
-              <div>
-                <Label value="Trips - Price" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
-                <div className="flex">
-                  <TextInput
-                    type="number"
-                    value={formData.payments.trips.price}
-                    onChange={(e) => handlePaymentChange('trips', 'price', e.target.value)}
-                    placeholder="0"
-                    className="flex-grow"
-                    disabled={!formData.payments.trips.officeName}
-                  />
-                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                    {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                  </span>
-                </div>
+                {formData.transfers.map((transfer, index) => (
+                  <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <Label value={`Transfer ${index + 1}: ${transfer.type}`} className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{transfer.from} → {transfer.to}</p>
+                      </div>
+                      <div>
+                        <Label value="Office" className="mb-1 block text-xs" />
+                        <SearchableSelect
+                          value={transfer.officeName || ''}
+                          onChange={(e) => handleTransferChange(index, 'officeName', e.target.value)}
+                          options={offices.map(office => ({
+                            value: office.name,
+                            label: `${office.name} - ${office.location}`
+                          }))}
+                          placeholder="Select office..."
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label value="Price" className="mb-1 block text-xs" />
+                        <div className="flex">
+                          <TextInput
+                            type="number"
+                            value={transfer.price || 0}
+                            onChange={(e) => handleTransferChange(index, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                            className="flex-grow text-sm"
+                            disabled={!transfer.officeName}
+                          />
+                          <span className="inline-flex items-center px-2 text-xs text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
-            {/* Flights Payment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                  <Label value="Flights - Office" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
-                  <SearchableSelect
-                    value={formData.payments.flights.officeName}
-                    onChange={(e) => handlePaymentChange('flights', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
+            {/* Trips Payment - Individual Items */}
+            {formData.trips.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Trips Payment Assignment
+                  </h4>
                 </div>
-              <div>
-                <Label value="Flights - Price" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
-                <div className="flex">
-                  <TextInput
-                    type="number"
-                    value={formData.payments.flights.price}
-                    onChange={(e) => handlePaymentChange('flights', 'price', e.target.value)}
-                    placeholder="0"
-                    className="flex-grow"
-                    disabled={!formData.payments.flights.officeName}
-                  />
-                  <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                    {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                  </span>
-                </div>
+                {formData.trips.map((trip, index) => (
+                  <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <Label value={`Trip ${index + 1}: ${trip.tourName || 'Unnamed Trip'}`} className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{trip.city}</p>
+                      </div>
+                      <div>
+                        <Label value="Office" className="mb-1 block text-xs" />
+                        <SearchableSelect
+                          value={trip.officeName || ''}
+                          onChange={(e) => handleTripChange(index, 'officeName', e.target.value)}
+                          options={offices.map(office => ({
+                            value: office.name,
+                            label: `${office.name} - ${office.location}`
+                          }))}
+                          placeholder="Select office..."
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label value="Price" className="mb-1 block text-xs" />
+                        <div className="flex">
+                          <TextInput
+                            type="number"
+                            value={trip.price || 0}
+                            onChange={(e) => handleTripChange(index, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                            className="flex-grow text-sm"
+                            disabled={!trip.officeName}
+                          />
+                          <span className="inline-flex items-center px-2 text-xs text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
+
+            {/* Flights Payment - Individual Items */}
+            {formData.flights.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    Flights Payment Assignment
+                  </h4>
+                </div>
+                {formData.flights.map((flight, index) => (
+                  <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <Label value={`Flight ${index + 1}: ${flight.companyName || 'Unnamed Flight'}`} className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300" />
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{flight.from} → {flight.to}</p>
+                      </div>
+                      <div>
+                        <Label value="Office" className="mb-1 block text-xs" />
+                        <SearchableSelect
+                          value={flight.officeName || ''}
+                          onChange={(e) => handleFlightChange(index, 'officeName', e.target.value)}
+                          options={offices.map(office => ({
+                            value: office.name,
+                            label: `${office.name} - ${office.location}`
+                          }))}
+                          placeholder="Select office..."
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label value="Price" className="mb-1 block text-xs" />
+                        <div className="flex">
+                          <TextInput
+                            type="number"
+                            value={flight.price || 0}
+                            onChange={(e) => handleFlightChange(index, 'price', parseFloat(e.target.value) || 0)}
+                            placeholder="0"
+                            className="flex-grow text-sm"
+                            disabled={!flight.officeName}
+                          />
+                          <span className="inline-flex items-center px-2 text-xs text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
+                            {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Total Display */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
@@ -2500,13 +2389,14 @@ export default function EditVoucherPage() {
               <div className="mt-4">
                 <div>
                   <Label htmlFor="note" value="Note" className="mb-2 block" />
-                  <Textarea
+                  <textarea
                     id="note"
                     name="note"
                     value={formData.note}
                     onChange={handleInputChange}
                     placeholder="Add any additional notes..."
                     rows={3}
+                    className="w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 rounded-lg px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-400 dark:focus:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-all duration-200 resize-vertical"
                   />
                 </div>
               </div>
@@ -2551,7 +2441,7 @@ export default function EditVoucherPage() {
               {availableVouchers.length > 0 ? (
                 <div className="space-y-2">
                   <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
-                  <Select
+                  <FlowbiteSelect
                     id="selectVoucherToDuplicate"
                     value={selectedVoucherToDuplicate}
                     onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
@@ -2563,7 +2453,7 @@ export default function EditVoucherPage() {
                         #{voucher.voucherNumber} - {voucher.clientName} ({formatDateForDisplay(voucher.arrivalDate)} to {formatDateForDisplay(voucher.departureDate)})
                       </option>
                     ))}
-                  </Select>
+                  </FlowbiteSelect>
                 </div>
               ) : (
                 <div className="text-center text-gray-500">

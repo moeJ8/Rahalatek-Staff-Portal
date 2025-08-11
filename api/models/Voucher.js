@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
 const voucherSchema = new mongoose.Schema({
     voucherNumber: {
         type: Number,
@@ -59,7 +60,10 @@ const voucherSchema = new mongoose.Schema({
         checkIn: Date,
         checkOut: Date,
         pax: Number,
-        confirmationNumber: String
+        confirmationNumber: String,
+        // Add payment info to each hotel
+        officeName: { type: String, default: '' },
+        price: { type: Number, default: 0 }
     }],
     transfers: [{
         type: { type: String, enum: ['ARV', 'DEP'] },
@@ -70,7 +74,10 @@ const voucherSchema = new mongoose.Schema({
         from: String,
         to: String,
         pax: Number,
-        vehicleType: String
+        vehicleType: String,
+        // Add payment info to each transfer
+        officeName: { type: String, default: '' },
+        price: { type: Number, default: 0 }
     }],
     trips: Schema.Types.Mixed,
     flights: [{
@@ -80,8 +87,12 @@ const voucherSchema = new mongoose.Schema({
         flightNumber: String,
         departureDate: Date,
         arrivalDate: Date,
-        luggage: String
+        luggage: String,
+        // Add payment info to each flight
+        officeName: { type: String, default: '' },
+        price: { type: Number, default: 0 }
     }],
+    // Keep the old payments structure for backward compatibility
     payments: {
         hotels: {
             officeName: {

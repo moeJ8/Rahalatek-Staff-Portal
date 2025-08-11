@@ -247,6 +247,8 @@ export const calculateTotalPrice = ({
               receptionCost = parseFloat(airportTransport.transportation.vitoReceptionPrice);
             } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice) {
               receptionCost = parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+            } else if (transportVehicleType === 'Bus' && airportTransport.transportation.busReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.busReceptionPrice);
             }
           }
           
@@ -255,6 +257,8 @@ export const calculateTotalPrice = ({
               farewellCost = parseFloat(airportTransport.transportation.vitoFarewellPrice);
             } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice) {
               farewellCost = parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+            } else if (transportVehicleType === 'Bus' && airportTransport.transportation.busFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.busFarewellPrice);
             }
           }
         }
@@ -268,6 +272,8 @@ export const calculateTotalPrice = ({
             receptionCost = parseFloat(selectedHotelData.transportation.vitoReceptionPrice);
           } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterReceptionPrice) {
             receptionCost = parseFloat(selectedHotelData.transportation.sprinterReceptionPrice);
+          } else if (transportVehicleType === 'Bus' && selectedHotelData.transportation.busReceptionPrice) {
+            receptionCost = parseFloat(selectedHotelData.transportation.busReceptionPrice);
           }
         }
         
@@ -276,6 +282,8 @@ export const calculateTotalPrice = ({
             farewellCost = parseFloat(selectedHotelData.transportation.vitoFarewellPrice);
           } else if (transportVehicleType === 'Sprinter' && selectedHotelData.transportation.sprinterFarewellPrice) {
             farewellCost = parseFloat(selectedHotelData.transportation.sprinterFarewellPrice);
+          } else if (transportVehicleType === 'Bus' && selectedHotelData.transportation.busFarewellPrice) {
+            farewellCost = parseFloat(selectedHotelData.transportation.busFarewellPrice);
           }
         }
         
@@ -561,6 +569,8 @@ export const calculateMultiHotelTotalPrice = ({
               receptionCost = parseFloat(airportTransport.transportation.vitoReceptionPrice);
             } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterReceptionPrice) {
               receptionCost = parseFloat(airportTransport.transportation.sprinterReceptionPrice);
+            } else if (transportVehicleType === 'Bus' && airportTransport.transportation.busReceptionPrice) {
+              receptionCost = parseFloat(airportTransport.transportation.busReceptionPrice);
             }
           }
         } 
@@ -570,6 +580,8 @@ export const calculateMultiHotelTotalPrice = ({
             receptionCost = parseFloat(entry.hotelData.transportation.vitoReceptionPrice);
           } else if (transportVehicleType === 'Sprinter' && entry.hotelData.transportation.sprinterReceptionPrice) {
             receptionCost = parseFloat(entry.hotelData.transportation.sprinterReceptionPrice);
+          } else if (transportVehicleType === 'Bus' && entry.hotelData.transportation.busReceptionPrice) {
+            receptionCost = parseFloat(entry.hotelData.transportation.busReceptionPrice);
           }
         }
         // Backward compatibility with very old data structure
@@ -606,6 +618,8 @@ export const calculateMultiHotelTotalPrice = ({
               farewellCost = parseFloat(airportTransport.transportation.vitoFarewellPrice);
             } else if (transportVehicleType === 'Sprinter' && airportTransport.transportation.sprinterFarewellPrice) {
               farewellCost = parseFloat(airportTransport.transportation.sprinterFarewellPrice);
+            } else if (transportVehicleType === 'Bus' && airportTransport.transportation.busFarewellPrice) {
+              farewellCost = parseFloat(airportTransport.transportation.busFarewellPrice);
             }
           }
         } 
@@ -615,6 +629,8 @@ export const calculateMultiHotelTotalPrice = ({
             farewellCost = parseFloat(entry.hotelData.transportation.vitoFarewellPrice);
           } else if (transportVehicleType === 'Sprinter' && entry.hotelData.transportation.sprinterFarewellPrice) {
             farewellCost = parseFloat(entry.hotelData.transportation.sprinterFarewellPrice);
+          } else if (transportVehicleType === 'Bus' && entry.hotelData.transportation.busFarewellPrice) {
+            farewellCost = parseFloat(entry.hotelData.transportation.busFarewellPrice);
           }
         }
         // Backward compatibility with very old data structure

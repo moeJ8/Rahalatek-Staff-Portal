@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, TextInput, Select, Label, Card, Checkbox, Modal, Textarea } from 'flowbite-react';
+import { Button, Select as FlowbiteSelect, Label, Card, Checkbox, Modal } from 'flowbite-react';
 import VoucherPreview from './VoucherPreview';
 import CustomButton from './CustomButton';
 import RahalatekLoader from './RahalatekLoader';
 import { toast } from 'react-hot-toast';
+import TextInput from './TextInput';
 import SearchableSelect from './SearchableSelect';
+import CustomDatePicker from './CustomDatePicker';
+import Select from './Select';
 import { HiDuplicate } from 'react-icons/hi';
 
 // Helper function to get profit color classes based on value
@@ -34,7 +37,9 @@ export default function VoucherForm({ onSuccess }) {
       checkIn: '', 
       checkOut: '', 
       pax: 1, 
-      confirmationNumber: '' 
+      confirmationNumber: '',
+      officeName: '',
+      price: 0
     }],
     transfers: [{ 
       type: 'ARV', 
@@ -45,14 +50,18 @@ export default function VoucherForm({ onSuccess }) {
       from: '', 
       to: '', 
       pax: 1, 
-      vehicleType: 'VITO' 
+      vehicleType: 'VITO',
+      officeName: '',
+      price: 0
     }],
     trips: [{ 
       city: '', 
       tourName: '', 
       count: 1, 
       type: '', 
-      pax: 1 
+      pax: 1,
+      officeName: '',
+      price: 0
     }],
     flights: [{
       companyName: '',
@@ -61,7 +70,9 @@ export default function VoucherForm({ onSuccess }) {
       flightNumber: '',
       departureDate: '',
       arrivalDate: '',
-      luggage: ''
+      luggage: '',
+      officeName: '',
+      price: 0
     }],
     payments: {
       hotels: {
@@ -108,9 +119,7 @@ export default function VoucherForm({ onSuccess }) {
   const [showPreview, setShowPreview] = useState(false);
   const [generatedVoucher, setGeneratedVoucher] = useState(null);
 
-  // Date display formatting
-  const [displayArrivalDate, setDisplayArrivalDate] = useState('');
-  const [displayDepartureDate, setDisplayDepartureDate] = useState('');
+
 
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
@@ -218,13 +227,7 @@ export default function VoucherForm({ onSuccess }) {
         remainingAmount: voucherToDuplicate.remainingAmount || 0
       });
       
-      // Update display dates
-      if (voucherToDuplicate.arrivalDate) {
-        setDisplayArrivalDate(formatDateForDisplay(new Date(voucherToDuplicate.arrivalDate).toISOString()));
-      }
-      if (voucherToDuplicate.departureDate) {
-        setDisplayDepartureDate(formatDateForDisplay(new Date(voucherToDuplicate.departureDate).toISOString()));
-      }
+      // Display dates are now handled by CustomDatePicker
       
       // Update custom hotel states
       setUseCustomHotel(voucherToDuplicate.hotels.map(hotel => {
@@ -239,10 +242,10 @@ export default function VoucherForm({ onSuccess }) {
       }));
       
       // Update custom tour states
-      setUseCustomTour(voucherToDuplicate.trips.map(trip => {
+      setUseCustomTour(Array.isArray(voucherToDuplicate.trips) ? voucherToDuplicate.trips.map(trip => {
         const tourExists = tours.some(t => t.name === trip.tourName);
         return !tourExists && trip.tourName !== '';
-      }));
+      }) : []);
       
       toast.success('Voucher data duplicated successfully! Make changes as needed and submit to create a new voucher.', {
         duration: 3000,
@@ -278,22 +281,9 @@ export default function VoucherForm({ onSuccess }) {
     return `${day}/${month}/${year}`;
   };
   
-  const parseDisplayDate = (displayDate) => {
-    if (!displayDate || !displayDate.includes('/')) return '';
-    const [day, month, year] = displayDate.split('/');
-    if (!day || !month || !year) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  };
+
   
-  // Update display dates when ISO dates change
-  useEffect(() => {
-    if (formData.arrivalDate) {
-      setDisplayArrivalDate(formatDateForDisplay(formData.arrivalDate));
-    }
-    if (formData.departureDate) {
-      setDisplayDepartureDate(formatDateForDisplay(formData.departureDate));
-    }
-  }, [formData.arrivalDate, formData.departureDate]);
+  // Date formatting is now handled by CustomDatePicker
   
   useEffect(() => {
     const fetchData = async () => {
@@ -615,11 +605,7 @@ export default function VoucherForm({ onSuccess }) {
     }
   };
 
-  // Helper function to format date for a specific hotel index
-  const formatHotelDateForDisplay = (index, dateType) => {
-    const date = formData.hotels[index][dateType];
-    return formatDateForDisplay(date);
-  };
+
 
   // Helper function to update hotel date
   const updateHotelDate = (index, dateType, isoDate) => {
@@ -743,11 +729,7 @@ export default function VoucherForm({ onSuccess }) {
     });
   };
 
-  // Helper function to format date for a specific transfer index
-  const formatTransferDateForDisplay = (index) => {
-    const date = formData.transfers[index].date;
-    return formatDateForDisplay(date);
-  };
+
 
   // Helper function to update transfer date
   const updateTransferDate = (index, isoDate) => {
@@ -969,10 +951,7 @@ export default function VoucherForm({ onSuccess }) {
     });
   };
 
-  const formatFlightDateForDisplay = (index, dateType) => {
-    const date = formData.flights[index]?.[dateType];
-    return date ? formatDateForDisplay(date) : '';
-  };
+
 
   const updateFlightDate = (index, dateType, isoDate) => {
     const updatedFlights = [...formData.flights];
@@ -983,38 +962,29 @@ export default function VoucherForm({ onSuccess }) {
     setFormData({ ...formData, flights: updatedFlights });
   };
 
-  // Payment handler functions
-  const handlePaymentChange = (section, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      payments: {
-        ...prev.payments,
-        [section]: {
-          ...prev.payments[section],
-          [field]: value
-        }
-      }
-    }));
-  };
 
-  // Auto-calculate capital from payment prices
+
+  // Auto-calculate capital from both individual service payments and global payments
   useEffect(() => {
-    const totalPayments = 
-      Number(formData.payments?.hotels?.price || 0) +
-      Number(formData.payments?.transfers?.price || 0) +
-      Number(formData.payments?.trips?.price || 0) +
-      Number(formData.payments?.flights?.price || 0);
+    const hotelPayments = formData.hotels.reduce((sum, hotel) => sum + (Number(hotel.price) || 0), 0);
+    const transferPayments = formData.transfers.reduce((sum, transfer) => sum + (Number(transfer.price) || 0), 0);
+    const tripPayments = formData.trips.reduce((sum, trip) => sum + (Number(trip.price) || 0), 0);
+    const flightPayments = formData.flights.reduce((sum, flight) => sum + (Number(flight.price) || 0), 0);
+    
+    // Add global payments for services that don't have individual payments
+    const globalHotelPayment = hotelPayments === 0 ? (Number(formData.payments.hotels.price) || 0) : 0;
+    const globalTransferPayment = transferPayments === 0 ? (Number(formData.payments.transfers.price) || 0) : 0;
+    const globalTripPayment = tripPayments === 0 ? (Number(formData.payments.trips.price) || 0) : 0;
+    const globalFlightPayment = flightPayments === 0 ? (Number(formData.payments.flights.price) || 0) : 0;
+    
+    const totalPayments = hotelPayments + transferPayments + tripPayments + flightPayments +
+                         globalHotelPayment + globalTransferPayment + globalTripPayment + globalFlightPayment;
     
     setFormData(prev => ({
       ...prev,
       capital: totalPayments.toString()
     }));
-  }, [
-    formData.payments?.hotels?.price,
-    formData.payments?.transfers?.price,
-    formData.payments?.trips?.price,
-    formData.payments?.flights?.price
-  ]);
+  }, [formData.hotels, formData.transfers, formData.trips, formData.flights, formData.payments]);
 
   // Preview and submit handlers
   const handlePreview = async () => {
@@ -1112,7 +1082,9 @@ export default function VoucherForm({ onSuccess }) {
         tourName: trip.tourName,
         count: Number(trip.count),
         type: trip.type,
-        pax: Number(trip.pax)
+        pax: Number(trip.pax),
+        officeName: trip.officeName || '',
+        price: Number(trip.price) || 0
       }));
 
       const payload = {
@@ -1315,116 +1287,40 @@ export default function VoucherForm({ onSuccess }) {
                 </div>
                 
                 <div>
-                  <Label htmlFor="arrivalDate" value="Arrival Date" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      id="displayArrivalDate"
-                      type="text"
-                      value={displayArrivalDate}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        setDisplayArrivalDate(newDisplayDate);
-                        
-                        // Only update the ISO date if we have a valid format
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate) {
-                            setFormData({
-                              ...formData,
-                              arrivalDate: newIsoDate
-                            });
-                            
-                            // If departure date is before the new arrival date, update it
-                            if (formData.departureDate && formData.departureDate < newIsoDate) {
-                              setFormData(prev => ({
-                                ...prev,
-                                departureDate: newIsoDate
-                              }));
-                              setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                            }
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                      required
-                    />
-                    <input 
-                      type="date" 
-                      name="arrivalDate"
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={formData.arrivalDate}
-                      onChange={(e) => {
-                        const newIsoDate = e.target.value;
-                        setFormData({
-                          ...formData,
-                          arrivalDate: newIsoDate
-                        });
-                        setDisplayArrivalDate(formatDateForDisplay(newIsoDate));
-                        
-                        // If departure date is before the new arrival date, update it
-                        if (formData.departureDate && formData.departureDate < newIsoDate) {
-                          setFormData(prev => ({
-                            ...prev,
-                            departureDate: newIsoDate
-                          }));
-                          setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                        }
-                      }}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Arrival Date"
+                    value={formData.arrivalDate}
+                    onChange={(newIsoDate) => {
+                      setFormData({
+                        ...formData,
+                        arrivalDate: newIsoDate
+                      });
+                      
+                      // If departure date is before the new arrival date, update it
+                      if (formData.departureDate && formData.departureDate < newIsoDate) {
+                        setFormData(prev => ({
+                          ...prev,
+                          departureDate: newIsoDate
+                        }));
+                      }
+                    }}
+                    required
+                  />
                 </div>
                 
                 <div>
-                  <Label htmlFor="departureDate" value="Departure Date" className="mb-2 block" />
-                  <div className="relative">
-                    <TextInput
-                      id="displayDepartureDate"
-                      type="text"
-                      value={displayDepartureDate}
-                      onChange={(e) => {
-                        const newDisplayDate = e.target.value;
-                        setDisplayDepartureDate(newDisplayDate);
-                        
-                        // Only update the ISO date if we have a valid format
-                        if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                          const newIsoDate = parseDisplayDate(newDisplayDate);
-                          if (newIsoDate && (!formData.arrivalDate || newIsoDate >= formData.arrivalDate)) {
-                            setFormData({
-                              ...formData,
-                              departureDate: newIsoDate
-                            });
-                          }
-                        }
-                      }}
-                      placeholder="DD/MM/YYYY"
-                      required
-                    />
-                    <input 
-                      type="date" 
-                      name="departureDate"
-                      className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                      value={formData.departureDate}
-                      min={formData.arrivalDate || ''}
-                      onChange={(e) => {
-                        const newIsoDate = e.target.value;
-                        setFormData({
-                          ...formData,
-                          departureDate: newIsoDate
-                        });
-                        setDisplayDepartureDate(formatDateForDisplay(newIsoDate));
-                      }}
-                    />
-                    <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </span>
-                  </div>
+                  <CustomDatePicker
+                    label="Departure Date"
+                    value={formData.departureDate}
+                    min={formData.arrivalDate || ''}
+                    onChange={(newIsoDate) => {
+                      setFormData({
+                        ...formData,
+                        departureDate: newIsoDate
+                      });
+                    }}
+                    required
+                  />
                 </div>
               </div>
               
@@ -1505,13 +1401,13 @@ export default function VoucherForm({ onSuccess }) {
                         ) : (
                           <Select 
                             value={hotel.city} 
-                            onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
-                          >
-                            <option value="">Select City</option>
-                            {cities.map(city => (
-                              <option key={city} value={city}>{city}</option>
-                            ))}
-                          </Select>
+                            onChange={(value) => handleHotelChange(index, 'city', value)}
+                            options={[
+                              { value: '', label: 'Select City' },
+                              ...cities.map(city => ({ value: city, label: city }))
+                            ]}
+                            placeholder="Select City"
+                          />
                         )}
                       </div>
                       
@@ -1567,68 +1463,22 @@ export default function VoucherForm({ onSuccess }) {
                       </div>
                       
                       <div>
-                        <Label value="Check In" className="mb-2 block" />
-                        <div className="relative">
-                          <TextInput
-                            type="text"
-                            value={formatHotelDateForDisplay(index, 'checkIn')}
-                            onChange={(e) => {
-                              const newDisplayDate = e.target.value;
-                              // Only update if valid format
-                              if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                                const newIsoDate = parseDisplayDate(newDisplayDate);
-                                if (newIsoDate) {
-                                  updateHotelDate(index, 'checkIn', newIsoDate);
-                                }
-                              }
-                            }}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <input 
-                            type="date" 
-                            className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                            value={formData.hotels[index].checkIn}
-                            onChange={(e) => updateHotelDate(index, 'checkIn', e.target.value)}
-                          />
-                          <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                        </div>
+                        <CustomDatePicker
+                          label="Check In"
+                          value={formData.hotels[index].checkIn}
+                          onChange={(newIsoDate) => updateHotelDate(index, 'checkIn', newIsoDate)}
+                          required
+                        />
                       </div>
                       
                       <div>
-                        <Label value="Check Out" className="mb-2 block" />
-                        <div className="relative">
-                          <TextInput
-                            type="text"
-                            value={formatHotelDateForDisplay(index, 'checkOut')}
-                            onChange={(e) => {
-                              const newDisplayDate = e.target.value;
-                              // Only update if valid format and after check-in
-                              if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                                const newIsoDate = parseDisplayDate(newDisplayDate);
-                                if (newIsoDate && (!formData.hotels[index].checkIn || newIsoDate >= formData.hotels[index].checkIn)) {
-                                  updateHotelDate(index, 'checkOut', newIsoDate);
-                                }
-                              }
-                            }}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <input 
-                            type="date" 
-                            className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                            value={formData.hotels[index].checkOut}
-                            min={formData.hotels[index].checkIn}
-                            onChange={(e) => updateHotelDate(index, 'checkOut', e.target.value)}
-                          />
-                          <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                        </div>
+                        <CustomDatePicker
+                          label="Check Out"
+                          value={formData.hotels[index].checkOut}
+                          min={formData.hotels[index].checkIn || ''}
+                          onChange={(newIsoDate) => updateHotelDate(index, 'checkOut', newIsoDate)}
+                          required
+                        />
                       </div>
                       
                       <div>
@@ -1712,43 +1562,22 @@ export default function VoucherForm({ onSuccess }) {
                         <Label value="Type" className="mb-2 block" />
                         <Select 
                           value={transfer.type} 
-                          onChange={(e) => handleTransferChange(index, 'type', e.target.value)}
-                        >
-                          <option value="ARV">Arrival (ARV)</option>
-                          <option value="DEP">Departure (DEP)</option>
-                        </Select>
+                          onChange={(value) => handleTransferChange(index, 'type', value)}
+                          options={[
+                            { value: 'ARV', label: 'Arrival (ARV)' },
+                            { value: 'DEP', label: 'Departure (DEP)' }
+                          ]}
+                          placeholder="Select Type"
+                        />
                       </div>
                       
                       <div>
-                        <Label value="Date" className="mb-2 block" />
-                        <div className="relative">
-                          <TextInput
-                            type="text"
-                            value={formatTransferDateForDisplay(index)}
-                            onChange={(e) => {
-                              const newDisplayDate = e.target.value;
-                              // Only update if valid format
-                              if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                                const newIsoDate = parseDisplayDate(newDisplayDate);
-                                if (newIsoDate) {
-                                  updateTransferDate(index, newIsoDate);
-                                }
-                              }
-                            }}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <input 
-                            type="date" 
-                            className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                            value={formData.transfers[index].date}
-                            onChange={(e) => updateTransferDate(index, e.target.value)}
-                          />
-                          <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                        </div>
+                        <CustomDatePicker
+                          label="Date"
+                          value={formData.transfers[index].date}
+                          onChange={(newIsoDate) => updateTransferDate(index, newIsoDate)}
+                          required
+                        />
                       </div>
                       
                       <div>
@@ -1791,13 +1620,13 @@ export default function VoucherForm({ onSuccess }) {
                         ) : (
                           <Select
                             value={transfer.city}
-                            onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
-                          >
-                            <option value="">Select a city</option>
-                            {cities.map((city, i) => (
-                              <option key={`transfer-city-opt-${i}`} value={city}>{city}</option>
-                            ))}
-                          </Select>
+                            onChange={(value) => handleTransferChange(index, 'city', value)}
+                            options={[
+                              { value: '', label: 'Select a city' },
+                              ...cities.map(city => ({ value: city, label: city }))
+                            ]}
+                            placeholder="Select a city"
+                          />
                         )}
                       </div>
                       
@@ -1831,12 +1660,15 @@ export default function VoucherForm({ onSuccess }) {
                         <Label value="Vehicle Type" className="mb-2 block" />
                         <Select 
                           value={transfer.vehicleType} 
-                          onChange={(e) => handleTransferChange(index, 'vehicleType', e.target.value)}
-                        >
-                          <option value="VAN">VAN</option>
-                          <option value="VITO">VITO</option>
-                          <option value="SPRINTER">SPRINTER</option>
-                        </Select>
+                          onChange={(value) => handleTransferChange(index, 'vehicleType', value)}
+                          options={[
+                            { value: 'VAN', label: 'VAN' },
+                            { value: 'VITO', label: 'VITO' },
+                            { value: 'SPRINTER', label: 'SPRINTER' },
+                            { value: 'BUS', label: 'BUS' }
+                          ]}
+                          placeholder="Select Vehicle Type"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1920,13 +1752,13 @@ export default function VoucherForm({ onSuccess }) {
                         ) : (
                           <Select 
                             value={trip.city} 
-                            onChange={(e) => handleTripChange(index, 'city', e.target.value)}
-                          >
-                            <option value="">Select City</option>
-                            {cities.map(city => (
-                              <option key={city} value={city}>{city}</option>
-                            ))}
-                          </Select>
+                            onChange={(value) => handleTripChange(index, 'city', value)}
+                            options={[
+                              { value: '', label: 'Select City' },
+                              ...cities.map(city => ({ value: city, label: city }))
+                            ]}
+                            placeholder="Select City"
+                          />
                         )}
                       </div>
                       
@@ -2089,66 +1921,22 @@ export default function VoucherForm({ onSuccess }) {
                       </div>
                       
                       <div>
-                        <Label value="Departure Date" className="mb-2 block" />
-                        <div className="relative">
-                          <TextInput
-                            type="text"
-                            value={formatFlightDateForDisplay(index, 'departureDate')}
-                            onChange={(e) => {
-                              const newDisplayDate = e.target.value;
-                              if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                                const newIsoDate = parseDisplayDate(newDisplayDate);
-                                if (newIsoDate) {
-                                  updateFlightDate(index, 'departureDate', newIsoDate);
-                                }
-                              }
-                            }}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <input 
-                            type="date" 
-                            className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                            value={flight.departureDate}
-                            onChange={(e) => updateFlightDate(index, 'departureDate', e.target.value)}
-                          />
-                          <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                        </div>
+                        <CustomDatePicker
+                          label="Departure Date"
+                          value={flight.departureDate}
+                          onChange={(newIsoDate) => updateFlightDate(index, 'departureDate', newIsoDate)}
+                          required
+                        />
                       </div>
                       
                       <div>
-                        <Label value="Arrival Date" className="mb-2 block" />
-                        <div className="relative">
-                          <TextInput
-                            type="text"
-                            value={formatFlightDateForDisplay(index, 'arrivalDate')}
-                            onChange={(e) => {
-                              const newDisplayDate = e.target.value;
-                              if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                                const newIsoDate = parseDisplayDate(newDisplayDate);
-                                if (newIsoDate) {
-                                  updateFlightDate(index, 'arrivalDate', newIsoDate);
-                                }
-                              }
-                            }}
-                            placeholder="DD/MM/YYYY"
-                          />
-                          <input 
-                            type="date" 
-                            className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                            value={flight.arrivalDate}
-                            min={flight.departureDate || ''}
-                            onChange={(e) => updateFlightDate(index, 'arrivalDate', e.target.value)}
-                          />
-                          <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                        </div>
+                        <CustomDatePicker
+                          label="Arrival Date"
+                          value={flight.arrivalDate}
+                          min={flight.departureDate || ''}
+                          onChange={(newIsoDate) => updateFlightDate(index, 'arrivalDate', newIsoDate)}
+                          required
+                        />
                       </div>
                       
                       <div>
@@ -2169,154 +1957,295 @@ export default function VoucherForm({ onSuccess }) {
                 <div className="mb-3">
                   <h3 className="text-xl font-semibold dark:text-white">Payment Distribution</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Assign payment amounts to different offices. Total will be calculated as capital.
+                    Assign payment amounts to different offices for each service. Total will be calculated as capital.
                   </p>
                 </div>
                 
-                <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg space-y-4">
+                <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-4 rounded-lg space-y-6">
                   {/* Currency Selection */}
                   <div className="mb-4 pb-4 border-b border-gray-200 dark:border-gray-600">
                     <div className="flex justify-center">
-                      <Select
-                        id="currency"
-                        name="currency"
-                        value={formData.currency}
-                        onChange={handleInputChange}
-                        className="w-22 text-center"
-                      >
-                        <option value="USD">$ USD</option>
-                        <option value="EUR">€ EUR</option>
-                        <option value="TRY">₺ TRY</option>
-                      </Select>
-                    </div>
-                  </div>
-                  {/* Hotels Payment */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                  <Label value="Hotels - Office" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
-                  <SearchableSelect
-                    value={formData.payments.hotels.officeName}
-                    onChange={(e) => handlePaymentChange('hotels', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
-                </div>
-                    <div>
-                      <Label value="Hotels - Price" className="mb-2 block font-medium text-blue-600 dark:text-blue-400" />
-                      <div className="flex">
-                        <TextInput
-                          type="number"
-                          value={formData.payments.hotels.price}
-                          onChange={(e) => handlePaymentChange('hotels', 'price', e.target.value)}
-                          placeholder="0"
-                          className="flex-grow"
-                          disabled={!formData.payments.hotels.officeName}
+                      <div className="w-32">
+                        <Select
+                          value={formData.currency}
+                          onChange={(value) => {
+                            setFormData({
+                              ...formData,
+                              currency: value
+                            });
+                          }}
+                          options={[
+                            { value: 'USD', label: '$ USD' },
+                            { value: 'EUR', label: '€ EUR' },
+                            { value: 'TRY', label: '₺ TRY' }
+                          ]}
+                          placeholder="Select Currency"
                         />
-                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Transfers Payment */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                  <Label value="Transfers - Office" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
-                  <SearchableSelect
-                    value={formData.payments.transfers.officeName}
-                    onChange={(e) => handlePaymentChange('transfers', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
-                </div>
-                    <div>
-                      <Label value="Transfers - Price" className="mb-2 block font-medium text-green-600 dark:text-green-400" />
-                      <div className="flex">
-                        <TextInput
-                          type="number"
-                          value={formData.payments.transfers.price}
-                          onChange={(e) => handlePaymentChange('transfers', 'price', e.target.value)}
-                          placeholder="0"
-                          className="flex-grow"
-                          disabled={!formData.payments.transfers.officeName}
-                        />
-                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                        </span>
+                  {/* Hotels Payment - Individual Items */}
+                  {formData.hotels.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                          Hotels Payment Assignment
+                        </h4>
                       </div>
+                      {formData.hotels.map((hotel, index) => (
+                        <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold rounded-full">
+                                  {index + 1}
+                                </span>
+                                <Label value={hotel.hotelName || 'Unnamed Hotel'} className="text-sm font-medium text-gray-800 dark:text-gray-200" />
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 pl-8 flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {hotel.city}
+                              </p>
+                            </div>
+                            <div>
+                              <Label value="Office" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <SearchableSelect
+                                value={hotel.officeName || ''}
+                                onChange={(e) => handleHotelChange(index, 'officeName', e.target.value)}
+                                options={offices.map(office => ({
+                                  value: office.name,
+                                  label: `${office.name} - ${office.location}`
+                                }))}
+                                placeholder="Select office..."
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label value="Price" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:ring-2 focus-within:ring-blue-500 dark:focus-within:ring-blue-400">
+                                <TextInput
+                                  type="number"
+                                  value={hotel.price || 0}
+                                  onChange={(e) => handleHotelChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="flex-grow text-sm border-0 focus:ring-0"
+                                  disabled={!hotel.officeName}
+                                />
+                                <span className="inline-flex items-center px-3 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-slate-600 dark:text-gray-300">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Trips Payment */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                  <Label value="Trips - Office" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
-                  <SearchableSelect
-                    value={formData.payments.trips.officeName}
-                    onChange={(e) => handlePaymentChange('trips', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
-                </div>
-                    <div>
-                      <Label value="Trips - Price" className="mb-2 block font-medium text-purple-600 dark:text-purple-400" />
-                      <div className="flex">
-                        <TextInput
-                          type="number"
-                          value={formData.payments.trips.price}
-                          onChange={(e) => handlePaymentChange('trips', 'price', e.target.value)}
-                          placeholder="0"
-                          className="flex-grow"
-                          disabled={!formData.payments.trips.officeName}
-                        />
-                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                        </span>
+                  {/* Transfers Payment - Individual Items */}
+                  {formData.transfers.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                          Transfers Payment Assignment
+                        </h4>
                       </div>
+                      {formData.transfers.map((transfer, index) => (
+                        <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center justify-center w-6 h-6 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 text-xs font-semibold rounded-full">
+                                  {index + 1}
+                                </span>
+                                <Label value={transfer.type || 'Transfer'} className="text-sm font-medium text-gray-800 dark:text-gray-200" />
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 pl-8 flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                                {transfer.from} → {transfer.to}
+                              </p>
+                            </div>
+                            <div>
+                              <Label value="Office" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <SearchableSelect
+                                value={transfer.officeName || ''}
+                                onChange={(e) => handleTransferChange(index, 'officeName', e.target.value)}
+                                options={offices.map(office => ({
+                                  value: office.name,
+                                  label: `${office.name} - ${office.location}`
+                                }))}
+                                placeholder="Select office..."
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label value="Price" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:ring-2 focus-within:ring-green-500 dark:focus-within:ring-green-400">
+                                <TextInput
+                                  type="number"
+                                  value={transfer.price || 0}
+                                  onChange={(e) => handleTransferChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="flex-grow text-sm border-0 focus:ring-0"
+                                  disabled={!transfer.officeName}
+                                />
+                                <span className="inline-flex items-center px-3 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-slate-600 dark:text-gray-300">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Flights Payment */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                  <Label value="Flights - Office" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
-                  <SearchableSelect
-                    value={formData.payments.flights.officeName}
-                    onChange={(e) => handlePaymentChange('flights', 'officeName', e.target.value)}
-                    options={offices.map(office => ({
-                      value: office.name,
-                      label: `${office.name} - ${office.location}`
-                    }))}
-                    placeholder="Search for an office..."
-                  />
-                </div>
-                    <div>
-                      <Label value="Flights - Price" className="mb-2 block font-medium text-orange-600 dark:text-orange-400" />
-                      <div className="flex">
-                        <TextInput
-                          type="number"
-                          value={formData.payments.flights.price}
-                          onChange={(e) => handlePaymentChange('flights', 'price', e.target.value)}
-                          placeholder="0"
-                          className="flex-grow"
-                          disabled={!formData.payments.flights.officeName}
-                        />
-                        <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
-                          {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
-                        </span>
+                  {/* Trips Payment - Individual Items */}
+                  {formData.trips.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                          <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                          Trips Payment Assignment
+                        </h4>
                       </div>
+                      {formData.trips.map((trip, index) => (
+                        <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center justify-center w-6 h-6 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-semibold rounded-full">
+                                  {index + 1}
+                                </span>
+                                <Label value={trip.tourName || 'Unnamed Trip'} className="text-sm font-medium text-gray-800 dark:text-gray-200" />
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 pl-8 flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {trip.city}
+                              </p>
+                            </div>
+                            <div>
+                              <Label value="Office" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <SearchableSelect
+                                value={trip.officeName || ''}
+                                onChange={(e) => handleTripChange(index, 'officeName', e.target.value)}
+                                options={offices.map(office => ({
+                                  value: office.name,
+                                  label: `${office.name} - ${office.location}`
+                                }))}
+                                placeholder="Select office..."
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label value="Price" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:ring-2 focus-within:ring-purple-500 dark:focus-within:ring-purple-400">
+                                <TextInput
+                                  type="number"
+                                  value={trip.price || 0}
+                                  onChange={(e) => handleTripChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="flex-grow text-sm border-0 focus:ring-0"
+                                  disabled={!trip.officeName}
+                                />
+                                <span className="inline-flex items-center px-3 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-slate-600 dark:text-gray-300">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
+
+                  {/* Flights Payment - Individual Items */}
+                  {formData.flights.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                          <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                          Flights Payment Assignment
+                        </h4>
+                      </div>
+                      {formData.flights.map((flight, index) => (
+                        <div key={index} className="bg-gradient-to-r from-white to-gray-50 dark:from-slate-900 dark:to-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200">
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+                            <div className="space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 text-xs font-semibold rounded-full">
+                                  {index + 1}
+                                </span>
+                                <Label value={flight.companyName || 'Unnamed Flight'} className="text-sm font-medium text-gray-800 dark:text-gray-200" />
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 pl-8 flex items-center">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                                {flight.from} → {flight.to}
+                              </p>
+                            </div>
+                            <div>
+                              <Label value="Office" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <SearchableSelect
+                                value={flight.officeName || ''}
+                                onChange={(e) => handleFlightChange(index, 'officeName', e.target.value)}
+                                options={offices.map(office => ({
+                                  value: office.name,
+                                  label: `${office.name} - ${office.location}`
+                                }))}
+                                placeholder="Select office..."
+                                className="text-sm"
+                              />
+                            </div>
+                            <div>
+                              <Label value="Price" className="mb-2 block text-xs font-medium text-gray-600 dark:text-gray-400" />
+                              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:ring-2 focus-within:ring-orange-500 dark:focus-within:ring-orange-400">
+                                <TextInput
+                                  type="number"
+                                  value={flight.price || 0}
+                                  onChange={(e) => handleFlightChange(index, 'price', parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  className="flex-grow text-sm border-0 focus:ring-0"
+                                  disabled={!flight.officeName}
+                                />
+                                <span className="inline-flex items-center px-3 text-sm font-medium text-gray-700 bg-gray-100 dark:bg-slate-600 dark:text-gray-300">
+                                  {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Total Display */}
                   <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
@@ -2441,13 +2370,14 @@ export default function VoucherForm({ onSuccess }) {
                     <div className="mt-4">
                       <div>
                         <Label htmlFor="note" value="Note" className="mb-2 block" />
-                        <Textarea
+                        <textarea
                           id="note"
                           name="note"
                           value={formData.note}
                           onChange={handleInputChange}
                           placeholder="Add any additional notes..."
                           rows={3}
+                          className="w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 rounded-lg px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-400 dark:focus:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-all duration-200 resize-vertical"
                         />
                       </div>
                     </div>
@@ -2506,7 +2436,7 @@ export default function VoucherForm({ onSuccess }) {
                 {availableVouchers.length > 0 ? (
                   <div className="space-y-2">
                     <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
-                    <Select
+                    <FlowbiteSelect
                       id="selectVoucherToDuplicate"
                       value={selectedVoucherToDuplicate}
                       onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
@@ -2518,7 +2448,7 @@ export default function VoucherForm({ onSuccess }) {
                           #{voucher.voucherNumber} - {voucher.clientName} ({formatDateForDisplay(voucher.arrivalDate)} to {formatDateForDisplay(voucher.departureDate)})
                         </option>
                       ))}
-                    </Select>
+                    </FlowbiteSelect>
                   </div>
                 ) : (
                   <div className="text-center text-gray-500">

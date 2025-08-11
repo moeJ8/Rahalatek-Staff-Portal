@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Card, Button, Alert, TextInput, Select } from 'flowbite-react';
+import { Card, Button, Alert } from 'flowbite-react';
 import RahalatekLoader from '../components/RahalatekLoader';
 import { FaSearch, FaFilter, FaTrash, FaPen, FaInfoCircle } from 'react-icons/fa';
 import HotelInfo from '../components/HotelInfo';
 import HotelDetailModal from '../components/HotelDetailModal';
 import CustomButton from '../components/CustomButton';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import Search from '../components/Search';
+import Select from '../components/Select';
 import toast from 'react-hot-toast';
 
 export default function HotelsPage() {
@@ -84,12 +86,12 @@ export default function HotelsPage() {
     setSearchTerm(e.target.value);
   };
   
-  const handleStarFilter = (e) => {
-    setStarFilter(e.target.value);
+  const handleStarFilter = (value) => {
+    setStarFilter(value);
   };
   
-  const handleCityFilter = (e) => {
-    setCityFilter(e.target.value);
+  const handleCityFilter = (value) => {
+    setCityFilter(value);
   };
   
   const resetFilters = () => {
@@ -169,13 +171,12 @@ export default function HotelsPage() {
         <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
           {/* Search Bar */}
           <div className="mb-4">
-            <TextInput
-              type="text"
+            <Search
               placeholder="Search by name, city, or description..."
               value={searchTerm}
               onChange={handleSearch}
-              icon={FaSearch}
               className="w-full"
+              showClearButton={true}
             />
           </div>
           
@@ -185,39 +186,41 @@ export default function HotelsPage() {
               <Select 
                 value={starFilter}
                 onChange={handleStarFilter}
+                placeholder="Filter by Stars"
+                options={[
+                  { value: '', label: 'Filter by Stars' },
+                  { value: '1', label: '1 Star' },
+                  { value: '2', label: '2 Stars' },
+                  { value: '3', label: '3 Stars' },
+                  { value: '4', label: '4 Stars' },
+                  { value: '5', label: '5 Stars' }
+                ]}
                 className="w-full"
-              >
-                <option value="">Filter by Stars</option>
-                <option value="1">1 Star</option>
-                <option value="2">2 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="5">5 Stars</option>
-              </Select>
+              />
             </div>
             
             <div className="w-full">
               <Select 
                 value={cityFilter}
                 onChange={handleCityFilter}
+                placeholder="Filter by City"
+                options={[
+                  { value: '', label: 'Filter by City' },
+                  ...availableCities.map(city => ({ value: city, label: city }))
+                ]}
                 className="w-full"
-              >
-                <option value="">Filter by City</option>
-                {availableCities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </Select>
+              />
             </div>
             
             <div className="w-full sm:col-span-2 lg:col-span-1">
               <CustomButton 
-                variant="gray" 
+                variant="red" 
                 onClick={resetFilters}
                 disabled={!searchTerm && !starFilter && !cityFilter}
-                className="w-full"
+                className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
-                Reset Filters
+                Clean Filters
               </CustomButton>
             </div>
           </div>

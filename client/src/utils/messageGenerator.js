@@ -91,15 +91,19 @@ export const generateBookingMessage = ({
         
         if (airportObj && (
           (transportVehicleType === 'Vito' && airportObj.transportation.vitoReceptionPrice > 0) ||
-          (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterReceptionPrice > 0)
+          (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterReceptionPrice > 0) ||
+          (transportVehicleType === 'Bus' && airportObj.transportation.busReceptionPrice > 0)
         )) {
-          transportationLines.push(`${RLM}الاستقبال من ${airportName} بسيارة ${transportVehicleType} خاصة`);
+          const vehicleText = transportVehicleType === 'Bus' ? `${transportVehicleType} خاص` : `بسيارة ${transportVehicleType} خاصة`;
+          transportationLines.push(`${RLM}الاستقبال من ${airportName} ${vehicleText}`);
         }
       } else if (hotelData.transportation && (
         (transportVehicleType === 'Vito' && hotelData.transportation.vitoReceptionPrice > 0) ||
-        (transportVehicleType === 'Sprinter' && hotelData.transportation.sprinterReceptionPrice > 0)
+        (transportVehicleType === 'Sprinter' && hotelData.transportation.sprinterReceptionPrice > 0) ||
+        (transportVehicleType === 'Bus' && hotelData.transportation.busReceptionPrice > 0)
       )) {
-        transportationLines.push(`${RLM}الاستقبال من ${airportName} بسيارة ${transportVehicleType} خاصة`);
+        const vehicleText = transportVehicleType === 'Bus' ? `${transportVehicleType} خاص` : `بسيارة ${transportVehicleType} خاصة`;
+        transportationLines.push(`${RLM}الاستقبال من ${airportName} ${vehicleText}`);
       }
     }
     
@@ -117,15 +121,19 @@ export const generateBookingMessage = ({
         
         if (airportObj && (
           (transportVehicleType === 'Vito' && airportObj.transportation.vitoFarewellPrice > 0) ||
-          (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterFarewellPrice > 0)
+          (transportVehicleType === 'Sprinter' && airportObj.transportation.sprinterFarewellPrice > 0) ||
+          (transportVehicleType === 'Bus' && airportObj.transportation.busFarewellPrice > 0)
         )) {
-          transportationLines.push(`${RLM}التوديع إلى ${airportName} بسيارة ${transportVehicleType} خاصة`);
+          const vehicleText = transportVehicleType === 'Bus' ? `${transportVehicleType} خاص` : `بسيارة ${transportVehicleType} خاصة`;
+          transportationLines.push(`${RLM}التوديع إلى ${airportName} ${vehicleText}`);
         }
       } else if (hotelData.transportation && (
         (transportVehicleType === 'Vito' && hotelData.transportation.vitoFarewellPrice > 0) ||
-        (transportVehicleType === 'Sprinter' && hotelData.transportation.sprinterFarewellPrice > 0)
+        (transportVehicleType === 'Sprinter' && hotelData.transportation.sprinterFarewellPrice > 0) ||
+        (transportVehicleType === 'Bus' && hotelData.transportation.busFarewellPrice > 0)
       )) {
-        transportationLines.push(`${RLM}التوديع إلى ${airportName} بسيارة ${transportVehicleType} خاصة`);
+        const vehicleText = transportVehicleType === 'Bus' ? `${transportVehicleType} خاص` : `بسيارة ${transportVehicleType} خاصة`;
+        transportationLines.push(`${RLM}التوديع إلى ${airportName} ${vehicleText}`);
       }
     }
     
@@ -139,7 +147,8 @@ export const generateBookingMessage = ({
         !line.includes(`التوديع إلى ${airportName}`)
       );
       
-      transportationLines.push(`${RLM}استقبال وتوديع من وإلى ${airportName} بسيارة ${transportVehicleType} خاصة`);
+      const vehicleText = transportVehicleType === 'Bus' ? `${transportVehicleType} خاص` : `بسيارة ${transportVehicleType} خاصة`;
+      transportationLines.push(`${RLM}استقبال وتوديع من وإلى ${airportName} ${vehicleText}`);
     }
   });
 

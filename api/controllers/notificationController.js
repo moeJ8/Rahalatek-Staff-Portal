@@ -132,6 +132,34 @@ exports.generateArrivalReminders = async (req, res) => {
 };
 
 /**
+ * Generate departure reminders manually (admin only)
+ */
+exports.generateDepartureReminders = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin privileges required.'
+            });
+        }
+
+        const notifications = await NotificationService.generateDepartureReminders();
+
+        res.status(200).json({
+            success: true,
+            message: `Generated ${notifications.length} departure reminder notifications`,
+            data: notifications
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate departure reminders',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Generate daily arrivals summary manually (admin only)
  */
 exports.generateDailyArrivalsSummary = async (req, res) => {

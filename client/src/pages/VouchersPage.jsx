@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Modal, Alert, TextInput, Select } from 'flowbite-react';
+import { Card, Button, Table, Modal, Alert, TextInput } from 'flowbite-react';
 import SearchableSelect from '../components/SearchableSelect';
+import Select from '../components/Select';
+import Search from '../components/Search';
 import CustomDatePicker from '../components/CustomDatePicker';
 import StatusControls from '../components/StatusControls';
 import CreatedByControls from '../components/CreatedByControls';
@@ -526,12 +528,11 @@ export default function VouchersPage() {
       <Card className="dark:bg-slate-950">
         <div className="mb-4">
           <div className="mb-4">
-            <TextInput
-              type="text"
+            <Search
+              id="voucher-search"
               placeholder="Search by client name or voucher number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              icon={FaSearch}
             />
           </div>
 
@@ -541,26 +542,29 @@ export default function VouchersPage() {
             <div className="flex gap-2">
               <div className="w-full sm:w-48">
                 <Select
+                  id="dateFilter"
                   value={dateFilter}
                   onChange={handleDateFilterChange}
-                >
-                  <option value="">Created - All Time</option>
-                  <option value="january">Created - January</option>
-                  <option value="february">Created - February</option>
-                  <option value="march">Created - March</option>
-                  <option value="april">Created - April</option>
-                  <option value="may">Created - May</option>
-                  <option value="june">Created - June</option>
-                  <option value="july">Created - July</option>
-                  <option value="august">Created - August</option>
-                  <option value="september">Created - September</option>
-                  <option value="october">Created - October</option>
-                  <option value="november">Created - November</option>
-                  <option value="december">Created - December</option>
-                  <option value="this-year">Created - This Year</option>
-                  <option value="last-year">Created - Last Year</option>
-                  <option value="custom">Created - Custom Date</option>
-                </Select>
+                  placeholder="Created - All Time"
+                  options={[
+                    { value: '', label: 'Created - All Time' },
+                    { value: 'january', label: 'Created - January' },
+                    { value: 'february', label: 'Created - February' },
+                    { value: 'march', label: 'Created - March' },
+                    { value: 'april', label: 'Created - April' },
+                    { value: 'may', label: 'Created - May' },
+                    { value: 'june', label: 'Created - June' },
+                    { value: 'july', label: 'Created - July' },
+                    { value: 'august', label: 'Created - August' },
+                    { value: 'september', label: 'Created - September' },
+                    { value: 'october', label: 'Created - October' },
+                    { value: 'november', label: 'Created - November' },
+                    { value: 'december', label: 'Created - December' },
+                    { value: 'this-year', label: 'Created - This Year' },
+                    { value: 'last-year', label: 'Created - Last Year' },
+                    { value: 'custom', label: 'Created - Custom Date' }
+                  ]}
+                />
               </div>
               
               {/* Custom Creation Date Picker */}
@@ -579,26 +583,29 @@ export default function VouchersPage() {
             <div className="flex gap-2">
               <div className="w-full sm:w-48">
                 <Select
+                  id="arrivalDateFilter"
                   value={arrivalDateFilter}
                   onChange={handleArrivalDateFilterChange}
-                >
-                  <option value="">Arrival - All Time</option>
-                  <option value="january">Arrival - January</option>
-                  <option value="february">Arrival - February</option>
-                  <option value="march">Arrival - March</option>
-                  <option value="april">Arrival - April</option>
-                  <option value="may">Arrival - May</option>
-                  <option value="june">Arrival - June</option>
-                  <option value="july">Arrival - July</option>
-                  <option value="august">Arrival - August</option>
-                  <option value="september">Arrival - September</option>
-                  <option value="october">Arrival - October</option>
-                  <option value="november">Arrival - November</option>
-                  <option value="december">Arrival - December</option>
-                  <option value="this-year">Arrival - This Year</option>
-                  <option value="last-year">Arrival - Last Year</option>
-                  <option value="custom">Arrival - Custom Date</option>
-                </Select>
+                  placeholder="Arrival - All Time"
+                  options={[
+                    { value: '', label: 'Arrival - All Time' },
+                    { value: 'january', label: 'Arrival - January' },
+                    { value: 'february', label: 'Arrival - February' },
+                    { value: 'march', label: 'Arrival - March' },
+                    { value: 'april', label: 'Arrival - April' },
+                    { value: 'may', label: 'Arrival - May' },
+                    { value: 'june', label: 'Arrival - June' },
+                    { value: 'july', label: 'Arrival - July' },
+                    { value: 'august', label: 'Arrival - August' },
+                    { value: 'september', label: 'Arrival - September' },
+                    { value: 'october', label: 'Arrival - October' },
+                    { value: 'november', label: 'Arrival - November' },
+                    { value: 'december', label: 'Arrival - December' },
+                    { value: 'this-year', label: 'Arrival - This Year' },
+                    { value: 'last-year', label: 'Arrival - Last Year' },
+                    { value: 'custom', label: 'Arrival - Custom Date' }
+                  ]}
+                />
               </div>
               
               {/* Custom Arrival Date Picker */}
@@ -616,14 +623,17 @@ export default function VouchersPage() {
             {/* Status Filter */}
             <div className="w-full sm:w-48">
               <Select
+                id="statusFilter"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="await">Awaiting</option>
-                <option value="arrived">Arrived</option>
-                <option value="canceled">Canceled</option>
-              </Select>
+                placeholder="All Statuses"
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'await', label: 'Awaiting' },
+                  { value: 'arrived', label: 'Arrived' },
+                  { value: 'canceled', label: 'Canceled' }
+                ]}
+              />
             </div>
             
                         {/* User Filter - Show for admins or when there are multiple users */}
@@ -669,7 +679,7 @@ export default function VouchersPage() {
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
                 <button
                   onClick={handleClearFilters}
-                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300 transition-all duration-200 hover:scale-105 whitespace-nowrap"
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300 transition-all duration-200 hover:scale-105 whitespace-nowrap"
                 >
                   <FaTimes className="w-3 h-3" />
                   Clear Filters

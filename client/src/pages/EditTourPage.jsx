@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Label, TextInput, Textarea, Select } from 'flowbite-react';
+import { Card, Label, Textarea, Select } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HiPlus, HiX } from 'react-icons/hi';
 import CustomButton from '../components/CustomButton';
+import CustomSelect from '../components/Select';
+import TextInput from '../components/TextInput';
 import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
 
@@ -55,25 +57,7 @@ export default function EditTourPage() {
         });
     };
 
-    const handleVipCarTypeChange = (e) => {
-        const carType = e.target.value;
-        let minCapacity = 2;
-        let maxCapacity = 8;
-        
-        if (carType === 'Sprinter') {
-            minCapacity = 9;
-            maxCapacity = 16;
-        }
-        
-        setTourData({
-            ...tourData,
-            vipCarType: carType,
-            carCapacity: {
-                min: minCapacity,
-                max: maxCapacity
-            }
-        });
-    };
+
 
     const showSuccessMessage = (message) => {
         toast.success(message, {
@@ -154,61 +138,71 @@ export default function EditTourPage() {
                             </div>
                             
                             <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="tourCity" value="City" />
-                                </div>
-                                <Select
+                                <CustomSelect
                                     id="tourCity"
-                                    name="city"
+                                    label="City"
                                     value={tourData.city}
-                                    onChange={handleTourChange}
+                                    onChange={(value) => setTourData({...tourData, city: value})}
+                                    options={[
+                                        { value: "Antalya", label: "Antalya" },
+                                        { value: "Bodrum", label: "Bodrum" },
+                                        { value: "Bursa", label: "Bursa" },
+                                        { value: "Cappadocia", label: "Cappadocia" },
+                                        { value: "Fethiye", label: "Fethiye" },
+                                        { value: "Istanbul", label: "Istanbul" },
+                                        { value: "Trabzon", label: "Trabzon" }
+                                    ]}
+                                    placeholder="Select City"
                                     required
-                                    size="md"
-                                >
-                                    <option value="">Select City</option>
-                                    <option value="Antalya">Antalya</option>
-                                    <option value="Bodrum">Bodrum</option>
-                                    <option value="Bursa">Bursa</option>
-                                    <option value="Cappadocia">Cappadocia</option>
-                                    <option value="Fethiye">Fethiye</option>
-                                    <option value="Istanbul">Istanbul</option>
-                                    <option value="Trabzon">Trabzon</option>
-                                </Select>
+                                />
                             </div>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="tourType" value="Tour Type" />
-                                </div>
-                                <Select
+                                <CustomSelect
                                     id="tourType"
-                                    name="tourType"
+                                    label="Tour Type"
                                     value={tourData.tourType || 'Group'}
-                                    onChange={handleTourChange}
+                                    onChange={(value) => setTourData({...tourData, tourType: value})}
+                                    options={[
+                                        { value: "Group", label: "Group Tour (per person)" },
+                                        { value: "VIP", label: "VIP Tour (per car)" }
+                                    ]}
                                     required
-                                >
-                                    <option value="Group">Group Tour (per person)</option>
-                                    <option value="VIP">VIP Tour (per car)</option>
-                                </Select>
+                                />
                             </div>
                             
                             {tourData.tourType === 'VIP' && (
                                 <div>
-                                    <div className="mb-2 block">
-                                        <Label htmlFor="vipCarType" value="VIP Car Type" />
-                                    </div>
-                                    <Select
+                                    <CustomSelect
                                         id="vipCarType"
-                                        name="vipCarType"
+                                        label="VIP Car Type"
                                         value={tourData.vipCarType || 'Vito'}
-                                        onChange={handleVipCarTypeChange}
+                                        onChange={(value) => {
+                                            let minCapacity = 2;
+                                            let maxCapacity = 8;
+                                            
+                                            if (value === 'Sprinter') {
+                                                minCapacity = 9;
+                                                maxCapacity = 16;
+                                            }
+                                            
+                                            setTourData({
+                                                ...tourData,
+                                                vipCarType: value,
+                                                carCapacity: {
+                                                    min: minCapacity,
+                                                    max: maxCapacity
+                                                }
+                                            });
+                                        }}
+                                        options={[
+                                            { value: "Vito", label: "Vito (2-8 persons)" },
+                                            { value: "Sprinter", label: "Sprinter (9-16 persons)" }
+                                        ]}
                                         required
-                                    >
-                                        <option value="Vito">Vito (2-8 persons)</option>
-                                        <option value="Sprinter">Sprinter (9-16 persons)</option>
-                                    </Select>
+                                    />
                                     <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                                         {tourData.vipCarType === 'Vito' 
                                             ? 'Capacity: 2-8 persons' 
@@ -262,15 +256,14 @@ export default function EditTourPage() {
                         </div>
                         
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourDetailDesc" value="Detailed Description" />
-                            </div>
-                            <Textarea
+                            <TextInput
                                 id="tourDetailDesc"
                                 name="detailedDescription"
+                                as="textarea"
                                 rows={4}
                                 value={tourData.detailedDescription || ''}
                                 onChange={handleTourChange}
+                                label="Detailed Description"
                             />
                         </div>
                         

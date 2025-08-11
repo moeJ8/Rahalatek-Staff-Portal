@@ -492,7 +492,9 @@ const PriceBreakdown = ({
                       if (hotelCostInfo.transportCost <= 0) return null;
                       
                       const vehicleType = hotelCostInfo.transportVehicleType || entry.transportVehicleType || "Vito";
-                      const vehicleCapacity = vehicleType === 'Vito' ? '(2-8 people)' : '(9-16 people)';
+                      const vehicleCapacity = vehicleType === 'Vito' ? '(2-8 people)' : 
+                                             vehicleType === 'Sprinter' ? '(9-16 people)' : 
+                                             vehicleType === 'Bus' ? '(+16 people)' : '(capacity unknown)';
                       
                       return (
                         <div key={hotelIndex} className="mb-3 last:mb-0">

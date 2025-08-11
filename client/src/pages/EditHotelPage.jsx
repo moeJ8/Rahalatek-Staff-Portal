@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react'
 import axios from 'axios';
 import { useState } from 'react';
-import { Card, Button, Label, TextInput, Textarea, Select, Checkbox, Tabs, Accordion } from 'flowbite-react';
+import { Card, Label, Textarea, Select, Checkbox, Tabs, Accordion } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiPlus, HiX, HiTrash, HiCalendar } from 'react-icons/hi';
+import { HiPlus, HiTrash, HiCalendar } from 'react-icons/hi';
 import CustomButton from '../components/CustomButton';
+import CustomSelect from '../components/Select';
+import TextInput from '../components/TextInput';
 import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
 
@@ -22,7 +24,9 @@ export default function EditHotelPage() {
             vitoReceptionPrice: 0,
             vitoFarewellPrice: 0,
             sprinterReceptionPrice: 0,
-            sprinterFarewellPrice: 0
+            sprinterFarewellPrice: 0,
+            busReceptionPrice: 0,
+            busFarewellPrice: 0
         },
         airport: '',
         airportTransportation: [],
@@ -229,7 +233,9 @@ export default function EditHotelPage() {
                         vitoReceptionPrice: 0,
                         vitoFarewellPrice: 0,
                         sprinterReceptionPrice: 0,
-                        sprinterFarewellPrice: 0
+                        sprinterFarewellPrice: 0,
+                        busReceptionPrice: 0,
+                        busFarewellPrice: 0
                     }
                 }
             ]
@@ -448,58 +454,52 @@ export default function EditHotelPage() {
                         </div>
                         
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="hotelCity" value="City" />
-                            </div>
-                            <Select
+                            <CustomSelect
                                 id="hotelCity"
-                                name="city"
+                                label="City"
                                 value={hotelData.city}
-                                onChange={handleHotelChange}
+                                onChange={(value) => setHotelData({...hotelData, city: value})}
+                                options={[
+                                    { value: "Antalya", label: "Antalya" },
+                                    { value: "Bodrum", label: "Bodrum" },
+                                    { value: "Bursa", label: "Bursa" },
+                                    { value: "Cappadocia", label: "Cappadocia" },
+                                    { value: "Fethiye", label: "Fethiye" },
+                                    { value: "Istanbul", label: "Istanbul" },
+                                    { value: "Trabzon", label: "Trabzon" }
+                                ]}
+                                placeholder="Select City"
                                 required
-                                size="md"
-                            >
-                                <option value="">Select City</option>
-                                <option value="Antalya">Antalya</option>
-                                <option value="Bodrum">Bodrum</option>
-                                <option value="Bursa">Bursa</option>
-                                <option value="Cappadocia">Cappadocia</option>
-                                <option value="Fethiye">Fethiye</option>
-                                <option value="Istanbul">Istanbul</option>
-                                <option value="Trabzon">Trabzon</option>
-                            </Select>
+                            />
                         </div>
                     </div>
 
                     <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="hotelStars" value="Stars" />
-                        </div>
-                        <Select
+                        <CustomSelect
                             id="hotelStars"
-                            name="stars"
-                            value={hotelData.stars}
-                            onChange={handleHotelChange}
+                            label="Stars"
+                            value={hotelData.stars.toString()}
+                            onChange={(value) => setHotelData({...hotelData, stars: parseInt(value)})}
+                            options={[
+                                { value: "1", label: "1 Star" },
+                                { value: "2", label: "2 Stars" },
+                                { value: "3", label: "3 Stars" },
+                                { value: "4", label: "4 Stars" },
+                                { value: "5", label: "5 Stars" }
+                            ]}
                             required
-                        >
-                            <option value={1}>1 Star</option>
-                            <option value={2}>2 Stars</option>
-                            <option value={3}>3 Stars</option>
-                            <option value={4}>4 Stars</option>
-                            <option value={5}>5 Stars</option>
-                        </Select>
+                        />
                     </div>
                     
                     <div>
-                        <div className="mb-2 block">
-                            <Label htmlFor="hotelDesc" value="Description" />
-                        </div>
-                        <Textarea
+                        <TextInput
                             id="hotelDesc"
                             name="description"
+                            as="textarea"
                             rows={4}
                             value={hotelData.description || ''}
                             onChange={handleHotelChange}
+                            label="Description"
                         />
                     </div>
                     
@@ -776,20 +776,21 @@ export default function EditHotelPage() {
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <Label htmlFor={`airport-${index}`} value="Select Airport" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id={`airport-${index}`}
+                                                    label="Select Airport"
                                                     value={item.airport}
-                                                    onChange={(e) => handleAirportTransportationChange(index, 'airport', e.target.value)}
+                                                    onChange={(value) => handleAirportTransportationChange(index, 'airport', value)}
+                                                    options={[
+                                                        { value: "", label: "Select Airport" },
+                                                        ...airports.map((airport) => ({
+                                                            value: airport.name,
+                                                            label: airport.name
+                                                        }))
+                                                    ]}
+                                                    placeholder="Select Airport"
                                                     required
-                                                >
-                                                    <option value="">Select Airport</option>
-                                                    {airports.map((airport, idx) => (
-                                                        <option key={idx} value={airport.name}>
-                                                            {airport.name}
-                                                        </option>
-                                                    ))}
-                                                </Select>
+                                                />
                                             </div>
                                             
                                             <div>
@@ -833,6 +834,26 @@ export default function EditHotelPage() {
                                                             size="sm"
                                                             value={item.transportation.sprinterFarewellPrice}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'sprinterFarewellPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor={`bus-reception-${index}`} value="Bus Reception Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`bus-reception-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.busReceptionPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'busReceptionPrice', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label htmlFor={`bus-farewell-${index}`} value="Bus Farewell Price ($)" size="sm" className="mb-1" />
+                                                        <TextInput
+                                                            id={`bus-farewell-${index}`}
+                                                            type="number"
+                                                            size="sm"
+                                                            value={item.transportation.busFarewellPrice}
+                                                            onChange={(e) => handleTransportationPriceChange(index, 'busFarewellPrice', e.target.value)}
                                                         />
                                                     </div>
                                                 </div>
@@ -900,7 +921,7 @@ export default function EditHotelPage() {
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Vito: 2-8 persons, Sprinter: 9-16 persons
+                            Vito: 2-8 persons, Sprinter: 9-16 persons, Bus: +16 persons
                         </p>
                     </div>
                     

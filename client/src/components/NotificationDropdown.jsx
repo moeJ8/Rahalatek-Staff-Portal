@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Spinner, Badge } from 'flowbite-react';
-import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaCalendarAlt, FaCalendarDay, FaUser } from 'react-icons/fa';
+import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -170,6 +170,8 @@ const NotificationDropdown = () => {
     switch (type) {
       case 'voucher_arrival_reminder':
         return <FaPlane className={iconClass} />;
+      case 'voucher_departure_reminder':
+        return <FaPlaneDeparture className={iconClass} />;
       case 'daily_arrivals_summary':
         return <FaCalendarDay className="w-4 h-4 text-orange-500" />;
       case 'voucher_status_change':

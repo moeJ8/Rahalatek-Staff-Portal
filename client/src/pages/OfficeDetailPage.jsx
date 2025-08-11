@@ -7,6 +7,8 @@ import { getAllVouchers } from '../utils/voucherApi';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomButton from '../components/CustomButton';
 import SearchableSelect from '../components/SearchableSelect';
+import CheckBoxDropDown from '../components/CheckBoxDropDown';
+import Search from '../components/Search';
 import PaymentManager from '../components/PaymentManager';
 import CustomTable from '../components/CustomTable';
 import CustomScrollbar from '../components/CustomScrollbar';
@@ -26,7 +28,7 @@ const OfficeDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filters, setFilters] = useState({
-        month: (new Date().getMonth() + 1).toString(), // Current month
+        month: [(new Date().getMonth() + 1).toString()], // Current month as array
         year: new Date().getFullYear().toString(),
         currency: 'USD'
     });
@@ -77,7 +79,6 @@ const OfficeDetailPage = () => {
 
     // Calculate service payments for a voucher for this office
     const calculateServicePayments = (voucher) => {
-        const payments = voucher.payments || {};
         const services = {
             hotels: 0,
             transfers: 0,
@@ -85,24 +86,52 @@ const OfficeDetailPage = () => {
             flights: 0
         };
         
-        // Calculate hotels
-        if (payments.hotels?.officeName === officeName) {
-            services.hotels = parseFloat(payments.hotels.price) || 0;
+        // Calculate hotels - sum all individual hotel prices for this office
+        if (voucher.hotels) {
+            voucher.hotels.forEach(hotel => {
+                if (hotel.officeName === displayName) {
+                    services.hotels += parseFloat(hotel.price) || 0;
+                }
+            });
         }
         
-        // Calculate transfers
-        if (payments.transfers?.officeName === officeName) {
-            services.transfers = parseFloat(payments.transfers.price) || 0;
+        // Calculate transfers - sum all individual transfer prices for this office
+        if (voucher.transfers) {
+            voucher.transfers.forEach(transfer => {
+                if (transfer.officeName === displayName) {
+                    services.transfers += parseFloat(transfer.price) || 0;
+                }
+            });
         }
         
-        // Calculate trips
-        if (payments.trips?.officeName === officeName) {
-            services.trips = parseFloat(payments.trips.price) || 0;
+        // Calculate trips - handle both individual trip payments and global payments.trips
+        let tripsTotal = 0;
+        let tripsHandled = false;
+        
+        // First, try to calculate from individual trip payments if trips is an array
+        if (voucher.trips && Array.isArray(voucher.trips)) {
+            voucher.trips.forEach(trip => {
+                if (trip && typeof trip === 'object' && trip.officeName === displayName && trip.price) {
+                    tripsTotal += parseFloat(trip.price) || 0;
+                    tripsHandled = true;
+                }
+            });
         }
         
-        // Calculate flights
-        if (payments.flights?.officeName === officeName) {
-            services.flights = parseFloat(payments.flights.price) || 0;
+        // If no individual trip payments found, fall back to global payments.trips
+        if (!tripsHandled && voucher.payments && voucher.payments.trips && voucher.payments.trips.officeName === displayName) {
+            tripsTotal = parseFloat(voucher.payments.trips.price) || 0;
+        }
+        
+        services.trips = tripsTotal;
+        
+        // Calculate flights - sum all individual flight prices for this office
+        if (voucher.flights) {
+            voucher.flights.forEach(flight => {
+                if (flight.officeName === displayName) {
+                    services.flights += parseFloat(flight.price) || 0;
+                }
+            });
         }
         
         services.total = services.hotels + services.transfers + services.trips + services.flights;
@@ -116,13 +145,20 @@ const OfficeDetailPage = () => {
         if (isDirectClient) return [];
         
         return vouchers.filter(voucher => {
-            const payments = voucher.payments || {};
-            const hasHotelPayment = payments.hotels?.officeName === displayName;
-            const hasTransferPayment = payments.transfers?.officeName === displayName;
-            const hasTripPayment = payments.trips?.officeName === displayName;
-            const hasFlightPayment = payments.flights?.officeName === displayName;
+            // Check if any individual service is assigned to this office
+            const hasHotelService = voucher.hotels?.some(hotel => hotel.officeName === displayName);
+            const hasTransferService = voucher.transfers?.some(transfer => transfer.officeName === displayName);
+            // Check for trip services - both individual and global
+            let hasTripService = false;
+            if (voucher.trips && Array.isArray(voucher.trips)) {
+                hasTripService = voucher.trips.some(trip => trip && typeof trip === 'object' && trip.officeName === displayName);
+            }
+            if (!hasTripService) {
+                hasTripService = voucher.payments?.trips?.officeName === displayName;
+            }
+            const hasFlightService = voucher.flights?.some(flight => flight.officeName === displayName);
             
-            return hasHotelPayment || hasTransferPayment || hasTripPayment || hasFlightPayment;
+            return hasHotelService || hasTransferService || hasTripService || hasFlightService;
         });
     }, [vouchers, displayName, isDirectClient]);
 
@@ -150,9 +186,9 @@ const OfficeDetailPage = () => {
             // Year filter
             if (filters.year && voucherYear.toString() !== filters.year) return false;
             
-            // Month filter - only apply if a specific month is selected (not "All Months")
-            if (filters.month && typeof filters.month === 'string' && filters.month.trim() !== '') {
-                if (voucherMonth.toString() !== filters.month) return false;
+            // Month filter - only apply if specific months are selected
+            if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
+                if (!filters.month.includes(voucherMonth.toString())) return false;
             }
             
             return true;
@@ -211,9 +247,9 @@ const OfficeDetailPage = () => {
             // Year filter
             if (filters.year && voucherYear.toString() !== filters.year) return false;
             
-            // Month filter - only apply if a specific month is selected (not "All Months")
-            if (filters.month && typeof filters.month === 'string' && filters.month.trim() !== '') {
-                if (voucherMonth.toString() !== filters.month) return false;
+            // Month filter - only apply if specific months are selected
+            if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
+                if (!filters.month.includes(voucherMonth.toString())) return false;
             }
             
             return true;
@@ -310,15 +346,25 @@ const OfficeDetailPage = () => {
     }, [displayName]);
     
     const handleFilterChange = (filterType, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [filterType]: value
-        }));
+        if (filterType === 'month') {
+            // Handle multi-select for months
+            setFilters(prev => ({
+                ...prev,
+                month: Array.isArray(value) ? value : [value]
+            }));
+        } else {
+            setFilters(prev => ({
+                ...prev,
+                [filterType]: value
+            }));
+        }
     };
+
+
     
     const clearFilters = () => {
         setFilters({
-            month: (new Date().getMonth() + 1).toString(), // Current month
+            month: [(new Date().getMonth() + 1).toString()], // Current month as array
             year: new Date().getFullYear().toString(),
             currency: 'USD'
         });
@@ -329,7 +375,8 @@ const OfficeDetailPage = () => {
     const hasFiltersApplied = () => {
         const currentYear = new Date().getFullYear().toString();
         const currentMonth = (new Date().getMonth() + 1).toString();
-        return filters.month !== currentMonth ||
+        return !filters.month.includes(currentMonth) || 
+               filters.month.length !== 1 ||
                filters.year !== currentYear ||
                filters.currency !== 'USD' ||
                serviceTableSearch.trim() !== '' ||
@@ -458,21 +505,16 @@ const OfficeDetailPage = () => {
                                     placeholder="Search or select year..."
                                 />
                             </div>
-                            <div>
-                                <Label htmlFor="month-filter" value="Month" className="mb-2" />
-                                <SearchableSelect
-                                    id="month-filter"
-                                    options={monthOptions}
-                                    value={filters.month}
-                                    onChange={(eventOrValue) => {
-                                        const value = typeof eventOrValue === 'string' 
-                                            ? eventOrValue 
-                                            : eventOrValue?.target?.value || eventOrValue;
-                                        handleFilterChange('month', value);
-                                    }}
-                                    placeholder="Search or select month..."
-                                />
-                            </div>
+                            <CheckBoxDropDown
+                                label="Month"
+                                id="month-filter"
+                                options={monthOptions}
+                                value={filters.month}
+                                onChange={(value) => handleFilterChange('month', value)}
+                                placeholder="Select months..."
+                                allOptionsLabel="All Months"
+                                allowMultiple={true}
+                            />
                             <div>
                                 <Label htmlFor="currency-filter" value="Currency" className="mb-2" />
                                 <SearchableSelect
@@ -493,7 +535,7 @@ const OfficeDetailPage = () => {
                                     variant="red"
                                     onClick={clearFilters}
                                     disabled={!hasFiltersApplied()}
-                                    className="w-full"
+                                    className="w-full h-[48px]"
                                     title={hasFiltersApplied() ? "Clear all filters" : "No filters to clear"}
                                     icon={HiX}
                                 >
@@ -512,11 +554,10 @@ const OfficeDetailPage = () => {
                                     Service Breakdown by Voucher
                                 </h3>
                                 <div className="mb-4">
-                                    <TextInput
+                                    <Search
                                         placeholder="Search by voucher ID or client name..."
                                         value={serviceTableSearch}
                                         onChange={(e) => setServiceTableSearch(e.target.value)}
-                                        icon={HiSearch}
                                         className="max-w-md"
                                     />
                                 </div>
@@ -594,11 +635,10 @@ const OfficeDetailPage = () => {
                                 Client Payments
                             </h3>
                             <div className="mb-4">
-                                <TextInput
+                                <Search
                                     placeholder="Search by voucher ID or client name..."
                                     value={clientTableSearch}
                                     onChange={(e) => setClientTableSearch(e.target.value)}
-                                    icon={HiSearch}
                                     className="max-w-md"
                                 />
                             </div>

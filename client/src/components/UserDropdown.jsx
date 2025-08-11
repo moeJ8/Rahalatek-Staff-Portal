@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiChevronDown, HiLogout, HiCog } from 'react-icons/hi';
+import { HiChevronDown, HiLogout, HiCog, HiUser } from 'react-icons/hi';
 import UserBadge from './UserBadge';
 
 export default function UserDropdown({ user, onLogout }) {
@@ -29,6 +29,11 @@ export default function UserDropdown({ user, onLogout }) {
   const handleDashboardClick = () => {
     setDropdownOpen(false);
     navigate('/dashboard');
+  };
+
+  const handleProfileClick = () => {
+    setDropdownOpen(false);
+    navigate('/profile');
   };
 
   const handleLogoutClick = () => {
@@ -101,6 +106,14 @@ export default function UserDropdown({ user, onLogout }) {
 
           {/* Menu Items */}
           <div className="py-1">
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            >
+              <HiUser className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              Profile
+            </button>
+            
             {(user.isAdmin || user.isAccountant) && (
               <button
                 onClick={handleDashboardClick}

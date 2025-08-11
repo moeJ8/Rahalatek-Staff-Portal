@@ -11,6 +11,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const officeRoutes = require('./routes/officeRoutes');
 const debtRoutes = require('./routes/debtRoutes');
 const officePaymentRoutes = require('./routes/officePaymentRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const path = require('path');
@@ -101,6 +103,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/offices', officeRoutes);
 app.use('/api/debts', debtRoutes);
 app.use('/api/office-payments', officePaymentRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

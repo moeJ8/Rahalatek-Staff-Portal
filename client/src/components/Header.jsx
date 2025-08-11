@@ -5,7 +5,7 @@ import CustomDarkModeToggle from './CustomDarkModeToggle';
 import CustomButton from './CustomButton';
 import UserDropdown from './UserDropdown';
 import NotificationDropdown from './NotificationDropdown';
-import OfficeSearchDropdown from './OfficeSearchDropdown';
+import Searchbar from './Searchbar';
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -70,8 +70,8 @@ export default function Header() {
               />
             </Link>
             
-            {/* Office Search - Left side, only for admin/accountant */}
-            {user && (user?.isAdmin || user?.isAccountant) && <OfficeSearchDropdown />}
+            {/* Search Bar - Left side, only for admin/accountant */}
+            {user && (user?.isAdmin || user?.isAccountant) && <Searchbar />}
           </div>
           
           {/* Desktop Navigation */}
@@ -194,6 +194,14 @@ export default function Header() {
                     className={`py-2 px-1 ${isActive('/vouchers') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
                   >
                     Vouchers
+                  </Link>
+                  
+                  <Link 
+                    to="/profile"
+                    onClick={closeMobileMenu}
+                    className={`py-2 px-1 ${isActive('/profile') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'}`}
+                  >
+                    Profile
                   </Link>
                   
                   {(user.isAdmin || user.isAccountant) && (

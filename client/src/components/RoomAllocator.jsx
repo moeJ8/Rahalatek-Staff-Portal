@@ -1,5 +1,7 @@
 import React from 'react';
-import { Button, Select, Label, Alert } from 'flowbite-react';
+import { Label, Alert } from 'flowbite-react';
+import Select from './Select';
+import CustomButton from './CustomButton';
 
 const RoomAllocator = ({ 
   selectedHotelData, 
@@ -78,95 +80,96 @@ const RoomAllocator = ({
           <div key={index} className="flex flex-col gap-2 p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-600 h-full">
             <div className="flex justify-between items-center border-b border-gray-200 dark:border-slate-600 pb-2 mb-2">
               <span className="font-medium text-gray-800 dark:text-white">Room {index + 1}</span>
-              <Button 
-                color="failure" 
+              <CustomButton 
+                variant="red" 
                 size="xs" 
                 onClick={() => onRemoveRoom(index)}
-                className="px-2 py-1 text-xs"
               >
                 Remove
-              </Button>
+              </CustomButton>
             </div>
             
             <div className="flex flex-col gap-4 flex-grow">
               <div>
-                <Label htmlFor={`roomType-${index}`} value="Room Type" className="text-sm dark:text-white mb-1" />
                 <Select 
                   id={`roomType-${index}`}
+                  label="Room Type"
                   value={room.roomTypeIndex}
-                  onChange={(e) => onRoomTypeSelect(index, e.target.value)}
+                  onChange={(value) => onRoomTypeSelect(index, value)}
+                  placeholder="Select Room Type"
+                  options={[
+                    { value: '', label: 'Select Room Type' },
+                    ...selectedHotelData.roomTypes.map((roomType, typeIndex) => ({
+                      value: typeIndex.toString(),
+                      label: `${roomType.type} ($${roomType.pricePerNight}/night)`
+                    }))
+                  ]}
                   className="text-sm"
-                >
-                  <option value="">Select Room Type</option>
-                  {selectedHotelData.roomTypes.map((roomType, typeIndex) => (
-                    <option key={typeIndex} value={typeIndex}>
-                      {roomType.type} (${roomType.pricePerNight}/night)
-                    </option>
-                  ))}
-                </Select>
+                />
               </div>
                 
               <div>
-                <Label htmlFor={`occupants-${index}`} value="Adults" className="text-sm dark:text-white mb-1" />
                 <Select
                   id={`occupants-${index}`}
-                  value={room.occupants}
-                  onChange={(e) => onOccupantsChange(index, e.target.value)}
+                  label="Adults"
+                  value={room.occupants.toString()}
+                  onChange={(value) => onOccupantsChange(index, value)}
+                  placeholder="Select Adults"
+                  options={[1, 2, 3, 4].map(num => ({
+                    value: num.toString(),
+                    label: `${num} ${num === 1 ? 'person' : 'people'}`
+                  }))}
                   className="text-sm"
-                >
-                  {[1, 2, 3, 4].map(num => (
-                    <option key={num} value={num}>{num} {num === 1 ? 'person' : 'people'}</option>
-                  ))}
-                </Select>
+                />
               </div>
               
               {includeChildren && (
                 <div className="flex flex-col gap-3 mt-1 p-3 bg-gray-100 dark:bg-slate-900 rounded-md">
                   <div>
-                    <Label htmlFor={`children-under-3-${index}`} value="Children (0-3)" className="dark:text-white mb-1 text-xs" />
                     <Select
                       id={`children-under-3-${index}`}
-                      size="sm"
-                      value={room.childrenUnder3 || 0}
-                      onChange={(e) => onChildrenUnder3Change(index, parseInt(e.target.value))}
+                      label="Children (0-3)"
+                      value={(room.childrenUnder3 || 0).toString()}
+                      onChange={(value) => onChildrenUnder3Change(index, parseInt(value))}
+                      placeholder="Select Count"
+                      options={[0, 1, 2, 3, 4].map(num => ({
+                        value: num.toString(),
+                        label: num.toString()
+                      }))}
                       className="text-sm"
-                    >
-                      {[0, 1, 2, 3, 4].map(num => (
-                        <option key={num} value={num}>{num}</option>
-                      ))}
-                    </Select>
+                    />
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free on tours</p>
                   </div>
                   
                   <div>
-                    <Label htmlFor={`children-3to6-${index}`} value="Children (3-6)" className="dark:text-white mb-1 text-xs" />
                     <Select
                       id={`children-3to6-${index}`}
-                      size="sm"
-                      value={room.children3to6 || 0}
-                      onChange={(e) => onChildren3to6Change(index, parseInt(e.target.value))}
+                      label="Children (3-6)"
+                      value={(room.children3to6 || 0).toString()}
+                      onChange={(value) => onChildren3to6Change(index, parseInt(value))}
+                      placeholder="Select Count"
+                      options={[0, 1, 2, 3, 4].map(num => ({
+                        value: num.toString(),
+                        label: num.toString()
+                      }))}
                       className="text-sm"
-                    >
-                      {[0, 1, 2, 3, 4].map(num => (
-                        <option key={num} value={num}>{num}</option>
-                      ))}
-                    </Select>
+                    />
                     <p className="text-xs text-green-600 dark:text-green-400 mt-1">Free accommodation</p>
                   </div>
                   
                   <div>
-                    <Label htmlFor={`children-6to12-${index}`} value="Children (6-12)" className="dark:text-white mb-1 text-xs" />
                     <Select
                       id={`children-6to12-${index}`}
-                      size="sm"
-                      value={room.children6to12 || 0}
-                      onChange={(e) => onChildren6to12Change(index, parseInt(e.target.value))}
+                      label="Children (6-12)"
+                      value={(room.children6to12 || 0).toString()}
+                      onChange={(value) => onChildren6to12Change(index, parseInt(value))}
+                      placeholder="Select Count"
+                      options={[0, 1, 2, 3, 4].map(num => ({
+                        value: num.toString(),
+                        label: num.toString()
+                      }))}
                       className="text-sm"
-                    >
-                      {[0, 1, 2, 3, 4].map(num => (
-                        <option key={num} value={num}>{num}</option>
-                      ))}
-                    </Select>
+                    />
                     <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Special hotel rate</p>
                   </div>
                 </div>
@@ -177,17 +180,13 @@ const RoomAllocator = ({
       </div>
       
       <div className="flex justify-center mt-4">
-        <Button 
-          size="xs"
-          color="light"
+        <CustomButton 
+          size="sm"
+          variant="pinkToOrange"
           onClick={onAddRoom}
-          className="px-3 py-1.5 flex items-center"
         >
-          <span className="text-sm font-medium flex items-center">
-            <span className="mr-1 inline-flex items-center">+</span>
-            Add Room
-          </span>
-        </Button>
+          + Add Room
+        </CustomButton>
       </div>
     </div>
   );

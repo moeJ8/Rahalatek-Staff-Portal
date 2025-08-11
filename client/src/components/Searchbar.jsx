@@ -3,10 +3,12 @@ import { FaSearch, FaBuilding, FaMapMarkerAlt, FaPhone, FaEnvelope, FaUser } fro
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CustomScrollbar from './CustomScrollbar';
+import UserBadge from './UserBadge';
 
-const OfficeSearchDropdown = () => {
+const Searchbar = () => {
   const [offices, setOffices] = useState([]);
   const [directClients, setDirectClients] = useState([]);
+  const [users, setUsers] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -16,6 +18,10 @@ const OfficeSearchDropdown = () => {
   const inputRef = useRef(null);
   const mobileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Check user role to determine if they can search for users
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const canSearchUsers = currentUser.isAdmin || currentUser.isAccountant;
 
   // Close dropdown when clicking outside (desktop only)
   useEffect(() => {
@@ -32,9 +38,10 @@ const OfficeSearchDropdown = () => {
     };
   }, [showMobileModal]);
 
-  // Fetch offices and direct clients on mount
+  // Fetch offices, direct clients, and users on mount
   useEffect(() => {
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle escape key for mobile modal
@@ -52,7 +59,7 @@ const OfficeSearchDropdown = () => {
     }
   }, [showMobileModal]);
 
-  // Filter offices and direct clients based on search query
+  // Filter offices, direct clients, and users based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredResults([]);
@@ -72,8 +79,13 @@ const OfficeSearchDropdown = () => {
       client.name.toLowerCase().includes(query)
     ).map(client => ({ ...client, type: 'client' }));
     
-    setFilteredResults([...filteredOffices, ...filteredClients]);
-  }, [searchQuery, offices, directClients]);
+    // Filter users (only if user has permission)
+    const filteredUsers = canSearchUsers ? users.filter(user => 
+      user.username.toLowerCase().includes(query)
+    ).map(user => ({ ...user, type: 'user' })) : [];
+    
+    setFilteredResults([...filteredOffices, ...filteredClients, ...filteredUsers]);
+  }, [searchQuery, offices, directClients, users, canSearchUsers]);
 
   const fetchOffices = async () => {
     try {
@@ -114,10 +126,28 @@ const OfficeSearchDropdown = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    if (!canSearchUsers) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/auth/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchOffices(), fetchDirectClients()]);
+      const promises = [fetchOffices(), fetchDirectClients()];
+      if (canSearchUsers) {
+        promises.push(fetchUsers());
+      }
+      await Promise.all(promises);
     } finally {
       setLoading(false);
     }
@@ -137,6 +167,8 @@ const OfficeSearchDropdown = () => {
       navigate(`/office/${encodeURIComponent(result.name)}`);
     } else if (result.type === 'client') {
       navigate(`/client/${encodeURIComponent(result.name)}`);
+    } else if (result.type === 'user') {
+      navigate(`/profile/${result._id}`);
     }
     setShowDropdown(false);
     setSearchQuery('');
@@ -159,12 +191,12 @@ const OfficeSearchDropdown = () => {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search offices & clients..."
+            placeholder={canSearchUsers ? "Search offices, clients & users..." : "Search offices & clients..."}
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onKeyDown={handleKeyDown}
-            className="w-64 px-4 py-2 pl-10 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400 transition-colors duration-200"
+            className="w-72 px-4 py-2 pl-10 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:focus:ring-teal-400 dark:focus:border-teal-400 transition-colors duration-200"
           />
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         </div>
@@ -181,7 +213,7 @@ const OfficeSearchDropdown = () => {
             }, 100);
           }}
           className="lg:hidden flex items-center justify-center p-2 text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800"
-          title="Search offices & clients"
+          title={canSearchUsers ? "Search offices, clients & users" : "Search offices & clients"}
         >
           <FaSearch className="w-5 h-5" />
         </button>
@@ -216,7 +248,7 @@ const OfficeSearchDropdown = () => {
                   <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                   <p className="text-gray-500 dark:text-gray-400">Start typing to search</p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                    Search by office name, location, or client name
+                    {canSearchUsers ? "Search by office name, location, client name, or username" : "Search by office name, location, or client name"}
                   </p>
                 </div>
               ) : filteredResults.length === 0 ? (
@@ -240,6 +272,8 @@ const OfficeSearchDropdown = () => {
                         <div className="flex-shrink-0 mt-1">
                           {result.type === 'office' ? (
                             <FaBuilding className="w-4 h-4 text-teal-500" />
+                          ) : result.type === 'user' ? (
+                            <FaUser className="w-4 h-4 text-blue-500" />
                           ) : (
                             <FaUser className="w-4 h-4 text-rose-500" />
                           )}
@@ -251,17 +285,21 @@ const OfficeSearchDropdown = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                  {result.type === 'client' && result.name.length > 20 
+                                  {result.type === 'client' && result.name && result.name.length > 20 
                                     ? `${result.name.substring(0, 20)}...` 
-                                    : result.name}
+                                    : (result.type === 'user' ? result.username : result.name)}
                                 </p>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                  result.type === 'office' 
-                                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
-                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
-                                }`}>
-                                  {result.type === 'office' ? 'Office' : 'Direct Client'}
-                                </span>
+                                {result.type === 'user' ? (
+                                  <UserBadge user={result} size="xs" />
+                                ) : (
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                    result.type === 'office' 
+                                      ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                      : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                                  }`}>
+                                    {result.type === 'office' ? 'Office' : 'Direct Client'}
+                                  </span>
+                                )}
                               </div>
                               
                               {result.type === 'office' ? (
@@ -295,6 +333,12 @@ const OfficeSearchDropdown = () => {
                                     )}
                                   </div>
                                 </>
+                              ) : result.type === 'user' ? (
+                                <div className="mt-1">
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    System user - View profile & analytics
+                                  </p>
+                                </div>
                               ) : (
                                 <div className="mt-1">
                                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -339,7 +383,7 @@ const OfficeSearchDropdown = () => {
             <input
               ref={mobileInputRef}
               type="text"
-              placeholder="Search offices & clients..."
+              placeholder={canSearchUsers ? "Search offices, clients & users..." : "Search offices & clients..."}
               value={searchQuery}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
@@ -362,7 +406,7 @@ const OfficeSearchDropdown = () => {
                 <FaSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <p className="text-gray-500 dark:text-gray-400">Start typing to search</p>
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                  Search by office name, location, or client name
+                  {canSearchUsers ? "Search by office name, location, client name, or username" : "Search by office name, location, or client name"}
                 </p>
               </div>
             ) : filteredResults.length === 0 ? (
@@ -389,6 +433,8 @@ const OfficeSearchDropdown = () => {
                       <div className="flex-shrink-0 mt-1">
                         {result.type === 'office' ? (
                           <FaBuilding className="w-5 h-5 text-teal-500" />
+                        ) : result.type === 'user' ? (
+                          <FaUser className="w-5 h-5 text-blue-500" />
                         ) : (
                           <FaUser className="w-5 h-5 text-rose-500" />
                         )}
@@ -397,17 +443,21 @@ const OfficeSearchDropdown = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-base font-medium text-gray-900 dark:text-white">
-                            {result.type === 'client' && result.name.length > 20 
+                            {result.type === 'client' && result.name && result.name.length > 20 
                               ? `${result.name.substring(0, 20)}...` 
-                              : result.name}
+                              : (result.type === 'user' ? result.username : result.name)}
                           </p>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            result.type === 'office' 
-                              ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
-                              : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
-                          }`}>
-                            {result.type === 'office' ? 'Office' : 'Direct Client'}
-                          </span>
+                          {result.type === 'user' ? (
+                            <UserBadge user={result} size="xs" />
+                          ) : (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              result.type === 'office' 
+                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+                                : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                            }`}>
+                              {result.type === 'office' ? 'Office' : 'Direct Client'}
+                            </span>
+                          )}
                         </div>
                         
                         {result.type === 'office' ? (
@@ -415,6 +465,12 @@ const OfficeSearchDropdown = () => {
                             <FaMapMarkerAlt className="w-4 h-4 text-gray-400 mr-2" />
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                               {result.location}
+                            </p>
+                          </div>
+                        ) : result.type === 'user' ? (
+                          <div className="mt-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              System user - View profile & analytics
                             </p>
                           </div>
                         ) : (
@@ -459,4 +515,4 @@ const OfficeSearchDropdown = () => {
   );
 };
 
-export default OfficeSearchDropdown; 
+export default Searchbar; 

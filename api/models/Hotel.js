@@ -62,7 +62,9 @@ const airportTransportationSchema = new mongoose.Schema({
         vitoReceptionPrice: { type: Number, default: 0 },
         vitoFarewellPrice: { type: Number, default: 0 },
         sprinterReceptionPrice: { type: Number, default: 0 },
-        sprinterFarewellPrice: { type: Number, default: 0 }
+        sprinterFarewellPrice: { type: Number, default: 0 },
+        busReceptionPrice: { type: Number, default: 0 },
+        busFarewellPrice: { type: Number, default: 0 }
     }
 });
 
@@ -79,7 +81,9 @@ const hotelSchema = new mongoose.Schema({
         vitoReceptionPrice: { type: Number, default: 0 },
         vitoFarewellPrice: { type: Number, default: 0 },
         sprinterReceptionPrice: { type: Number, default: 0 },
-        sprinterFarewellPrice: { type: Number, default: 0 }
+        sprinterFarewellPrice: { type: Number, default: 0 },
+        busReceptionPrice: { type: Number, default: 0 },
+        busFarewellPrice: { type: Number, default: 0 }
     },
     description: { type: String },
     childrenPolicies: {

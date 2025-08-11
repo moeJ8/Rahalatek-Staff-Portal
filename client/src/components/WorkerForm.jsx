@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Button, TextInput, Select, Label, Card, Checkbox, Alert, Datepicker, Modal } from 'flowbite-react'
+import { Label, Card, Checkbox, Alert, } from 'flowbite-react'
+import TextInput from './TextInput'
+import Select from './Select'
 import BookingMessage from './BookingMessage'
 import TourSelector from './TourSelector'
 import RoomAllocator from './RoomAllocator'
 import PriceBreakdown from './PriceBreakdown'
-import ChildrenSection from './ChildrenSection'
 import HotelDetailModal from './HotelDetailModal'
 import SearchableSelect from './SearchableSelect'
 import CustomButton from './CustomButton'
+import CustomDatePicker from './CustomDatePicker'
 import RahalatekLoader from './RahalatekLoader'
 import { FaInfoCircle, FaUndoAlt } from 'react-icons/fa'
 import { 
@@ -499,12 +501,7 @@ export default function WorkerForm() {
     return `${day}/${month}/${year}`;
   };
   
-  const parseDisplayDate = (displayDate) => {
-    if (!displayDate || !displayDate.includes('/')) return '';
-    const [day, month, year] = displayDate.split('/');
-    if (!day || !month || !year) return '';
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  };
+
   
   useEffect(() => {
     if (startDate) {
@@ -603,100 +600,34 @@ export default function WorkerForm() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <div className="mb-2 block">
-                <Label htmlFor="startDate" value="Package Start Date" className="dark:text-white" />
-              </div>
-              <div className="relative">
-                <TextInput
-                  id="displayStartDate"
-                  type="text"
-                  value={displayStartDate}
-                  onChange={(e) => {
-                    const newDisplayDate = e.target.value;
-                    setDisplayStartDate(newDisplayDate);
-                    
-                    // Only update the ISO date if we have a valid format
-                    if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                      const newIsoDate = parseDisplayDate(newDisplayDate);
-                      if (newIsoDate) {
-                        setStartDate(newIsoDate);
-                        
-                        // If end date is before the new start date, update it
-                        if (endDate && endDate < newIsoDate) {
-                          setEndDate(newIsoDate);
-                          setDisplayEndDate(formatDateForDisplay(newIsoDate));
-                        }
-                      }
-                    }
-                  }}
-                  placeholder="DD/MM/YYYY"
-                  required
-                />
-                <input 
-                  type="date" 
-                  className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                  value={startDate}
-                  onChange={(e) => {
-                    const newIsoDate = e.target.value;
-                    setStartDate(newIsoDate);
-                    setDisplayStartDate(formatDateForDisplay(newIsoDate));
-                    
-                    // If end date is before the new start date, update it
-                    if (endDate && endDate < newIsoDate) {
-                      setEndDate(newIsoDate);
-                      setDisplayEndDate(formatDateForDisplay(newIsoDate));
-                    }
-                  }}
-                />
-                <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </span>
-              </div>
+              <CustomDatePicker
+                label="Package Start Date"
+                value={startDate}
+                onChange={(newIsoDate) => {
+                  setStartDate(newIsoDate);
+                  setDisplayStartDate(formatDateForDisplay(newIsoDate));
+                  
+                  // If end date is before the new start date, update it
+                  if (endDate && endDate < newIsoDate) {
+                    setEndDate(newIsoDate);
+                    setDisplayEndDate(formatDateForDisplay(newIsoDate));
+                  }
+                }}
+                required
+              />
             </div>
             
             <div>
-              <div className="mb-2 block">
-                <Label htmlFor="endDate" value="Package End Date" className="dark:text-white" />
-              </div>
-              <div className="relative">
-                <TextInput
-                  id="displayEndDate"
-                  type="text"
-                  value={displayEndDate}
-                  onChange={(e) => {
-                    const newDisplayDate = e.target.value;
-                    setDisplayEndDate(newDisplayDate);
-                    
-                    // Only update the ISO date if we have a valid format
-                    if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                      const newIsoDate = parseDisplayDate(newDisplayDate);
-                      if (newIsoDate && (!startDate || newIsoDate >= startDate)) {
-                        setEndDate(newIsoDate);
-                      }
-                    }
-                  }}
-                  placeholder="DD/MM/YYYY"
-                  required
-                />
-                <input 
-                  type="date" 
-                  className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => {
-                    const newIsoDate = e.target.value;
-                    setEndDate(newIsoDate);
-                    setDisplayEndDate(formatDateForDisplay(newIsoDate));
-                  }}
-                />
-                <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </span>
-              </div>
+              <CustomDatePicker
+                label="Package End Date"
+                value={endDate}
+                min={startDate || ''}
+                onChange={(newIsoDate) => {
+                  setEndDate(newIsoDate);
+                  setDisplayEndDate(formatDateForDisplay(newIsoDate));
+                }}
+                required
+              />
             </div>
           </div>
           
@@ -857,7 +788,7 @@ export default function WorkerForm() {
             </div>
             
             {hotelEntries.map((entry, hotelIndex) => (
-              <Card key={hotelIndex} className="dark:bg-slate-900 overflow-hidden mb-6">
+              <Card key={hotelIndex} className="dark:bg-slate-900 mb-6">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-lg font-semibold dark:text-white">Hotel #{hotelIndex + 1}</h4>
                   {hotelEntries.length > 1 && (
@@ -893,91 +824,29 @@ export default function WorkerForm() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="mb-2 block">
-                        <Label htmlFor={`checkIn-${hotelIndex}`} value="Check-in Date" className="dark:text-white" />
-                      </div>
-                      <div className="relative">
-                        <TextInput
-                          id={`displayCheckIn-${hotelIndex}`}
-                          type="text"
-                          value={entry.displayCheckIn || ''}
-                          onChange={(e) => {
-                            const newDisplayDate = e.target.value;
-                            
-                            // Only update the ISO date if we have a valid format
-                            if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                              const newIsoDate = parseDisplayDate(newDisplayDate);
-                              if (newIsoDate) {
-                                handleHotelDateChange(hotelIndex, 'checkIn', newIsoDate, newDisplayDate);
-                              }
-                            } else {
-                              handleHotelDateChange(hotelIndex, 'checkIn', entry.checkIn, newDisplayDate);
-                            }
-                          }}
-                          placeholder="DD/MM/YYYY"
-                          required
-                        />
-                        <input 
-                          type="date" 
-                          className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                          value={entry.checkIn || ''}
-                          min={startDate}
-                          max={endDate}
-                          onChange={(e) => {
-                            const newIsoDate = e.target.value;
-                            handleHotelDateChange(hotelIndex, 'checkIn', newIsoDate, formatDateForDisplay(newIsoDate));
-                          }}
-                        />
-                        <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </span>
-                      </div>
+                      <CustomDatePicker
+                        label="Check-in Date"
+                        value={entry.checkIn || ''}
+                        min={startDate}
+                        max={endDate}
+                        onChange={(newIsoDate) => {
+                          handleHotelDateChange(hotelIndex, 'checkIn', newIsoDate, formatDateForDisplay(newIsoDate));
+                        }}
+                        required
+                      />
                     </div>
                     
                     <div>
-                      <div className="mb-2 block">
-                        <Label htmlFor={`checkOut-${hotelIndex}`} value="Check-out Date" className="dark:text-white" />
-                      </div>
-                      <div className="relative">
-                        <TextInput
-                          id={`displayCheckOut-${hotelIndex}`}
-                          type="text"
-                          value={entry.displayCheckOut || ''}
-                          onChange={(e) => {
-                            const newDisplayDate = e.target.value;
-                            
-                            // Only update the ISO date if we have a valid format
-                            if (newDisplayDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                              const newIsoDate = parseDisplayDate(newDisplayDate);
-                              if (newIsoDate && (!entry.checkIn || newIsoDate >= entry.checkIn)) {
-                                handleHotelDateChange(hotelIndex, 'checkOut', newIsoDate, newDisplayDate);
-                              }
-                            } else {
-                              handleHotelDateChange(hotelIndex, 'checkOut', entry.checkOut, newDisplayDate);
-                            }
-                          }}
-                          placeholder="DD/MM/YYYY"
-                          required
-                        />
-                        <input 
-                          type="date" 
-                          className="absolute top-0 right-0 h-full w-10 opacity-0 cursor-pointer"
-                          value={entry.checkOut || ''}
-                          min={entry.checkIn || startDate}
-                          max={endDate}
-                          onChange={(e) => {
-                            const newIsoDate = e.target.value;
-                            handleHotelDateChange(hotelIndex, 'checkOut', newIsoDate, formatDateForDisplay(newIsoDate));
-                          }}
-                        />
-                        <span className="absolute top-0 right-0 h-full px-2 flex items-center pointer-events-none">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </span>
-                      </div>
+                      <CustomDatePicker
+                        label="Check-out Date"
+                        value={entry.checkOut || ''}
+                        min={entry.checkIn || startDate}
+                        max={endDate}
+                        onChange={(newIsoDate) => {
+                          handleHotelDateChange(hotelIndex, 'checkOut', newIsoDate, formatDateForDisplay(newIsoDate));
+                        }}
+                        required
+                      />
                     </div>
                   </div>
                   
@@ -1036,55 +905,56 @@ export default function WorkerForm() {
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <div className="mb-2 block">
-                              <Label htmlFor={`hotelAirport-${hotelIndex}`} value="Hotel Airport" className="dark:text-white" />
-                            </div>
                             <Select
                               id={`hotelAirport-${hotelIndex}`}
+                              label="Hotel Airport"
                               value={entry.selectedAirport || ""}
-                              onChange={(e) => handleHotelAirportChange(hotelIndex, e.target.value)}
+                              onChange={(value) => handleHotelAirportChange(hotelIndex, value)}
+                              placeholder="Select Airport"
+                              options={(() => {
+                                let airportOptions = [{ value: '', label: 'Select Airport' }];
+                                
+                                // Only show airports associated with this hotel
+                                if (entry.hotelData.airportTransportation && entry.hotelData.airportTransportation.length > 0) {
+                                  // If hotel has airportTransportation array, use those airports
+                                  airportOptions.push(...entry.hotelData.airportTransportation.map((item) => ({
+                                    value: item.airport,
+                                    label: item.airport
+                                  })));
+                                } else if (entry.hotelData.airport) {
+                                  // If hotel just has a single airport field, show that
+                                  airportOptions.push({
+                                    value: entry.hotelData.airport,
+                                    label: entry.hotelData.airport
+                                  });
+                                } else {
+                                  // If no airports are found for this hotel, show all airports as fallback
+                                  airportOptions.push(...airports.map((airport) => ({
+                                    value: airport.name,
+                                    label: airport.name
+                                  })));
+                                }
+                                
+                                return airportOptions;
+                              })()}
                               required
-                            >
-                              <option value="">Select Airport</option>
-                              {/* Only show airports associated with this hotel */}
-                              {entry.hotelData.airportTransportation && entry.hotelData.airportTransportation.length > 0 ? (
-                                // If hotel has airportTransportation array, use those airports
-                                entry.hotelData.airportTransportation.map((item, idx) => (
-                                  <option key={idx} value={item.airport}>
-                                    {item.airport}
-                                  </option>
-                                ))
-                              ) : entry.hotelData.airport ? (
-                                // If hotel just has a single airport field, show that
-                                <option value={entry.hotelData.airport}>
-                                  {entry.hotelData.airport}
-                                </option>
-                              ) : (
-                                // If no airports are found for this hotel, show all airports as fallback
-                                airports.map((airport, idx) => (
-                                  <option key={idx} value={airport.name}>
-                                    {airport.name}
-                                  </option>
-                                ))
-                              )}
-                            </Select>
-                            
+                            />
                           </div>
                           
                           <div>
-                            <div className="mb-2 block">
-                              <Label htmlFor={`vehicleType-${hotelIndex}`} value="Transport Vehicle Type" className="dark:text-white" />
-                            </div>
                             <Select
                               id={`vehicleType-${hotelIndex}`}
+                              label="Transport Vehicle Type"
                               value={entry.transportVehicleType || "Vito"}
-                              onChange={(e) => handleHotelVehicleTypeChange(hotelIndex, e.target.value)}
+                              onChange={(value) => handleHotelVehicleTypeChange(hotelIndex, value)}
+                              placeholder="Select Vehicle Type"
+                              options={[
+                                { value: 'Vito', label: 'Vito (2-8 people)' },
+                                { value: 'Sprinter', label: 'Sprinter (9-16 people)' },
+                                { value: 'Bus', label: 'Bus (+16 people)' }
+                              ]}
                               required
-                            >
-                              <option value="Vito">Vito (2-8 people)</option>
-                              <option value="Sprinter">Sprinter (9-16 people)</option>
-                            </Select>
-                            
+                            />
                           </div>
                         </div>
                         

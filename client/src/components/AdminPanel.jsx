@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
-import { TextInput, Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
+import { Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -9,10 +9,13 @@ import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
 import RahalatekLoader from './RahalatekLoader'
 import SearchableSelect from './SearchableSelect'
+import Search from './Search'
 import CustomTable from './CustomTable'
 import CustomScrollbar from './CustomScrollbar'
+import CustomSelect from './Select'
+import TextInput from './TextInput'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
-import { generateArrivalReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
+import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
@@ -370,7 +373,7 @@ export default function AdminPanel() {
 
     // Auto-fetch debts when filters change
     useEffect(() => {
-        if (activeTab === 'financials' && dataLoaded) {
+        if (activeTab === 'debts' && dataLoaded) {
             fetchDebts();
         }
     }, [debtFilters, activeTab, dataLoaded]);
@@ -770,25 +773,7 @@ export default function AdminPanel() {
         });
     };
 
-    const handleVipCarTypeChange = (e) => {
-        const carType = e.target.value;
-        let minCapacity = 2;
-        let maxCapacity = 8;
-        
-        if (carType === 'Sprinter') {
-            minCapacity = 9;
-            maxCapacity = 16;
-        }
-        
-        setTourData({
-            ...tourData,
-            vipCarType: carType,
-            carCapacity: {
-                min: minCapacity,
-                max: maxCapacity
-            }
-        });
-    };
+
 
     const handleAirportChange = (e) => {
         const { name, value } = e.target;
@@ -1257,7 +1242,9 @@ export default function AdminPanel() {
                         vitoReceptionPrice: '',
                         vitoFarewellPrice: '',
                         sprinterReceptionPrice: '',
-                        sprinterFarewellPrice: ''
+                        sprinterFarewellPrice: '',
+                        busReceptionPrice: '',
+                        busFarewellPrice: ''
                     }
                 }
             ]
@@ -1481,6 +1468,48 @@ export default function AdminPanel() {
         } catch (err) {
             console.error('Error generating arrival reminders:', err);
             toast.error(err.response?.data?.message || 'Failed to generate arrival reminders', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
+        } finally {
+            setNotificationLoading(false);
+        }
+    };
+
+    // Handle generating departure reminders manually
+    const handleGenerateDepartureReminders = async () => {
+        if (!isAdmin) return;
+        
+        setNotificationLoading(true);
+        try {
+            const result = await generateDepartureReminders();
+            toast.success(result.message || 'Departure reminders generated successfully', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+        } catch (err) {
+            console.error('Error generating departure reminders:', err);
+            toast.error(err.response?.data?.message || 'Failed to generate departure reminders', {
                 duration: 3000,
                 style: {
                     background: '#f44336',
@@ -2612,22 +2641,23 @@ export default function AdminPanel() {
                                         required
                                     />
                                 ) : (
-                                    <Select
+                                    <CustomSelect
                                         id="hotelCity"
-                                        name="city"
                                         value={hotelData.city}
-                                        onChange={handleHotelChange}
+                                        onChange={(value) => handleHotelChange({ target: { name: 'city', value } })}
+                                        options={[
+                                            { value: '', label: 'Select City' },
+                                            { value: 'Antalya', label: 'Antalya' },
+                                            { value: 'Bodrum', label: 'Bodrum' },
+                                            { value: 'Bursa', label: 'Bursa' },
+                                            { value: 'Cappadocia', label: 'Cappadocia' },
+                                            { value: 'Fethiye', label: 'Fethiye' },
+                                            { value: 'Istanbul', label: 'Istanbul' },
+                                            { value: 'Trabzon', label: 'Trabzon' }
+                                        ]}
+                                        placeholder="Select City"
                                         required
-                                    >
-                                        <option value="">Select City</option>
-                                        <option value="Antalya">Antalya</option>
-                                        <option value="Bodrum">Bodrum</option>
-                                        <option value="Bursa">Bursa</option>
-                                        <option value="Cappadocia">Cappadocia</option>
-                                        <option value="Fethiye">Fethiye</option>
-                                        <option value="Istanbul">Istanbul</option>
-                                        <option value="Trabzon">Trabzon</option>
-                                    </Select>
+                                    />
                                 )}
                             </div>
                                             
@@ -2635,18 +2665,19 @@ export default function AdminPanel() {
                                                 <div className="mb-2 block">
                                                     <Label htmlFor="hotelStars" value="Stars" />
                                                 </div>
-                                                <Select
+                                                <CustomSelect
                                                     id="hotelStars"
-                                                    name="stars"
                                                     value={hotelData.stars}
-                                                    onChange={handleHotelChange}
+                                                    onChange={(value) => handleHotelChange({ target: { name: 'stars', value } })}
+                                                    options={[
+                                                        { value: '', label: 'Rating' },
+                                                        { value: '3', label: '3 Stars' },
+                                                        { value: '4', label: '4 Stars' },
+                                                        { value: '5', label: '5 Stars' }
+                                                    ]}
+                                                    placeholder="Rating"
                                                     required
-                                                >
-                                                    <option value="">Rating</option>
-                                                    <option value="3">3 Stars</option>
-                                                    <option value="4">4 Stars</option>
-                                                    <option value="5">5 Stars</option>
-                                                </Select>
+                                                />
                                             </div>
                                         </div>
                                         
@@ -3003,21 +3034,17 @@ export default function AdminPanel() {
                                                                 
                                                                 <div className="mb-4">
                                                                     <Label htmlFor={`airport-${index}`} value="Select Airport" className="mb-2" />
-                                                                    <Select
+                                                                    <CustomSelect
                                                                         id={`airport-${index}`}
                                                                         value={item.airport}
-                                                                        onChange={(e) => handleAirportTransportationChange(index, 'airport', e.target.value)}
+                                                                        onChange={(value) => handleAirportTransportationChange(index, 'airport', value)}
+                                                                        options={[
+                                                                            { value: '', label: 'Select Airport' },
+                                                                            ...(airports.length > 0 ? getAirportOptions() : [])
+                                                                        ]}
+                                                                        placeholder="Select Airport"
                                                                         required
-                                                                    >
-                                                                        <option value="">Select Airport</option>
-                                                                        {airports.length > 0 && 
-                                                                            getAirportOptions().map((airport, idx) => (
-                                                                                <option key={idx} value={airport.value}>
-                                                                                    {airport.label}
-                                                                                </option>
-                                                                            ))
-                                                                        }
-                                                                    </Select>
+                                                                    />
                                                                 </div>
                                                                 
                                                                 <div>
@@ -3061,6 +3088,26 @@ export default function AdminPanel() {
                                                                                 size="sm"
                                                                                 value={item.transportation.sprinterFarewellPrice}
                                                                                 onChange={(e) => handleTransportationPriceChange(index, 'sprinterFarewellPrice', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <Label htmlFor={`bus-reception-${index}`} value="Bus Reception Price ($)" size="sm" className="mb-1" />
+                                                                            <TextInput
+                                                                                id={`bus-reception-${index}`}
+                                                                                type="number"
+                                                                                size="sm"
+                                                                                value={item.transportation.busReceptionPrice}
+                                                                                onChange={(e) => handleTransportationPriceChange(index, 'busReceptionPrice', e.target.value)}
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <Label htmlFor={`bus-farewell-${index}`} value="Bus Farewell Price ($)" size="sm" className="mb-1" />
+                                                                            <TextInput
+                                                                                id={`bus-farewell-${index}`}
+                                                                                type="number"
+                                                                                size="sm"
+                                                                                value={item.transportation.busFarewellPrice}
+                                                                                onChange={(e) => handleTransportationPriceChange(index, 'busFarewellPrice', e.target.value)}
                                                                             />
                                                                         </div>
                                                                     </div>
@@ -3154,23 +3201,56 @@ export default function AdminPanel() {
                                                             })}
                                                         />
                                                     </div>
+                                                    <div>
+                                                        <div className="mb-2 block">
+                                                            <Label htmlFor="busReceptionPrice" value="Bus Reception Price ($)" />
+                                                        </div>
+                                                        <TextInput
+                                                            id="busReceptionPrice"
+                                                            type="number"
+                                                            value={hotelData.transportation.busReceptionPrice}
+                                                            onChange={(e) => setHotelData({
+                                                                ...hotelData,
+                                                                transportation: {
+                                                                    ...hotelData.transportation,
+                                                                    busReceptionPrice: e.target.value
+                                                                }
+                                                            })}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <div className="mb-2 block">
+                                                            <Label htmlFor="busFarewellPrice" value="Bus Farewell Price ($)" />
+                                                        </div>
+                                                        <TextInput
+                                                            id="busFarewellPrice"
+                                                            type="number"
+                                                            value={hotelData.transportation.busFarewellPrice}
+                                                            onChange={(e) => setHotelData({
+                                                                ...hotelData,
+                                                                transportation: {
+                                                                    ...hotelData.transportation,
+                                                                    busFarewellPrice: e.target.value
+                                                                }
+                                                            })}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                Vito: 2-8 persons, Sprinter: 9-16 persons
+                                                Vito: 2-8 persons, Sprinter: 9-16 persons, Bus: +16 persons
                                             </p>
                                         </div>
                                         
                                         <div>
-                                            <div className="mb-2 block">
-                                                <Label htmlFor="hotelDescription" value="Hotel Description" />
-                                            </div>
-                                            <Textarea
+                                            <TextInput
                                                 id="hotelDescription"
                                                 name="description"
+                                                as="textarea"
                                                 rows={3}
                                                 value={hotelData.description}
                                                 onChange={handleHotelChange}
+                                                label="Hotel Description"
                                             />
                                         </div>
                                         
@@ -3217,60 +3297,71 @@ export default function AdminPanel() {
                                             </div>
                                             
                                             <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="tourCity" value="City" />
-                                                </div>
-                                                <Select
+                                                <CustomSelect
                                                     id="tourCity"
-                                                    name="city"
+                                                    label="City"
                                                     value={tourData.city}
-                                                    onChange={handleTourChange}
+                                                    onChange={(value) => setTourData({...tourData, city: value})}
+                                                    options={[
+                                                        { value: "Antalya", label: "Antalya" },
+                                                        { value: "Bodrum", label: "Bodrum" },
+                                                        { value: "Bursa", label: "Bursa" },
+                                                        { value: "Cappadocia", label: "Cappadocia" },
+                                                        { value: "Fethiye", label: "Fethiye" },
+                                                        { value: "Istanbul", label: "Istanbul" },
+                                                        { value: "Trabzon", label: "Trabzon" }
+                                                    ]}
+                                                    placeholder="Select City"
                                                     required
-                                                >
-                                                    <option value="">Select City</option>
-                                                    <option value="Antalya">Antalya</option>
-                                                    <option value="Bodrum">Bodrum</option>
-                                                    <option value="Bursa">Bursa</option>
-                                                    <option value="Cappadocia">Cappadocia</option>
-                                                    <option value="Fethiye">Fethiye</option>
-                                                    <option value="Istanbul">Istanbul</option>
-                                                    <option value="Trabzon">Trabzon</option>
-                                                </Select>
+                                                />
                                             </div>
                                         </div>
                                         
                                                                 <div className={`grid grid-cols-1 ${tourData.tourType === 'Group' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
                             <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="tourType" value="Tour Type" />
-                                </div>
-                                <Select
+                                <CustomSelect
                                     id="tourType"
-                                    name="tourType"
+                                    label="Tour Type"
                                     value={tourData.tourType}
-                                    onChange={handleTourChange}
+                                    onChange={(value) => setTourData({...tourData, tourType: value})}
+                                    options={[
+                                        { value: "Group", label: "Group Tour (per person)" },
+                                        { value: "VIP", label: "VIP Tour (per car)" }
+                                    ]}
                                     required
-                                >
-                                    <option value="Group">Group Tour (per person)</option>
-                                    <option value="VIP">VIP Tour (per car)</option>
-                                </Select>
+                                />
                             </div>
                             
                             {tourData.tourType === 'VIP' && (
                                 <div>
-                                    <div className="mb-2 block">
-                                        <Label htmlFor="vipCarType" value="VIP Car Type" />
-                                    </div>
-                                    <Select
+                                    <CustomSelect
                                         id="vipCarType"
-                                        name="vipCarType"
+                                        label="VIP Car Type"
                                         value={tourData.vipCarType}
-                                        onChange={handleVipCarTypeChange}
+                                        onChange={(value) => {
+                                            let minCapacity = 2;
+                                            let maxCapacity = 8;
+                                            
+                                            if (value === 'Sprinter') {
+                                                minCapacity = 9;
+                                                maxCapacity = 16;
+                                            }
+                                            
+                                            setTourData({
+                                                ...tourData,
+                                                vipCarType: value,
+                                                carCapacity: {
+                                                    min: minCapacity,
+                                                    max: maxCapacity
+                                                }
+                                            });
+                                        }}
+                                        options={[
+                                            { value: "Vito", label: "Vito (2-8 persons)" },
+                                            { value: "Sprinter", label: "Sprinter (9-16 persons)" }
+                                        ]}
                                         required
-                                    >
-                                        <option value="Vito">Vito (2-8 persons)</option>
-                                        <option value="Sprinter">Sprinter (9-16 persons)</option>
-                                    </Select>
+                                    />
                                 </div>
                             )}
                             
@@ -3325,15 +3416,14 @@ export default function AdminPanel() {
                         </div>
                         
                         <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourDetailDesc" value="Detailed Description" />
-                            </div>
-                            <Textarea
+                            <TextInput
                                 id="tourDetailDesc"
                                 name="detailedDescription"
+                                as="textarea"
                                 rows={4}
                                 value={tourData.detailedDescription}
                                 onChange={handleTourChange}
+                                label="Detailed Description"
                             />
                         </div>
                                         
@@ -3531,15 +3621,14 @@ export default function AdminPanel() {
                                         </div>
                                         
                                         <div>
-                                            <div className="mb-2 block">
-                                                <Label htmlFor="officeDescription" value="Description" />
-                                            </div>
-                                            <Textarea
+                                            <TextInput
                                                 id="officeDescription"
                                                 name="description"
+                                                as="textarea"
                                                 rows={3}
                                                 value={officeData.description}
                                                 onChange={handleOfficeChange}
+                                                label="Description"
                                             />
                                         </div>
                                         
@@ -3558,15 +3647,10 @@ export default function AdminPanel() {
                                         
                                         {/* Search Bar */}
                                         <div className="mb-6">
-                                            <TextInput
+                                            <Search
                                                 placeholder="Search offices by name, location, email, or phone number..."
                                                 value={officeSearchQuery}
                                                 onChange={(e) => setOfficeSearchQuery(e.target.value)}
-                                                icon={() => (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                    </svg>
-                                                )}
                                             />
                                         </div>
                                         
@@ -4314,7 +4398,7 @@ export default function AdminPanel() {
                                                     variant="red"
                                                     onClick={clearFinancialFilters}
                                                     disabled={!hasFinancialFiltersApplied()}
-                                                    className="w-full"
+                                                    className="w-full h-12"
                                                     title={hasFinancialFiltersApplied() ? "Clear all financial filters" : "No filters to clear"}
                                                     icon={HiX}
                                                 >
@@ -4326,7 +4410,7 @@ export default function AdminPanel() {
                                                     variant="blue"
                                                     onClick={fetchFinancialData}
                                                     disabled={financialLoading}
-                                                    className="w-full"
+                                                    className="w-full h-12"
                                                     title="Refresh financial data"
                                                 >
                                                     {financialLoading ? 'Refreshing...' : 'Refresh Data'}
@@ -4338,27 +4422,12 @@ export default function AdminPanel() {
                                     {/* Search Bar and Filters */}
                                     <div className="mb-6 -ml-2">
                                         <div className="flex gap-4 items-center">
-                                            <div className="relative w-80">
-                                                <TextInput
+                                            <div className="w-80">
+                                                <Search
                                                     placeholder={financialFilters.viewType === 'clients' ? "Search clients by name..." : "Search offices by name..."}
                                                     value={financialSearchQuery}
                                                     onChange={(e) => setFinancialSearchQuery(e.target.value)}
-                                                    icon={() => (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                        </svg>
-                                                    )}
-                                                    className="pl-5 w-full"
                                                 />
-                                                {financialSearchQuery && (
-                                                    <button
-                                                        onClick={() => setFinancialSearchQuery('')}
-                                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                                        title="Clear search"
-                                                    >
-                                                        <HiX className="h-4 w-4" />
-                                                    </button>
-                                                )}
                                             </div>
                                             
                                             {/* Client Type Filter - Only show in clients section */}
@@ -4551,9 +4620,11 @@ export default function AdminPanel() {
                                         <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                             <div>
-                                                <Label htmlFor="debt-office-filter" value="Office" className="mb-2" />
-                                                <SearchableSelect
+                                                <CustomSelect
                                                     id="debt-office-filter"
+                                                    label="Office"
+                                                    value={debtFilters.office}
+                                                    onChange={(value) => handleDebtFilterChange('office', value)}
                                                     options={[
                                                         { value: '', label: 'All Offices' },
                                                         ...offices.map(office => ({
@@ -4561,46 +4632,43 @@ export default function AdminPanel() {
                                                             label: `${office.name} - ${office.location}`
                                                         }))
                                                     ]}
-                                                    value={debtFilters.office}
-                                                    onChange={(eventOrValue) => {
-                                                        const value = typeof eventOrValue === 'string' 
-                                                            ? eventOrValue 
-                                                            : eventOrValue?.target?.value || eventOrValue;
-                                                        handleDebtFilterChange('office', value);
-                                                    }}
                                                     placeholder="Search offices..."
                                                 />
                                             </div>
                                             <div>
-                                                <Label htmlFor="debt-status-filter" value="Status" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id="debt-status-filter"
+                                                    label="Status"
                                                     value={debtFilters.status}
-                                                    onChange={(e) => handleDebtFilterChange('status', e.target.value)}
-                                                >
-                                                    <option value="">All Status</option>
-                                                    <option value="OPEN">Open</option>
-                                                    <option value="CLOSED">Closed</option>
-                                                </Select>
+                                                    onChange={(value) => handleDebtFilterChange('status', value)}
+                                                    options={[
+                                                        { value: "", label: "All Status" },
+                                                        { value: "OPEN", label: "Open" },
+                                                        { value: "CLOSED", label: "Closed" }
+                                                    ]}
+                                                    placeholder="Select status..."
+                                                />
                                             </div>
                                             <div>
-                                                <Label htmlFor="debt-type-filter" value="Type" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id="debt-type-filter"
+                                                    label="Type"
                                                     value={debtFilters.type}
-                                                    onChange={(e) => handleDebtFilterChange('type', e.target.value)}
-                                                >
-                                                    <option value="">All Types</option>
-                                                    <option value="OWED_TO_OFFICE">We Owe Them</option>
-                                                    <option value="OWED_FROM_OFFICE">They Owe Us</option>
-                                                </Select>
+                                                    onChange={(value) => handleDebtFilterChange('type', value)}
+                                                    options={[
+                                                        { value: "", label: "All Types" },
+                                                        { value: "OWED_TO_OFFICE", label: "We Owe Them" },
+                                                        { value: "OWED_FROM_OFFICE", label: "They Owe Us" }
+                                                    ]}
+                                                    placeholder="Select type..."
+                                                />
                                             </div>
                                             <div className="flex items-end">
                                                 <CustomButton
                                                     variant="red"
                                                     onClick={clearDebtFilters}
                                                     disabled={!hasDebtFiltersApplied()}
-                                                    className="w-full"
+                                                    className="w-full h-[44px]"
                                                     title={hasDebtFiltersApplied() ? "Clear all debt filters" : "No filters to clear"}
                                                     icon={HiX}
                                                 >
@@ -4612,7 +4680,7 @@ export default function AdminPanel() {
                                                     variant="blue"
                                                     onClick={fetchDebts}
                                                     disabled={debtLoading}
-                                                    className="w-full"
+                                                    className="w-full h-[44px]"
                                                     title="Refresh debt data"
                                                 >
                                                     {debtLoading ? 'Loading...' : 'Refresh Debts'}
@@ -4780,7 +4848,13 @@ export default function AdminPanel() {
                                         renderRow={(user) => (
                                             <>
                                                 <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
-                                                    {user.username}
+                                                    <button
+                                                        onClick={() => navigate(`/profile/${user._id}`)}
+                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium cursor-pointer"
+                                                        title="View user profile"
+                                                    >
+                                                        {user.username}
+                                                    </button>
                                                 </Table.Cell>
                                                 <Table.Cell className="flex items-center justify-center px-4 py-3">
                                                     <UserBadge user={user} />
@@ -4875,7 +4949,13 @@ export default function AdminPanel() {
                         renderRow={(user) => (
                             <>
                                 <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
-                                    {user.username}
+                                    <button
+                                        onClick={() => navigate(`/profile/${user._id}`)}
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium cursor-pointer"
+                                        title="View user profile"
+                                    >
+                                        {user.username}
+                                    </button>
                                 </Table.Cell>
                                 <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                                     {new Date(user.createdAt).toLocaleDateString()}
@@ -4962,6 +5042,34 @@ export default function AdminPanel() {
                                                             </>
                                                         ) : (
                                                             "Generate Arrival Reminders"
+                                                        )}
+                                                    </CustomButton>
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <h4 className="font-medium text-gray-900 dark:text-white">
+                                                        Departure Reminders
+                                                    </h4>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Generate notifications for vouchers with clients departing tomorrow.
+                                                    </p>
+                                                    <CustomButton
+                                                        variant="blue"
+                                                        onClick={handleGenerateDepartureReminders}
+                                                        disabled={notificationLoading}
+                                                        title="Generate departure reminder notifications"
+                                                        icon={notificationLoading ? null : FaPlaneDeparture}
+                                                    >
+                                                        {notificationLoading ? (
+                                                            <>
+                                                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                </svg>
+                                                                Generating...
+                                                            </>
+                                                        ) : (
+                                                            "Generate Departure Reminders"
                                                         )}
                                                     </CustomButton>
                                                 </div>
@@ -5267,16 +5375,17 @@ export default function AdminPanel() {
                                                 </Select>
                                             </div>
                                             <div>
-                                                <Label htmlFor="debt-type" value="Debt Type" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id="debt-type"
+                                                    label="Debt Type"
                                                     value={debtForm.type}
-                                                    onChange={(e) => setDebtForm({ ...debtForm, type: e.target.value })}
+                                                    onChange={(value) => setDebtForm({ ...debtForm, type: value })}
+                                                    options={[
+                                                        { value: "OWED_TO_OFFICE", label: "We Owe Them" },
+                                                        { value: "OWED_FROM_OFFICE", label: "They Owe Us" }
+                                                    ]}
                                                     required
-                                                >
-                                                    <option value="OWED_TO_OFFICE">We Owe Them</option>
-                                                    <option value="OWED_FROM_OFFICE">They Owe Us</option>
-                                                </Select>
+                                                />
                                             </div>
                                         </div>
 

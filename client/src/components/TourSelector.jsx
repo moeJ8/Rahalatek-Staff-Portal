@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Label, Checkbox, TextInput, Select } from 'flowbite-react';
+import { Card, Label, Checkbox, Select } from 'flowbite-react';
 import { FaCrown, FaUsers, FaCar, FaSearch, FaCheck, FaCalendarDay, FaGripLines, FaArrowsAltV } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
+import Search from './Search';
 
 const TourSelector = ({ 
   availableTours, 
@@ -116,16 +117,13 @@ const TourSelector = ({
       <Card className="dark:bg-slate-900">
         <div className="space-y-3">
           {/* Search Bar */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <FaSearch className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </div>
-            <TextInput
-              type="text"
+          <div>
+            <Search
               placeholder="Search tours..."
               value={searchTerm}
               onChange={handleSearch}
-              className="pl-10 w-full"
+              showClearButton={true}
+              className="w-full"
             />
           </div>
           

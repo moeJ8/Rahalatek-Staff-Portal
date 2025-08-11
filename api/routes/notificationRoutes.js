@@ -9,6 +9,7 @@ router.get('/unread-count', notificationController.getUnreadCount);
 router.put('/:id/read', notificationController.markAsRead);
 router.put('/mark-all-read', notificationController.markAllAsRead);
 router.post('/generate-arrival-reminders', notificationController.generateArrivalReminders);
+router.post('/generate-departure-reminders', notificationController.generateDepartureReminders);
 router.post('/generate-daily-summary', notificationController.generateDailyArrivalsSummary);
 router.delete('/:id', notificationController.deleteNotification);
 router.post('/cleanup-expired', notificationController.cleanupExpired);

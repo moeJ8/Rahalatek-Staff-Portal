@@ -81,6 +81,22 @@ export const generateArrivalReminders = async () => {
 };
 
 /**
+ * Generate departure reminders manually (admin only)
+ */
+export const generateDepartureReminders = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post('/api/notifications/generate-departure-reminders', {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating departure reminders:', error);
+    throw error;
+  }
+};
+
+/**
  * Delete a notification (admin only)
  */
 export const deleteNotification = async (notificationId) => {

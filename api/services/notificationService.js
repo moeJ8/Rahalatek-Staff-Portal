@@ -105,6 +105,70 @@ class NotificationService {
     }
 
     /**
+     * Generate departure reminder notifications for vouchers departing tomorrow
+     */
+    static async generateDepartureReminders() {
+        try {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const tomorrowEnd = new Date(tomorrow);
+            tomorrowEnd.setHours(23, 59, 59, 999);
+
+            const vouchersDepartingTomorrow = await Voucher.find({
+                departureDate: {
+                    $gte: tomorrow,
+                    $lte: tomorrowEnd
+                },
+                status: { $in: ['await', 'arrived'] }, // Only vouchers that haven't been cancelled
+                $or: [
+                    { isDeleted: false },
+                    { isDeleted: { $exists: false } }
+                ]
+            }).populate('createdBy', 'username');
+
+            const notifications = [];
+
+            for (const voucher of vouchersDepartingTomorrow) {
+                // Check if we already have a departure reminder for this voucher
+                const existingNotification = await Notification.findOne({
+                    type: 'voucher_departure_reminder',
+                    relatedVoucher: voucher._id,
+                    isActive: true
+                });
+
+                if (!existingNotification) {
+                    const notification = await this.createNotification({
+                        type: 'voucher_departure_reminder',
+                        title: `Client Departure Tomorrow`,
+                        message: `${voucher.clientName} (Voucher #${voucher.voucherNumber}) is scheduled to depart tomorrow.`,
+                        relatedVoucher: voucher._id,
+                        voucherCreatedBy: voucher.createdBy._id,
+                        priority: 'high',
+                        metadata: {
+                            voucherNumber: voucher.voucherNumber,
+                            clientName: voucher.clientName,
+                            departureDate: voucher.departureDate,
+                            createdByUsername: voucher.createdBy.username
+                        }
+                    });
+
+                    notifications.push(notification);
+                }
+            }
+
+            if (notifications.length > 0) {
+                console.log(`${notifications.length} departure reminders sent`);
+            }
+            return notifications;
+        } catch (error) {
+            console.error('Error generating departure reminders:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Create role change notification
      */
     static async createRoleChangeNotification({

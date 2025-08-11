@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, Alert, TextInput, Select } from 'flowbite-react';
+import { Card, Button, Badge, Alert } from 'flowbite-react';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
 import TourInfo from '../components/TourInfo';
 import CustomButton from '../components/CustomButton';
 import RahalatekLoader from '../components/RahalatekLoader';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import Search from '../components/Search';
+import Select from '../components/Select';
 import toast from 'react-hot-toast';
 
 export default function ToursPage() {
@@ -101,12 +103,12 @@ export default function ToursPage() {
     setSearchTerm(e.target.value);
   };
   
-  const handleCityFilter = (e) => {
-    setCityFilter(e.target.value);
+  const handleCityFilter = (value) => {
+    setCityFilter(value);
   };
   
-  const handleDurationFilter = (e) => {
-    setDurationFilter(e.target.value);
+  const handleDurationFilter = (value) => {
+    setDurationFilter(value);
   };
   
   const resetFilters = () => {
@@ -177,13 +179,12 @@ export default function ToursPage() {
         <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
           {/* Search Bar */}
           <div className="mb-4">
-            <TextInput
-              type="text"
+            <Search
               placeholder="Search by name, city, description, or highlights..."
               value={searchTerm}
               onChange={handleSearch}
-              icon={FaSearch}
               className="w-full"
+              showClearButton={true}
             />
           </div>
           
@@ -193,37 +194,39 @@ export default function ToursPage() {
               <Select 
                 value={cityFilter}
                 onChange={handleCityFilter}
+                placeholder="Filter by City"
+                options={[
+                  { value: '', label: 'Filter by City' },
+                  ...availableCities.map(city => ({ value: city, label: city }))
+                ]}
                 className="w-full"
-              >
-                <option value="">Filter by City</option>
-                {availableCities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </Select>
+              />
             </div>
             
             <div className="w-full">
               <Select 
                 value={durationFilter}
                 onChange={handleDurationFilter}
+                placeholder="Filter by Duration"
+                options={[
+                  { value: '', label: 'Filter by Duration' },
+                  { value: '1', label: 'Short (up to 3 hours)' },
+                  { value: '2', label: 'Medium (3-6 hours)' },
+                  { value: '3', label: 'Long (6+ hours)' }
+                ]}
                 className="w-full"
-              >
-                <option value="">Filter by Duration</option>
-                <option value="1">Short (up to 3 hours)</option>
-                <option value="2">Medium (3-6 hours)</option>
-                <option value="3">Long (6+ hours)</option>
-              </Select>
+              />
             </div>
             
             <div className="w-full sm:col-span-2 lg:col-span-1">
               <CustomButton 
-                variant="gray" 
+                variant="red" 
                 onClick={resetFilters}
                 disabled={!searchTerm && !cityFilter && !durationFilter}
-                className="w-full"
+                className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
-                Reset Filters
+                Clean Filters
               </CustomButton>
             </div>
           </div>
