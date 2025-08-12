@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spinner } from 'flowbite-react';
+import { Card } from 'flowbite-react';
 import Select from './Select';
 import { 
     HiDocumentText, 
@@ -15,6 +15,7 @@ import {
     HiCash
 } from 'react-icons/hi';
 import axios from 'axios';
+import RahalatekLoader from './RahalatekLoader';
 import toast from 'react-hot-toast';
 
 const getCurrencySymbol = (currency) => {
@@ -134,41 +135,50 @@ const CurrencyBreakdown = ({ revenueByCurrency, profitByCurrency }) => {
     );
 };
 
-const MonthlyChart = ({ monthlyData, title, dataKey, color }) => (
-    <Card className="bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700">
-        <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <HiChartBar className="w-5 h-5" />
-                {title}
-            </h3>
-        </div>
-        <div className="space-y-2">
-            {monthlyData.map((data, index) => {
-                const maxValue = Math.max(...monthlyData.map(d => d[dataKey]));
-                const percentage = maxValue > 0 ? (data[dataKey] / maxValue) * 100 : 0;
-                
-                return (
-                    <div key={index} className="flex items-center gap-3">
-                        <div className="w-8 text-xs text-gray-600 dark:text-gray-400">
-                            {data.month}
-                        </div>
-                        <div className="flex-1 flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                <div 
-                                    className={`h-2 rounded-full ${color}`}
-                                    style={{ width: `${percentage}%` }}
-                                />
+const MonthlyChart = ({ monthlyData, title, dataKey, color }) => {
+    const [animateBars, setAnimateBars] = useState(false);
+    useEffect(() => {
+        setAnimateBars(false);
+        const t = setTimeout(() => setAnimateBars(true), 60);
+        return () => clearTimeout(t);
+    }, [monthlyData, dataKey]);
+
+    return (
+        <Card className="bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700">
+            <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <HiChartBar className="w-5 h-5" />
+                    {title}
+                </h3>
+            </div>
+            <div className="space-y-2">
+                {monthlyData.map((data, index) => {
+                    const maxValue = Math.max(...monthlyData.map(d => d[dataKey]));
+                    const percentage = maxValue > 0 ? (data[dataKey] / maxValue) * 100 : 0;
+                    
+                    return (
+                        <div key={index} className="flex items-center gap-3">
+                            <div className="w-8 text-xs text-gray-600 dark:text-gray-400">
+                                {data.month}
                             </div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-white w-12 text-right">
-                                {dataKey === 'revenue' ? formatNumber(data[dataKey]) : data[dataKey]}
+                            <div className="flex-1 flex items-center gap-2">
+                                <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div 
+                                        className={`h-2 rounded-full ${color} transition-[width] duration-700 ease-out will-change-[width]`}
+                                        style={{ width: animateBars ? `${percentage}%` : '0%' }}
+                                    />
+                                </div>
+                                <div className="text-sm font-medium text-gray-900 dark:text-white w-12 text-right">
+                                    {dataKey === 'revenue' ? formatNumber(data[dataKey]) : data[dataKey]}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                );
-            })}
-        </div>
-    </Card>
-);
+                    );
+                })}
+            </div>
+        </Card>
+    );
+};
 
 export default function UserAnalytics({ userId }) {
     const [analytics, setAnalytics] = useState(null);
@@ -271,12 +281,7 @@ export default function UserAnalytics({ userId }) {
         return (
             <Card className="bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-center py-12">
-                    <div className="flex items-center gap-3">
-                        <Spinner size="lg" />
-                        <span className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                            Loading analytics...
-                        </span>
-                    </div>
+                    <RahalatekLoader size="lg" />
                 </div>
             </Card>
         );
@@ -409,8 +414,8 @@ export default function UserAnalytics({ userId }) {
                 )}
             </div>
 
-            {/* Revenue Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Revenue & Profit Stats - 2x2 grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <StatCard
                     title="Total Revenue"
                     value={selectedCurrency === 'ALL' ? 
@@ -420,16 +425,6 @@ export default function UserAnalytics({ userId }) {
                     icon={HiCurrencyDollar}
                     color="bg-emerald-500"
                     trend={performance.growth.revenue !== 0 ? { value: performance.growth.revenue } : null}
-                />
-                <StatCard
-                    title="Average Voucher Value"
-                    value={selectedCurrency === 'ALL' ? 
-                        <span className="flex items-center gap-1"><HiCash className="w-5 h-5 text-green-600" />{formatNumber((filteredFinancialData?.overview?.averageVoucherValue) || overview.averageVoucherValue)}</span> :
-                        `${selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'TRY' ? '₺' : '$'}${formatNumber((filteredFinancialData?.overview?.averageVoucherValue) || overview.averageVoucherValue)}`
-                    }
-                    icon={HiTrendingUp}
-                    color="bg-purple-500"
-                    subtitle="Mean value per voucher"
                 />
                 <StatCard
                     title="This Month Revenue"
@@ -443,8 +438,8 @@ export default function UserAnalytics({ userId }) {
                 />
             </div>
 
-            {/* Profit Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Profit Stats - same row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <StatCard
                     title="Total Profit"
                     value={selectedCurrency === 'ALL' ? 
@@ -454,16 +449,6 @@ export default function UserAnalytics({ userId }) {
                     icon={HiCash}
                     color="bg-green-500"
                     trend={performance.growth.profit !== 0 ? { value: performance.growth.profit } : null}
-                />
-                <StatCard
-                    title="Average Profit per Voucher"
-                    value={selectedCurrency === 'ALL' ? 
-                        <span className="flex items-center gap-1"><HiCash className="w-5 h-5 text-green-600" />{formatNumber((filteredFinancialData?.profit?.average) || profit.average)}</span> :
-                        `${selectedCurrency === 'EUR' ? '€' : selectedCurrency === 'TRY' ? '₺' : '$'}${formatNumber((filteredFinancialData?.profit?.average) || profit.average)}`
-                    }
-                    icon={HiTrendingUp}
-                    color="bg-teal-500"
-                    subtitle="Mean profit per voucher"
                 />
                 <StatCard
                     title="This Month Profit"
@@ -494,7 +479,6 @@ export default function UserAnalytics({ userId }) {
 
             {/* Monthly Charts */}
             <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Monthly Analytics</h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <MonthlyChart
                         monthlyData={monthlyLoading ? [] : (monthlyData?.revenue || monthly.revenue)}

@@ -17,6 +17,7 @@ import TextInput from './TextInput'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
+import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary } from '../utils/profileApi'
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
@@ -26,18 +27,18 @@ export default function AdminPanel() {
     const navigate = useNavigate();
     
     // Check user role
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const isAdmin = user.isAdmin || false;
-    const isAccountant = user.isAccountant || false;
+    const authUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = authUser.isAdmin || false;
+    const isAccountant = authUser.isAccountant || false;
     
     const getInitialTab = () => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
-                    const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts']; // Accountants can access financials and debts but not users/requests
+            const availableTabs = isAdmin 
+            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'users', 'requests', 'notifications']
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries']; // Accountants can access financials, debts, and salaries but not users/requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -61,8 +62,8 @@ export default function AdminPanel() {
         url.searchParams.set('tab', tabName);
         window.history.pushState({}, '', url);
         
-        // Fetch users data only when switching to users tab and data not loaded yet
-        if (tabName === 'users' && users.length === 0 && dataLoaded) {
+        // Fetch users data only when switching to users/salaries tab
+        if ((tabName === 'users' || tabName === 'salaries') && dataLoaded) {
             fetchUsers();
         }
         
@@ -260,6 +261,112 @@ export default function AdminPanel() {
         );
     }, [offices, officeSearchQuery]);
 
+    // Salaries/Bonuses tab state
+    const [selectedUserForSalary, setSelectedUserForSalary] = useState('');
+    const [bonusForm, setBonusForm] = useState({ amount: '', currency: 'USD', note: '' });
+    const [bonuses, setBonuses] = useState([]);
+    const [salaryTabLoading, setSalaryTabLoading] = useState(false);
+    const [salaryForm, setSalaryForm] = useState({ salaryAmount: '', salaryCurrency: 'USD', salaryDayOfMonth: '', salaryNotes: '' });
+    const [updateFromNextCycleAdmin, setUpdateFromNextCycleAdmin] = useState(false);
+
+    const handleLoadUserBonuses = async (userId) => {
+        try {
+            setSalaryTabLoading(true);
+            const res = await getUserBonuses(userId);
+            setBonuses(res.bonuses || []);
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to load bonuses', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
+    const handleLoadUserSalary = async (userId) => {
+        try {
+            setSalaryTabLoading(true);
+            const res = await getUserSalary(userId);
+            setSalaryForm({
+                salaryAmount: res.salaryAmount ?? '',
+                salaryCurrency: res.salaryCurrency || 'USD',
+                salaryDayOfMonth: res.salaryDayOfMonth ?? '',
+                salaryNotes: res.salaryNotes || ''
+            });
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to load salary', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
+    const computePreviousCycle = () => {
+        // Determine previous month for user's salary cycle
+        const now = new Date();
+        // Previous month relative to now
+        const prevMonthIndex = (now.getMonth() + 11) % 12;
+        const year = now.getFullYear() - (now.getMonth() === 0 ? 1 : 0);
+        return { year, month: prevMonthIndex };
+    };
+
+    const handleGrantBonus = async () => {
+        if (!selectedUserForSalary) return;
+        const selected = users.find(u => u._id === selectedUserForSalary);
+        if (!selected) return;
+        const amountNum = parseFloat(bonusForm.amount);
+        if (isNaN(amountNum) || amountNum < 0) {
+            toast.error('Enter a valid bonus amount', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            return;
+        }
+        const { year, month } = computePreviousCycle();
+        try {
+            setSalaryTabLoading(true);
+            await saveMonthlyBonus(selected._id, { year, month, amount: amountNum, note: bonusForm.note });
+            toast.success('Bonus saved', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            await handleLoadUserBonuses(selected._id);
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to save bonus', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
     // Standard room types for hotels
     const standardRoomTypes = [
         "SINGLE ROOM",
@@ -329,8 +436,8 @@ export default function AdminPanel() {
                     setTours(toursResponse.data);
                     setOffices(officesResponse.data.data);
                     
-                    // Only fetch users if starting on users tab or requests tab
-                    if (activeTab === 'users') {
+                    // Only fetch users if starting on users/salaries tab or requests tab
+                    if (activeTab === 'users' || activeTab === 'salaries') {
                         await fetchUsers();
                     } else if (activeTab === 'requests') {
                         await fetchPendingRequests();
@@ -348,7 +455,7 @@ export default function AdminPanel() {
             
             fetchInitialData();
         }
-    }, []);
+    }, [activeTab, dataLoaded]);
     
     // Only fetch users data when switching to users tab and haven't loaded it yet
     useEffect(() => {
@@ -369,7 +476,7 @@ export default function AdminPanel() {
         if (activeTab === 'tours' && dataLoaded && tours.length === 0) {
             fetchTours();
         }
-    }, [activeTab]);
+    }, [activeTab, dataLoaded, hotels.length, tours.length]);
 
     // Auto-fetch debts when filters change
     useEffect(() => {
@@ -444,6 +551,35 @@ export default function AdminPanel() {
             });
             
             const approvedUsers = response.data.filter(user => user.isApproved);
+            // Ensure current user is included (backend may exclude requester)
+            const currentUserId = authUser.id || authUser._id;
+            if (currentUserId && !approvedUsers.some(u => u._id === currentUserId)) {
+                approvedUsers.unshift({
+                    _id: currentUserId,
+                    username: authUser.username || 'Me',
+                    isAdmin: !!authUser.isAdmin,
+                    isAccountant: !!authUser.isAccountant,
+                    isApproved: true
+                });
+            }
+            // If current user's record lacks salary fields, hydrate them from /me/salary
+            if (currentUserId) {
+                const meIndex = approvedUsers.findIndex(u => u._id === currentUserId);
+                if (meIndex !== -1 && typeof approvedUsers[meIndex].salaryAmount === 'undefined') {
+                    try {
+                        const meSalaryRes = await axios.get('/api/profile/me/salary', {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        approvedUsers[meIndex] = {
+                            ...approvedUsers[meIndex],
+                            salaryAmount: meSalaryRes.data?.salaryAmount ?? null,
+                            salaryCurrency: meSalaryRes.data?.salaryCurrency ?? 'USD'
+                        };
+                    } catch {
+                        // ignore, leave as-is
+                    }
+                }
+            }
             setUsers(approvedUsers);
             setError('');
         } catch (err) {
@@ -2394,6 +2530,25 @@ export default function AdminPanel() {
                                     </svg>
                                     Users
                                 </button>
+                                {(isAdmin || isAccountant) && (
+                                    <button
+                                        id="tab-salaries"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'salaries' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                        onClick={() => handleTabChange('salaries')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'salaries')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'salaries'}
+                                        aria-controls="salaries-panel"
+                                    >
+                                        <FaDollarSign className="h-5 w-5 mr-3" />
+                                        Salaries
+                                    </button>
+                                )}
                                 
                                 {/* Only show User Requests tab to full admins */}
                                 {isAdmin && (
@@ -2549,6 +2704,20 @@ export default function AdminPanel() {
                                     >
                                         Users
                                     </button>
+                                    {(isAdmin || isAccountant) && (
+                                        <button
+                                            id="tab-salaries-mobile"
+                                            className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'salaries' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                            onClick={() => handleTabChange('salaries')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'salaries')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'salaries'}
+                                            aria-controls="salaries-panel"
+                                        >
+                                            Salaries
+                                        </button>
+                                    )}
                                     {isAdmin && (
                                         <button
                                             id="tab-requests-mobile"
@@ -4833,8 +5002,11 @@ export default function AdminPanel() {
                                             ...(isAdmin ? [
                                                 { label: 'Admin Actions', className: '' },
                                                 { label: 'Accountant Actions', className: '' },
+                                                { label: 'Salary', className: '' },
                                                 { label: 'Delete', className: '' }
-                                            ] : [])
+                                            ] : [
+                                                { label: 'Salary', className: '' }
+                                            ])
                                         ]}
                                         data={users.sort((a, b) => {
                                             // Sort by role priority: Admin (3) > Accountant (2) > User (1)
@@ -4905,21 +5077,38 @@ export default function AdminPanel() {
                                                                 )}
                                                             </div>
                                                         </Table.Cell>
-                                                        <Table.Cell className="px-4 py-3">
-                                                            <CustomButton
-                                                                variant="red"
-                                                                onClick={() => openDeleteUserModal(user)}
-                                                                title="Delete user"
-                                                                icon={({ className }) => (
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                    </svg>
-                                                                )}
-                                                            >
-                                                                Delete
-                                                            </CustomButton>
-                                                        </Table.Cell>
                                                     </>
+                                                )}
+                                                {(isAdmin || isAccountant) && (
+                                                    <Table.Cell className="px-4 py-3 text-sm">
+                                                        {isAccountant && user.isAdmin ? (
+                                                            <span className="text-gray-500 dark:text-gray-400">Restricted</span>
+                                                        ) : (
+                                                            typeof user.salaryAmount === 'number' ? (
+                                                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                                                    {getCurrencySymbol(user.salaryCurrency || 'USD')}{Number(user.salaryAmount).toFixed(2)}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-gray-500 dark:text-gray-400">N/A</span>
+                                                            )
+                                                        )}
+                                                    </Table.Cell>
+                                                )}
+                                                {isAdmin && (
+                                                    <Table.Cell className="px-4 py-3">
+                                                        <CustomButton
+                                                            variant="red"
+                                                            onClick={() => openDeleteUserModal(user)}
+                                                            title="Delete user"
+                                                            icon={({ className }) => (
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            )}
+                                                        >
+                                                            Delete
+                                                        </CustomButton>
+                                                    </Table.Cell>
                                                 )}
                                             </>
                                         )}
@@ -4930,6 +5119,220 @@ export default function AdminPanel() {
                                             </svg>
                                         )}
                                     />
+                                </Card>
+                            )}
+
+                            {(activeTab === 'salaries') && (isAdmin || isAccountant) && (
+                                <Card className="w-full dark:bg-slate-950" id="salaries-panel" role="tabpanel" aria-labelledby="tab-salaries">
+                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Salaries & Bonuses</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <Label value="Select User" className="mb-2" />
+                                            <SearchableSelect
+                                                id="salaryUserSelect"
+                                                value={selectedUserForSalary}
+                                                onChange={async (val) => { 
+                                                    const v = val?.target?.value ?? val; 
+                                                    const selected = users.find(u => u._id === v); 
+                                                    if (isAccountant && !isAdmin && selected?.isAdmin) { 
+                                                        toast.error('Accountants cannot manage admin salaries', {
+                                                            duration: 3000,
+                                                            style: {
+                                                                background: '#f44336',
+                                                                color: '#fff',
+                                                                fontWeight: '500'
+                                                            }
+                                                        }); 
+                                                        setSelectedUserForSalary(''); 
+                                                        return; 
+                                                    } 
+                                                    setSelectedUserForSalary(v); 
+                                                    if (v) { 
+                                                        await handleLoadUserSalary(v); 
+                                                        await handleLoadUserBonuses(v); 
+                                                    } 
+                                                }}
+                                                options={(isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users).map(u => ({ value: u._id, label: u.username }))}
+                                                placeholder="Search user..."
+                                                clearable
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Salary edit (same style as profile page) */}
+                                    <div className="mt-4">
+                                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Salary</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                            <div>
+                                                <Label value="Amount" className="mb-2" />
+                                                <TextInput
+                                                    value={salaryForm.salaryAmount}
+                                                    onChange={(e) => setSalaryForm({ ...salaryForm, salaryAmount: e.target.value })}
+                                                    placeholder="0.00"
+                                                    disabled={!selectedUserForSalary}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label value="Currency" className="mb-2" />
+                                                <CustomSelect
+                                                    id="salaryCurrencyAdmin"
+                                                    value={salaryForm.salaryCurrency}
+                                                    onChange={(val) => setSalaryForm({ ...salaryForm, salaryCurrency: val })}
+                                                    options={[{ value: 'USD', label: 'USD' },{ value: 'EUR', label: 'EUR' },{ value: 'TRY', label: 'TRY' }]}
+                                                    disabled={!selectedUserForSalary}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label value="Salary Day" className="mb-2" />
+                                                <CustomSelect
+                                                    id="salaryDayAdmin"
+                                                    value={salaryForm.salaryDayOfMonth}
+                                                    onChange={(val) => setSalaryForm({ ...salaryForm, salaryDayOfMonth: val })}
+                                                    options={Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }))}
+                                                    placeholder="Day (1-31)"
+                                                    disabled={!selectedUserForSalary}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label value="Next Salary" className="mb-2" />
+                                                <div className="h-[42px] flex items-center px-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    {salaryForm.salaryDayOfMonth ? (() => { const now=new Date(); const nm=now.getMonth()+1; const y=now.getFullYear()+Math.floor(nm/12); const m=nm%12; const dim=new Date(y,m+1,0).getDate(); const dd=String(Math.min(parseInt(salaryForm.salaryDayOfMonth,10)||1,dim)).padStart(2,'0'); const mm=String(m+1).padStart(2,'0'); return `${dd}/${mm}/${y}`; })() : '-'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4">
+                                            <Label value="Notes" className="mb-2" />
+                                            <TextInput
+                                                value={salaryForm.salaryNotes}
+                                                onChange={(e) => setSalaryForm({ ...salaryForm, salaryNotes: e.target.value })}
+                                                placeholder="Optional notes"
+                                                disabled={!selectedUserForSalary}
+                                            />
+                                        </div>
+                                        <div className="mt-4">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="updateFromNextCycleAdmin"
+                                                    checked={updateFromNextCycleAdmin}
+                                                    onChange={(e) => setUpdateFromNextCycleAdmin(e.target.checked)}
+                                                    disabled={!selectedUserForSalary}
+                                                />
+                                                <label htmlFor="updateFromNextCycleAdmin" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                                    Update starting from next salary cycle {salaryForm.salaryDayOfMonth ? `(${(() => {
+                                                        const day = parseInt(salaryForm.salaryDayOfMonth, 10);
+                                                        if (!day || day < 1 || day > 31) return '';
+                                                        const now = new Date();
+                                                        const nextMonth = now.getMonth() + 1;
+                                                        const year = now.getFullYear() + Math.floor(nextMonth / 12);
+                                                        const month = nextMonth % 12;
+                                                        const clampedDay = Math.min(day, new Date(year, month + 1, 0).getDate());
+                                                        const nextDate = new Date(year, month, clampedDay);
+                                                        const dd = String(nextDate.getDate()).padStart(2, '0');
+                                                        const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
+                                                        const yyyy = nextDate.getFullYear();
+                                                        return `${dd}/${mm}/${yyyy}`;
+                                                    })()})` : ''}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end mt-4">
+                                            <CustomButton
+                                                onClick={async () => {
+                                                    if (!selectedUserForSalary) return;
+                                                    const payload = {
+                                                        salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                        salaryCurrency: salaryForm.salaryCurrency,
+                                                        salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
+                                                        salaryNotes: salaryForm.salaryNotes || '',
+                                                        updateFromNextCycle: updateFromNextCycleAdmin
+                                                    };
+                                                    try {
+                                                        setSalaryTabLoading(true);
+                                                        await updateUserSalary(selectedUserForSalary, payload);
+                                                        toast.success('Salary updated', {
+                                                            duration: 3000,
+                                                            style: {
+                                                                background: '#4CAF50',
+                                                                color: '#fff',
+                                                                fontWeight: '500'
+                                                            }
+                                                        });
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                        toast.error('Failed to update salary', {
+                                                            duration: 3000,
+                                                            style: {
+                                                                background: '#f44336',
+                                                                color: '#fff',
+                                                                fontWeight: '500'
+                                                            }
+                                                        });
+                                                    } finally {
+                                                        setSalaryTabLoading(false);
+                                                    }
+                                                }}
+                                                disabled={!selectedUserForSalary || salaryTabLoading}
+                                            >
+                                                Save Salary
+                                            </CustomButton>
+                                        </div>
+                                    </div>
+
+                                    {/* Bonus editor */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                                        <div>
+                                            <Label value="Bonus Amount" className="mb-2" />
+                                            <TextInput
+                                                value={bonusForm.amount}
+                                                onChange={(e) => setBonusForm({ ...bonusForm, amount: e.target.value })}
+                                                placeholder="0.00"
+                                                disabled={!selectedUserForSalary}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label value="Bonus Note (optional)" className="mb-2" />
+                                        <TextInput
+                                            value={bonusForm.note}
+                                            onChange={(e) => setBonusForm({ ...bonusForm, note: e.target.value })}
+                                            placeholder="e.g., Outstanding performance in previous cycle"
+                                            disabled={!selectedUserForSalary}
+                                        />
+                                    </div>
+                                    <div className="flex justify-end mt-4">
+                                        <CustomButton onClick={handleGrantBonus} disabled={!selectedUserForSalary || salaryTabLoading}>Save Bonus for Previous Cycle</CustomButton>
+                                    </div>
+
+                                    <div className="mt-6">
+                                        <h3 className="text-lg font-semibold dark:text-white mb-3">Recent Bonuses</h3>
+                                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                                <thead className="bg-gray-50 dark:bg-slate-900">
+                                                    <tr>
+                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Month</th>
+                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Amount</th>
+                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Currency</th>
+                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Note</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                                    {(bonuses || []).slice().sort((a,b)=> (b.year - a.year) || (b.month - a.month)).map((b, idx) => (
+                                                        <tr key={idx}>
+                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{new Date(b.year, b.month, 1).toLocaleString(undefined,{ month:'long', year:'numeric' })}</td>
+                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{b.amount}</td>
+                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{b.currency}</td>
+                                                            <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300">{b.note || '-'}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {(!bonuses || bonuses.length === 0) && (
+                                                        <tr>
+                                                            <td className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={4}>No bonuses recorded</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </Card>
                             )}
                             

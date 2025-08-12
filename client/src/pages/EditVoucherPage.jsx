@@ -1181,11 +1181,12 @@ export default function EditVoucherPage() {
     const tripPayments = formData.trips.reduce((sum, trip) => sum + (Number(trip.price) || 0), 0);
     const flightPayments = formData.flights.reduce((sum, flight) => sum + (Number(flight.price) || 0), 0);
     
-    // Add global payments for services that don't have individual payments
-    const globalHotelPayment = hotelPayments === 0 ? (Number(formData.payments.hotels.price) || 0) : 0;
-    const globalTransferPayment = transferPayments === 0 ? (Number(formData.payments.transfers.price) || 0) : 0;
-    const globalTripPayment = tripPayments === 0 ? (Number(formData.payments.trips.price) || 0) : 0;
-    const globalFlightPayment = flightPayments === 0 ? (Number(formData.payments.flights.price) || 0) : 0;
+    // Only use global payments when there are NO individual payments for that service type
+    // AND when individual service arrays are empty (to avoid double counting)
+    const globalHotelPayment = (hotelPayments === 0 && formData.hotels.length === 0) ? (Number(formData.payments.hotels.price) || 0) : 0;
+    const globalTransferPayment = (transferPayments === 0 && formData.transfers.length === 0) ? (Number(formData.payments.transfers.price) || 0) : 0;
+    const globalTripPayment = (tripPayments === 0 && formData.trips.length === 0) ? (Number(formData.payments.trips.price) || 0) : 0;
+    const globalFlightPayment = (flightPayments === 0 && formData.flights.length === 0) ? (Number(formData.payments.flights.price) || 0) : 0;
     
     const totalPayments = hotelPayments + transferPayments + tripPayments + flightPayments +
                          globalHotelPayment + globalTransferPayment + globalTripPayment + globalFlightPayment;

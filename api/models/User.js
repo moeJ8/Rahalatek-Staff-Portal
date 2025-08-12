@@ -46,6 +46,53 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Salary fields
+userSchema.add({
+    salaryAmount: {
+        type: Number,
+        default: null,
+        min: 0
+    },
+    salaryCurrency: {
+        type: String,
+        default: null
+    },
+    salaryDayOfMonth: {
+        type: Number,
+        default: null,
+        min: 1,
+        max: 31
+    },
+    salaryNotes: {
+        type: String,
+        default: null
+    },
+    salaryBaseEntries: [
+        {
+            year: { type: Number, required: true },
+            month: { type: Number, required: true }, // 0-11
+            amount: { type: Number, required: true, min: 0 },
+            currency: { type: String, default: 'USD' },
+            note: { type: String, default: '' },
+            setBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+            createdAt: { type: Date, default: Date.now },
+            updatedAt: { type: Date, default: Date.now }
+        }
+    ],
+    salaryBonuses: [
+        {
+            year: { type: Number, required: true }, // Gregorian year of cycle reference
+            month: { type: Number, required: true }, // 0-11 month index for the cycle reference (e.g., previous cycle start)
+            amount: { type: Number, required: true, min: 0 },
+            currency: { type: String, default: 'USD' },
+            note: { type: String, default: '' },
+            awardedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+            createdAt: { type: Date, default: Date.now },
+            updatedAt: { type: Date, default: Date.now }
+        }
+    ]
+});
+
 // Hash password before saving
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
