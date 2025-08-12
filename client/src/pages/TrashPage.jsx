@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Table, Modal, Alert, Badge, TextInput } from 'flowbite-react';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomButton from '../components/CustomButton';
@@ -32,6 +32,7 @@ export default function TrashPage() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState('');
   const [permanentDeleteModal, setPermanentDeleteModal] = useState(false);
   const [voucherToDelete, setVoucherToDelete] = useState(null);
@@ -207,31 +208,6 @@ export default function TrashPage() {
     }
   };
 
-  // Initialize user info and fetch data
-  useEffect(() => {
-    const initializeUserAndFetchData = async () => {
-      // Check if the current user is an admin or accountant
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const userIsAdmin = user.isAdmin || false;
-      const userIsAccountant = user.isAccountant || false;
-      const userId = user.id || null;
-      
-      setIsAdmin(userIsAdmin);
-      setIsAccountant(userIsAccountant);
-      setCurrentUserId(userId);
-
-      // Now fetch trashed vouchers with the correct user info
-      await fetchTrashedVouchers(userIsAdmin, userIsAccountant, userId);
-    };
-
-    initializeUserAndFetchData();
-  }, []);
-
-  // Clear selected vouchers when filters change
-  useEffect(() => {
-    setSelectedVouchers(new Set());
-  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate]);
-
   // Simple helper function to check if user can manage a voucher
   const canManageVoucher = () => {
     // Only full admins can manage vouchers in trash (restore/delete)
@@ -239,7 +215,7 @@ export default function TrashPage() {
     return isAdmin && !isAccountant;
   };
 
-  const fetchTrashedVouchers = async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
+  const fetchTrashedVouchers = useCallback(async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -278,9 +254,32 @@ export default function TrashPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAdmin, isAccountant, currentUserId]);
 
+  // Initialize user info and fetch data
+  useEffect(() => {
+    const initializeUserAndFetchData = async () => {
+      // Check if the current user is an admin or accountant
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userIsAdmin = user.isAdmin || false;
+      const userIsAccountant = user.isAccountant || false;
+      const userId = user.id || null;
+      
+      setIsAdmin(userIsAdmin);
+      setIsAccountant(userIsAccountant);
+      setCurrentUserId(userId);
 
+      // Now fetch trashed vouchers with the correct user info
+      await fetchTrashedVouchers(userIsAdmin, userIsAccountant, userId);
+    };
+
+    initializeUserAndFetchData();
+  }, [fetchTrashedVouchers]);
+
+  // Clear selected vouchers when filters change
+  useEffect(() => {
+    setSelectedVouchers(new Set());
+  }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate]);
 
   // Helper function to check if a date falls within a range
   const isDateInRange = (dateString, range, customDateValue = null) => {
@@ -326,39 +325,56 @@ export default function TrashPage() {
 
   // Filter vouchers based on search query, user filter, and date filters
   useEffect(() => {
-    let filtered = trashedVouchers;
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(voucher => 
-        voucher.clientName.toLowerCase().includes(query) || 
-        voucher.voucherNumber.toString().includes(query)
-      );
-    }
-    
-    // Apply user filter
-    if (userFilter) {
-      filtered = filtered.filter(voucher => 
-        voucher.createdBy && voucher.createdBy._id === userFilter
-      );
-    }
-    
-    // Apply creation date filter
-    if (dateFilter) {
-      filtered = filtered.filter(voucher => 
-        isDateInRange(voucher.createdAt, dateFilter, customDate)
-      );
-    }
-    
-    // Apply arrival date filter
-    if (arrivalDateFilter) {
-      filtered = filtered.filter(voucher => 
-        isDateInRange(voucher.arrivalDate, arrivalDateFilter, customArrivalDate)
-      );
-    }
-    
-    setFilteredVouchers(filtered);
+    const applyFilters = async () => {
+      // Show loading if there are active filters
+      const hasActiveFilters = searchQuery || userFilter || dateFilter || arrivalDateFilter;
+      
+      if (hasActiveFilters && trashedVouchers.length > 0) {
+        setFilterLoading(true);
+      }
+
+      // Small delay to show loading state for better UX
+      if (hasActiveFilters) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      let filtered = trashedVouchers;
+      
+      // Apply search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(voucher => 
+          voucher.clientName.toLowerCase().includes(query) || 
+          voucher.voucherNumber.toString().includes(query)
+        );
+      }
+      
+      // Apply user filter
+      if (userFilter) {
+        filtered = filtered.filter(voucher => 
+          voucher.createdBy && voucher.createdBy._id === userFilter
+        );
+      }
+      
+      // Apply creation date filter
+      if (dateFilter) {
+        filtered = filtered.filter(voucher => 
+          isDateInRange(voucher.createdAt, dateFilter, customDate)
+        );
+      }
+      
+      // Apply arrival date filter
+      if (arrivalDateFilter) {
+        filtered = filtered.filter(voucher => 
+          isDateInRange(voucher.arrivalDate, arrivalDateFilter, customArrivalDate)
+        );
+      }
+      
+      setFilteredVouchers(filtered);
+      setFilterLoading(false);
+    };
+
+    applyFilters();
   }, [searchQuery, userFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, trashedVouchers]);
 
   const formatDate = (dateString) => {
@@ -378,22 +394,18 @@ export default function TrashPage() {
     return filter.charAt(0).toUpperCase() + filter.slice(1);
   };
 
-  const handleDateFilterChange = (e) => {
-    const selectedFilter = e.target.value;
-    setDateFilter(selectedFilter);
-    
+  const handleDateFilterChange = (value) => {
+    setDateFilter(value);
     // Clear custom date when switching away from custom
-    if (selectedFilter !== 'custom') {
+    if (value !== 'custom') {
       setCustomDate('');
     }
   };
 
-  const handleArrivalDateFilterChange = (e) => {
-    const selectedFilter = e.target.value;
-    setArrivalDateFilter(selectedFilter);
-    
+  const handleArrivalDateFilterChange = (value) => {
+    setArrivalDateFilter(value);
     // Clear custom date when switching away from custom
-    if (selectedFilter !== 'custom') {
+    if (value !== 'custom') {
       setCustomArrivalDate('');
     }
   };
@@ -676,6 +688,10 @@ export default function TrashPage() {
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
+        ) : filterLoading ? (
+          <div className="py-8">
+            <RahalatekLoader size="lg" />
+          </div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {(searchQuery || userFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers in trash.'}

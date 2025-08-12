@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Select, TextInput } from 'flowbite-react';
+import { Card } from 'flowbite-react';
 import CustomDatePicker from './CustomDatePicker';
 import SearchableSelect from './SearchableSelect';
+import Select from './Select';
+import Search from './Search';
 import CustomScrollbar from './CustomScrollbar';
 import { FaCalculator, FaTimes, FaSearch } from 'react-icons/fa';
 
@@ -118,7 +120,7 @@ const FloatingTotalsPanel = ({
 
       {/* Mobile Modal - Centered */}
       {showFloatingTotals && (
-        <div className="block sm:hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div className="sm:hidden fixed inset-0 flex items-center justify-center p-4 z-50">
           <Card className={`w-[95vw] max-h-[85vh] overflow-y-auto p-3 shadow-2xl border-2 border-blue-200 dark:border-cyan-700 dark:bg-slate-900 transform transition-all duration-300 ease-in-out will-change-transform ${
             showFloatingTotals && !isAnimating ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-8'
           } animate-in slide-in-from-bottom-5 fade-in`}>
@@ -147,13 +149,10 @@ const FloatingTotalsPanel = ({
             <div className="space-y-2 sm:space-y-3">
               {/* Search - Hidden on mobile, visible on desktop */}
               <div className="hidden sm:block">
-                <TextInput
-                  type="text"
+                <Search
                   placeholder="Search by client name or voucher number..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  icon={FaSearch}
-                  size="sm"
                 />
               </div>
 
@@ -163,24 +162,27 @@ const FloatingTotalsPanel = ({
                 <div>
                   <Select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    size="sm"
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="await">Awaiting</option>
-                    <option value="arrived">Arrived</option>
-                    <option value="canceled">Canceled</option>
-                  </Select>
+                    onChange={setStatusFilter}
+                    placeholder="All Statuses"
+                    options={[
+                      { value: '', label: 'All Statuses' },
+                      { value: 'await', label: 'Awaiting' },
+                      { value: 'arrived', label: 'Arrived' },
+                      { value: 'canceled', label: 'Canceled' }
+                    ]}
+                  />
                 </div>
 
                 {/* User Filter */}
                 <div>
                   <SearchableSelect
-                    options={uniqueUsers.map(user => ({ value: user._id, label: user.username }))}
+                    options={[
+                      { value: '', label: 'All Users' },
+                      ...uniqueUsers.map(user => ({ value: user._id, label: user.username }))
+                    ]}
                     value={userFilter}
-                    onChange={setUserFilter}
+                    onChange={(e) => setUserFilter(e.target.value)}
                     placeholder="All Users"
-                    size="sm"
                   />
                 </div>
 
@@ -189,25 +191,26 @@ const FloatingTotalsPanel = ({
                   <Select
                     value={dateFilter}
                     onChange={handleDateFilterChange}
-                    size="sm"
-                  >
-                    <option value="">All Creation Dates</option>
-                    <option value="january">Created - January</option>
-                    <option value="february">Created - February</option>
-                    <option value="march">Created - March</option>
-                    <option value="april">Created - April</option>
-                    <option value="may">Created - May</option>
-                    <option value="june">Created - June</option>
-                    <option value="july">Created - July</option>
-                    <option value="august">Created - August</option>
-                    <option value="september">Created - September</option>
-                    <option value="october">Created - October</option>
-                    <option value="november">Created - November</option>
-                    <option value="december">Created - December</option>
-                    <option value="this-year">Created - This Year</option>
-                    <option value="last-year">Created - Last Year</option>
-                    <option value="custom">Created - Custom Date</option>
-                  </Select>
+                    placeholder="All Creation Dates"
+                    options={[
+                      { value: '', label: 'All Creation Dates' },
+                      { value: 'january', label: 'Created - January' },
+                      { value: 'february', label: 'Created - February' },
+                      { value: 'march', label: 'Created - March' },
+                      { value: 'april', label: 'Created - April' },
+                      { value: 'may', label: 'Created - May' },
+                      { value: 'june', label: 'Created - June' },
+                      { value: 'july', label: 'Created - July' },
+                      { value: 'august', label: 'Created - August' },
+                      { value: 'september', label: 'Created - September' },
+                      { value: 'october', label: 'Created - October' },
+                      { value: 'november', label: 'Created - November' },
+                      { value: 'december', label: 'Created - December' },
+                      { value: 'this-year', label: 'Created - This Year' },
+                      { value: 'last-year', label: 'Created - Last Year' },
+                      { value: 'custom', label: 'Created - Custom Date' }
+                    ]}
+                  />
                 </div>
 
                 {/* Arrival Date Filter */}
@@ -215,25 +218,26 @@ const FloatingTotalsPanel = ({
                   <Select
                     value={arrivalDateFilter}
                     onChange={handleArrivalDateFilterChange}
-                    size="sm"
-                  >
-                    <option value="">All Arrival Dates</option>
-                    <option value="january">Arrival - January</option>
-                    <option value="february">Arrival - February</option>
-                    <option value="march">Arrival - March</option>
-                    <option value="april">Arrival - April</option>
-                    <option value="may">Arrival - May</option>
-                    <option value="june">Arrival - June</option>
-                    <option value="july">Arrival - July</option>
-                    <option value="august">Arrival - August</option>
-                    <option value="september">Arrival - September</option>
-                    <option value="october">Arrival - October</option>
-                    <option value="november">Arrival - November</option>
-                    <option value="december">Arrival - December</option>
-                    <option value="this-year">Arrival - This Year</option>
-                    <option value="last-year">Arrival - Last Year</option>
-                    <option value="custom">Arrival - Custom Date</option>
-                  </Select>
+                    placeholder="All Arrival Dates"
+                    options={[
+                      { value: '', label: 'All Arrival Dates' },
+                      { value: 'january', label: 'Arrival - January' },
+                      { value: 'february', label: 'Arrival - February' },
+                      { value: 'march', label: 'Arrival - March' },
+                      { value: 'april', label: 'Arrival - April' },
+                      { value: 'may', label: 'Arrival - May' },
+                      { value: 'june', label: 'Arrival - June' },
+                      { value: 'july', label: 'Arrival - July' },
+                      { value: 'august', label: 'Arrival - August' },
+                      { value: 'september', label: 'Arrival - September' },
+                      { value: 'october', label: 'Arrival - October' },
+                      { value: 'november', label: 'Arrival - November' },
+                      { value: 'december', label: 'Arrival - December' },
+                      { value: 'this-year', label: 'Arrival - This Year' },
+                      { value: 'last-year', label: 'Arrival - Last Year' },
+                      { value: 'custom', label: 'Arrival - Custom Date' }
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -364,13 +368,10 @@ const FloatingTotalsPanel = ({
               <div className="space-y-3">
                 {/* Search - Desktop version */}
                 <div>
-                  <TextInput
-                    type="text"
+                  <Search
                     placeholder="Search by client name or voucher number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    icon={FaSearch}
-                    size="sm"
                   />
                 </div>
 
@@ -380,24 +381,27 @@ const FloatingTotalsPanel = ({
                   <div>
                     <Select
                       value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      size="sm"
-                    >
-                      <option value="">All Statuses</option>
-                      <option value="await">Awaiting</option>
-                      <option value="arrived">Arrived</option>
-                      <option value="canceled">Canceled</option>
-                    </Select>
+                      onChange={setStatusFilter}
+                      placeholder="All Statuses"
+                      options={[
+                        { value: '', label: 'All Statuses' },
+                        { value: 'await', label: 'Awaiting' },
+                        { value: 'arrived', label: 'Arrived' },
+                        { value: 'canceled', label: 'Canceled' }
+                      ]}
+                    />
                   </div>
 
                   {/* User Filter */}
                   <div>
                     <SearchableSelect
-                      options={uniqueUsers.map(user => ({ value: user._id, label: user.username }))}
+                      options={[
+                        { value: '', label: 'All Users' },
+                        ...uniqueUsers.map(user => ({ value: user._id, label: user.username }))
+                      ]}
                       value={userFilter}
-                      onChange={setUserFilter}
+                      onChange={(e) => setUserFilter(e.target.value)}
                       placeholder="All Users"
-                      size="sm"
                     />
                   </div>
 
@@ -406,25 +410,26 @@ const FloatingTotalsPanel = ({
                     <Select
                       value={dateFilter}
                       onChange={handleDateFilterChange}
-                      size="sm"
-                    >
-                      <option value="">All Creation Dates</option>
-                      <option value="january">Created - January</option>
-                      <option value="february">Created - February</option>
-                      <option value="march">Created - March</option>
-                      <option value="april">Created - April</option>
-                      <option value="may">Created - May</option>
-                      <option value="june">Created - June</option>
-                      <option value="july">Created - July</option>
-                      <option value="august">Created - August</option>
-                      <option value="september">Created - September</option>
-                      <option value="october">Created - October</option>
-                      <option value="november">Created - November</option>
-                      <option value="december">Created - December</option>
-                      <option value="this-year">Created - This Year</option>
-                      <option value="last-year">Created - Last Year</option>
-                      <option value="custom">Created - Custom Date</option>
-                    </Select>
+                      placeholder="All Creation Dates"
+                      options={[
+                        { value: '', label: 'All Creation Dates' },
+                        { value: 'january', label: 'Created - January' },
+                        { value: 'february', label: 'Created - February' },
+                        { value: 'march', label: 'Created - March' },
+                        { value: 'april', label: 'Created - April' },
+                        { value: 'may', label: 'Created - May' },
+                        { value: 'june', label: 'Created - June' },
+                        { value: 'july', label: 'Created - July' },
+                        { value: 'august', label: 'Created - August' },
+                        { value: 'september', label: 'Created - September' },
+                        { value: 'october', label: 'Created - October' },
+                        { value: 'november', label: 'Created - November' },
+                        { value: 'december', label: 'Created - December' },
+                        { value: 'this-year', label: 'Created - This Year' },
+                        { value: 'last-year', label: 'Created - Last Year' },
+                        { value: 'custom', label: 'Created - Custom Date' }
+                      ]}
+                    />
                   </div>
 
                   {/* Arrival Date Filter */}
@@ -432,25 +437,26 @@ const FloatingTotalsPanel = ({
                     <Select
                       value={arrivalDateFilter}
                       onChange={handleArrivalDateFilterChange}
-                      size="sm"
-                    >
-                      <option value="">All Arrival Dates</option>
-                      <option value="january">Arrival - January</option>
-                      <option value="february">Arrival - February</option>
-                      <option value="march">Arrival - March</option>
-                      <option value="april">Arrival - April</option>
-                      <option value="may">Arrival - May</option>
-                      <option value="june">Arrival - June</option>
-                      <option value="july">Arrival - July</option>
-                      <option value="august">Arrival - August</option>
-                      <option value="september">Arrival - September</option>
-                      <option value="october">Arrival - October</option>
-                      <option value="november">Arrival - November</option>
-                      <option value="december">Arrival - December</option>
-                      <option value="this-year">Arrival - This Year</option>
-                      <option value="last-year">Arrival - Last Year</option>
-                      <option value="custom">Arrival - Custom Date</option>
-                    </Select>
+                      placeholder="All Arrival Dates"
+                      options={[
+                        { value: '', label: 'All Arrival Dates' },
+                        { value: 'january', label: 'Arrival - January' },
+                        { value: 'february', label: 'Arrival - February' },
+                        { value: 'march', label: 'Arrival - March' },
+                        { value: 'april', label: 'Arrival - April' },
+                        { value: 'may', label: 'Arrival - May' },
+                        { value: 'june', label: 'Arrival - June' },
+                        { value: 'july', label: 'Arrival - July' },
+                        { value: 'august', label: 'Arrival - August' },
+                        { value: 'september', label: 'Arrival - September' },
+                        { value: 'october', label: 'Arrival - October' },
+                        { value: 'november', label: 'Arrival - November' },
+                        { value: 'december', label: 'Arrival - December' },
+                        { value: 'this-year', label: 'Arrival - This Year' },
+                        { value: 'last-year', label: 'Arrival - Last Year' },
+                        { value: 'custom', label: 'Arrival - Custom Date' }
+                      ]}
+                    />
                   </div>
                 </div>
 

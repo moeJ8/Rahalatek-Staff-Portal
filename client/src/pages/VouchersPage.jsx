@@ -34,6 +34,7 @@ export default function VouchersPage() {
   const [statusFilter, setStatusFilter] = useState('');
 
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleteModal, setDeleteModal] = useState(false);
   const [voucherToDelete, setVoucherToDelete] = useState(null);
@@ -324,53 +325,70 @@ export default function VouchersPage() {
 
   // Filter vouchers based on search query, user filter, and date filters
   useEffect(() => {
-    let filtered = vouchers;
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(voucher => 
-        voucher.clientName.toLowerCase().includes(query) || 
-        voucher.voucherNumber.toString().includes(query)
-      );
-    }
-    
-    // Apply user filter
-    if (userFilter) {
-      filtered = filtered.filter(voucher => 
-        voucher.createdBy && voucher.createdBy._id === userFilter
-      );
-    }
-    
-    // Apply office filter
-    if (officeFilter) {
-      filtered = filtered.filter(voucher => 
-        voucher.officeName === officeFilter
-      );
-    }
-    
-    // Apply creation date filter
-    if (dateFilter) {
-      filtered = filtered.filter(voucher => 
-        isDateInRange(voucher.createdAt, dateFilter, customDate)
-      );
-    }
-    
-    // Apply arrival date filter
-    if (arrivalDateFilter) {
-      filtered = filtered.filter(voucher => 
-        isDateInRange(voucher.arrivalDate, arrivalDateFilter, customArrivalDate)
-      );
-    }
-    
-    // Apply status filter
-    if (statusFilter) {
-      filtered = filtered.filter(voucher => 
-        (voucher.status || 'await') === statusFilter
-      );
-    }
-    
-    setFilteredVouchers(filtered);
+    const applyFilters = async () => {
+      // Show loading if there are active filters
+      const hasActiveFilters = searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter;
+      
+      if (hasActiveFilters && vouchers.length > 0) {
+        setFilterLoading(true);
+      }
+
+      // Small delay to show loading state for better UX
+      if (hasActiveFilters) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      let filtered = vouchers;
+      
+      // Apply search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(voucher => 
+          voucher.clientName.toLowerCase().includes(query) || 
+          voucher.voucherNumber.toString().includes(query)
+        );
+      }
+      
+      // Apply user filter
+      if (userFilter) {
+        filtered = filtered.filter(voucher => 
+          voucher.createdBy && voucher.createdBy._id === userFilter
+        );
+      }
+      
+      // Apply office filter
+      if (officeFilter) {
+        filtered = filtered.filter(voucher => 
+          voucher.officeName === officeFilter
+        );
+      }
+      
+      // Apply creation date filter
+      if (dateFilter) {
+        filtered = filtered.filter(voucher => 
+          isDateInRange(voucher.createdAt, dateFilter, customDate)
+        );
+      }
+      
+      // Apply arrival date filter
+      if (arrivalDateFilter) {
+        filtered = filtered.filter(voucher => 
+          isDateInRange(voucher.arrivalDate, arrivalDateFilter, customArrivalDate)
+        );
+      }
+      
+      // Apply status filter
+      if (statusFilter) {
+        filtered = filtered.filter(voucher => 
+          (voucher.status || 'await') === statusFilter
+        );
+      }
+      
+      setFilteredVouchers(filtered);
+      setFilterLoading(false);
+    };
+
+    applyFilters();
   }, [searchQuery, userFilter, officeFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
 
   const formatDate = (dateString) => {
@@ -391,20 +409,16 @@ export default function VouchersPage() {
 
 
 
-  const handleDateFilterChange = (e) => {
-    const selectedFilter = e.target.value;
-    setDateFilter(selectedFilter);
-
-    if (selectedFilter !== 'custom') {
+  const handleDateFilterChange = (value) => {
+    setDateFilter(value);
+    if (value !== 'custom') {
       setCustomDate('');
     }
   };
 
-  const handleArrivalDateFilterChange = (e) => {
-    const selectedFilter = e.target.value;
-    setArrivalDateFilter(selectedFilter);
-    
-    if (selectedFilter !== 'custom') {
+  const handleArrivalDateFilterChange = (value) => {
+    setArrivalDateFilter(value);
+    if (value !== 'custom') {
       setCustomArrivalDate('');
     }
   };
@@ -625,7 +639,7 @@ export default function VouchersPage() {
               <Select
                 id="statusFilter"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={setStatusFilter}
                 placeholder="All Statuses"
                 options={[
                   { value: '', label: 'All Statuses' },
@@ -731,6 +745,10 @@ export default function VouchersPage() {
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
+        ) : filterLoading ? (
+          <div className="py-8">
+            <RahalatekLoader size="lg" />
+          </div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
