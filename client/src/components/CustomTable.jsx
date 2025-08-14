@@ -94,7 +94,7 @@ const CustomTable = ({
                         data.map((item, index) => (
                             <Table.Row 
                                 key={item.id || item._id || index} 
-                                className="bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
+                                className="group bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
                             >
                                 {renderRow ? renderRow(item, index) : (
                                     <Table.Cell className="px-4 py-3">

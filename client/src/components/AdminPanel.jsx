@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
 import { Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -17,7 +17,7 @@ import TextInput from './TextInput'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
-import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary } from '../utils/profileApi'
+import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary, getUserSalaryBaseEntries, editMonthSalary, editMonthBonus } from '../utils/profileApi'
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
@@ -263,20 +263,175 @@ export default function AdminPanel() {
 
     // Salaries/Bonuses tab state
     const [selectedUserForSalary, setSelectedUserForSalary] = useState('');
+    const [selectedUserData, setSelectedUserData] = useState(null);
     const [bonusForm, setBonusForm] = useState({ amount: '', currency: 'USD', note: '' });
     const [bonuses, setBonuses] = useState([]);
+    const [salaryBaseEntries, setSalaryBaseEntries] = useState([]);
     const [salaryTabLoading, setSalaryTabLoading] = useState(false);
     const [salaryForm, setSalaryForm] = useState({ salaryAmount: '', salaryCurrency: 'USD', salaryDayOfMonth: '', salaryNotes: '' });
     const [updateFromNextCycleAdmin, setUpdateFromNextCycleAdmin] = useState(false);
+    
+    // Inline editing state for salary table
+    const [editingAmount, setEditingAmount] = useState(null); // Store entry id being edited
+    const [editAmount, setEditAmount] = useState(''); // Store the edited amount value
+    const [saveAmountLoading, setSaveAmountLoading] = useState(false);
+    
+    // Inline editing state for bonus table
+    const [editingBonusAmount, setEditingBonusAmount] = useState(null); // Store bonus id being edited
+    const [editBonusAmount, setEditBonusAmount] = useState(''); // Store the edited bonus amount value
+    const [saveBonusAmountLoading, setSaveBonusAmountLoading] = useState(false);
+    
+    // Inner tabs for salaries section
+    const [salaryInnerTab, setSalaryInnerTab] = useState('salary');
+    
+    // Month editor state
+    const [selectedMonthToEdit, setSelectedMonthToEdit] = useState('');
+    const [selectedBonusMonthToEdit, setSelectedBonusMonthToEdit] = useState('');
+
+    // Generate month options from salary base entries
+    const getMonthOptions = () => {
+        if (!salaryBaseEntries || salaryBaseEntries.length === 0) return [];
+        
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        
+        return salaryBaseEntries
+            .filter(entry => {
+                // Only show entries for current month or earlier
+                return entry.year < currentYear || (entry.year === currentYear && entry.month <= currentMonth);
+            })
+            .sort((a, b) => (b.year - a.year) || (b.month - a.month)) // Newest first
+            .map(entry => ({
+                value: `${entry.year}-${entry.month}`,
+                label: new Date(entry.year, entry.month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
+            }));
+    };
+
+    // Check if selected month is the current month
+    const isCurrentMonth = (monthKey) => {
+        if (!monthKey) return true; // No month selected = editing current
+        const [year, month] = monthKey.split('-').map(Number);
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        return year === currentYear && month === currentMonth;
+    };
+
+    // Handle month selection for editing
+    const handleMonthSelection = (monthKey) => {
+        setSelectedMonthToEdit(monthKey);
+        
+        // Reset next cycle checkbox when selecting a non-current month
+        if (!isCurrentMonth(monthKey)) {
+            setUpdateFromNextCycleAdmin(false);
+        }
+        
+        if (monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const entry = salaryBaseEntries.find(e => e.year === year && e.month === month);
+            if (entry) {
+                // When selecting a month to edit, only update the notes
+                // Amount should always start empty, not pre-filled
+                setSalaryForm(prevForm => ({
+                    ...prevForm,
+                    salaryNotes: entry.note || ''
+                }));
+            }
+        } else {
+            // Reset to current user salary data when no month selected
+            if (selectedUserForSalary) {
+                handleLoadUserSalary(selectedUserForSalary);
+            }
+        }
+    };
+
+    // Handle bonus month selection for editing
+    const handleBonusMonthSelection = (monthKey) => {
+        setSelectedBonusMonthToEdit(monthKey);
+        if (monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const bonus = bonuses.find(b => b.year === year && b.month === month);
+            if (bonus) {
+                // Populate bonus form with existing bonus data
+                setBonusForm({
+                    amount: bonus.amount.toString(),
+                    currency: bonus.currency,
+                    note: bonus.note || ''
+                });
+            } else {
+                // No bonus exists for this salary month - start with empty form
+                setBonusForm({ amount: '', currency: 'USD', note: '' });
+            }
+        } else {
+            // Reset to empty bonus form when no month selected
+            setBonusForm({ amount: '', currency: 'USD', note: '' });
+        }
+    };
 
     const handleLoadUserBonuses = async (userId) => {
         try {
             setSalaryTabLoading(true);
             const res = await getUserBonuses(userId);
-            setBonuses(res.bonuses || []);
+            const bonusEntries = res.bonuses || [];
+            setBonuses(bonusEntries);
+            
+            // Auto-select current month if it exists
+            if (bonusEntries.length > 0) {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                
+                const currentMonthBonus = bonusEntries.find(b => b.year === currentYear && b.month === currentMonth);
+                if (currentMonthBonus) {
+                    const monthKey = `${currentYear}-${currentMonth}`;
+                    handleBonusMonthSelection(monthKey);
+                }
+            }
         } catch (e) {
             console.error(e);
             toast.error('Failed to load bonuses', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
+    const handleLoadUserSalaryBaseEntries = async (userId, autoSelectCurrentMonth = false) => {
+        try {
+            setSalaryTabLoading(true);
+            const res = await getUserSalaryBaseEntries(userId);
+            const entries = res.salaryBaseEntries || [];
+            setSalaryBaseEntries(entries);
+            
+            // Auto-select current month only if explicitly requested (initial load)
+            if (autoSelectCurrentMonth && entries.length > 0) {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                
+                const currentMonthEntry = entries.find(e => e.year === currentYear && e.month === currentMonth);
+                if (currentMonthEntry) {
+                    const monthKey = `${currentYear}-${currentMonth}`;
+                    setSelectedMonthToEdit(monthKey);
+                    // Populate form with current month's salary data
+                    setSalaryForm(prevForm => ({
+                        salaryAmount: currentMonthEntry.amount.toString(),
+                        salaryCurrency: currentMonthEntry.currency,
+                        salaryDayOfMonth: prevForm.salaryDayOfMonth, // Keep current day setting
+                        salaryNotes: currentMonthEntry.note || ''
+                    }));
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Failed to load salary history', {
                 duration: 3000,
                 style: {
                     background: '#f44336',
@@ -294,11 +449,22 @@ export default function AdminPanel() {
             setSalaryTabLoading(true);
             const res = await getUserSalary(userId);
             setSalaryForm({
-                salaryAmount: res.salaryAmount ?? '',
+                salaryAmount: '', // Start with empty amount field
                 salaryCurrency: res.salaryCurrency || 'USD',
                 salaryDayOfMonth: res.salaryDayOfMonth ?? '',
                 salaryNotes: res.salaryNotes || ''
             });
+            
+            // Load complete user data for raise detection
+            try {
+                const userResponse = await axios.get(`/api/profile/${userId}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                });
+                setSelectedUserData(userResponse.data);
+            } catch (err) {
+                console.error('Failed to load user data:', err);
+                setSelectedUserData(null);
+            }
         } catch (e) {
             console.error(e);
             toast.error('Failed to load salary', {
@@ -314,6 +480,154 @@ export default function AdminPanel() {
         }
     };
 
+    // Inline editing helper functions for salary table
+    const handleEditAmount = (entry) => {
+        setEditingAmount(`${entry.year}-${entry.month}`);
+        setEditAmount(entry.amount.toString());
+    };
+
+    const handleCancelEdit = () => {
+        setEditingAmount(null);
+        setEditAmount('');
+    };
+
+    const handleSaveAmount = async (entry) => {
+        if (!selectedUserForSalary || saveAmountLoading) return;
+        
+        const newAmount = parseFloat(editAmount);
+        if (isNaN(newAmount) || newAmount < 0) {
+            toast.error('Please enter a valid amount', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            return;
+        }
+
+        if (newAmount === entry.amount) {
+            handleCancelEdit();
+            return;
+        }
+
+        try {
+            setSaveAmountLoading(true);
+            
+            // Use the existing editMonthSalary function
+            await editMonthSalary(selectedUserForSalary, {
+                year: entry.year,
+                month: entry.month,
+                amount: newAmount,
+                note: entry.note
+            });
+
+            // Refresh the salary entries
+            await handleLoadUserSalaryBaseEntries(selectedUserForSalary, false);
+            
+            // Update selected user data if needed
+            const userResponse = await axios.get(`/api/profile/${selectedUserForSalary}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setSelectedUserData(userResponse.data);
+
+            toast.success('Salary amount updated', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+
+            handleCancelEdit();
+        } catch (error) {
+            console.error('Error updating salary amount:', error);
+            toast.error('Failed to update salary amount', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSaveAmountLoading(false);
+        }
+    };
+
+    // Bonus amount editing helper functions
+    const handleEditBonusAmount = (bonus) => {
+        setEditingBonusAmount(`${bonus.year}-${bonus.month}`);
+        setEditBonusAmount(bonus.amount.toString());
+    };
+
+    const handleCancelBonusEdit = () => {
+        setEditingBonusAmount(null);
+        setEditBonusAmount('');
+    };
+
+    const handleSaveBonusAmount = async (bonus) => {
+        if (!selectedUserForSalary || saveBonusAmountLoading) return;
+        
+        const newAmount = parseFloat(editBonusAmount);
+        if (isNaN(newAmount) || newAmount < 0) {
+            toast.error('Please enter a valid amount', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            return;
+        }
+
+        if (newAmount === bonus.amount) {
+            handleCancelBonusEdit();
+            return;
+        }
+
+        try {
+            setSaveBonusAmountLoading(true);
+            
+            // Use the existing editMonthBonus function
+            await editMonthBonus(selectedUserForSalary, {
+                year: bonus.year,
+                month: bonus.month,
+                amount: newAmount,
+                note: bonus.note
+            });
+
+            // Refresh the bonus entries
+            await handleLoadUserBonuses(selectedUserForSalary);
+
+            toast.success('Bonus amount updated', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+
+            handleCancelBonusEdit();
+        } catch (error) {
+            console.error('Error updating bonus amount:', error);
+            toast.error('Failed to update bonus amount', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSaveBonusAmountLoading(false);
+        }
+    };
+
     const computePreviousCycle = () => {
         // Determine previous month for user's salary cycle
         const now = new Date();
@@ -321,6 +635,60 @@ export default function AdminPanel() {
         const prevMonthIndex = (now.getMonth() + 11) % 12;
         const year = now.getFullYear() - (now.getMonth() === 0 ? 1 : 0);
         return { year, month: prevMonthIndex };
+    };
+
+    const getNextSalaryDateAdmin = (dayOfMonth) => {
+        const day = parseInt(dayOfMonth, 10);
+        if (!day || day < 1 || day > 31) return '';
+        const now = new Date();
+        const nextMonthIndex = now.getMonth() + 1;
+        const year = now.getFullYear() + Math.floor(nextMonthIndex / 12);
+        const month = nextMonthIndex % 12;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const clampedDay = Math.min(day, daysInMonth);
+        const nextDate = new Date(year, month, clampedDay);
+        return nextDate.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+    };
+
+    const getScheduledRaiseInfoAdmin = () => {
+        if (!selectedUserData?.salaryBaseEntries || selectedUserData.salaryBaseEntries.length === 0) return null;
+        
+        const now = new Date();
+        const nextMonth = now.getMonth() + 1;
+        const nextYear = now.getFullYear() + Math.floor(nextMonth / 12);
+        const nextMonthIndex = nextMonth % 12;
+        
+        // Current month's salary
+        const currentMonthEntry = selectedUserData.salaryBaseEntries.find(e => 
+            e.year === now.getFullYear() && e.month === now.getMonth()
+        );
+        const currentSalary = currentMonthEntry?.amount ?? selectedUserData.salaryAmount ?? 0;
+        
+        // Next month's salary
+        const nextMonthEntry = selectedUserData.salaryBaseEntries.find(e => 
+            e.year === nextYear && e.month === nextMonthIndex
+        );
+        
+        if (!nextMonthEntry) return null;
+        
+        const nextSalary = nextMonthEntry.amount;
+        const salaryDifference = nextSalary - currentSalary;
+        
+        // Show if there's any change (raise or decrease)
+        if (salaryDifference !== 0) {
+            const nextSalaryDate = selectedUserData.salaryDayOfMonth ? getNextSalaryDateAdmin(selectedUserData.salaryDayOfMonth) : null;
+            return {
+                amount: salaryDifference,
+                currency: nextMonthEntry.currency || selectedUserData.salaryCurrency || 'USD',
+                newTotal: nextSalary,
+                date: nextSalaryDate,
+                username: selectedUserData.username,
+                note: nextMonthEntry.note || '',
+                isIncrease: salaryDifference > 0
+            };
+        }
+        
+        return null;
     };
 
     const handleGrantBonus = async () => {
@@ -339,10 +707,33 @@ export default function AdminPanel() {
             });
             return;
         }
-        const { year, month } = computePreviousCycle();
+        
         try {
             setSalaryTabLoading(true);
-            await saveMonthlyBonus(selected._id, { year, month, amount: amountNum, note: bonusForm.note });
+            
+            // If editing a specific month, check if bonus exists
+            if (selectedBonusMonthToEdit) {
+                const [year, month] = selectedBonusMonthToEdit.split('-').map(Number);
+                const existingBonus = bonuses.find(b => b.year === year && b.month === month);
+                
+                if (existingBonus) {
+                    // Edit existing bonus
+                    await editMonthBonus(selected._id, {
+                        year,
+                        month,
+                        amount: amountNum,
+                        note: bonusForm.note || ''
+                    });
+                } else {
+                    // Create new bonus for this salary month
+                    await saveMonthlyBonus(selected._id, { year, month, amount: amountNum, note: bonusForm.note });
+                }
+            } else {
+                // Normal bonus save for previous cycle
+                const { year, month } = computePreviousCycle();
+                await saveMonthlyBonus(selected._id, { year, month, amount: amountNum, note: bonusForm.note });
+            }
+            
             toast.success('Bonus saved', {
                 duration: 3000,
                 style: {
@@ -1664,7 +2055,7 @@ export default function AdminPanel() {
         }
     };
 
-    // Handle generating daily arrivals summary manually
+    // Handle generating daily arrivals and departures summary manually
     const handleGenerateDailySummary = async () => {
         if (!isAdmin) return;
         
@@ -2546,7 +2937,7 @@ export default function AdminPanel() {
                                         aria-controls="salaries-panel"
                                     >
                                         <FaDollarSign className="h-5 w-5 mr-3" />
-                                        Salaries
+                                        Salaries & Bonuses
                                     </button>
                                 )}
                                 
@@ -2715,7 +3106,7 @@ export default function AdminPanel() {
                                             aria-selected={activeTab === 'salaries'}
                                             aria-controls="salaries-panel"
                                         >
-                                            Salaries
+                                            Salaries & Bonuses
                                         </button>
                                     )}
                                     {isAdmin && (
@@ -5125,7 +5516,9 @@ export default function AdminPanel() {
                             {(activeTab === 'salaries') && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="salaries-panel" role="tabpanel" aria-labelledby="tab-salaries">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Salaries & Bonuses</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    
+                                    {/* User Selection (common for both tabs) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                         <div>
                                             <Label value="Select User" className="mb-2" />
                                             <SearchableSelect
@@ -5148,8 +5541,16 @@ export default function AdminPanel() {
                                                     } 
                                                     setSelectedUserForSalary(v); 
                                                     if (v) { 
-                                                        await handleLoadUserSalary(v); 
-                                                        await handleLoadUserBonuses(v); 
+                                                        // Reset month selections when switching users
+                                                        setSelectedMonthToEdit('');
+                                                        setSelectedBonusMonthToEdit('');
+                                                        
+                                                        // Load data in parallel
+                                                        await Promise.all([
+                                                            handleLoadUserSalary(v),
+                                                            handleLoadUserBonuses(v), 
+                                                            handleLoadUserSalaryBaseEntries(v, true) // Auto-select current month on initial load
+                                                        ]);
                                                     } 
                                                 }}
                                                 options={(isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users).map(u => ({ value: u._id, label: u.username }))}
@@ -5159,9 +5560,144 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-                                    {/* Salary edit (same style as profile page) */}
-                                    <div className="mt-4">
+                                    {/* Inner Tab Navigation */}
+                                    {selectedUserForSalary && (
+                                        <div className="mb-6">
+                                            <div className="border-b border-gray-200 dark:border-gray-700">
+                                                <nav className="-mb-px flex space-x-8">
+                                                    <button
+                                                        onClick={() => setSalaryInnerTab('salary')}
+                                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                                            salaryInnerTab === 'salary'
+                                                                ? 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                                        }`}
+                                                    >
+                                                        💰 Salary Management
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSalaryInnerTab('bonus')}
+                                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                                            salaryInnerTab === 'bonus'
+                                                                ? 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                                        }`}
+                                                    >
+                                                        🎁 Bonus Management
+                                                    </button>
+                                                </nav>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Salary Tab Content */}
+                                    {selectedUserForSalary && salaryInnerTab === 'salary' && (
+                                        <div>
+                                            {/* Month Filter Section */}
+                                            {(isAdmin) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
+                                                <div className="mb-6">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <Label value="Select Month to Edit" className="mb-2" />
+                                                            <SearchableSelect
+                                                                value={selectedMonthToEdit}
+                                                                onChange={(val) => {
+                                                                    const value = val?.target?.value ?? val;
+                                                                    handleMonthSelection(value);
+                                                                }}
+                                                                options={getMonthOptions()}
+                                                                placeholder="Select a month to edit..."
+                                                                clearable
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Current Salary Management */}
+                                            <div className="mt-4">
                                         <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Salary</h3>
+                                        
+                                        {/* Scheduled Raise Notification */}
+                                        {(() => {
+                                            const raiseInfo = getScheduledRaiseInfoAdmin();
+                                            if (raiseInfo) {
+                                                return (
+                                                    <div className="mb-4 relative">
+                                                        <div className="flex items-start justify-between">
+                                                            <div className="flex-1">
+                                                                <div className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                                    Scheduled salary {raiseInfo.isIncrease ? 'increase' : 'decrease'}: {raiseInfo.isIncrease ? '+' : ''}{raiseInfo.amount.toFixed(2)} {raiseInfo.currency} effective {raiseInfo.date}
+                                                                </div>
+                                                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                                                    Current: {(raiseInfo.newTotal - raiseInfo.amount).toFixed(2)} {raiseInfo.currency} → New: <span className={`${raiseInfo.isIncrease ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"} font-medium`}>{raiseInfo.newTotal.toFixed(2)} {raiseInfo.currency}</span>
+                                                                </div>
+                                                                {raiseInfo.note && (
+                                                                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 italic">
+                                                                        Note: {raiseInfo.note}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <CustomButton
+                                                                onClick={async () => {
+                                                                    if (!selectedUserForSalary) return;
+                                                                    
+                                                                    try {
+                                                                        setSalaryTabLoading(true);
+                                                                        
+                                                                        // Delete the scheduled salary entry
+                                                                        const now = new Date();
+                                                                        const nextMonth = now.getMonth() + 1;
+                                                                        const nextYear = now.getFullYear() + Math.floor(nextMonth / 12);
+                                                                        const nextMonthIndex = nextMonth % 12;
+                                                                        
+                                                                        await axios.delete(`/api/profile/${selectedUserForSalary}/salary/base`, {
+                                                                            data: { year: nextYear, month: nextMonthIndex },
+                                                                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                                                        });
+                                                                        
+                                                                        // Refresh user data and salary entries
+                                                                        const userResponse = await axios.get(`/api/profile/${selectedUserForSalary}`, {
+                                                                            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                                                        });
+                                                                        setSelectedUserData(userResponse.data);
+                                                                        await handleLoadUserSalaryBaseEntries(selectedUserForSalary, false);
+                                                                        
+                                                                        toast.success('Scheduled salary change removed', {
+                                                                            duration: 3000,
+                                                                            style: {
+                                                                                background: '#4CAF50',
+                                                                                color: '#fff',
+                                                                                fontWeight: '500'
+                                                                            }
+                                                                        });
+                                                                    } catch (error) {
+                                                                        console.error('Error removing scheduled salary:', error);
+                                                                        toast.error('Failed to remove scheduled salary change', {
+                                                                            duration: 3000,
+                                                                            style: {
+                                                                                background: '#f44336',
+                                                                                color: '#fff',
+                                                                                fontWeight: '500'
+                                                                            }
+                                                                        });
+                                                                    } finally {
+                                                                        setSalaryTabLoading(false);
+                                                                    }
+                                                                }}
+                                                                variant="red"
+                                                                size="sm"
+                                                                disabled={salaryTabLoading}
+                                                                className="ml-2"
+                                                            >
+                                                                Remove Scheduled Salary {raiseInfo.isIncrease ? 'Increase' : 'Decrease'}
+                                                            </CustomButton>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div>
                                                 <Label value="Amount" className="mb-2" />
@@ -5171,6 +5707,61 @@ export default function AdminPanel() {
                                                     placeholder="0.00"
                                                     disabled={!selectedUserForSalary}
                                                 />
+                                                
+                                                {/* Show current salary when checkbox is enabled */}
+                                                {updateFromNextCycleAdmin && selectedUserData && salaryForm.salaryAmount && (
+                                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                                        Current: {(() => {
+                                                            // Get the actual current salary (same logic as Recent Salaries table)
+                                                            const now = new Date();
+                                                            const currentYear = now.getFullYear();
+                                                            const currentMonth = now.getMonth();
+                                                            
+                                                            // Find the most recent salary entry for current month or earlier
+                                                            const currentSalaryEntry = (salaryBaseEntries || [])
+                                                                .filter(entry => {
+                                                                    return entry.year < currentYear || (entry.year === currentYear && entry.month <= currentMonth);
+                                                                })
+                                                                .sort((a, b) => (b.year - a.year) || (b.month - a.month))[0];
+                                                            
+                                                            const currentSalary = currentSalaryEntry ? currentSalaryEntry.amount.toFixed(2) : (selectedUserData.salaryAmount || 0).toFixed(2);
+                                                            const currency = currentSalaryEntry ? currentSalaryEntry.currency : (selectedUserData.salaryCurrency || 'USD');
+                                                            const newSalary = (parseFloat(salaryForm.salaryAmount) || 0).toFixed(2);
+                                                            
+                                                            return `${currentSalary} → ${newSalary} ${currency}`;
+                                                        })()}
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Next Cycle Checkbox - Only show when editing current month */}
+                                                {isCurrentMonth(selectedMonthToEdit) && (
+                                                    <div className="mt-3">
+                                                        <div className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id="updateFromNextCycleAdmin"
+                                                                checked={updateFromNextCycleAdmin}
+                                                                onChange={(e) => setUpdateFromNextCycleAdmin(e.target.checked)}
+                                                                disabled={!selectedUserForSalary}
+                                                            />
+                                                            <label htmlFor="updateFromNextCycleAdmin" className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                                                                Update from next cycle {salaryForm.salaryDayOfMonth ? `(${(() => {
+                                                                    const day = parseInt(salaryForm.salaryDayOfMonth, 10);
+                                                                    if (!day || day < 1 || day > 31) return '';
+                                                                    const now = new Date();
+                                                                    const nextMonth = now.getMonth() + 1;
+                                                                    const year = now.getFullYear() + Math.floor(nextMonth / 12);
+                                                                    const month = nextMonth % 12;
+                                                                    const clampedDay = Math.min(day, new Date(year, month + 1, 0).getDate());
+                                                                    const nextDate = new Date(year, month, clampedDay);
+                                                                    const dd = String(nextDate.getDate()).padStart(2, '0');
+                                                                    const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
+                                                                    const yyyy = nextDate.getFullYear();
+                                                                    return `${dd}/${mm}/${yyyy}`;
+                                                                })()})` : ''}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <Label value="Currency" className="mb-2" />
@@ -5209,46 +5800,80 @@ export default function AdminPanel() {
                                                 disabled={!selectedUserForSalary}
                                             />
                                         </div>
-                                        <div className="mt-4">
-                                            <div className="flex items-center space-x-2">
-                                                <Checkbox
-                                                    id="updateFromNextCycleAdmin"
-                                                    checked={updateFromNextCycleAdmin}
-                                                    onChange={(e) => setUpdateFromNextCycleAdmin(e.target.checked)}
-                                                    disabled={!selectedUserForSalary}
-                                                />
-                                                <label htmlFor="updateFromNextCycleAdmin" className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                    Update starting from next salary cycle {salaryForm.salaryDayOfMonth ? `(${(() => {
-                                                        const day = parseInt(salaryForm.salaryDayOfMonth, 10);
-                                                        if (!day || day < 1 || day > 31) return '';
-                                                        const now = new Date();
-                                                        const nextMonth = now.getMonth() + 1;
-                                                        const year = now.getFullYear() + Math.floor(nextMonth / 12);
-                                                        const month = nextMonth % 12;
-                                                        const clampedDay = Math.min(day, new Date(year, month + 1, 0).getDate());
-                                                        const nextDate = new Date(year, month, clampedDay);
-                                                        const dd = String(nextDate.getDate()).padStart(2, '0');
-                                                        const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
-                                                        const yyyy = nextDate.getFullYear();
-                                                        return `${dd}/${mm}/${yyyy}`;
-                                                    })()})` : ''}
-                                                </label>
-                                            </div>
-                                        </div>
+
                                         <div className="flex justify-end mt-4">
                                             <CustomButton
                                                 onClick={async () => {
                                                     if (!selectedUserForSalary) return;
-                                                    const payload = {
-                                                        salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
-                                                        salaryCurrency: salaryForm.salaryCurrency,
-                                                        salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
-                                                        salaryNotes: salaryForm.salaryNotes || '',
-                                                        updateFromNextCycle: updateFromNextCycleAdmin
-                                                    };
+                                                    
                                                     try {
                                                         setSalaryTabLoading(true);
-                                                        await updateUserSalary(selectedUserForSalary, payload);
+                                                        
+                                                        // If next cycle is checked, always use normal salary update
+                                                        if (updateFromNextCycleAdmin) {
+                                                            const payload = {
+                                                                salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                salaryCurrency: salaryForm.salaryCurrency,
+                                                                salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
+                                                                salaryNotes: salaryForm.salaryNotes || '',
+                                                                updateFromNextCycle: updateFromNextCycleAdmin
+                                                            };
+                                                            await updateUserSalary(selectedUserForSalary, payload);
+                                                        } else if (selectedMonthToEdit) {
+                                                            // If editing a specific month, check if currency is being changed
+                                                            const [year, month] = selectedMonthToEdit.split('-').map(Number);
+                                                            
+                                                            // Get current user currency to compare
+                                                            const currentUserCurrency = selectedUserData?.salaryCurrency || 'USD';
+                                                            const isCurrencyChanging = salaryForm.salaryCurrency !== currentUserCurrency;
+                                                            
+                                                            if (isCurrencyChanging) {
+                                                                // If currency is changing, use regular salary update API
+                                                                const payload = {
+                                                                    salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                    salaryCurrency: salaryForm.salaryCurrency,
+                                                                    salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
+                                                                    salaryNotes: salaryForm.salaryNotes || '',
+                                                                    updateFromNextCycle: false
+                                                                };
+                                                                await updateUserSalary(selectedUserForSalary, payload);
+                                                            } else {
+                                                                // If only amount/note changing, use month edit API
+                                                                await editMonthSalary(selectedUserForSalary, {
+                                                                    year,
+                                                                    month,
+                                                                    amount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                    note: salaryForm.salaryNotes || ''
+                                                                });
+                                                            }
+                                                        } else {
+                                                            // Normal salary update for current month
+                                                            const payload = {
+                                                                salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                salaryCurrency: salaryForm.salaryCurrency,
+                                                                salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
+                                                                salaryNotes: salaryForm.salaryNotes || '',
+                                                                updateFromNextCycle: false
+                                                            };
+                                                            await updateUserSalary(selectedUserForSalary, payload);
+                                                        }
+                                                        
+                                                        // Refresh user data to update raise notification
+                                                        try {
+                                                            const userResponse = await axios.get(`/api/profile/${selectedUserForSalary}`, {
+                                                                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                                            });
+                                                            setSelectedUserData(userResponse.data);
+                                                        } catch (err) {
+                                                            console.error('Failed to refresh user data:', err);
+                                                        }
+                                                        
+                                                        // Refresh salary base entries to update Recent Salaries table
+                                                        await handleLoadUserSalaryBaseEntries(selectedUserForSalary, false); // Don't auto-select month after save
+                                                        
+                                                        // Refresh salary form data to show updated values
+                                                        await handleLoadUserSalary(selectedUserForSalary);
+                                                        
                                                         toast.success('Salary updated', {
                                                             duration: 3000,
                                                             style: {
@@ -5273,12 +5898,116 @@ export default function AdminPanel() {
                                                 }}
                                                 disabled={!selectedUserForSalary || salaryTabLoading}
                                             >
-                                                Save Salary
+                                                {selectedMonthToEdit ? `Save ${getMonthOptions().find(opt => opt.value === selectedMonthToEdit)?.label || 'Month'} Salary` : 'Save Salary'}
                                             </CustomButton>
                                         </div>
                                     </div>
 
-                                    {/* Bonus editor */}
+                                    {/* Recent Salaries Table */}
+                                    <div className="mt-6">
+                                        <h3 className="text-lg font-semibold dark:text-white mb-3">Recent Salaries</h3>
+                                        <CustomTable
+                                            headers={[
+                                                { label: 'Month', className: '' },
+                                                { label: 'Amount', className: '' },
+                                                { label: 'Currency', className: '' },
+                                                { label: 'Note', className: '' }
+                                            ]}
+                                            data={(salaryBaseEntries || [])
+                                                .filter(entry => {
+                                                    const now = new Date();
+                                                    const currentYear = now.getFullYear();
+                                                    const currentMonth = now.getMonth();
+                                                    // Only show entries for current month or earlier
+                                                    return entry.year < currentYear || (entry.year === currentYear && entry.month <= currentMonth);
+                                                })
+                                                .slice().sort((a,b)=> (b.year - a.year) || (b.month - a.month))}
+                                            renderRow={(entry) => (
+                                                <>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {new Date(entry.year, entry.month, 1).toLocaleString(undefined,{ month:'long', year:'numeric' })}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {editingAmount === `${entry.year}-${entry.month}` ? (
+                                                            <div className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={editAmount}
+                                                                    onChange={(e) => setEditAmount(e.target.value)}
+                                                                    className="w-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 rounded-lg px-2 py-1 text-xs font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-400 dark:focus:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    disabled={saveAmountLoading}
+                                                                />
+                                                                <button
+                                                                    onClick={() => handleSaveAmount(entry)}
+                                                                    disabled={saveAmountLoading}
+                                                                    className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 disabled:opacity-50"
+                                                                    title="Save"
+                                                                >
+                                                                    <FaCheck className="w-3 h-3" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleCancelEdit}
+                                                                    disabled={saveAmountLoading}
+                                                                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                                                                    title="Cancel"
+                                                                >
+                                                                    <FaTimes className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center space-x-2">
+                                                                <span>{entry.amount}</span>
+                                                                <button
+                                                                    onClick={() => handleEditAmount(entry)}
+                                                                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    title="Edit amount"
+                                                                >
+                                                                    <FaEdit className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {entry.currency}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3">
+                                                        {entry.note || '-'}
+                                                    </Table.Cell>
+                                                </>
+                                            )}
+                                            emptyMessage="No salary history recorded"
+                                        />
+                                    </div>
+                                        </div>
+                                    )}
+
+                                    {/* Bonus Tab Content */}
+                                    {selectedUserForSalary && salaryInnerTab === 'bonus' && (
+                                        <div>
+                                            {/* Bonus Month Filter Section */}
+                                            {(isAdmin) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
+                                                <div className="mb-6">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        <div>
+                                                            <Label value="Select Month to Edit" className="mb-2" />
+                                                            <SearchableSelect
+                                                                value={selectedBonusMonthToEdit}
+                                                                onChange={(val) => {
+                                                                    const value = val?.target?.value ?? val;
+                                                                    handleBonusMonthSelection(value);
+                                                                }}
+                                                                options={getMonthOptions()}
+                                                                placeholder="Select a month to edit..."
+                                                                clearable
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Bonus editor */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                                         <div>
                                             <Label value="Bonus Amount" className="mb-2" />
@@ -5300,39 +6029,89 @@ export default function AdminPanel() {
                                         />
                                     </div>
                                     <div className="flex justify-end mt-4">
-                                        <CustomButton onClick={handleGrantBonus} disabled={!selectedUserForSalary || salaryTabLoading}>Save Bonus for Previous Cycle</CustomButton>
+                                        <CustomButton onClick={handleGrantBonus} disabled={!selectedUserForSalary || salaryTabLoading}>
+                                            {selectedBonusMonthToEdit ? `Save ${getMonthOptions().find(opt => opt.value === selectedBonusMonthToEdit)?.label || 'Month'} Bonus` : 'Save Bonus for Previous Cycle'}
+                                        </CustomButton>
                                     </div>
 
                                     <div className="mt-6">
                                         <h3 className="text-lg font-semibold dark:text-white mb-3">Recent Bonuses</h3>
-                                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                <thead className="bg-gray-50 dark:bg-slate-900">
-                                                    <tr>
-                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Month</th>
-                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Amount</th>
-                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Currency</th>
-                                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Note</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {(bonuses || []).slice().sort((a,b)=> (b.year - a.year) || (b.month - a.month)).map((b, idx) => (
-                                                        <tr key={idx}>
-                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{new Date(b.year, b.month, 1).toLocaleString(undefined,{ month:'long', year:'numeric' })}</td>
-                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{b.amount}</td>
-                                                            <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100">{b.currency}</td>
-                                                            <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300">{b.note || '-'}</td>
-                                                        </tr>
-                                                    ))}
-                                                    {(!bonuses || bonuses.length === 0) && (
-                                                        <tr>
-                                                            <td className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400" colSpan={4}>No bonuses recorded</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                        <CustomTable
+                                            headers={[
+                                                { label: 'Month', className: '' },
+                                                { label: 'Amount', className: '' },
+                                                { label: 'Currency', className: '' },
+                                                { label: 'Note', className: '' }
+                                            ]}
+                                            data={(bonuses || [])
+                                                .filter(bonus => {
+                                                    const now = new Date();
+                                                    const currentYear = now.getFullYear();
+                                                    const currentMonth = now.getMonth();
+                                                    // Only show entries for current month or earlier
+                                                    return bonus.year < currentYear || (bonus.year === currentYear && bonus.month <= currentMonth);
+                                                })
+                                                .slice().sort((a,b)=> (b.year - a.year) || (b.month - a.month))}
+                                            renderRow={(bonus) => (
+                                                <>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {new Date(bonus.year, bonus.month, 1).toLocaleString(undefined,{ month:'long', year:'numeric' })}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {editingBonusAmount === `${bonus.year}-${bonus.month}` ? (
+                                                            <div className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={editBonusAmount}
+                                                                    onChange={(e) => setEditBonusAmount(e.target.value)}
+                                                                    className="w-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 rounded-lg px-2 py-1 text-xs font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-400 dark:focus:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    disabled={saveBonusAmountLoading}
+                                                                />
+                                                                <button
+                                                                    onClick={() => handleSaveBonusAmount(bonus)}
+                                                                    disabled={saveBonusAmountLoading}
+                                                                    className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 disabled:opacity-50"
+                                                                    title="Save"
+                                                                >
+                                                                    <FaCheck className="w-3 h-3" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleCancelBonusEdit}
+                                                                    disabled={saveBonusAmountLoading}
+                                                                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                                                                    title="Cancel"
+                                                                >
+                                                                    <FaTimes className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center space-x-2">
+                                                                <span>{bonus.amount}</span>
+                                                                <button
+                                                                    onClick={() => handleEditBonusAmount(bonus)}
+                                                                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    title="Edit amount"
+                                                                >
+                                                                    <FaEdit className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-800 dark:text-gray-100 px-4 py-3">
+                                                        {bonus.currency}
+                                                    </Table.Cell>
+                                                    <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3">
+                                                        {bonus.note || '-'}
+                                                    </Table.Cell>
+                                                </>
+                                            )}
+                                            emptyMessage="No bonuses recorded"
+                                        />
                                     </div>
+                                        </div>
+                                    )}
                                 </Card>
                             )}
                             
@@ -5482,13 +6261,13 @@ export default function AdminPanel() {
                                                         Daily Summary
                                                     </h4>
                                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                        Generate morning summary of today's arrivals.
+                                                        Generate morning summary of today's arrivals and departures.
                                                     </p>
                                                     <CustomButton
                                                         variant="orange"
                                                         onClick={handleGenerateDailySummary}
                                                         disabled={notificationLoading}
-                                                        title="Generate daily arrivals summary"
+                                                        title="Generate daily arrivals and departures summary"
                                                         icon={notificationLoading ? null : FaCalendarDay}
                                                     >
                                                         {notificationLoading ? (

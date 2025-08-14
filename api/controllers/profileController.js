@@ -209,14 +209,19 @@ exports.updateUserSalary = async (req, res) => {
         }
 
         const prevAmount = user.salaryAmount;
+        const prevNotes = user.salaryNotes;
+        const prevCurrency = user.salaryCurrency;
         const amountChanged = salaryAmount !== undefined && Number(salaryAmount) !== Number(prevAmount);
+        const notesChanged = salaryNotes !== undefined && salaryNotes !== prevNotes;
+        const currencyChanged = salaryCurrency !== undefined && salaryCurrency !== prevCurrency;
+        
         if (salaryAmount !== undefined) user.salaryAmount = salaryAmount;
         if (salaryCurrency !== undefined) user.salaryCurrency = salaryCurrency;
         if (salaryDayOfMonth !== undefined) user.salaryDayOfMonth = salaryDayOfMonth;
         if (salaryNotes !== undefined) user.salaryNotes = salaryNotes;
 
-        // Handle salary changes based on updateFromNextCycle flag
-        if (amountChanged) {
+        // Handle salary changes based on updateFromNextCycle flag or when amount/notes/currency change
+        if (amountChanged || notesChanged || currencyChanged || updateFromNextCycle) {
             const now = new Date();
             let targetYear = now.getFullYear();
             let targetMonth = now.getMonth();
@@ -266,9 +271,9 @@ exports.updateUserSalary = async (req, res) => {
             const entry = {
                 year: targetYear,
                 month: targetMonth,
-                amount: Number(salaryAmount) || 0,
+                amount: Number(salaryAmount) || user.salaryAmount || 0,
                 currency: user.salaryCurrency || 'USD',
-                note: updateFromNextCycle ? 'Base updated from next cycle' : 'Base updated',
+                note: salaryNotes || (updateFromNextCycle ? 'Base updated from next cycle' : (currencyChanged && !amountChanged ? 'Currency updated' : 'Base updated')),
                 updatedAt: new Date()
             };
             if (idx >= 0) user.salaryBaseEntries[idx] = { ...user.salaryBaseEntries[idx]._doc, ...entry };
@@ -321,6 +326,139 @@ exports.addMonthlyBaseSalary = async (req, res) => {
         }
         await user.save();
         res.json({ message: 'Monthly base salary saved', base: entry });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get salary base entries for a user (admins and accountants only)
+exports.getUserSalaryBaseEntries = async (req, res) => {
+    try {
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
+        }
+        
+        const { userId } = req.params;
+        const user = await User.findById(userId).select('username salaryBaseEntries');
+        
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Sort salary base entries by year and month (newest first)
+        const sortedEntries = (user.salaryBaseEntries || []).sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year;
+            return b.month - a.month;
+        });
+
+        res.json({ 
+            username: user.username,
+            salaryBaseEntries: sortedEntries 
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Edit specific month salary entry (admins only)
+exports.editPreviousMonthSalary = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+        
+        const { userId } = req.params;
+        const { year, month, amount, note = '' } = req.body;
+        
+        // Validation
+        if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
+            return res.status(400).json({ message: 'Invalid year or month' });
+        }
+        if (typeof amount !== 'number' || amount < 0) {
+            return res.status(400).json({ message: 'Invalid salary amount' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const currency = user.salaryCurrency || 'USD';
+        const entryIndex = (user.salaryBaseEntries || []).findIndex(e => e.year === year && e.month === month);
+        
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Salary entry for this month not found' });
+        }
+
+        // Update existing entry
+        const updatedEntry = {
+            ...user.salaryBaseEntries[entryIndex]._doc,
+            amount,
+            currency,
+            note: note,
+            setBy: req.user.userId,
+            updatedAt: new Date()
+        };
+
+        user.salaryBaseEntries[entryIndex] = updatedEntry;
+        await user.save();
+
+        res.json({ 
+            message: 'Salary entry updated successfully',
+            entry: updatedEntry
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Edit specific month bonus entry (admins only)
+exports.editPreviousMonthBonus = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+        
+        const { userId } = req.params;
+        const { year, month, amount, note = '' } = req.body;
+        
+        // Validation
+        if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
+            return res.status(400).json({ message: 'Invalid year or month' });
+        }
+        if (typeof amount !== 'number' || amount < 0) {
+            return res.status(400).json({ message: 'Invalid bonus amount' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const currency = user.salaryCurrency || 'USD';
+        const entryIndex = (user.salaryBonuses || []).findIndex(b => b.year === year && b.month === month);
+        
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Bonus entry for this month not found' });
+        }
+
+        // Update existing entry
+        const updatedEntry = {
+            ...user.salaryBonuses[entryIndex]._doc,
+            amount,
+            currency,
+            note: note,
+            awardedBy: req.user.userId,
+            updatedAt: new Date()
+        };
+
+        user.salaryBonuses[entryIndex] = updatedEntry;
+        await user.save();
+
+        res.json({ 
+            message: 'Bonus entry updated successfully',
+            entry: updatedEntry
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -388,6 +526,45 @@ exports.getUserBonuses = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
         res.json({ bonuses: user.salaryBonuses || [] });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Delete specific salary base entry (admins only)
+exports.deleteScheduledSalaryEntry = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+        
+        const { userId } = req.params;
+        const { year, month } = req.body;
+        
+        // Validation
+        if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
+            return res.status(400).json({ message: 'Invalid year or month' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Find and remove the salary base entry
+        const entryIndex = (user.salaryBaseEntries || []).findIndex(e => e.year === year && e.month === month);
+        
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Scheduled salary entry not found' });
+        }
+
+        // Remove the entry
+        user.salaryBaseEntries.splice(entryIndex, 1);
+        await user.save();
+
+        res.json({ 
+            message: 'Scheduled salary entry deleted successfully'
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

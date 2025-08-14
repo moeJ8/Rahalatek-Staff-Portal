@@ -37,4 +37,23 @@ export const saveMonthlyBaseSalary = async (userId, { year, month, amount, note 
   return response.data;
 };
 
+export const getUserSalaryBaseEntries = async (userId) => {
+  const response = await axios.get(`/api/profile/${userId}/salary/base`);
+  return response.data;
+};
+
+export const editMonthSalary = async (userId, { year, month, amount, note }) => {
+  const response = await axios.put(`/api/profile/${userId}/salary/edit`, {
+    year, month, amount, note
+  });
+  return response.data;
+};
+
+export const editMonthBonus = async (userId, { year, month, amount, note }) => {
+  const response = await axios.put(`/api/profile/${userId}/bonus/edit`, {
+    year, month, amount, note
+  });
+  return response.data;
+};
+
 

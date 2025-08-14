@@ -160,7 +160,7 @@ exports.generateDepartureReminders = async (req, res) => {
 };
 
 /**
- * Generate daily arrivals summary manually (admin only)
+ * Generate daily arrivals and departures summary manually (admin only)
  */
 exports.generateDailyArrivalsSummary = async (req, res) => {
     try {
@@ -171,19 +171,42 @@ exports.generateDailyArrivalsSummary = async (req, res) => {
             });
         }
 
-        const notifications = await NotificationService.generateDailyArrivalsSummary(true);
+        // Generate both arrivals and departures summaries
+        const [arrivalNotifications, departureNotifications] = await Promise.all([
+            NotificationService.generateDailyArrivalsSummary(true),
+            NotificationService.generateDailyDeparturesSummary(true)
+        ]);
+
+        const totalNotifications = arrivalNotifications.length + departureNotifications.length;
+        const messages = [];
+        
+        if (arrivalNotifications.length > 0) {
+            messages.push('Daily arrivals summary regenerated');
+        } else {
+            messages.push('No arrivals today');
+        }
+        
+        if (departureNotifications.length > 0) {
+            messages.push('Daily departures summary regenerated');
+        } else {
+            messages.push('No departures today');
+        }
 
         res.status(200).json({
             success: true,
-            message: notifications.length > 0 
-                ? `Daily arrivals summary regenerated successfully` 
-                : 'No arrivals today - no summary to generate',
-            data: notifications
+            message: totalNotifications > 0 
+                ? messages.join(' and ') + ' successfully'
+                : 'No arrivals or departures today - no summaries to generate',
+            data: {
+                arrivals: arrivalNotifications,
+                departures: departureNotifications,
+                total: totalNotifications
+            }
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Failed to generate daily arrivals summary',
+            message: 'Failed to generate daily summaries',
             error: error.message
         });
     }

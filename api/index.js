@@ -36,22 +36,25 @@ mongoose.connect(process.env.MONGO_URI)
       console.log('Starting notification system...');
       try {
         await NotificationService.generateArrivalReminders();
+        await NotificationService.generateDepartureReminders();
         await NotificationService.generateDailyArrivalsSummary();
+        await NotificationService.generateDailyDeparturesSummary();
       } catch (err) {
         console.error('Notification system error:', err);
       }
       
-      // Schedule arrival reminder generation every hour
+      // Schedule arrival and departure reminder generation every hour
       setInterval(async () => {
         try {
           await NotificationService.generateArrivalReminders();
+          await NotificationService.generateDepartureReminders();
           await NotificationService.cleanupExpiredNotifications();
         } catch (err) {
           console.error('Scheduled task error:', err);
         }
       }, 1 * 60 * 60 * 1000);
       
-      // Schedule daily arrivals summary generation every morning at 8 AM
+      // Schedule daily arrivals and departures summary generation every morning at 8 AM
       const scheduleDailySummary = () => {
         const now = new Date();
         const next8AM = new Date();
@@ -67,11 +70,13 @@ mongoose.connect(process.env.MONGO_URI)
         setTimeout(async () => {
           try {
             await NotificationService.generateDailyArrivalsSummary();
+            await NotificationService.generateDailyDeparturesSummary();
             
             // Schedule the next one (24 hours later)
             setInterval(async () => {
               try {
                 await NotificationService.generateDailyArrivalsSummary();
+                await NotificationService.generateDailyDeparturesSummary();
               } catch (err) {
                 console.error('⚠️ Daily summary error:', err);
               }

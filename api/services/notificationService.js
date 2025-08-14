@@ -290,6 +290,78 @@ class NotificationService {
     }
 
     /**
+     * Generate daily departures summary for today
+     */
+    static async generateDailyDeparturesSummary(forceRegenerate = false) {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            // Find vouchers departing today
+            const vouchersDepartingToday = await Voucher.find({
+                departureDate: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                $or: [
+                    { isDeleted: false },
+                    { isDeleted: { $exists: false } }
+                ]
+            }).populate('createdBy', 'username').sort({ departureDate: 1 });
+
+            // If no departures today, don't create a summary
+            if (vouchersDepartingToday.length === 0) {
+                return [];
+            }
+
+            // Create summary message
+            const voucherNumbers = vouchersDepartingToday.map(v => `#${v.voucherNumber}`).join(', ');
+            const summaryMessage = `Today's Departures (${vouchersDepartingToday.length}): ${voucherNumbers}`;
+
+            // Check if we already have a summary for today
+            const existingSummary = await Notification.findOne({
+                type: 'daily_departures_summary',
+                createdAt: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                isActive: true
+            });
+
+            if (existingSummary && !forceRegenerate) {
+                return [];
+            }
+
+            // If regenerating, deactivate the old one
+            if (existingSummary && forceRegenerate) {
+                await Notification.findByIdAndUpdate(existingSummary._id, { isActive: false });
+            }
+
+            // Create the notification
+            const notification = await this.createNotification({
+                type: 'daily_departures_summary',
+                title: `Today's Departures Summary - ${today.toLocaleDateString()}`,
+                message: summaryMessage,
+                priority: 'medium',
+                expiresAt: todayEnd,
+                metadata: {
+                    date: today.toISOString(),
+                    totalDepartures: vouchersDepartingToday.length,
+                    voucherNumbers: vouchersDepartingToday.map(v => v.voucherNumber)
+                }
+            });
+
+            return [notification];
+        } catch (error) {
+            console.error('Error generating daily departures summary:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get user notifications based on their role
      */
     static async getUserNotifications(userId, isAdmin, isAccountant) {

@@ -11,7 +11,7 @@ import UserBadge from '../components/UserBadge';
 import CustomSelect from '../components/Select';
 import UserAnalytics from '../components/UserAnalytics';
 import RahalatekLoader from '../components/RahalatekLoader';
-import { getMyBonuses, getUserBonuses, saveMonthlyBaseSalary } from '../utils/profileApi';
+import { getMyBonuses, getUserBonuses } from '../utils/profileApi';
 
 const securityQuestions = [
     { value: "What was your childhood nickname?", label: "What was your childhood nickname?" },
@@ -297,6 +297,45 @@ export default function ProfilePage() {
         return formatDisplayDDMMYYYY(nextDate);
     };
 
+    const getScheduledRaiseInfo = () => {
+        if (!user?.salaryBaseEntries || user.salaryBaseEntries.length === 0) return null;
+        
+        const now = new Date();
+        const nextMonth = now.getMonth() + 1;
+        const nextYear = now.getFullYear() + Math.floor(nextMonth / 12);
+        const nextMonthIndex = nextMonth % 12;
+        
+        // Current month's salary
+        const currentMonthEntry = user.salaryBaseEntries.find(e => 
+            e.year === now.getFullYear() && e.month === now.getMonth()
+        );
+        const currentSalary = currentMonthEntry?.amount ?? user.salaryAmount ?? 0;
+        
+        // Next month's salary
+        const nextMonthEntry = user.salaryBaseEntries.find(e => 
+            e.year === nextYear && e.month === nextMonthIndex
+        );
+        
+        if (!nextMonthEntry) return null;
+        
+        const nextSalary = nextMonthEntry.amount;
+        const salaryDifference = nextSalary - currentSalary;
+        
+        // Show if there's any change (raise or decrease)
+        if (salaryDifference !== 0) {
+            const nextSalaryDate = user.salaryDayOfMonth ? getNextSalaryDate(user.salaryDayOfMonth) : null;
+            return {
+                amount: salaryDifference,
+                currency: nextMonthEntry.currency || user.salaryCurrency || 'USD',
+                newTotal: nextSalary,
+                date: nextSalaryDate,
+                isIncrease: salaryDifference > 0
+            };
+        }
+        
+        return null;
+    };
+
     const daysInMonth = (year, monthIndex) => {
         return new Date(year, monthIndex + 1, 0).getDate();
     };
@@ -351,24 +390,6 @@ export default function ProfilePage() {
             };
             await axios.put(`/api/profile/${targetId}/salary`, payload);
 
-            // 2) Ensure monthly base entry for current/next month reflects the new base and currency
-            // If updateFromNextCycle is true, the backend will handle this properly
-            if (!updateFromNextCycle) {
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                const currentYear = now.getFullYear();
-                try {
-                    await saveMonthlyBaseSalary(targetId, {
-                        year: currentYear,
-                        month: currentMonth,
-                        amount: amount,
-                        note: salaryData.salaryNotes || ''
-                    });
-                } catch {
-                    // ignore; monthly base may already exist
-                }
-            }
-
             // 3) Refresh user profile and bonuses to update header instantly
             try {
                 const refreshed = await axios.get(userId ? `/api/profile/${userId}` : '/api/profile/me');
@@ -387,6 +408,15 @@ export default function ProfilePage() {
             } catch {
                 // ignore
             }
+
+            // Update user state with new salary information
+            setUser(prevUser => ({
+                ...prevUser,
+                salaryAmount: amount,
+                salaryCurrency: salaryData.salaryCurrency,
+                salaryDayOfMonth: day,
+                salaryNotes: salaryData.salaryNotes || ''
+            }));
 
             toast.success('Salary updated successfully', {
                 duration: 3000,
@@ -723,8 +753,9 @@ export default function ProfilePage() {
                                         })()}</span>
                                     </div>
                                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                                        Next salary: {salaryData.salaryDayOfMonth ? getNextSalaryDate(salaryData.salaryDayOfMonth) : '-'}
+                                        Next salary: {user?.salaryDayOfMonth ? getNextSalaryDate(user.salaryDayOfMonth) : '-'}
                                     </div>
+
                                     <div className="mt-2 flex justify-center md:justify-end">
                                         <CustomButton
                                             variant="green"
@@ -737,6 +768,112 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Salary Change Notification - Prominent placement */}
+                        {(isOwnProfile || currentUser?.isAdmin || (currentUser?.isAccountant && !user?.isAdmin)) && (() => {
+                            const raiseInfo = getScheduledRaiseInfo();
+                            if (raiseInfo) {
+                                return (
+                                    <div className={`mb-6 p-4 border-l-4 rounded-lg shadow-sm ${
+                                        raiseInfo.isIncrease 
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-l-green-500 border-green-200 dark:border-green-800' 
+                                            : 'bg-red-50 dark:bg-red-900/20 border-l-red-500 border-red-200 dark:border-red-800'
+                                    }`}>
+                                        <div className="flex items-start">
+                                            <div className={`flex-shrink-0 ${
+                                                raiseInfo.isIncrease ? 'text-green-500' : 'text-red-500'
+                                            }`}>
+                                                {raiseInfo.isIncrease ? (
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <div className="ml-3 flex-1">
+                                                <div className={`text-base font-semibold ${
+                                                    raiseInfo.isIncrease 
+                                                        ? 'text-green-800 dark:text-green-200' 
+                                                        : 'text-red-800 dark:text-red-200'
+                                                }`}>
+                                                    {raiseInfo.isIncrease ? 'Salary Increase Scheduled' : 'Salary Decrease Scheduled'}
+                                                </div>
+                                                <div className={`text-sm mt-1 ${
+                                                    raiseInfo.isIncrease 
+                                                        ? 'text-green-700 dark:text-green-300' 
+                                                        : 'text-red-700 dark:text-red-300'
+                                                }`}>
+                                                    {raiseInfo.isIncrease ? '+' : ''}{raiseInfo.amount.toFixed(2)} {raiseInfo.currency} {raiseInfo.isIncrease ? 'increase' : 'decrease'} starting {raiseInfo.date}
+                                                </div>
+                                                <div className={`text-sm mt-1 font-medium ${
+                                                    raiseInfo.isIncrease 
+                                                        ? 'text-green-800 dark:text-green-200' 
+                                                        : 'text-red-800 dark:text-red-200'
+                                                }`}>
+                                                    New salary: {raiseInfo.newTotal.toFixed(2)} {raiseInfo.currency}
+                                                </div>
+                                            </div>
+                                            {(currentUser?.isAdmin || currentUser?.isAccountant) && (
+                                                <div className="ml-2 flex-shrink-0">
+                                                    <CustomButton
+                                                        onClick={async () => {
+                                                            try {
+                                                                setSalarySaving(true);
+
+                                                                // Delete the scheduled salary entry
+                                                                const now = new Date();
+                                                                const nextMonth = now.getMonth() + 1;
+                                                                const nextYear = now.getFullYear() + Math.floor(nextMonth / 12);
+                                                                const nextMonthIndex = nextMonth % 12;
+
+                                                                await axios.delete(`/api/profile/${user._id}/salary/base`, {
+                                                                    data: { year: nextYear, month: nextMonthIndex },
+                                                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                                                                });
+
+                                                                // Refresh user data
+                                                                await fetchUserProfile(user._id);
+
+                                                                toast.success('Scheduled salary change removed', {
+                                                                    duration: 3000,
+                                                                    style: {
+                                                                        background: '#4CAF50',
+                                                                        color: '#fff',
+                                                                        fontWeight: '500'
+                                                                    }
+                                                                });
+                                                            } catch (error) {
+                                                                console.error('Error removing scheduled salary:', error);
+                                                                toast.error('Failed to remove scheduled salary change', {
+                                                                    duration: 3000,
+                                                                    style: {
+                                                                        background: '#f44336',
+                                                                        color: '#fff',
+                                                                        fontWeight: '500'
+                                                                    }
+                                                                });
+                                                            } finally {
+                                                                setSalarySaving(false);
+                                                            }
+                                                        }}
+                                                        variant="red"
+                                                        size="sm"
+                                                        disabled={salarySaving}
+                                                        className="!text-xs"
+                                                    >
+                                                        Remove Scheduled Salary {raiseInfo.isIncrease ? 'Increase' : 'Decrease'}
+                                                    </CustomButton>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
 
                         <div className="flex items-center gap-3 mb-5">
                             {canEdit() && (

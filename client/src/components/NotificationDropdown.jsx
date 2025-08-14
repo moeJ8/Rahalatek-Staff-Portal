@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Spinner, Badge } from 'flowbite-react';
-import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser } from 'react-icons/fa';
+import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -8,10 +8,12 @@ import CustomScrollbar from './CustomScrollbar';
 
 const NotificationDropdown = () => {
   const [notifications, setNotifications] = useState([]);
+  const [filteredNotifications, setFilteredNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -42,7 +44,9 @@ const NotificationDropdown = () => {
         })
       ]);
 
-      setNotifications(notificationsRes.data.data);
+      const notifData = notificationsRes.data.data;
+      setNotifications(notifData);
+      setFilteredNotifications(notifData);
       setUnreadCount(unreadCountRes.data.count);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -67,6 +71,30 @@ const NotificationDropdown = () => {
     }
   };
 
+  // Filter notifications based on active filter
+  const filterNotifications = (notifs, filter) => {
+    switch (filter) {
+      case 'arrival':
+        return notifs.filter(notif => 
+          notif.type === 'voucher_arrival_reminder' || 
+          notif.type === 'daily_arrivals_summary'
+        );
+      case 'departure':
+        return notifs.filter(notif => 
+          notif.type === 'voucher_departure_reminder' || 
+          notif.type === 'daily_departures_summary'
+        );
+      case 'all':
+      default:
+        return notifs;
+    }
+  };
+
+  // Update filtered notifications when filter or notifications change
+  useEffect(() => {
+    setFilteredNotifications(filterNotifications(notifications, activeFilter));
+  }, [notifications, activeFilter]);
+
   // Fetch notifications on mount and when dropdown opens
   useEffect(() => {
     fetchNotifications();
@@ -86,11 +114,12 @@ const NotificationDropdown = () => {
       });
 
       // Update local state
-      setNotifications(prev => prev.map(notif => 
+      const updatedNotifications = notifications.map(notif => 
         notif._id === notificationId 
           ? { ...notif, readBy: [...(notif.readBy || []), { user: 'current_user', readAt: new Date() }] }
           : notif
-      ));
+      );
+      setNotifications(updatedNotifications);
       
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -122,10 +151,11 @@ const NotificationDropdown = () => {
       });
 
       // Update local state - mark all as read
-      setNotifications(prev => prev.map(notif => ({
+      const updatedNotifications = notifications.map(notif => ({
         ...notif,
         readBy: [...(notif.readBy || []), { user: 'current_user', readAt: new Date() }]
-      })));
+      }));
+      setNotifications(updatedNotifications);
       
       setUnreadCount(0);
       toast.success('All notifications marked as read', {
@@ -169,11 +199,13 @@ const NotificationDropdown = () => {
     
     switch (type) {
       case 'voucher_arrival_reminder':
-        return <FaPlane className={iconClass} />;
+        return <FaPlaneArrival className={iconClass} />;
       case 'voucher_departure_reminder':
         return <FaPlaneDeparture className={iconClass} />;
       case 'daily_arrivals_summary':
         return <FaCalendarDay className="w-4 h-4 text-orange-500" />;
+      case 'daily_departures_summary':
+        return <FaCalendarDay className="w-4 h-4 text-purple-500" />;
       case 'voucher_status_change':
         return <FaCalendarAlt className={iconClass} />;
       case 'user_role_change':
@@ -233,7 +265,7 @@ const NotificationDropdown = () => {
 
       {/* Dropdown Menu */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[500px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
@@ -270,25 +302,67 @@ const NotificationDropdown = () => {
             </button>
           )}
 
+          {/* Filter Tabs */}
+          <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+                activeFilter === 'all'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <FaBell className="w-3 h-3" />
+              All
+            </button>
+            <button
+              onClick={() => setActiveFilter('arrival')}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+                activeFilter === 'arrival'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <FaPlaneArrival className="w-3 h-3" />
+              Arrival
+            </button>
+            <button
+              onClick={() => setActiveFilter('departure')}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+                activeFilter === 'departure'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <FaPlaneDeparture className="w-3 h-3" />
+              Departure
+            </button>
+          </div>
+
           {/* Notifications List */}
-          <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-slate-700">
-            <CustomScrollbar maxHeight="400px" className="h-full">
+          <div className="flex-1 min-h-0">
+            <CustomScrollbar maxHeight="480px" className="h-full">
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-8">
                   <Spinner size="md" className="text-teal-600" />
                   <span className="ml-2 text-gray-600 dark:text-gray-400">Loading notifications...</span>
                 </div>
-              ) : notifications.length === 0 ? (
+              ) : filteredNotifications.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <FaBell className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500 dark:text-gray-400">No notifications yet</p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {notifications.length === 0 ? 'No notifications yet' : `No ${activeFilter === 'all' ? '' : activeFilter} notifications`}
+                  </p>
                   <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                    You'll receive notifications for upcoming arrivals and role changes
+                    {notifications.length === 0 
+                      ? "You'll receive notifications for upcoming arrivals and role changes"
+                      : `Try switching to a different filter to see more notifications`
+                    }
                   </p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200 dark:divide-slate-700">
-                  {notifications.map((notification) => (
+                  {filteredNotifications.map((notification) => (
                     <div
                       key={notification._id}
                       className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
