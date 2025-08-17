@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HiChevronDown, HiLogout, HiCog, HiUser } from 'react-icons/hi';
+import { FaQrcode, FaCalendarAlt } from 'react-icons/fa';
 import UserBadge from './UserBadge';
 
-export default function UserDropdown({ user, onLogout }) {
+export default function UserDropdown({ user, onLogout, onCalendarClick }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -34,6 +35,18 @@ export default function UserDropdown({ user, onLogout }) {
   const handleProfileClick = () => {
     setDropdownOpen(false);
     navigate('/profile');
+  };
+
+  const handleAttendanceClick = () => {
+    setDropdownOpen(false);
+    navigate('/attendance');
+  };
+
+  const handleCalendarClick = () => {
+    setDropdownOpen(false);
+    if (onCalendarClick) {
+      onCalendarClick();
+    }
   };
 
   const handleLogoutClick = () => {
@@ -113,7 +126,7 @@ export default function UserDropdown({ user, onLogout }) {
               <HiUser className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
               Profile
             </button>
-            
+
             {(user.isAdmin || user.isAccountant) && (
               <button
                 onClick={handleDashboardClick}
@@ -123,6 +136,22 @@ export default function UserDropdown({ user, onLogout }) {
                 Dashboard
               </button>
             )}
+
+            <button
+              onClick={handleAttendanceClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            >
+              <FaQrcode className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              Attendance
+            </button>
+
+            <button
+              onClick={handleCalendarClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            >
+              <FaCalendarAlt className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              My Calendar
+            </button>
             
             <button
               onClick={handleLogoutClick}

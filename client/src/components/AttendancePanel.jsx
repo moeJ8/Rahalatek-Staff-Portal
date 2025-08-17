@@ -1,0 +1,3275 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Table } from 'flowbite-react';
+import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock } from 'react-icons/fa';
+import { HiRefresh, HiPlus } from 'react-icons/hi';
+import CustomButton from './CustomButton';
+import RahalatekLoader from './RahalatekLoader';
+import CustomTable from './CustomTable';
+import SearchableSelect from './SearchableSelect';
+import CustomScrollbar from './CustomScrollbar';
+import Select from './Select';
+import CustomDatePicker from './CustomDatePicker';
+import TextInput from './TextInput';
+import CustomModal from './CustomModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
+import CustomCheckbox from './CustomCheckbox';
+import { toast } from 'react-hot-toast';
+import axios from 'axios';
+
+export default function AttendancePanel() {
+  const [qrCode, setQrCode] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [attendanceReports, setAttendanceReports] = useState([]);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [reportFilters, setReportFilters] = useState({
+    period: 'daily',
+    userId: '',
+    status: '',
+    specificDate: ''
+  });
+  const [reportSummary, setReportSummary] = useState(null);
+  const [yearlyView, setYearlyView] = useState(false);
+  const [settingsView, setSettingsView] = useState(false);
+  const [yearlyData, setYearlyData] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [yearlyLoading, setYearlyLoading] = useState(false);
+  const [availableYears, setAvailableYears] = useState([]);
+  const [dayModal, setDayModal] = useState({ visible: false, data: null });
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [hoveredDay, setHoveredDay] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  
+  // Settings data states
+  const [workingDaysConfig, setWorkingDaysConfig] = useState(null);
+  const [holidays, setHolidays] = useState([]);
+  const [userLeaves, setUserLeaves] = useState([]);
+  
+  // Settings UI states
+  const [activeSettingsTab, setActiveSettingsTab] = useState('working-days');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, leaveId: null, leaveName: '' });
+  const [holidayDeleteConfirmation, setHolidayDeleteConfirmation] = useState({ show: false, holidayId: null, holidayName: '' });
+  const [workingDaysForm, setWorkingDaysForm] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    defaultWorkingDays: [0, 1, 2, 3, 4, 6] // Sunday, Monday to Thursday, Saturday (Friday is non-working)
+  });
+  const [holidayForm, setHolidayForm] = useState({
+    name: '',
+    description: '',
+    date: '',
+    type: 'company',
+    isRecurring: false,
+    color: '#f87171'
+  });
+  const [leaveForm, setLeaveForm] = useState({
+    userId: '',
+    leaveType: 'sick',
+    customLeaveType: '',
+    startDate: '',
+    endDate: '',
+    reason: '',
+    isHalfDay: false,
+    halfDayPeriod: 'morning'
+  });
+  
+  // Admin editing states
+  const [editModal, setEditModal] = useState({ visible: false, data: null });
+  const [createModal, setCreateModal] = useState({ visible: false, data: null });
+  const [deleteModal, setDeleteModal] = useState({ visible: false, recordId: null, recordData: null });
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+
+
+  const authUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = authUser.isAdmin || false;
+
+  // Fetch settings data (working days, holidays, leaves)
+  const fetchSettingsData = useCallback(async (year, month) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Authorization': `Bearer ${token}` };
+      
+      // Fetch working days configuration
+      const workingDaysResponse = await fetch(`/api/working-days?year=${year}&month=${month + 1}`, { headers });
+      if (workingDaysResponse.ok) {
+        const workingDaysData = await workingDaysResponse.json();
+        setWorkingDaysConfig(workingDaysData.data);
+      }
+      
+      // Fetch holidays for the month
+      const holidaysResponse = await fetch(`/api/holidays?year=${year}&month=${month + 1}`, { headers });
+      if (holidaysResponse.ok) {
+        const holidaysData = await holidaysResponse.json();
+        setHolidays(holidaysData.data);
+      }
+      
+      // Fetch user leaves for the month
+      const leavesResponse = await fetch(`/api/user-leave?year=${year}&month=${month + 1}`, { headers });
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        setUserLeaves(leavesData.data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings data:', error);
+    }
+  }, []);
+
+  // Helper function to determine day styling based on settings
+  const getDayInfo = useCallback((year, month, day) => {
+    const date = new Date(year, month, day);
+    const dayInfo = {
+      isWorkingDay: true,
+      isHoliday: false,
+      hasLeave: false,
+      holidayInfo: null,
+      leaveInfo: [],
+      bgColor: '',
+      textColor: '',
+      label: ''
+    };
+
+    // Check if it's a working day
+    if (workingDaysConfig?.workingDays) {
+      const dayConfig = workingDaysConfig.workingDays.find(d => d.day === day);
+      if (dayConfig) {
+        dayInfo.isWorkingDay = dayConfig.isWorkingDay;
+    } else {
+        // Fallback to default working days of week
+        const dayOfWeek = date.getDay();
+        dayInfo.isWorkingDay = workingDaysConfig.defaultWorkingDaysOfWeek?.includes(dayOfWeek) || false;
+      }
+    } else {
+      // Default: Sunday, Monday to Thursday, Saturday (Friday is non-working)
+      const dayOfWeek = date.getDay();
+      dayInfo.isWorkingDay = [0, 1, 2, 3, 4, 6].includes(dayOfWeek);
+    }
+
+    // Check for holidays
+    const holiday = holidays.find(h => {
+      const holidayDate = new Date(h.date);
+      return holidayDate.getDate() === day && 
+             holidayDate.getMonth() === month && 
+             holidayDate.getFullYear() === year;
+    });
+    if (holiday) {
+      dayInfo.isHoliday = true;
+      dayInfo.holidayInfo = holiday;
+    }
+
+    // Check for user leaves
+    const dayLeaves = userLeaves.filter(leave => {
+      const startDate = new Date(leave.startDate);
+      const endDate = new Date(leave.endDate);
+      return date >= startDate && date <= endDate;
+    });
+    if (dayLeaves.length > 0) {
+      dayInfo.hasLeave = true;
+      dayInfo.leaveInfo = dayLeaves;
+    }
+
+    // Set styling based on day type
+    if (dayInfo.isHoliday) {
+      dayInfo.bgColor = 'bg-purple-200 dark:bg-purple-800/50';
+      dayInfo.textColor = 'text-purple-900 dark:text-purple-100';
+      dayInfo.label = `Holiday: ${dayInfo.holidayInfo.name}`;
+    } else if (dayInfo.hasLeave) {
+      dayInfo.bgColor = 'bg-yellow-200 dark:bg-yellow-800/50';
+      dayInfo.textColor = 'text-yellow-900 dark:text-yellow-100';
+      dayInfo.label = `${dayInfo.leaveInfo.length} employee(s) on leave`;
+    } else if (!dayInfo.isWorkingDay) {
+      dayInfo.bgColor = 'bg-gray-200 dark:bg-gray-800';
+      dayInfo.textColor = 'text-gray-600 dark:text-gray-400';
+      dayInfo.label = 'Non-working day';
+    }
+
+    return dayInfo;
+  }, [workingDaysConfig, holidays, userLeaves]);
+
+  // Settings management functions
+  const loadWorkingDaysConfig = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/working-days?year=${workingDaysForm.year}&month=${workingDaysForm.month}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWorkingDaysConfig(data.data);
+        
+        // IMPORTANT: Update the form's defaultWorkingDays to match the loaded configuration
+        // This prevents the bug where switching months corrupts the calendar display
+        if (data.data && data.data.defaultWorkingDaysOfWeek) {
+          setWorkingDaysForm(prev => ({
+            ...prev,
+            defaultWorkingDays: data.data.defaultWorkingDaysOfWeek
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading working days:', error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [workingDaysForm.year, workingDaysForm.month]);
+
+  // Auto-load working days configuration when year/month changes
+  // This prevents the calendar corruption bug where switching months would
+  // show incorrect non-working days due to stale defaultWorkingDays state
+  useEffect(() => {
+    if (settingsView && activeSettingsTab === 'working-days') {
+      loadWorkingDaysConfig();
+    }
+  }, [workingDaysForm.year, workingDaysForm.month, settingsView, activeSettingsTab, loadWorkingDaysConfig]);
+
+  const saveWorkingDaysConfig = useCallback(async (workingDays) => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/working-days', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          year: workingDaysForm.year,
+          month: workingDaysForm.month,
+          workingDays,
+          defaultWorkingDaysOfWeek: workingDaysForm.defaultWorkingDays
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Working days configuration saved successfully!', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: 'bold',
+          }
+        });
+        await loadWorkingDaysConfig();
+        // Refresh calendar data if in calendar view
+        if (yearlyView) {
+          fetchSettingsData(selectedYear, currentMonth);
+        }
+      } else {
+        toast.error('Failed to save working days configuration', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error saving working days:', error);
+      toast.error('Error saving working days configuration', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+        }
+      });
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [workingDaysForm, loadWorkingDaysConfig, yearlyView, selectedYear, currentMonth, fetchSettingsData]);
+
+  const loadHolidays = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/holidays', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setHolidays(data.data);
+      }
+    } catch (error) {
+      console.error('Error loading holidays:', error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+
+  const saveHoliday = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/holidays', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(holidayForm)
+      });
+
+      if (response.ok) {
+        setHolidayForm({
+          name: '',
+          description: '',
+          date: '',
+          type: 'company',
+          isRecurring: false,
+          color: '#f87171'
+        });
+        await loadHolidays();
+      }
+    } catch (error) {
+      console.error('Error saving holiday:', error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [holidayForm, loadHolidays]);
+
+  const deleteHoliday = useCallback(async (holidayId) => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/holidays/${holidayId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        toast.success('Holiday deleted successfully!', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: 'bold',
+          }
+        });
+        await loadHolidays();
+        setHolidayDeleteConfirmation({ show: false, holidayId: null, holidayName: '' });
+      } else {
+        toast.error('Failed to delete holiday', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting holiday:', error);
+      toast.error('Error deleting holiday', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+        }
+      });
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [loadHolidays]);
+
+  const loadUserLeaves = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/user-leave', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserLeaves(data.data);
+      }
+    } catch (error) {
+      console.error('Error loading user leaves:', error);
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  }, []);
+
+  const saveUserLeave = useCallback(async () => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/user-leave', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(leaveForm)
+      });
+
+      if (response.ok) {
+        setLeaveForm({
+          userId: '',
+          leaveType: 'sick',
+          customLeaveType: '',
+          startDate: '',
+          endDate: '',
+          reason: '',
+          isHalfDay: false,
+          halfDayPeriod: 'morning'
+        });
+        await loadUserLeaves();
+        toast.success('Leave record added successfully', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#4CAF50',
+          },
+        });
+      } else {
+        toast.error('Failed to add leave record', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#f44336',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error saving user leave:', error);
+      toast.error('Error saving leave record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [leaveForm, loadUserLeaves]);
+
+  const deleteUserLeave = useCallback(async (leaveId) => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/user-leave/${leaveId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        await loadUserLeaves();
+        toast.success('Leave record deleted successfully', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#4CAF50',
+          },
+        });
+      } else {
+        toast.error('Failed to delete leave record', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#f44336',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting user leave:', error);
+      toast.error('Error deleting leave record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [loadUserLeaves]);
+
+  const fetchAttendanceReports = useCallback(async () => {
+    try {
+      setReportLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Prepare query parameters
+      const queryParams = { ...reportFilters };
+      
+      // Handle custom date
+      if (reportFilters.period === 'custom') {
+        if (reportFilters.specificDate && reportFilters.specificDate.trim()) {
+          let dayNum, monthNum, yearNum;
+          
+          // Check if date is in YYYY-MM-DD format (ISO format from date picker)
+          if (reportFilters.specificDate.includes('-') && reportFilters.specificDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Parse YYYY-MM-DD format
+            const [year, month, day] = reportFilters.specificDate.split('-');
+            dayNum = parseInt(day, 10);
+            monthNum = parseInt(month, 10);
+            yearNum = parseInt(year, 10);
+
+          } 
+          // Check if date is in DD/MM/YYYY format
+          else if (reportFilters.specificDate.includes('/') && reportFilters.specificDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+            // Parse DD/MM/YYYY format
+            const [day, month, year] = reportFilters.specificDate.split('/');
+            dayNum = parseInt(day, 10);
+            monthNum = parseInt(month, 10);
+            yearNum = parseInt(year, 10);
+
+          } else {
+            return;
+          }
+          
+          // Validate parsed numbers
+          if (dayNum && monthNum && yearNum && 
+              dayNum >= 1 && dayNum <= 31 && 
+              monthNum >= 1 && monthNum <= 12 && 
+              yearNum >= 1900) {
+            
+            // Create date objects in local timezone
+            const startDate = new Date(yearNum, monthNum - 1, dayNum, 0, 0, 0, 0);
+            const endDate = new Date(yearNum, monthNum - 1, dayNum, 23, 59, 59, 999);
+            
+            // Validate the date is valid
+            if (!isNaN(startDate.getTime()) && 
+                startDate.getDate() === dayNum && 
+                startDate.getMonth() === monthNum - 1 && 
+                startDate.getFullYear() === yearNum) {
+              
+              // Use local timezone dates to match how attendance records are stored
+              queryParams.startDate = startDate.toISOString();
+              queryParams.endDate = endDate.toISOString();
+              
+
+            } else {
+              return;
+            }
+          } else {
+            return;
+          }
+        } else {
+          // Custom period selected but no date provided - fallback to daily
+          queryParams.period = 'daily';
+        }
+      }
+      
+      // Remove specificDate from query params as backend doesn't need it
+      delete queryParams.specificDate;
+      
+      const params = new URLSearchParams(queryParams);
+      const response = await axios.get(`/api/attendance/reports?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAttendanceReports(response.data.data.records);
+      setReportSummary(response.data.data.summary);
+    } catch (error) {
+      console.error('Error fetching attendance reports:', error);
+      toast.error('Failed to load attendance reports', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setReportLoading(false);
+    }
+  }, [reportFilters]);
+
+  useEffect(() => {
+    fetchUsers();
+    fetchAttendanceReports();
+    if (isAdmin) {
+      fetchQRCode();
+    }
+  }, [fetchAttendanceReports, isAdmin]);
+
+  const fetchAvailableYears = useCallback(async (skipYearValidation = false) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/attendance/available-years', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const years = response.data.data || [];
+      setAvailableYears(years);
+      
+      // Only validate/change selected year if not skipping validation
+      if (!skipYearValidation && years.length > 0) {
+        const maxYear = Math.max(...years);
+        const nextYear = maxYear + 1;
+        
+        // Get current selected year at the time of this call
+        setSelectedYear(currentSelectedYear => {
+          if (!years.includes(currentSelectedYear) && currentSelectedYear !== nextYear) {
+            return maxYear;
+          }
+          return currentSelectedYear;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching available years:', error);
+      // Fallback to current year if API fails
+      const currentYear = new Date().getFullYear();
+      setAvailableYears([currentYear]);
+      if (!skipYearValidation) {
+        setSelectedYear(currentYear);
+      }
+    }
+  }, []);
+
+  const fetchYearlyData = useCallback(async () => {
+    try {
+      setYearlyLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/attendance/yearly-calendar?year=${selectedYear}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setYearlyData(response.data.data);
+    } catch (error) {
+      console.error('Error fetching yearly data:', error);
+      toast.error('Failed to load yearly attendance data', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setYearlyLoading(false);
+    }
+  }, [selectedYear]);
+
+  useEffect(() => {
+    if (yearlyView && (isAdmin || authUser?.isAccountant)) {
+      fetchAvailableYears(true); // Skip year validation on initial load
+      fetchYearlyData();
+    }
+  }, [yearlyView, fetchAvailableYears, fetchYearlyData, isAdmin, authUser?.isAccountant]);
+
+  const fetchQRCode = async () => {
+    try {
+      setQrLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/attendance/qr', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setQrCode(response.data.data);
+    } catch (error) {
+      console.error('Error fetching QR code:', error);
+      toast.error('Failed to load QR code', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/attendance/users', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const handlePrintQR = () => {
+    const qrData = qrCode;
+    
+    if (!qrData) {
+      toast.error('No QR code to print', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+      return;
+    }
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Monthly Attendance QR Code</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+              background: white;
+            }
+            .qr-container {
+              text-align: center;
+              border: 2px solid #333;
+              padding: 30px;
+              border-radius: 10px;
+              background: white;
+            }
+            .qr-title {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              color: #333;
+            }
+            .qr-subtitle {
+              font-size: 18px;
+              color: #666;
+              margin-bottom: 20px;
+            }
+            .qr-image {
+              margin: 20px 0;
+            }
+            .qr-info {
+              font-size: 14px;
+              color: #888;
+              margin-top: 20px;
+            }
+            .instructions {
+              margin-top: 30px;
+              padding: 20px;
+              background: #f5f5f5;
+              border-radius: 8px;
+              max-width: 400px;
+            }
+            .instructions h3 {
+              margin-top: 0;
+              color: #333;
+            }
+            .instructions ol {
+              text-align: left;
+              color: #666;
+            }
+            @page {
+              size: A4;
+              margin: 0.3in;
+            }
+            @media print {
+              * {
+                box-sizing: border-box;
+              }
+              body { 
+                margin: 0;
+                padding: 0;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              }
+              .qr-container {
+                padding: 20px;
+                margin-bottom: 15px;
+                width: 100%;
+                max-width: 500px;
+              }
+              .qr-title {
+                font-size: 22px;
+                margin-bottom: 8px;
+              }
+              .qr-subtitle {
+                font-size: 16px;
+                margin-bottom: 15px;
+              }
+              .qr-image {
+                margin: 15px 0;
+              }
+              .qr-image img {
+                width: 220px !important;
+                height: 220px !important;
+              }
+              .qr-info {
+                font-size: 13px;
+                margin-top: 15px;
+              }
+              .instructions {
+                margin-top: 20px;
+                padding: 15px;
+                font-size: 13px;
+                max-width: 100%;
+                width: 100%;
+                max-width: 500px;
+              }
+              .instructions h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+                margin-top: 0;
+              }
+              .instructions ol {
+                margin: 0;
+                padding-left: 18px;
+              }
+              .instructions li {
+                margin-bottom: 4px;
+                line-height: 1.4;
+              }
+              .note {
+                margin-top: 12px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-container">
+            <div class="qr-title">Employee Attendance</div>
+            <div class="qr-subtitle">Monthly QR Code - ${qrData.monthYear}</div>
+            <div class="qr-image">
+              <img src="${qrData.qrCodeImage}" alt="Attendance QR Code" style="width: 250px; height: 250px;"/>
+            </div>
+            <div class="qr-info">
+              <div>Valid until: ${new Date(qrData.expiresAt).toLocaleDateString()}</div>
+              <div>Generated: ${new Date(qrData.createdAt).toLocaleDateString()}</div>
+            </div>
+          </div>
+          
+          <div class="instructions">
+            <h3>Instructions for Employees:</h3>
+            <ol>
+              <li>Open your camera app or QR scanner</li>
+              <li>Point camera at this QR code</li>
+              <li>Tap the notification to open attendance page</li>
+              <li>Tap "Start Camera to Check In/Out"</li>
+              <li>Scan this same QR code again through the app</li>
+            </ol>
+            <p><strong>Note:</strong> Use the same QR code for both check-in and check-out.</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Create a blob and use it for printing to avoid about:blank
+    const blob = new Blob([printContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank');
+    
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.onafterprint = () => {
+        printWindow.close();
+        URL.revokeObjectURL(url);
+      };
+    };
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '--:--';
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    const baseClasses = "px-2 py-1 rounded-full text-xs font-medium";
+    switch (status) {
+      case 'checked-in':
+        return `${baseClasses} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`;
+      case 'checked-out':
+        return `${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200`;
+      case 'not-checked-in':
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200`;
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'checked-in':
+        return <FaCheck className="w-3 h-3 text-green-600" />;
+      case 'checked-out':
+        return <FaClock className="w-3 h-3 text-blue-600" />;
+      default:
+        return <FaTimes className="w-3 h-3 text-gray-600" />;
+    }
+  };
+
+  const handleDayClick = (dayData, day, month) => {
+    setDayModal({
+      visible: true,
+      data: {
+        day,
+        month,
+        users: dayData.users,
+        date: dayData.date
+      }
+    });
+  };
+
+  const closeDayModal = () => {
+    setDayModal({ visible: false, data: null });
+  };
+
+  const navigateMonth = (direction) => {
+    setCurrentMonth(prev => {
+      const newMonth = direction === 'prev' ? prev - 1 : prev + 1;
+      const finalMonth = newMonth < 0 ? 11 : newMonth > 11 ? 0 : newMonth;
+      
+      // Fetch settings data for the new month
+      fetchSettingsData(selectedYear, finalMonth);
+      
+      return finalMonth;
+    });
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+
+
+  const exportReport = () => {
+    if (attendanceReports.length === 0) {
+      toast.error('No data to export', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+      return;
+    }
+
+    const csvHeaders = ['Date', 'Employee', 'Check In', 'Check Out', 'Hours Worked', 'Status'];
+    const csvData = attendanceReports.map(record => [
+      formatDate(record.date),
+      record.userId?.username || 'Unknown',
+      formatTime(record.checkIn),
+      formatTime(record.checkOut),
+      record.hoursWorked || 0,
+      record.status
+    ]);
+
+    const csvContent = [csvHeaders, ...csvData]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = reportFilters.period === 'custom' && reportFilters.specificDate 
+      ? reportFilters.specificDate.replace(/\//g, '-')
+      : new Date().toISOString().split('T')[0];
+    a.download = `attendance-report-${reportFilters.period}-${dateStr}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Admin attendance management functions
+  const handleEditAttendance = (record) => {
+    const formatDateForInput = (date) => {
+      const d = new Date(date);
+      return d.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    };
+
+    setEditModal({
+      visible: true,
+      data: {
+        ...record,
+        checkInTime: record.checkIn ? new Date(record.checkIn).toTimeString().slice(0, 5) : '',
+        checkOutTime: record.checkOut ? new Date(record.checkOut).toTimeString().slice(0, 5) : '',
+        date: formatDateForInput(record.date)
+      }
+    });
+  };
+
+
+
+  const handleDeleteAttendance = (record) => {
+    setDeleteModal({
+      visible: true,
+      recordId: record._id,
+      recordData: record
+    });
+  };
+
+  const confirmDeleteAttendance = async () => {
+    try {
+      setAdminActionLoading(true);
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/attendance/admin/delete/${deleteModal.recordId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success('Attendance record deleted successfully', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      setDeleteModal({ visible: false, recordId: null, recordData: null });
+      fetchAttendanceReports();
+    } catch (error) {
+      console.error('Error deleting attendance:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete attendance record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setAdminActionLoading(false);
+    }
+  };
+
+  const submitEditAttendance = async (formData) => {
+    try {
+      setAdminActionLoading(true);
+      const token = localStorage.getItem('token');
+      
+             // Prepare data for API - create proper ISO strings to avoid timezone issues
+       const createLocalDateTime = (date, time) => {
+         // Parse date parts (YYYY-MM-DD format)
+         const [year, month, day] = date.split('-');
+         // Parse time parts (HH:MM format)
+         const [hours, minutes] = time.split(':');
+         // Create date object with explicit values (month is 0-indexed)
+         const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), 0);
+         return localDate.toISOString();
+       };
+
+       const editData = {
+         checkIn: formData.checkInTime ? createLocalDateTime(formData.date, formData.checkInTime) : null,
+         checkOut: formData.checkOutTime ? createLocalDateTime(formData.date, formData.checkOutTime) : null,
+         status: formData.status,
+         notes: formData.notes,
+         adminNotes: formData.adminNotes
+       };
+
+      await axios.put(`/api/attendance/admin/edit/${editModal.data._id}`, editData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success('Attendance record updated successfully', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      setEditModal({ visible: false, data: null });
+      fetchAttendanceReports();
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error(error.response?.data?.message || 'Failed to update attendance record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setAdminActionLoading(false);
+    }
+  };
+
+  const submitCreateAttendance = async (formData) => {
+    try {
+      setAdminActionLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Prepare data for API - create proper ISO strings to avoid timezone issues
+      const createLocalDateTime = (date, time) => {
+        // Parse date parts (YYYY-MM-DD format)
+        const [year, month, day] = date.split('-');
+        // Parse time parts (HH:MM format)
+        const [hours, minutes] = time.split(':');
+        // Create date object with explicit values (month is 0-indexed)
+        const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), 0);
+        return localDate.toISOString();
+      };
+
+      const createData = {
+        userId: formData.userId,
+        date: formData.date,
+        checkIn: formData.checkInTime ? createLocalDateTime(formData.date, formData.checkInTime) : null,
+        checkOut: formData.checkOutTime ? createLocalDateTime(formData.date, formData.checkOutTime) : null,
+        status: formData.status || 'checked-out',
+        notes: formData.notes || '',
+        adminNotes: formData.adminNotes || 'Manually created by admin'
+      };
+
+      await axios.post('/api/attendance/admin/manual-entry', createData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success('Manual attendance entry created successfully', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      setCreateModal({ visible: false, data: null });
+      fetchAttendanceReports();
+    } catch (error) {
+      console.error('Error creating attendance:', error);
+      toast.error(error.response?.data?.message || 'Failed to create attendance record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setAdminActionLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full dark:bg-slate-950" id="attendance-panel" role="tabpanel" aria-labelledby="tab-attendance">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2 dark:text-white flex items-center justify-center">
+            <FaCalendarDay className="mr-3 text-teal-600 dark:text-teal-400" />
+            Attendance Management
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Manage employee attendance, generate QR codes, and view reports
+          </p>
+        </div>
+
+        {/* QR Code Section - Admin Only */}
+        {isAdmin && (
+          <Card className="bg-gray-50 dark:bg-slate-950">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+              <h3 className="text-lg font-semibold dark:text-white flex items-center">
+                <FaQrcode className="mr-2 text-purple-600 dark:text-purple-400" />
+                QR Code
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <CustomButton
+                  variant="gray"
+                  size="sm"
+                  onClick={fetchQRCode}
+                  icon={HiRefresh}
+                  disabled={qrLoading}
+                  className="w-full sm:w-auto"
+                >
+                  Refresh
+                </CustomButton>
+                <CustomButton
+                  variant="blueToTeal"
+                  size="sm"
+                  onClick={handlePrintQR}
+                  icon={FaPrint}
+                  disabled={!qrCode || qrLoading}
+                  className="w-full sm:w-auto"
+                >
+                  Print QR Code
+                </CustomButton>
+              </div>
+            </div>
+
+            {qrLoading ? (
+              <div className="flex justify-center py-8">
+                <RahalatekLoader size="lg" />
+              </div>
+            ) : qrCode ? (
+              <div className="flex flex-col md:flex-row gap-6 items-center">
+                <div className="flex-shrink-0">
+                  <img 
+                    src={qrCode.qrCodeImage} 
+                    alt="Monthly Attendance QR Code"
+                    className="w-48 h-48 border-2 border-gray-300 dark:border-gray-600 rounded-lg"
+                  />
+                </div>
+                <div className="flex-1 space-y-3 text-center md:text-left">
+                  <div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Month: </span>
+                    <span className="text-lg font-semibold dark:text-white">{qrCode.monthYear}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Valid until: </span>
+                    <span className="dark:text-white">{formatDate(qrCode.expiresAt)}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Generated: </span>
+                    <span className="dark:text-white">{formatDate(qrCode.createdAt)}</span>
+                  </div>
+
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                Failed to load QR code. Click refresh to try again.
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* View Toggle - Responsive */}
+        <div className="flex justify-center mb-6">
+          <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm w-full sm:w-auto">
+            <div className={`${isAdmin ? 'grid grid-cols-3 sm:flex' : 'grid grid-cols-2 sm:flex'} gap-0 w-full`}>
+              <button
+                onClick={() => { setYearlyView(false); setSettingsView(false); }}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  !yearlyView && !settingsView
+                    ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                }`}
+              >
+                <FaList className="w-4 h-4" />
+                <span className="hidden sm:inline">Reports</span>
+                <span className="sm:hidden">Reports</span>
+              </button>
+              <button
+                onClick={() => { 
+                  setYearlyView(true); 
+                  setSettingsView(false); 
+                  // Fetch settings data for current month/year when calendar view is opened
+                  setTimeout(() => {
+                    fetchSettingsData(selectedYear, currentMonth);
+                  }, 100); // Small delay to ensure state is updated
+                }}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  yearlyView && !settingsView
+                    ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                }`}
+              >
+                <FaCalendarAlt className="w-4 h-4" />
+                <span className="hidden sm:inline">Calendar</span>
+                <span className="sm:hidden">Calendar</span>
+              </button>
+              {isAdmin && (
+                <button
+                  onClick={() => { 
+                    setYearlyView(false); 
+                    setSettingsView(true);
+                    // Load initial settings data
+                    if (activeSettingsTab === 'working-days') {
+                      loadWorkingDaysConfig();
+                      fetchAvailableYears(true);
+                    } else if (activeSettingsTab === 'holidays') {
+                      loadHolidays();
+                    } else if (activeSettingsTab === 'leave') {
+                      loadUserLeaves();
+                      loadUsers();
+                    }
+                  }}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                    settingsView
+                      ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                  }`}
+                >
+                  <FaCog className="w-4 h-4" />
+                  <span className="hidden sm:inline">Settings</span>
+                  <span className="sm:hidden">Settings</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Conditional Content Based on View */}
+        {settingsView && isAdmin ? (
+          /* Settings Section */
+          <Card className="bg-gray-50 dark:bg-slate-950">
+            <div className="p-3 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold dark:text-white flex items-center mb-4 sm:mb-6">
+                <FaCog className="mr-2 text-blue-600 dark:text-blue-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Attendance Settings</span>
+                <span className="sm:hidden">Settings</span>
+              </h3>
+              {/* Settings Navigation */}
+              <div className="mb-6">
+                <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm">
+                  <button 
+                    onClick={() => {
+                      setActiveSettingsTab('working-days');
+                      loadWorkingDaysConfig();
+                      // Fetch available years to populate the year dropdown
+                      fetchAvailableYears(true);
+                    }}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeSettingsTab === 'working-days'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaBusinessTime className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Working Days</span>
+                    <span className="sm:hidden">Days</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setActiveSettingsTab('holidays');
+                      loadHolidays();
+                    }}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeSettingsTab === 'holidays'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaGift className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Company Holidays</span>
+                    <span className="sm:hidden">Holidays</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setActiveSettingsTab('leave');
+                      loadUserLeaves();
+                      loadUsers();
+                    }}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeSettingsTab === 'leave'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaUserClock className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Employee Leave</span>
+                    <span className="sm:hidden">Leave</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Conditional Content Based on Active Tab */}
+              {settingsLoading && (
+                <div className="flex justify-center py-8">
+                  <RahalatekLoader size="md" />
+                </div>
+              )}
+
+              {!settingsLoading && activeSettingsTab === 'working-days' && (
+                <div className="space-y-6">
+                  {/* Year/Month Selector */}
+                  <div className="mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                      <div>
+                        <Select
+                          label="Year"
+                          value={workingDaysForm.year}
+                          onChange={(value) => setWorkingDaysForm({...workingDaysForm, year: parseInt(value)})}
+                          options={(() => {
+                            // Get available years from attendance data
+                            const baseYears = availableYears.length > 0 ? [...availableYears] : [new Date().getFullYear()];
+                            
+                            // Add the next year if it's not already in the list
+                            const maxYear = Math.max(...baseYears);
+                            const nextYear = maxYear + 1;
+                            if (!baseYears.includes(nextYear)) {
+                              baseYears.push(nextYear);
+                            }
+                            
+                            // Sort years in descending order and create options
+                            return baseYears
+                              .sort((a, b) => b - a)
+                              .map(year => ({ value: year, label: year.toString() }));
+                          })()}
+                        />
+                      </div>
+                      <div>
+                        <Select
+                          label="Month"
+                          value={workingDaysForm.month}
+                          onChange={(value) => setWorkingDaysForm({...workingDaysForm, month: parseInt(value)})}
+                          options={['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month, index) => ({
+                            value: index + 1,
+                            label: month
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Monthly Calendar Grid */}
+                  {workingDaysConfig && (
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-4 text-sm sm:text-base">
+                        <span className="hidden sm:inline">
+                          {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][workingDaysForm.month - 1]} {workingDaysForm.year} - Working Days Configuration
+                        </span>
+                        <span className="sm:hidden">
+                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][workingDaysForm.month - 1]} {workingDaysForm.year} - Working Days
+                        </span>
+                      </h4>
+                      
+                      {/* Calendar Grid */}
+                      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
+                        {/* Header */}
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                          <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <span className="hidden sm:inline">{day}</span>
+                            <span className="sm:hidden">{['S', 'M', 'T', 'W', 'T', 'F', 'S'][index]}</span>
+                          </div>
+                        ))}
+                        
+                        {/* Days */}
+                        {(() => {
+                          const firstDay = new Date(workingDaysForm.year, workingDaysForm.month - 1, 1).getDay();
+                          const daysInMonth = new Date(workingDaysForm.year, workingDaysForm.month, 0).getDate();
+                          const days = [];
+                          
+                          // Empty cells for days before month starts
+                          for (let i = 0; i < firstDay; i++) {
+                            days.push(<div key={`empty-${i}`} className="p-0.5 sm:p-1"></div>);
+                          }
+                          
+                          // Days of the month
+                          for (let day = 1; day <= daysInMonth; day++) {
+                            const dayConfig = workingDaysConfig.workingDays?.find(d => d.day === day);
+                            const isWorkingDay = dayConfig?.isWorkingDay ?? true;
+                            
+                            days.push(
+                              <div key={day} className="p-0.5 sm:p-1">
+                                <button
+                                  onClick={() => {
+                                    const updatedWorkingDays = workingDaysConfig.workingDays?.map(d => 
+                                      d.day === day ? { ...d, isWorkingDay: !d.isWorkingDay } : d
+                                    ) || [];
+                                    
+                                    if (!dayConfig) {
+                                      updatedWorkingDays.push({ day, isWorkingDay: false });
+                                    }
+                                    
+                                    setWorkingDaysConfig({
+                                      ...workingDaysConfig,
+                                      workingDays: updatedWorkingDays.sort((a, b) => a.day - b.day)
+                                    });
+                                  }}
+                                  className={`w-full h-8 sm:h-10 rounded-md sm:rounded-lg text-xs sm:text-sm font-medium transition-all border sm:border-2 ${
+                                    isWorkingDay
+                                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700 hover:bg-green-200 dark:hover:bg-green-900/50'
+                                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-900/50'
+                                  }`}
+                                  title={`Day ${day}: ${isWorkingDay ? 'Working Day' : 'Non-Working Day'} - Click to toggle`}
+                                >
+                                  {day}
+                                </button>
+                              </div>
+                            );
+                          }
+                          
+                          return days;
+                        })()}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center">
+                          <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded mr-2"></span>
+                          <span className="hidden sm:inline">Working Day</span>
+                          <span className="sm:hidden">Working</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded mr-2"></span>
+                          <span className="hidden sm:inline">Non-Working Day</span>
+                          <span className="sm:hidden">Non-Working</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <span className="hidden sm:inline">Click on any day to toggle between working and non-working status</span>
+                        <span className="sm:hidden">Tap any day to toggle status</span>
+                      </p>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col sm:flex-row justify-center gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <CustomButton 
+                          onClick={async () => {
+                            if (workingDaysConfig?.workingDays) {
+                              await saveWorkingDaysConfig(workingDaysConfig.workingDays);
+                              // Force refresh calendar if it's open
+                              if (yearlyView) {
+                                setTimeout(() => {
+                                  fetchSettingsData(selectedYear, currentMonth);
+                                }, 500);
+                              }
+                            }
+                          }}
+                          disabled={!workingDaysConfig?.workingDays || settingsLoading}
+                          variant="green"
+                          size="sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm"
+                        >
+                          <span className="hidden sm:inline">{settingsLoading ? 'Saving...' : 'Save Changes'}</span>
+                          <span className="sm:hidden">{settingsLoading ? 'Saving...' : 'Save'}</span>
+                        </CustomButton>
+                        <CustomButton 
+                          onClick={async () => {
+                            const daysInMonth = new Date(workingDaysForm.year, workingDaysForm.month, 0).getDate();
+                            const defaultWorkingDays = [];
+                            
+                            for (let day = 1; day <= daysInMonth; day++) {
+                              const date = new Date(workingDaysForm.year, workingDaysForm.month - 1, day);
+                              const dayOfWeek = date.getDay();
+                              const isWorkingDay = workingDaysForm.defaultWorkingDays.includes(dayOfWeek);
+                              defaultWorkingDays.push({ day, isWorkingDay });
+                            }
+                            
+                            await saveWorkingDaysConfig(defaultWorkingDays);
+                          }}
+                          variant="orange"
+                          size="sm"
+                          className="w-full sm:w-auto text-xs sm:text-sm"
+                        >
+                          <span className="hidden sm:inline">Reset to Default</span>
+                          <span className="sm:hidden">Reset</span>
+                        </CustomButton>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!settingsLoading && activeSettingsTab === 'holidays' && (
+                <div className="space-y-6">
+                  {/* Add Holiday Form */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      Add New Holiday
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <TextInput
+                          label="Holiday Name"
+                          type="text"
+                          value={holidayForm.name}
+                          onChange={(e) => setHolidayForm({...holidayForm, name: e.target.value})}
+                          placeholder="e.g., New Year's Day"
+                        />
+                      </div>
+                      <div>
+                        <CustomDatePicker
+                          label="Date"
+                          value={holidayForm.date}
+                          onChange={(value) => setHolidayForm({...holidayForm, date: value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <Select
+                          label="Type"
+                          value={holidayForm.type}
+                          onChange={(value) => setHolidayForm({...holidayForm, type: value})}
+                          options={[
+                            { value: 'company', label: 'Company Holiday' },
+                            { value: 'national', label: 'National Holiday' },
+                            { value: 'religious', label: 'Religious Holiday' },
+                            { value: 'custom', label: 'Custom' }
+                          ]}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Recurring
+                        </label>
+                        <div className="mt-2">
+                          <CustomCheckbox
+                            id="holiday-recurring"
+                            label="Repeat yearly"
+                            checked={holidayForm.isRecurring}
+                            onChange={(checked) => setHolidayForm({...holidayForm, isRecurring: checked})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <TextInput
+                        as="textarea"
+                        rows={3}
+                        label="Description (Optional)"
+                        value={holidayForm.description}
+                        onChange={(e) => setHolidayForm({...holidayForm, description: e.target.value})}
+                        placeholder="Additional details about this holiday..."
+                      />
+                    </div>
+
+                    <CustomButton
+                      onClick={saveHoliday}
+                      disabled={!holidayForm.name || !holidayForm.date}
+                      color="purple"
+                      size="sm"
+                    >
+                      Add Holiday
+                    </CustomButton>
+                  </div>
+
+                  {/* Holidays List */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      Company Holidays ({holidays.length})
+                    </h4>
+                    
+                    {holidays.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <FaCalendarDay className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>No holidays configured yet</p>
+                        <p className="text-sm">Add your first holiday above</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {holidays.map((holiday) => (
+                          <div key={holiday._id} className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900 dark:text-white">{holiday.name}</h5>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {new Date(holiday.date).toLocaleDateString('en-GB')} 
+                                {holiday.description && ` - ${holiday.description}`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                holiday.type === 'national' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200' :
+                                holiday.type === 'religious' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
+                                'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
+                              }`}>
+                                {holiday.type}
+                              </span>
+                              {holiday.isRecurring && (
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200 rounded text-xs font-medium">
+                                  Recurring
+                                </span>
+                              )}
+                              <button 
+                                onClick={() => {
+                                  setHolidayDeleteConfirmation({
+                                    show: true,
+                                    holidayId: holiday._id,
+                                    holidayName: `${holiday.name} (${new Date(holiday.date).toLocaleDateString('en-GB')})`
+                                  });
+                                }}
+                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-all"
+                                title="Delete Holiday"
+                              >
+                                <FaTimes className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!settingsLoading && activeSettingsTab === 'leave' && (
+                <div className="space-y-6">
+                  {/* Add Employee Leave Form */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      Add Employee Leave
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <SearchableSelect
+                          label="Employee"
+                          value={leaveForm.userId}
+                          onChange={(e) => setLeaveForm({...leaveForm, userId: e.target.value})}
+                          options={users.map(user => ({
+                            value: user._id,
+                            label: user.username
+                          }))}
+                          placeholder="Select Employee"
+                        />
+                      </div>
+                      <div>
+                        <Select
+                          label="Leave Type"
+                          value={leaveForm.leaveType}
+                          onChange={(value) => setLeaveForm({...leaveForm, leaveType: value})}
+                          options={[
+                            { value: 'sick', label: 'Sick Leave' },
+                            { value: 'annual', label: 'Annual Leave' },
+                            { value: 'emergency', label: 'Emergency Leave' },
+                            { value: 'maternity', label: 'Maternity Leave' },
+                            { value: 'paternity', label: 'Paternity Leave' },
+                            { value: 'unpaid', label: 'Unpaid Leave' },
+                            { value: 'personal', label: 'Personal Leave' },
+                            { value: 'bereavement', label: 'Bereavement Leave' },
+                            { value: 'custom', label: 'Custom' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <CustomDatePicker
+                          label="Start Date"
+                          value={leaveForm.startDate}
+                          onChange={(value) => setLeaveForm({...leaveForm, startDate: value})}
+                        />
+                      </div>
+                      <div>
+                        <CustomDatePicker
+                          label="End Date"
+                          value={leaveForm.endDate}
+                          onChange={(value) => setLeaveForm({...leaveForm, endDate: value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <CustomCheckbox
+                        id="leave-half-day"
+                        label="Half Day Leave"
+                        checked={leaveForm.isHalfDay}
+                        onChange={(checked) => setLeaveForm({...leaveForm, isHalfDay: checked})}
+                      />
+                      {leaveForm.isHalfDay && (
+                        <div className="mt-2">
+                          <Select
+                            value={leaveForm.halfDayPeriod}
+                            onChange={(value) => setLeaveForm({...leaveForm, halfDayPeriod: value})}
+                            options={[
+                              { value: 'morning', label: 'Morning' },
+                              { value: 'afternoon', label: 'Afternoon' }
+                            ]}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mb-4">
+                      <TextInput
+                        as="textarea"
+                        rows={3}
+                        label="Reason"
+                        value={leaveForm.reason}
+                        onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})}
+                        placeholder="Reason for leave..."
+                      />
+                    </div>
+
+                    <CustomButton
+                      onClick={saveUserLeave}
+                      disabled={!leaveForm.userId || !leaveForm.startDate || !leaveForm.endDate}
+                      color="orange"
+                      size="sm"
+                    >
+                      Add Leave
+                    </CustomButton>
+                  </div>
+
+                  {/* Employee Leaves List */}
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      Employee Leaves ({userLeaves.length})
+                    </h4>
+                    
+                    {userLeaves.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <FaUsers className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>No employee leaves recorded yet</p>
+                        <p className="text-sm">Add the first leave record above</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {userLeaves.map((leave) => (
+                          <div key={leave._id} className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900 dark:text-white">
+                                {leave.userId?.username || 'Unknown User'}
+                              </h5>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)} Leave - {leave.daysCount} day{leave.daysCount > 1 ? 's' : ''}
+                                {leave.isHalfDay && ` (${leave.halfDayPeriod})`}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(leave.startDate).toLocaleDateString('en-GB')} to {new Date(leave.endDate).toLocaleDateString('en-GB')}
+                              </p>
+                              {leave.reason && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  Reason: {leave.reason}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                leave.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
+                                leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
+                                'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                              }`}>
+                                {leave.status}
+                              </span>
+                              <button 
+                                onClick={() => {
+                                  const user = users.find(u => u._id === leave.user);
+                                  setDeleteConfirmation({
+                                    show: true,
+                                    leaveId: leave._id,
+                                    leaveName: `${user?.username || 'Unknown'}'s ${leave.leaveType} leave (${new Date(leave.startDate).toLocaleDateString('en-GB')} - ${new Date(leave.endDate).toLocaleDateString('en-GB')})`
+                                  });
+                                }}
+                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-all"
+                                title="Delete Leave"
+                                disabled={settingsLoading}
+                              >
+                                <FaTrash className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        ) : yearlyView && (isAdmin || authUser?.isAccountant) ? (
+          <Card className="bg-gray-50 dark:bg-slate-950">
+            {/* Responsive Calendar Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-0 mb-6">
+              {/* Title and Stats */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <h3 className="text-lg font-semibold dark:text-white flex items-center">
+                  <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
+                  Yearly Attendance Calendar
+                </h3>
+                {yearlyData && (
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <FaUsers className="w-4 h-4" />
+                      {yearlyData.summary?.totalUsers || 0} Employees
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <FaCalendarDay className="w-4 h-4" />
+                      {yearlyData.summary?.totalWorkingDays || 0} Working Days
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Controls */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 self-start lg:self-auto">
+                <Select
+                  value={selectedYear}
+                  onChange={(value) => setSelectedYear(parseInt(value))}
+                  options={(() => {
+                    // Get available years from attendance data
+                    const baseYears = availableYears.length > 0 ? [...availableYears] : [new Date().getFullYear()];
+                    
+                    // Add the next year if it's not already in the list
+                    const maxYear = Math.max(...baseYears);
+                    const nextYear = maxYear + 1;
+                    if (!baseYears.includes(nextYear)) {
+                      baseYears.push(nextYear);
+                    }
+                    
+                    // Sort years in descending order and create options
+                    return baseYears
+                      .sort((a, b) => b - a)
+                      .map(year => ({ value: year, label: year.toString() }));
+                  })()}
+                />
+                <CustomButton
+                  onClick={() => {
+                    fetchYearlyData();
+                    // Also refresh settings data when refreshing calendar
+                    fetchSettingsData(selectedYear, currentMonth);
+                  }}
+                  size="sm"
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                  disabled={yearlyLoading}
+                >
+                  <HiRefresh className={`w-4 h-4 ${yearlyLoading ? 'animate-spin' : ''}`} />
+                  <span className="sm:hidden">Refresh Data</span>
+                  <span className="hidden sm:inline">Refresh</span>
+                </CustomButton>
+              </div>
+            </div>
+
+            {yearlyLoading ? (
+              <div className="flex justify-center py-12">
+                <RahalatekLoader size="lg" />
+              </div>
+            ) : yearlyData ? (
+              <div className="space-y-6">
+
+                {/* Calendar Carousel */}
+                <div className="relative">
+                  {/* Responsive Month Title */}
+                  <div className="text-center mb-4 sm:mb-6">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                      {monthNames[currentMonth]} {yearlyData.year}
+                    </h3>
+                  </div>
+
+                  {/* Mobile/Tablet: Calendar without side arrows */}
+                  <div className="block lg:hidden w-full">
+                    {(() => {
+                      const monthData = yearlyData.calendar[currentMonth] || {};
+                      
+                      return (
+                        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-2 sm:p-4 w-full">
+                        {/* Responsive Calendar Grid */}
+                        <div className="space-y-1 sm:space-y-2">
+                          {/* Responsive Days Header */}
+                          <div className="grid grid-cols-7 gap-1 sm:gap-2 lg:gap-4 mb-2 sm:mb-4 lg:mb-6">
+                            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+                              <div key={day} className="text-center p-1 sm:p-2 lg:p-3">
+                                <span className="text-xs sm:text-sm lg:text-base font-semibold text-gray-700 dark:text-gray-300">
+                                  {/* Show single letter on mobile, 3 letters on tablet, full on desktop */}
+                                  <span className="sm:hidden">{day.charAt(0)}</span>
+                                  <span className="hidden sm:inline lg:hidden">{day.slice(0, 3)}</span>
+                                  <span className="hidden lg:inline">{day}</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Responsive Calendar Days */}
+                          <div className="grid grid-cols-7 gap-1 sm:gap-2 lg:gap-4">
+                            {(() => {
+                              const firstDay = new Date(yearlyData.year, currentMonth, 1).getDay();
+                              const daysInMonth = new Date(yearlyData.year, currentMonth + 1, 0).getDate();
+                              const days = [];
+                              
+                              // Empty cells for days before month starts
+                              for (let i = 0; i < firstDay; i++) {
+                                days.push(<div key={`empty-${i}`} className="p-0.5 sm:p-1 lg:p-3"></div>);
+                              }
+                              
+                              // Days of the month
+                              for (let day = 1; day <= daysInMonth; day++) {
+                                const dayData = monthData[day];
+                                const dayInfo = getDayInfo(yearlyData.year, currentMonth, day);
+                                
+                                // Special handling for holidays and non-working days
+                                if (dayInfo.isHoliday || !dayInfo.isWorkingDay) {
+                                  const tooltipInfo = {
+                                    day,
+                                    month: currentMonth,
+                                    year: yearlyData.year,
+                                    isHoliday: dayInfo.isHoliday,
+                                    isWorkingDay: dayInfo.isWorkingDay,
+                                    holidayInfo: dayInfo.holidayInfo,
+                                    label: dayInfo.label
+                                  };
+
+                                  days.push(
+                                    <div 
+                                      key={day} 
+                                      className="p-0.5 sm:p-1 lg:p-3 text-center relative"
+                                      onMouseEnter={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setTooltipPosition({
+                                          x: rect.left + rect.width / 2,
+                                          y: rect.top - 10
+                                        });
+                                        setHoveredDay(tooltipInfo);
+                                      }}
+                                      onMouseLeave={() => setHoveredDay(null)}
+                                    >
+                                      <div className={`w-6 h-6 sm:w-8 sm:h-8 lg:w-14 lg:h-14 flex items-center justify-center text-xs sm:text-sm lg:text-base font-semibold rounded sm:rounded-md lg:rounded-lg ${dayInfo.bgColor} ${dayInfo.textColor} border-2 ${
+                                        dayInfo.isHoliday ? 'border-purple-400' : 'border-gray-400'
+                                      }`}>
+                                        {day}
+                                      </div>
+                                    </div>
+                                  );
+                                } else if (dayData) {
+                                  const dayInfo = getDayInfo(yearlyData.year, currentMonth, day);
+                                  const currentDate = new Date();
+                                  currentDate.setHours(23, 59, 59, 999); // End of today
+                                  const dayDate = new Date(yearlyData.year, currentMonth, day);
+                                  const isFutureDay = dayDate > currentDate;
+                                  
+                                  const presentCount = dayData.users.filter(user => user.status !== 'absent').length;
+                                  const totalUsers = dayData.users.length;
+                                  const attendanceRate = totalUsers > 0 ? (presentCount / totalUsers) * 100 : 0;
+                                  
+                                  let bgColor = 'bg-red-200 dark:bg-red-800/50 text-red-900 dark:text-red-100';
+                                  if (isFutureDay) {
+                                    bgColor = 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600';
+                                  } else {
+                                    if (attendanceRate >= 80) bgColor = 'bg-green-200 dark:bg-green-800/50 text-green-900 dark:text-green-100';
+                                    else if (attendanceRate >= 60) bgColor = 'bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-100';
+                                    else if (attendanceRate >= 40) bgColor = 'bg-orange-200 dark:bg-orange-800/50 text-orange-900 dark:text-orange-100';
+                                  }
+                                  
+                                  const tooltipInfo = {
+                                    day,
+                                    month: currentMonth,
+                                    year: yearlyData.year,
+                                    attendanceRate: attendanceRate.toFixed(0),
+                                    presentCount,
+                                    totalUsers: dayData.users.length,
+                                    hasLeave: dayInfo.hasLeave,
+                                    leaveInfo: dayInfo.label,
+                                    isFutureDay
+                                  };
+
+                                  days.push(
+                                    <div 
+                                      key={day} 
+                                      className="p-0.5 sm:p-1 lg:p-3 text-center relative" 
+                                      onMouseEnter={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setTooltipPosition({
+                                          x: rect.left + rect.width / 2,
+                                          y: rect.top - 10
+                                        });
+                                        setHoveredDay(tooltipInfo);
+                                      }}
+                                      onMouseLeave={() => setHoveredDay(null)}
+                                    >
+                                      <div className={`relative w-6 h-6 sm:w-8 sm:h-8 lg:w-14 lg:h-14 flex items-center justify-center text-xs sm:text-sm lg:text-base font-semibold rounded sm:rounded-md lg:rounded-lg ${bgColor} ${
+                                        isFutureDay 
+                                          ? 'cursor-not-allowed opacity-50' 
+                                          : 'cursor-pointer hover:scale-105 transition-transform shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                                      }`}
+                                           onClick={isFutureDay ? undefined : () => handleDayClick(dayData, day, monthNames[currentMonth])}>
+                                        {day}
+                                        {dayInfo.hasLeave && (
+                                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-white flex items-center justify-center">
+                                            <span className="text-xs text-white font-bold">{dayInfo.leaveInfo.length}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                } else {
+                                  days.push(
+                                    <div key={day} className="p-0.5 sm:p-1 lg:p-3 text-center">
+                                      <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-14 lg:h-14 flex items-center justify-center text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded sm:rounded-md lg:rounded-lg border border-gray-200 dark:border-gray-700">
+                                        {day}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              }
+                              
+                              return days;
+                            })()}
+                          </div>
+                        </div>
+                        
+                        {/* Responsive Month Summary */}
+                        <div className="mt-3 sm:mt-4 lg:mt-6 pt-2 sm:pt-3 lg:pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4 text-center">
+                            <div>
+                              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
+                                {Object.keys(monthData).length}
+                              </div>
+                              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                <span className="sm:hidden">Days</span>
+                                <span className="hidden sm:inline">Working Days</span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
+                                {(() => {
+                                  const workingDays = Object.keys(monthData).length;
+                                  if (workingDays === 0) return '0%';
+                                  
+                                  const totalPossible = workingDays * yearlyData.summary.totalUsers;
+                                  const totalPresent = Object.values(monthData).reduce((total, day) => 
+                                    total + day.users.filter(user => user.status !== 'absent').length, 0
+                                  );
+                                  
+                                  return totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) + '%' : '0%';
+                                })()}
+                              </div>
+                              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                <span className="sm:hidden">Avg</span>
+                                <span className="hidden sm:inline">Avg Attendance</span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
+                                {Object.values(monthData).reduce((total, day) => 
+                                  total + day.users.filter(user => user.status !== 'absent').length, 0
+                                )}
+                              </div>
+                              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                                <span className="sm:hidden">Present</span>
+                                <span className="hidden sm:inline">Total Present</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Mobile/Tablet: Navigation arrows below calendar (hidden on desktop) */}
+                  <div className="flex lg:hidden justify-center items-center gap-4 mt-4">
+                    <button
+                      onClick={() => navigateMonth('prev')}
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    >
+                      <FaChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => navigateMonth('next')}
+                      className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    >
+                      <FaChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Desktop: Calendar with side arrows */}
+                  <div className="hidden lg:flex items-center justify-center gap-6">
+                    {/* Left Arrow */}
+                    <button
+                      onClick={() => navigateMonth('prev')}
+                      className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    >
+                      <FaChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    {/* Desktop Calendar */}
+                    {(() => {
+                      const monthData = yearlyData.calendar[currentMonth] || {};
+                      
+                      return (
+                        <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 w-full max-w-4xl">
+                        {/* Calendar Grid */}
+                        <div className="space-y-2">
+                          {/* Days Header */}
+                          <div className="grid grid-cols-7 gap-4 mb-6">
+                            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
+                              <div key={day} className="text-center p-3">
+                                <span className="text-base font-semibold text-gray-700 dark:text-gray-300">{day}</span>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Calendar Days */}
+                          <div className="grid grid-cols-7 gap-4">
+                            {(() => {
+                              const firstDay = new Date(yearlyData.year, currentMonth, 1).getDay();
+                              const daysInMonth = new Date(yearlyData.year, currentMonth + 1, 0).getDate();
+                              const days = [];
+                              
+                              // Empty cells for days before month starts
+                              for (let i = 0; i < firstDay; i++) {
+                                days.push(<div key={`empty-${i}`} className="p-3"></div>);
+                              }
+                              
+                              // Days of the month
+                              for (let day = 1; day <= daysInMonth; day++) {
+                                const dayData = monthData[day];
+                                const dayInfo = getDayInfo(yearlyData.year, currentMonth, day);
+                                
+                                // Special handling for holidays and non-working days
+                                if (dayInfo.isHoliday || !dayInfo.isWorkingDay) {
+                                  const tooltipInfo = {
+                                    day,
+                                    month: currentMonth,
+                                    year: yearlyData.year,
+                                    isHoliday: dayInfo.isHoliday,
+                                    isWorkingDay: dayInfo.isWorkingDay,
+                                    holidayInfo: dayInfo.holidayInfo,
+                                    label: dayInfo.label
+                                  };
+
+                                  days.push(
+                                    <div 
+                                      key={day} 
+                                      className="p-3 text-center relative"
+                                      onMouseEnter={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setTooltipPosition({
+                                          x: rect.left + rect.width / 2,
+                                          y: rect.top - 10
+                                        });
+                                        setHoveredDay(tooltipInfo);
+                                      }}
+                                      onMouseLeave={() => setHoveredDay(null)}
+                                    >
+                                      <div className={`w-14 h-14 flex items-center justify-center text-base font-semibold rounded-lg ${dayInfo.bgColor} ${dayInfo.textColor} border-2 ${
+                                        dayInfo.isHoliday ? 'border-purple-400' : 'border-gray-400'
+                                      }`}>
+                                        {day}
+                                      </div>
+                                    </div>
+                                  );
+                                } else if (dayData) {
+                                  const dayInfo = getDayInfo(yearlyData.year, currentMonth, day);
+                                  const currentDate = new Date();
+                                  currentDate.setHours(23, 59, 59, 999); // End of today
+                                  const dayDate = new Date(yearlyData.year, currentMonth, day);
+                                  const isFutureDay = dayDate > currentDate;
+                                  
+                                  const presentCount = dayData.users.filter(user => user.status !== 'absent').length;
+                                  const totalUsers = dayData.users.length;
+                                  const attendanceRate = totalUsers > 0 ? (presentCount / totalUsers) * 100 : 0;
+                                  
+                                  let bgColor = 'bg-red-200 dark:bg-red-800/50 text-red-900 dark:text-red-100';
+                                  if (isFutureDay) {
+                                    bgColor = 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600';
+                                  } else {
+                                    if (attendanceRate >= 80) bgColor = 'bg-green-200 dark:bg-green-800/50 text-green-900 dark:text-green-100';
+                                    else if (attendanceRate >= 60) bgColor = 'bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-100';
+                                    else if (attendanceRate >= 40) bgColor = 'bg-orange-200 dark:bg-orange-800/50 text-orange-900 dark:text-orange-100';
+                                  }
+                                  
+                                  const tooltipInfo = {
+                                    day,
+                                    month: currentMonth,
+                                    year: yearlyData.year,
+                                    attendanceRate: attendanceRate.toFixed(0),
+                                    presentCount,
+                                    totalUsers: dayData.users.length,
+                                    hasLeave: dayInfo.hasLeave,
+                                    leaveInfo: dayInfo.label,
+                                    isFutureDay
+                                  };
+
+                                  days.push(
+                                    <div 
+                                      key={day} 
+                                      className="p-3 text-center relative" 
+                                      onMouseEnter={(e) => {
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setTooltipPosition({
+                                          x: rect.left + rect.width / 2,
+                                          y: rect.top - 10
+                                        });
+                                        setHoveredDay(tooltipInfo);
+                                      }}
+                                      onMouseLeave={() => setHoveredDay(null)}
+                                    >
+                                      <div className={`relative w-14 h-14 flex items-center justify-center text-base font-semibold rounded-lg ${bgColor} ${
+                                        isFutureDay 
+                                          ? 'cursor-not-allowed opacity-50' 
+                                          : 'cursor-pointer hover:scale-105 transition-transform shadow-sm border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                                      }`}
+                                           onClick={isFutureDay ? undefined : () => handleDayClick(dayData, day, monthNames[currentMonth])}>
+                                        {day}
+                                        {dayInfo.hasLeave && (
+                                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border border-white flex items-center justify-center">
+                                            <span className="text-xs text-white font-bold">{dayInfo.leaveInfo.length}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                } else {
+                                  days.push(
+                                    <div key={day} className="p-3 text-center">
+                                      <div className="w-14 h-14 flex items-center justify-center text-base text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                                        {day}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              }
+                              
+                              return days;
+                            })()}
+                          </div>
+                        </div>
+                        
+                        {/* Desktop Month Summary */}
+                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                {Object.keys(monthData).length}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">Working Days</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                {(() => {
+                                  const workingDays = Object.keys(monthData).length;
+                                  if (workingDays === 0) return '0%';
+                                  
+                                  const totalPossible = workingDays * yearlyData.summary.totalUsers;
+                                  const totalPresent = Object.values(monthData).reduce((total, day) => 
+                                    total + day.users.filter(user => user.status !== 'absent').length, 0
+                                  );
+                                  
+                                  return totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) + '%' : '0%';
+                                })()}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">Avg Attendance</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                {Object.values(monthData).reduce((total, day) => 
+                                  total + day.users.filter(user => user.status !== 'absent').length, 0
+                                )}
+                              </div>
+                              <div className="text-sm text-gray-600 dark:text-gray-400">Total Present</div>
+                            </div>
+                          </div>
+                        </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Right Arrow */}
+                    <button
+                      onClick={() => navigateMonth('next')}
+                      className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    >
+                      <FaChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Responsive Legend */}
+                <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-2 sm:gap-3">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-green-200 dark:bg-green-800/50 border border-green-300 dark:border-green-700 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">80%+</span>
+                        <span className="hidden sm:inline">80%+ Present</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-yellow-200 dark:bg-yellow-800/50 border border-yellow-300 dark:border-yellow-700 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">60-79%</span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-orange-200 dark:bg-orange-800/50 border border-orange-300 dark:border-orange-700 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">40-59%</span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-red-200 dark:bg-red-800/50 border border-red-300 dark:border-red-700 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">0-39%</span>
+                        <span className="hidden sm:inline">Below 40%</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">Friday</span>
+                        <span className="hidden sm:inline">Friday/Holiday</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 opacity-50 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">Future</span>
+                        <span className="hidden sm:inline">Future Day</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-purple-200 dark:bg-purple-800/50 border-2 border-purple-400 flex-shrink-0"></div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">Holiday</span>
+                        <span className="hidden sm:inline">Company Holiday</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="relative w-4 h-4 sm:w-6 sm:h-6 rounded-lg bg-green-200 dark:bg-green-800/50 border border-green-300 dark:border-green-700 flex-shrink-0">
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full border border-white"></div>
+                      </div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        <span className="sm:hidden">Leave</span>
+                        <span className="hidden sm:inline">Employee Leave</span>
+                      </span>
+                    </div>
+                  </div>
+                  
+                </div>
+
+                {/* Day Details Modal */}
+                <CustomModal
+                  isOpen={dayModal.visible && dayModal.data}
+                  onClose={closeDayModal}
+                  title={dayModal.data ? `${dayModal.data.month} ${dayModal.data.day}, ${yearlyData?.year}` : ''}
+                  subtitle={dayModal.data && yearlyData ? (() => {
+                          const modalDate = new Date(yearlyData.year, monthNames.indexOf(dayModal.data.month), dayModal.data.day);
+                          return modalDate.toLocaleDateString('en-US', { weekday: 'long' });
+                  })() : ''}
+                >
+                  <div className="space-y-4">
+                      {/* Present Employees */}
+                      {(() => {
+                        const presentUsers = dayModal.data?.users.filter(user => user.status !== 'absent') || [];
+                        return presentUsers.length > 0 ? (
+                          <div>
+                            <h4 className="text-sm font-medium text-green-700 dark:text-green-400 mb-3 flex items-center">
+                              <FaCheck className="w-4 h-4 mr-2" />
+                              Present Employees ({presentUsers.length})
+                            </h4>
+                            <div className="space-y-3">
+                              {presentUsers.map(user => (
+                                <div key={user.userId} className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-gray-900 dark:text-white">{user.username}</span>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                      user.status === 'checked-out' 
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                                    }`}>
+                                      {user.status === 'checked-out' ? 'Completed' : 'Checked In'}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Hours and Times */}
+                                  <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                                    <div className="flex items-center gap-4">
+                                      {user.checkIn && (
+                                        <span>In: {formatTime(user.checkIn)}</span>
+                                      )}
+                                      {user.checkOut && (
+                                        <span>Out: {formatTime(user.checkOut)}</span>
+                                      )}
+                                    </div>
+                                    {user.hoursWorked > 0 && (
+                                      <span className="font-medium text-blue-600 dark:text-blue-400">
+                                        {user.hoursWorked.toFixed(1)}h worked
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+
+                      {/* Absent Employees */}
+                      {(() => {
+                        const absentUsers = dayModal.data?.users.filter(user => user.status === 'absent') || [];
+                        return absentUsers.length > 0 ? (
+                          <div>
+                            <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-3 flex items-center">
+                              <FaTimes className="w-4 h-4 mr-2" />
+                              Absent Employees ({absentUsers.length})
+                            </h4>
+                            <div className="space-y-3">
+                              {absentUsers.map(user => (
+                                <div key={user.userId} className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium text-gray-900 dark:text-white">{user.username}</span>
+                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                                      Absent
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+
+                      {/* Summary */}
+                      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
+                            <div className="text-xl font-bold text-gray-900 dark:text-white">
+                              {dayModal.data?.users.length || 0}
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Total Employees</div>
+                          </div>
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                              {dayModal.data?.users.length > 0 ? Math.round((dayModal.data.users.filter(u => u.status !== 'absent').length / dayModal.data.users.length) * 100) : 0}%
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">Attendance Rate</div>
+                          </div>
+                        </div>
+                      </div>
+                        </div>
+                </CustomModal>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <FaCalendarAlt className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No yearly data available. Click refresh to load.</p>
+              </div>
+            )}
+          </Card>
+        ) : (
+          /* Reports Section */
+          <Card className="bg-gray-50 dark:bg-slate-950">
+          {/* Responsive Report Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+            <h3 className="text-lg font-semibold dark:text-white flex items-center">
+              <FaChartLine className="mr-2 text-blue-600 dark:text-blue-400" />
+              Attendance Reports
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {isAdmin && (
+                <CustomButton
+                  variant="green"
+                  size="sm"
+                  onClick={() => setCreateModal({ visible: true, data: {} })}
+                  icon={HiPlus}
+                  disabled={adminActionLoading}
+                  className="w-full sm:w-auto"
+                >
+                  <span className="sm:hidden">Create</span>
+                  <span className="hidden sm:inline">Manual Entry</span>
+                </CustomButton>
+              )}
+              <CustomButton
+                variant="gray"
+                size="sm"
+                onClick={exportReport}
+                icon={FaDownload}
+                disabled={attendanceReports.length === 0}
+                className="w-full sm:w-auto"
+              >
+                <span className="sm:hidden">Export</span>
+                <span className="hidden sm:inline">Export CSV</span>
+              </CustomButton>
+              <CustomButton
+                variant="purple"
+                size="sm"
+                onClick={fetchAttendanceReports}
+                icon={HiRefresh}
+                disabled={reportLoading}
+                className="w-full sm:w-auto"
+              >
+                Refresh
+              </CustomButton>
+            </div>
+          </div>
+
+          {/* Responsive Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Time Period
+              </label>
+              <Select
+                value={reportFilters.period}
+                onChange={(value) => setReportFilters({
+                  ...reportFilters, 
+                  period: value
+                })}
+                options={[
+                  { value: 'daily', label: 'Today' },
+                  { value: 'weekly', label: 'This Week' },
+                  { value: 'monthly', label: 'This Month' },
+                  { value: 'yearly', label: 'This Year' }
+                ]}
+              />
+            </div>
+            
+            {/* Date Picker - Always visible */}
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Date
+              </label>
+              <CustomDatePicker
+                value={reportFilters.specificDate}
+                onChange={(date) => setReportFilters({...reportFilters, specificDate: date, period: 'custom'})}
+                placeholder="DD/MM/YYYY"
+                popupPosition="up"
+                max={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Employee
+              </label>
+              <SearchableSelect
+                value={reportFilters.userId}
+                onChange={(e) => setReportFilters({...reportFilters, userId: e.target.value})}
+                options={[
+                  { value: '', label: 'All Employees' },
+                  ...users.map(user => ({
+                    value: user._id,
+                    label: user.username
+                  }))
+                ]}
+                placeholder="Select employee..."
+              />
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <Select
+                value={reportFilters.status}
+                onChange={(value) => setReportFilters({...reportFilters, status: value})}
+                options={[
+                  { value: '', label: 'All Statuses' },
+                  { value: 'checked-in', label: 'Checked In' },
+                  { value: 'checked-out', label: 'Checked Out' },
+                  { value: 'not-checked-in', label: 'Not Checked In' }
+                ]}
+                placeholder="All Statuses"
+              />
+            </div>
+          </div>
+
+          {/* Responsive Summary Cards */}
+          {reportSummary && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <div className="p-1.5 sm:p-2 bg-blue-500 rounded-lg">
+                    <FaUsers className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Records</h3>
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  {reportSummary.totalRecords}
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <div className="p-1.5 sm:p-2 bg-green-500 rounded-lg">
+                    <FaCheck className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Checked In</h3>
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  {reportSummary.checkedInToday}
+                </div>
+              </div>
+              
+              {/* Checked Out */}
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <div className="p-1.5 sm:p-2 bg-orange-500 rounded-lg">
+                    <FaTimes className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Checked Out</h3>
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  {reportSummary.checkedOutToday}
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 border border-purple-200 dark:border-purple-800 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow duration-200">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <div className="p-1.5 sm:p-2 bg-purple-500 rounded-lg">
+                    <FaClock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  </div>
+                  <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Hours</h3>
+                </div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  {reportSummary.totalHours.toFixed(1)}h
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Responsive Reports Table */}
+          {reportLoading ? (
+            <div className="flex justify-center py-8">
+              <RahalatekLoader size="lg" />
+            </div>
+          ) : attendanceReports.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              No attendance records found for the selected criteria.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+              <CustomScrollbar>
+                <div className="min-w-full">
+                  <CustomTable
+                    headers={[
+                      { label: 'Date' },
+                      { label: 'Employee' },
+                      { label: 'Check In' },
+                      { label: 'Check Out' },
+                      { label: 'Hours' },
+                      { label: 'Status' },
+                      ...(isAdmin ? [{ label: 'Actions' }] : [])
+                    ]}
+                    data={attendanceReports}
+                    renderRow={(record) => (
+                      <>
+                        <Table.Cell className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                          <div className="text-xs sm:text-sm">
+                            {formatDate(record.date)}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white max-w-[120px] truncate">
+                              {record.userId?.username || 'Unknown'}
+                            </div>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
+                          <div className="text-xs sm:text-sm text-gray-900 dark:text-white font-mono">
+                            {formatTime(record.checkIn)}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
+                          <div className="text-xs sm:text-sm text-gray-900 dark:text-white font-mono">
+                            {formatTime(record.checkOut)}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                            {record.hoursWorked ? `${record.hoursWorked}h` : '--'}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="whitespace-nowrap">
+                          <div className="flex items-center space-x-1 sm:space-x-2">
+                            {getStatusIcon(record.status)}
+                            <span className={`${getStatusBadge(record.status)} text-xs px-2 py-1`}>
+                              {record.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                            {record.manuallyEdited && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                Edited
+                              </span>
+                            )}
+                          </div>
+                        </Table.Cell>
+                        {isAdmin && (
+                          <Table.Cell className="whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEditAttendance(record)}
+                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                                disabled={adminActionLoading}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAttendance(record)}
+                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                                disabled={adminActionLoading}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </Table.Cell>
+                        )}
+                      </>
+                    )}
+                    emptyMessage="No attendance records found."
+                  />
+                </div>
+              </CustomScrollbar>
+            </div>
+          )}
+        </Card>
+        )}
+      </div>
+
+      {/* Edit Attendance Modal */}
+      {editModal.visible && (
+        <AttendanceEditModal
+          isOpen={editModal.visible}
+          onClose={() => setEditModal({ visible: false, data: null })}
+          attendanceData={editModal.data}
+          onSubmit={submitEditAttendance}
+          isLoading={adminActionLoading}
+        />
+      )}
+
+      {/* Create Attendance Modal */}
+      {createModal.visible && (
+        <AttendanceCreateModal
+          isOpen={createModal.visible}
+          onClose={() => setCreateModal({ visible: false, data: null })}
+          initialData={createModal.data}
+          users={users}
+          onSubmit={submitCreateAttendance}
+          isLoading={adminActionLoading}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={deleteModal.visible}
+        onClose={() => setDeleteModal({ visible: false, recordId: null, recordData: null })}
+        onConfirm={confirmDeleteAttendance}
+        isLoading={adminActionLoading}
+        itemType="attendance record"
+        itemName={deleteModal.recordData ? `${deleteModal.recordData.userId?.username || 'User'}` : ''}
+        itemExtra={deleteModal.recordData ? new Date(deleteModal.recordData.date).toLocaleDateString('en-GB') : ''}
+      />
+
+      {/* Leave Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={deleteConfirmation.show}
+        onClose={() => setDeleteConfirmation({ show: false, leaveId: null, leaveName: '' })}
+        onConfirm={() => {
+          deleteUserLeave(deleteConfirmation.leaveId);
+          setDeleteConfirmation({ show: false, leaveId: null, leaveName: '' });
+        }}
+        isLoading={settingsLoading}
+        itemType="leave record"
+        itemName={deleteConfirmation.leaveName}
+      />
+
+      {/* Holiday Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={holidayDeleteConfirmation.show}
+        onClose={() => setHolidayDeleteConfirmation({ show: false, holidayId: null, holidayName: '' })}
+        onConfirm={() => {
+          deleteHoliday(holidayDeleteConfirmation.holidayId);
+        }}
+        isLoading={settingsLoading}
+        itemType="holiday"
+        itemName={holidayDeleteConfirmation.holidayName}
+      />
+
+      {/* Custom Tooltip */}
+      {hoveredDay && (
+        <div 
+          className="fixed z-50 pointer-events-none transform -translate-x-1/2 -translate-y-full"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y
+          }}
+        >
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg p-3 max-w-xs">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              {new Date(hoveredDay.year, hoveredDay.month, hoveredDay.day).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </div>
+            
+            <div className="space-y-1 text-xs">
+              {/* Holiday Information */}
+              {hoveredDay.isHoliday && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-md p-2 border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-purple-600 dark:text-purple-400 text-sm">🎉</span>
+                    <span className="font-semibold text-purple-900 dark:text-purple-100">
+                      {hoveredDay.holidayInfo?.name || 'Holiday'}
+                    </span>
+                  </div>
+                  {hoveredDay.holidayInfo?.description && (
+                    <p className="text-purple-700 dark:text-purple-300 text-xs leading-tight">
+                      {hoveredDay.holidayInfo.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Non-Working Day Information */}
+              {!hoveredDay.isWorkingDay && !hoveredDay.isHoliday && (
+                <div className="bg-gray-50 dark:bg-gray-900/20 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">📅</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100 text-xs">
+                      Non-Working Day
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Attendance Information (for regular days) */}
+              {hoveredDay.attendanceRate !== undefined && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-300">Attendance Rate:</span>
+                    <span className={`font-semibold ${
+                      hoveredDay.isFutureDay 
+                        ? 'text-gray-500' 
+                        : hoveredDay.attendanceRate >= 80 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : hoveredDay.attendanceRate >= 60 
+                            ? 'text-yellow-600 dark:text-yellow-400' 
+                            : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {hoveredDay.isFutureDay ? 'Future' : `${hoveredDay.attendanceRate}%`}
+                    </span>
+                  </div>
+                  
+                  {!hoveredDay.isFutureDay && hoveredDay.presentCount !== undefined && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-300">Present/Total:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {hoveredDay.presentCount}/{hoveredDay.totalUsers}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {/* Leave Information */}
+              {hoveredDay.hasLeave && (
+                <div className="pt-1 border-t border-gray-100 dark:border-slate-700">
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-600 dark:text-yellow-400 text-xs">🏖️</span>
+                    <span className="text-gray-600 dark:text-gray-300 text-xs leading-tight">
+                      {hoveredDay.leaveInfo}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Arrow pointing down */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-200 dark:border-t-slate-600"></div>
+              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-slate-800 -mt-1"></div>
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+
+
+// Edit Attendance Modal Component
+function AttendanceEditModal({ isOpen, onClose, attendanceData, onSubmit, isLoading }) {
+  const [formData, setFormData] = useState({
+    checkInTime: attendanceData?.checkInTime || '',
+    checkOutTime: attendanceData?.checkOutTime || '',
+    status: attendanceData?.status || 'checked-out',
+    notes: attendanceData?.notes || '',
+    adminNotes: attendanceData?.adminNotes || '',
+    date: attendanceData?.date || ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <CustomModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Edit Attendance - ${attendanceData?.userId?.username}`}
+      subtitle={formData.date}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <TextInput
+            type="time"
+            label="Check In Time"
+            value={formData.checkInTime}
+            onChange={(e) => handleChange('checkInTime', e.target.value)}
+          />
+          <TextInput
+            type="time"
+            label="Check Out Time"
+            value={formData.checkOutTime}
+            onChange={(e) => handleChange('checkOutTime', e.target.value)}
+          />
+        </div>
+
+        <Select
+          label="Status"
+          value={formData.status}
+          onChange={(value) => handleChange('status', value)}
+          options={[
+            { value: 'not-checked-in', label: 'Not Checked In' },
+            { value: 'checked-in', label: 'Checked In' },
+            { value: 'checked-out', label: 'Checked Out' }
+          ]}
+        />
+
+        <TextInput
+          as="textarea"
+          rows={3}
+          label="Employee Notes"
+          value={formData.notes}
+          onChange={(e) => handleChange('notes', e.target.value)}
+          placeholder="Employee notes..."
+        />
+
+        <TextInput
+          as="textarea"
+          rows={3}
+          label="Admin Notes"
+          value={formData.adminNotes}
+          onChange={(e) => handleChange('adminNotes', e.target.value)}
+          placeholder="Reason for edit..."
+        />
+
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <CustomButton variant="gray" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </CustomButton>
+          <CustomButton type="submit" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </CustomButton>
+        </div>
+      </form>
+    </CustomModal>
+  );
+}
+
+// Create Attendance Modal Component
+function AttendanceCreateModal({ isOpen, onClose, initialData, users, onSubmit, isLoading }) {
+  const [formData, setFormData] = useState({
+    userId: initialData?.userId || '',
+    date: initialData?.date || new Date().toISOString().split('T')[0],
+    checkInTime: '09:00',
+    checkOutTime: '17:00',
+    status: 'checked-out',
+    notes: '',
+    adminNotes: 'Manually created by admin'
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const selectedUser = users.find(u => u._id === formData.userId);
+
+  return (
+    <CustomModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Manual Attendance Entry"
+      subtitle={selectedUser ? `For ${selectedUser.username}` : 'Select employee and set attendance details'}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <Select
+            label="Employee"
+            value={formData.userId}
+            onChange={(value) => handleChange('userId', value)}
+            options={[
+              { value: '', label: 'Select Employee' },
+              ...users.map(user => ({ 
+                value: user._id, 
+                label: user.username 
+              }))
+            ]}
+            required
+          />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+              Date *
+            </label>
+            <CustomDatePicker
+              value={formData.date}
+              onChange={(date) => handleChange('date', date)}
+              placeholder="Select date"
+              required
+              popupSize="small"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <TextInput
+            type="time"
+            label="Check In Time"
+            value={formData.checkInTime}
+            onChange={(e) => handleChange('checkInTime', e.target.value)}
+          />
+          <TextInput
+            type="time"
+            label="Check Out Time"
+            value={formData.checkOutTime}
+            onChange={(e) => handleChange('checkOutTime', e.target.value)}
+          />
+        </div>
+
+        <TextInput
+          as="textarea"
+          rows={3}
+          label="Employee Notes"
+          value={formData.notes}
+          onChange={(e) => handleChange('notes', e.target.value)}
+          placeholder="Reason for attendance (sick leave, forgot to check in, etc.)"
+        />
+
+        <TextInput
+          as="textarea"
+          rows={2}
+          label="Admin Notes"
+          value={formData.adminNotes}
+          onChange={(e) => handleChange('adminNotes', e.target.value)}
+          placeholder="Internal admin notes..."
+        />
+
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <CustomButton variant="gray" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </CustomButton>
+          <CustomButton type="submit" disabled={isLoading}>
+            {isLoading ? 'Creating...' : 'Create Entry'}
+          </CustomButton>
+        </div>
+      </form>
+    </CustomModal>
+  );
+}

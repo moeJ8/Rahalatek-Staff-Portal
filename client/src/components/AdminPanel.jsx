@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
 import { Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -21,6 +21,7 @@ import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary, getU
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
+import AttendancePanel from './AttendancePanel'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -37,8 +38,8 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries']; // Accountants can access financials, debts, and salaries but not users/requests
+            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications']
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance']; // Accountants can access financials, debts, salaries, and attendance but not users/requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -2936,8 +2937,28 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'salaries'}
                                         aria-controls="salaries-panel"
                                     >
-                                        <FaDollarSign className="h-5 w-5 mr-3" />
+                                        <FaCoins className="h-5 w-5 mr-3" />
                                         Salaries & Bonuses
+                                    </button>
+                                )}
+                                
+                                {(isAdmin || isAccountant) && (
+                                    <button
+                                        id="tab-attendance"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'attendance' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                        onClick={() => handleTabChange('attendance')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'attendance')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'attendance'}
+                                        aria-controls="attendance-panel"
+                                    >
+                                        <FaCalendarDay className="h-5 w-5 mr-3" />
+                                        Attendance
                                     </button>
                                 )}
                                 
@@ -3107,6 +3128,20 @@ export default function AdminPanel() {
                                             aria-controls="salaries-panel"
                                         >
                                             Salaries & Bonuses
+                                        </button>
+                                    )}
+                                    {(isAdmin || isAccountant) && (
+                                        <button
+                                            id="tab-attendance-mobile"
+                                            className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'attendance' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                            onClick={() => handleTabChange('attendance')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'attendance')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'attendance'}
+                                            aria-controls="attendance-panel"
+                                        >
+                                            Attendance
                                         </button>
                                     )}
                                     {isAdmin && (
@@ -6183,6 +6218,11 @@ export default function AdminPanel() {
                         )}
                     />
                                 </Card>
+                            )}
+                            
+                            {/* Attendance Panel */}
+                            {activeTab === 'attendance' && (isAdmin || isAccountant) && (
+                                <AttendancePanel />
                             )}
                             
                             {/* Notifications Panel */}

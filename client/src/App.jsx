@@ -15,6 +15,7 @@ import TrashPage from './pages/TrashPage'
 import NotificationsPage from './pages/NotificationsPage'
 import OfficeDetailPage from './pages/OfficeDetailPage'
 import ProfilePage from './pages/ProfilePage'
+import AttendancePage from './pages/AttendancePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -111,6 +112,7 @@ function App() {
               <Route path="/tours" element={<ToursPage />} />
               <Route path="/hotels" element={<HotelsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/attendance" element={<AttendancePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />
             </Route>

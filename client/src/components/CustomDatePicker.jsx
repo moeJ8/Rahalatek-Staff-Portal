@@ -13,7 +13,9 @@ const CustomDatePicker = ({
   id = "",
   label,
   min = "",
-  max = ""
+  max = "",
+  popupSize = "normal",
+  popupPosition = "down" // "up", "down"
 }) => {
   const [displayDate, setDisplayDate] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -251,29 +253,29 @@ const CustomDatePicker = ({
       </div>
 
       {isOpen && (
-        <div className="fixed lg:absolute z-50 w-80 lg:mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200 
-                        top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:top-auto lg:left-auto lg:transform-none">
+        <div className={`fixed lg:absolute z-50 ${popupSize === 'small' ? 'w-52' : 'w-80'} ${popupPosition === 'up' ? 'lg:bottom-full lg:mb-1' : 'lg:top-full lg:mt-1'} bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200 
+                        top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:top-auto lg:left-auto lg:transform-none`}>
           {/* Calendar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200/50 dark:border-gray-600/50">
+          <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-b border-gray-200/50 dark:border-gray-600/50`}>
             <button
               type="button"
               onClick={() => navigateMonth(-1)}
-              className="p-2 rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200"
+              className={`${popupSize === 'small' ? 'p-1' : 'p-2'} rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200`}
             >
-              <FaChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <FaChevronLeft className={`${popupSize === 'small' ? 'w-3 h-3' : 'w-4 h-4'} text-gray-600 dark:text-gray-300`} />
             </button>
             <div className="flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => setShowMonthPicker(!showMonthPicker)}
-                className="text-lg font-semibold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 px-1 rounded"
+                className={`${popupSize === 'small' ? 'text-sm' : 'text-lg'} font-semibold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 px-1 rounded`}
               >
                 {monthNames[currentMonth.getMonth()]}
               </button>
               <button
                 type="button"
                 onClick={() => setShowYearPicker(!showYearPicker)}
-                className="text-lg font-semibold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 px-1 rounded"
+                className={`${popupSize === 'small' ? 'text-sm' : 'text-lg'} font-semibold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 px-1 rounded`}
               >
                 {currentMonth.getFullYear()}
               </button>
@@ -281,9 +283,9 @@ const CustomDatePicker = ({
             <button
               type="button"
               onClick={() => navigateMonth(1)}
-              className="p-2 rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200"
+              className={`${popupSize === 'small' ? 'p-1' : 'p-2'} rounded-lg hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200`}
             >
-              <FaChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <FaChevronRight className={`${popupSize === 'small' ? 'w-3 h-3' : 'w-4 h-4'} text-gray-600 dark:text-gray-300`} />
             </button>
           </div>
 
@@ -340,25 +342,25 @@ const CustomDatePicker = ({
           )}
 
           {/* Calendar Grid */}
-          <div className="p-4">
+          <div className={popupSize === 'small' ? 'p-1' : 'p-4'}>
             {/* Day headers */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
+            <div className={`grid grid-cols-7 ${popupSize === 'small' ? 'gap-0.5' : 'gap-1'} mb-2`}>
               {dayNames.map((day) => (
-                <div key={day} className="p-2 text-xs font-medium text-center text-gray-600 dark:text-gray-400">
+                <div key={day} className={`${popupSize === 'small' ? 'p-1' : 'p-2'} text-xs font-medium text-center text-gray-600 dark:text-gray-400`}>
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar days */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className={`grid grid-cols-7 ${popupSize === 'small' ? 'gap-0.5' : 'gap-1'}`}>
               {generateCalendarDays().map((dayInfo, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => handleDateSelect(dayInfo.date)}
                   disabled={dayInfo.isDisabled}
-                  className={`p-2 text-sm rounded-lg transition-all duration-200 ${
+                  className={`${popupSize === 'small' ? 'p-1 text-xs' : 'p-2 text-sm'} rounded-lg transition-all duration-200 ${
                     dayInfo.isDisabled
                       ? 'text-gray-300 dark:text-gray-700 cursor-not-allowed opacity-50'
                       : !dayInfo.isCurrentMonth
@@ -377,7 +379,7 @@ const CustomDatePicker = ({
           </div>
 
           {/* Calendar Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-gray-200/50 dark:border-gray-600/50">
+          <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-t border-gray-200/50 dark:border-gray-600/50`}>
             <button
               type="button"
               onClick={clearDate}

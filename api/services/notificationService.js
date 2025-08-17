@@ -1,5 +1,7 @@
 const Notification = require('../models/Notification');
 const Voucher = require('../models/Voucher');
+const Attendance = require('../models/Attendance');
+const User = require('../models/User');
 
 class NotificationService {
     
@@ -477,6 +479,132 @@ class NotificationService {
             return result;
         } catch (error) {
             console.error('Error deleting notification:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate checkout reminder notification for admins (employees who forgot to check out)
+     */
+    static async generateAttendanceCheckoutReminder() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            // Find employees who checked in today but didn't check out
+            const attendanceRecords = await Attendance.find({
+                date: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                status: 'checked-in', // Still checked in
+                checkIn: { $ne: null }, // Has check-in time
+                checkOut: null // No check-out time
+            }).populate('userId', 'username email');
+
+            if (attendanceRecords.length === 0) {
+                console.log('No employees forgot to check out today');
+                return [];
+            }
+
+            // Check if we already sent a reminder today
+            const existingNotification = await Notification.findOne({
+                type: 'attendance_checkout_reminder',
+                createdAt: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                isActive: true
+            });
+
+            if (existingNotification) {
+                console.log('Checkout reminder already sent today');
+                return [];
+            }
+
+            // Create list of employees
+            const employeeNames = attendanceRecords.map(record => record.userId.username).join(', ');
+            const employeeCount = attendanceRecords.length;
+
+            // Create notification for admins
+            const notification = await this.createNotification({
+                type: 'attendance_checkout_reminder',
+                title: `${employeeCount} Employee${employeeCount > 1 ? 's' : ''} Forgot to Check Out`,
+                message: `The following employee${employeeCount > 1 ? 's' : ''} forgot to check out today: ${employeeNames}. Click to manage their attendance.`,
+                priority: 'high',
+                expiresAt: todayEnd,
+                metadata: {
+                    date: today.toISOString(),
+                    employeeCount,
+                    employees: attendanceRecords.map(record => ({
+                        userId: record.userId._id,
+                        username: record.userId.username,
+                        email: record.userId.email,
+                        checkInTime: record.checkIn
+                    })),
+                    redirectTo: '/admin/attendance'
+                }
+            });
+
+            console.log(`✅ Checkout reminder sent for ${employeeCount} employee${employeeCount > 1 ? 's' : ''}`);
+            return [notification];
+        } catch (error) {
+            console.error('Error generating attendance checkout reminder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Automatically check out employees who forgot to check out (without setting checkout time)
+     */
+    static async autoCheckoutForgottenEmployees() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            // Find employees who checked in today but didn't check out
+            const attendanceRecords = await Attendance.find({
+                date: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                status: 'checked-in', // Still checked in
+                checkIn: { $ne: null }, // Has check-in time
+                checkOut: null // No check-out time
+            }).populate('userId', 'username');
+
+            if (attendanceRecords.length === 0) {
+                console.log('No employees to auto-checkout today');
+                return [];
+            }
+
+            const updatedRecords = [];
+
+            // Update each record to checked-out status without setting checkout time
+            for (const record of attendanceRecords) {
+                record.status = 'checked-out';
+                // NOTE: We intentionally don't set checkOut time so admin can set it manually
+                // record.checkOut remains null
+                // hoursWorked remains 0 since we need both checkIn and checkOut for calculation
+                
+                await record.save();
+                updatedRecords.push({
+                    userId: record.userId._id,
+                    username: record.userId.username,
+                    date: record.date
+                });
+            }
+
+            console.log(`🔄 Auto-checkout completed for ${updatedRecords.length} employee${updatedRecords.length > 1 ? 's' : ''}`);
+            return updatedRecords;
+        } catch (error) {
+            console.error('Error in auto-checkout process:', error);
             throw error;
         }
     }

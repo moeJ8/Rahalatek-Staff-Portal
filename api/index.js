@@ -13,6 +13,10 @@ const debtRoutes = require('./routes/debtRoutes');
 const officePaymentRoutes = require('./routes/officePaymentRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const workingDaysRoutes = require('./routes/workingDaysRoutes');
+const holidayRoutes = require('./routes/holidayRoutes');
+const userLeaveRoutes = require('./routes/userLeaveRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const path = require('path');
@@ -91,6 +95,73 @@ mongoose.connect(process.env.MONGO_URI)
       };
       
       scheduleDailySummary();
+
+      // Schedule attendance checkout reminder every day at 8 PM
+      const scheduleAttendanceReminder = () => {
+        const now = new Date();
+        const next8PM = new Date();
+        next8PM.setHours(20, 0, 0, 0); // 8 PM
+        
+        // If it's already past 8 PM today, schedule for tomorrow
+        if (now > next8PM) {
+          next8PM.setDate(next8PM.getDate() + 1);
+        }
+        
+        const timeUntil8PM = next8PM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            await NotificationService.generateAttendanceCheckoutReminder();
+            
+            // Schedule the next one (24 hours later)
+            setInterval(async () => {
+              try {
+                await NotificationService.generateAttendanceCheckoutReminder();
+              } catch (err) {
+                console.error('⚠️ Attendance reminder error:', err);
+              }
+            }, 24 * 60 * 60 * 1000); // Run every 24 hours
+            
+          } catch (err) {
+            console.error('⚠️ Attendance reminder error:', err);
+          }
+        }, timeUntil8PM);
+      };
+
+      // Schedule auto-checkout every day at 11 PM
+      const scheduleAutoCheckout = () => {
+        const now = new Date();
+        const next11PM = new Date();
+        next11PM.setHours(23, 0, 0, 0); // 11 PM
+        
+        // If it's already past 11 PM today, schedule for tomorrow
+        if (now > next11PM) {
+          next11PM.setDate(next11PM.getDate() + 1);
+        }
+        
+        const timeUntil11PM = next11PM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            await NotificationService.autoCheckoutForgottenEmployees();
+            
+            // Schedule the next one (24 hours later)
+            setInterval(async () => {
+              try {
+                await NotificationService.autoCheckoutForgottenEmployees();
+              } catch (err) {
+                console.error('⚠️ Auto-checkout error:', err);
+              }
+            }, 24 * 60 * 60 * 1000); // Run every 24 hours
+            
+          } catch (err) {
+            console.error('⚠️ Auto-checkout error:', err);
+          }
+        }, timeUntil11PM);
+      };
+
+      scheduleAttendanceReminder();
+      scheduleAutoCheckout();
       
     } catch (err) {
       console.error('Schema fix error:', err);
@@ -110,6 +181,10 @@ app.use('/api/debts', debtRoutes);
 app.use('/api/office-payments', officePaymentRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/working-days', workingDaysRoutes);
+app.use('/api/holidays', holidayRoutes);
+app.use('/api/user-leave', userLeaveRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

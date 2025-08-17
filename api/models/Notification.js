@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
-        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary'],
+        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary', 'attendance_checkout_reminder'],
         required: true
     },
     title: {

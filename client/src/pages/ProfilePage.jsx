@@ -11,6 +11,7 @@ import UserBadge from '../components/UserBadge';
 import CustomSelect from '../components/Select';
 import UserAnalytics from '../components/UserAnalytics';
 import RahalatekLoader from '../components/RahalatekLoader';
+import CustomModal from '../components/CustomModal';
 import { getMyBonuses, getUserBonuses } from '../utils/profileApi';
 
 const securityQuestions = [
@@ -47,7 +48,7 @@ export default function ProfilePage() {
     const [lastMonthBonus, setLastMonthBonus] = useState(null);
     const [salaryModalOpen, setSalaryModalOpen] = useState(false);
     const [animateBars, setAnimateBars] = useState(false);
-    const [modalEnter, setModalEnter] = useState(false);
+    const [_modalEnter, setModalEnter] = useState(false);
     const [allBonuses, setAllBonuses] = useState([]);
     const [salaryYears, setSalaryYears] = useState([]);
     const [selectedSalaryYear, setSelectedSalaryYear] = useState('');
@@ -1190,26 +1191,12 @@ export default function ProfilePage() {
                 </Card>
 
                 {/* Salaries modal */}
-                <Modal
-                    show={salaryModalOpen}
+                <CustomModal
+                    isOpen={salaryModalOpen}
                     onClose={closeSalariesModal}
-                    size="lg"
-                    popup
-                    theme={{
-                        content: {
-                            inner: `relative rounded-lg bg-white dark:bg-slate-900 transform transition-all duration-300 ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`
-                        },
-                        root: {
-                            base: `fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full ${modalEnter ? 'backdrop-blur-sm bg-black/30' : 'backdrop-blur-0 bg-black/0'} transition-all duration-300`
-                        }
-                    }}
+                    title="Monthly Salaries"
+                    size="md"
                 >
-                    <Modal.Header>
-                        <div className="text-center w-full">
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Monthly Salaries</h3>
-                        </div>
-                    </Modal.Header>
-                    <Modal.Body>
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="text-sm text-gray-600 dark:text-gray-300">Year</span>
@@ -1267,8 +1254,7 @@ export default function ProfilePage() {
                                 </table>
                             </div>
                         </div>
-                    </Modal.Body>
-                </Modal>
+                </CustomModal>
 
                 {/* Analytics Section */}
                 <UserAnalytics userId={user?.id || user?._id} />

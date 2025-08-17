@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Spinner, Badge } from 'flowbite-react';
-import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser } from 'react-icons/fa';
+import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -83,6 +83,10 @@ const NotificationDropdown = () => {
         return notifs.filter(notif => 
           notif.type === 'voucher_departure_reminder' || 
           notif.type === 'daily_departures_summary'
+        );
+      case 'attendance':
+        return notifs.filter(notif => 
+          notif.type === 'attendance_checkout_reminder'
         );
       case 'all':
       default:
@@ -210,6 +214,8 @@ const NotificationDropdown = () => {
         return <FaCalendarAlt className={iconClass} />;
       case 'user_role_change':
         return <FaUser className={iconClass} />;
+      case 'attendance_checkout_reminder':
+        return <FaClock className="w-4 h-4 text-yellow-500" />;
       default:
         return <FaBell className={iconClass} />;
     }
@@ -337,6 +343,17 @@ const NotificationDropdown = () => {
               <FaPlaneDeparture className="w-3 h-3" />
               Departure
             </button>
+            <button
+              onClick={() => setActiveFilter('attendance')}
+              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+                activeFilter === 'attendance'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <FaClock className="w-3 h-3" />
+              Attendance
+            </button>
           </div>
 
           {/* Notifications List */}
@@ -444,6 +461,16 @@ const NotificationDropdown = () => {
                               <span className="text-xs text-gray-500 dark:text-gray-400 italic">
                                 Role updated by admin
                               </span>
+                            )}
+                            {/* Show attendance link for checkout reminders */}
+                            {notification.type === 'attendance_checkout_reminder' && (
+                              <Link
+                                to="/dashboard?tab=attendance"
+                                className="text-xs text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 font-medium"
+                                onClick={() => setShowDropdown(false)}
+                              >
+                                Manage Attendance →
+                              </Link>
                             )}
                           </div>
                         </div>

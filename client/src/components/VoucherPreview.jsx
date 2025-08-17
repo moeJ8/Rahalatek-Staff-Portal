@@ -920,7 +920,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     phoneLabel.style.color = '#6b7280';
     
     const phoneNumber = document.createElement('div');
-    phoneNumber.textContent = '+90 553 924 1644';
+    phoneNumber.textContent = '+212 772-535475';
     phoneNumber.style.fontSize = '14px';
     
     phoneInfo.appendChild(phoneLabel);
@@ -973,7 +973,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       addressLabel.style.color = '#6b7280';
 
       const addressText = document.createElement('div');
-      addressText.textContent = 'Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye';
+      addressText.textContent = 'Molla Gürani, Turgut Özal Millet Cd, Feriha apt(64), Fatih/İstanbul';
       addressText.style.fontSize = '14px';
 
       addressInfo.appendChild(addressLabel);
@@ -1683,7 +1683,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <span className="text-2xl">📱</span>
             <div>
               <div className="text-sm text-gray-500">Phone</div>
-              <div className="text-sm">+90 553 924 1644</div>
+              <div className="text-sm">+212 772-535475</div>
             </div>
           </div>
           <div className="flex items-center gap-2" style={{ display: showContact ? 'flex' : 'none' }}>
@@ -1697,7 +1697,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             <span className="text-2xl">📍</span>
             <div>
               <div className="text-sm text-gray-500">Address</div>
-              <div className="text-sm">Merkez, Soğukçu Sk. No:21, 34381 Şişli/İstanbul, Türkiye</div>
+              <div className="text-sm">Molla Gürani, Turgut Özal Millet Cd, Feriha apt(64), Fatih/İstanbul</div>
             </div>
           </div>
         </div>
