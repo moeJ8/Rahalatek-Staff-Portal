@@ -101,6 +101,11 @@ export default function Header() {
     setCalendarOpen(false);
   };
 
+  // Handle attendance indicator click
+  const handleAttendanceClick = () => {
+    navigate('/attendance');
+  };
+
   // Get tooltip content for attendance indicators
   const getTooltipContent = (type, status, checkIn, checkOut) => {
     if (type === 'checkin') {
@@ -108,7 +113,7 @@ export default function Header() {
         return {
           title: 'Check-in Status',
           content: 'Not checked in today',
-          detail: 'Use QR code to check in'
+          detail: 'Click to go to attendance page'
         };
       } else {
         return {
@@ -122,13 +127,13 @@ export default function Header() {
         return {
           title: 'Check-out Status',
           content: 'Work completed',
-          detail: `Time: ${new Date(checkOut).toLocaleTimeString()}`
+          detail: `Time: ${new Date(checkOut).toLocaleTimeString()} • Click to view attendance`
         };
       } else {
         return {
           title: 'Check-out Status',
           content: 'Still working',
-          detail: 'Remember to check out when done'
+          detail: 'Click to check out when done'
         };
       }
     }
@@ -144,11 +149,12 @@ export default function Header() {
       <div className="flex items-center gap-2">
         {/* Check-in indicator */}
         <div 
-          className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 cursor-pointer ${
+          className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 hover:scale-110 ${
             status === 'not-checked-in' 
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-2 border-red-200 dark:border-red-800' 
+              ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-2 border-red-200 dark:border-red-800 cursor-pointer' 
               : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-2 border-green-200 dark:border-green-800'
           }`}
+          onClick={status === 'not-checked-in' ? handleAttendanceClick : undefined}
           onMouseEnter={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             setTooltipPosition({
@@ -170,6 +176,7 @@ export default function Header() {
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-2 border-blue-200 dark:border-blue-800' 
                 : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border-2 border-yellow-200 dark:border-yellow-800'
             }`}
+            onClick={handleAttendanceClick}
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               setTooltipPosition({

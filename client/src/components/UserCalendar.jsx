@@ -19,6 +19,7 @@ export default function UserCalendar({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [modalEnter, setModalEnter] = useState(false);
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -45,8 +46,17 @@ export default function UserCalendar({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       fetchCalendarData();
+      setTimeout(() => setModalEnter(true), 50);
+    } else {
+      setModalEnter(false);
     }
   }, [isOpen, fetchCalendarData]);
+
+  // Handle close with animation
+  const handleClose = () => {
+    setModalEnter(false);
+    setTimeout(() => onClose(), 300);
+  };
 
   const navigateMonth = (direction) => {
     if (direction === 'prev') {
@@ -180,81 +190,90 @@ export default function UserCalendar({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className={`fixed inset-0 bg-black bg-opacity-30 ${modalEnter ? 'backdrop-blur-sm' : 'backdrop-blur-0'} transition-all duration-300 flex items-center justify-center p-2 sm:p-4 z-50`}>
+      <div className={`bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-300 ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <FaCalendarAlt className="text-teal-600 dark:text-teal-400 text-xl" />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Calendar</h2>
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <FaCalendarAlt className="text-teal-600 dark:text-teal-400 text-lg sm:text-xl" />
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">My Calendar</h2>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <CustomButton
               variant="orange"
               size="sm"
               onClick={fetchCalendarData}
               icon={HiRefresh}
               disabled={loading}
+              className="hidden sm:flex"
             >
               Refresh
             </CustomButton>
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={fetchCalendarData}
+              disabled={loading}
+              className="sm:hidden p-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 disabled:opacity-50"
             >
-              <FaTimes className="w-5 h-5" />
+              <HiRefresh className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1"
+            >
+              <FaTimes className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <CustomScrollbar className="p-6 max-h-[calc(90vh-120px)]">
+        <CustomScrollbar className="p-3 sm:p-6 max-h-[calc(95vh-120px)] sm:max-h-[calc(90vh-120px)]">
           {loading ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-8 sm:py-12">
               <RahalatekLoader size="lg" />
             </div>
           ) : calendarData ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Year and Summary Info */}
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
                   {monthNames[currentMonth]} {selectedYear}
                 </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                    <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                  <div className="bg-green-50 dark:bg-green-900/20 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-green-600 dark:text-green-400">
                       {calendarData.summary.attendanceDays}
                     </div>
-                    <div className="text-sm text-green-700 dark:text-green-300">Present Days</div>
+                    <div className="text-xs sm:text-sm text-green-700 dark:text-green-300">Present Days</div>
                   </div>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-                    <div className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-yellow-600 dark:text-yellow-400">
                       {calendarData.summary.leaveDays}
                     </div>
-                    <div className="text-sm text-yellow-700 dark:text-yellow-300">Leave Days</div>
+                    <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-300">Leave Days</div>
                   </div>
-                  <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                    <div className="text-lg font-semibold text-red-600 dark:text-red-400">
+                  <div className="bg-red-50 dark:bg-red-900/20 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400">
                       {calendarData.summary.absentDays}
                     </div>
-                    <div className="text-sm text-red-700 dark:text-red-300">Absent Days</div>
+                    <div className="text-xs sm:text-sm text-red-700 dark:text-red-300">Absent Days</div>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                    <div className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-blue-600 dark:text-blue-400">
                       {calendarData.summary.attendanceRate}%
                     </div>
-                    <div className="text-sm text-blue-700 dark:text-blue-300">Attendance Rate</div>
+                    <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">Attendance Rate</div>
                   </div>
                 </div>
               </div>
 
               {/* Year and Month Navigation */}
-              <div className="flex justify-center items-center gap-6 mb-4">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mb-4">
+                {/* Year Navigation */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setSelectedYear(selectedYear - 1)}
                     disabled={selectedYear <= 2025}
-                    className={`px-3 py-1 text-sm rounded transition-all ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
                       selectedYear <= 2025 
                         ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                         : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -262,13 +281,13 @@ export default function UserCalendar({ isOpen, onClose }) {
                   >
                     {selectedYear - 1}
                   </button>
-                  <span className="text-lg font-semibold text-gray-900 dark:text-white px-2">
+                  <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white px-1 sm:px-2">
                     {selectedYear}
                   </span>
                   <button
                     onClick={() => setSelectedYear(selectedYear + 1)}
                     disabled={selectedYear >= 2026}
-                    className={`px-3 py-1 text-sm rounded transition-all ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
                       selectedYear >= 2026 
                         ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
                         : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
@@ -277,38 +296,40 @@ export default function UserCalendar({ isOpen, onClose }) {
                     {selectedYear + 1}
                   </button>
                 </div>
+                
+                {/* Month Navigation */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => navigateMonth('prev')}
-                    className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
                   >
-                    <FaChevronLeft className="w-4 h-4" />
+                    <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                   <button
                     onClick={() => navigateMonth('next')}
-                    className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
                   >
-                    <FaChevronRight className="w-4 h-4" />
+                    <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
 
               {/* Calendar Grid */}
-              <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6">
                 {/* Days Header */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-3 sm:mb-4">
                   {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day) => (
-                    <div key={day} className="text-center p-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        <span className="hidden md:inline">{day}</span>
-                        <span className="md:hidden">{day.slice(0, 3)}</span>
+                    <div key={day} className="text-center p-1 sm:p-2">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <span className="hidden sm:inline">{day}</span>
+                        <span className="sm:hidden">{day.slice(0, 1)}</span>
                       </span>
                     </div>
                   ))}
                 </div>
                 
                 {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                   {(() => {
                     const monthData = calendarData.calendar[currentMonth] || {};
                     const firstDay = new Date(selectedYear, currentMonth, 1).getDay();
@@ -317,12 +338,18 @@ export default function UserCalendar({ isOpen, onClose }) {
                     
                     // Empty cells for days before month starts
                     for (let i = 0; i < firstDay; i++) {
-                      days.push(<div key={`empty-${i}`} className="p-2"></div>);
+                      days.push(<div key={`empty-${i}`} className="p-1 sm:p-2"></div>);
                     }
+                    
+                    // Get today's date for comparison
+                    const today = new Date();
+                    const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === selectedYear;
+                    const currentDay = today.getDate();
                     
                     // Days of the month
                     for (let day = 1; day <= daysInMonth; day++) {
                       const dayData = monthData[day];
+                      const isToday = isCurrentMonth && day === currentDay;
                       
                       if (dayData) {
                         const colorClass = getDayColor(dayData);
@@ -332,7 +359,7 @@ export default function UserCalendar({ isOpen, onClose }) {
                         days.push(
                           <div
                             key={day}
-                            className="p-2 text-center relative"
+                            className="p-1 sm:p-2 text-center relative"
                             onMouseEnter={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               setTooltipPosition({
@@ -343,18 +370,28 @@ export default function UserCalendar({ isOpen, onClose }) {
                             }}
                             onMouseLeave={() => setHoveredDay(null)}
                           >
-                            <div className={`relative w-12 h-12 flex flex-col items-center justify-center text-sm font-semibold rounded-lg border-2 ${colorClass} transition-all hover:scale-105`}>
+                            <div className={`relative w-8 h-8 sm:w-12 sm:h-12 flex flex-col items-center justify-center text-xs sm:text-sm font-semibold rounded border-2 sm:rounded-lg ${colorClass} transition-all hover:scale-105`}>
                               <span className="text-xs">{day}</span>
-                              {icon && <div className="mt-0.5">{icon}</div>}
+                              {icon && <div className="mt-0.5 sm:block hidden">{icon}</div>}
+                              {isToday && (
+                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
                       } else {
                         days.push(
-                          <div key={day} className="p-2 text-center">
-                            <div className="w-12 h-12 flex items-center justify-center text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div key={day} className="p-1 sm:p-2 text-center relative">
+                            <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded border sm:rounded-lg border-gray-200 dark:border-gray-700`}>
                               {day}
                             </div>
+                            {isToday && (
+                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                              </div>
+                            )}
                           </div>
                         );
                       }
@@ -366,40 +403,40 @@ export default function UserCalendar({ isOpen, onClose }) {
               </div>
 
               {/* Legend */}
-              <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Legend</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-green-200 border border-green-400 flex items-center justify-center">
-                      <FaCheck className="w-2 h-2 text-green-600" />
+              <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 sm:p-4">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3 text-sm sm:text-base">Legend</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-xs sm:text-sm">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-green-200 border border-green-400 flex items-center justify-center">
+                      <FaCheck className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-green-600" />
                     </div>
                     <span className="text-gray-700 dark:text-gray-300">Present</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-yellow-200 border border-yellow-400 flex items-center justify-center">
-                      <FaClock className="w-2 h-2 text-yellow-600" />
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-yellow-200 border border-yellow-400 flex items-center justify-center">
+                      <FaClock className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-yellow-600" />
                     </div>
                     <span className="text-gray-700 dark:text-gray-300">On Leave</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-red-200 border border-red-400 flex items-center justify-center">
-                      <FaTimes className="w-2 h-2 text-red-600" />
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-red-200 border border-red-400 flex items-center justify-center">
+                      <FaTimes className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-red-600" />
                     </div>
                     <span className="text-gray-700 dark:text-gray-300">Absent</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-purple-200 border border-purple-400 flex items-center justify-center">
-                      <FaGift className="w-2 h-2 text-purple-600" />
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-purple-200 border border-purple-400 flex items-center justify-center">
+                      <FaGift className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-purple-600" />
                     </div>
                     <span className="text-gray-700 dark:text-gray-300">Holiday</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-gray-200 border border-gray-300"></div>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-gray-200 border border-gray-300"></div>
                     <span className="text-gray-700 dark:text-gray-300">Non-Working</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-blue-200 border border-blue-400 flex items-center justify-center">
-                      <FaClock className="w-2 h-2 text-blue-600" />
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-blue-200 border border-blue-400 flex items-center justify-center">
+                      <FaClock className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-blue-600" />
                     </div>
                     <span className="text-gray-700 dark:text-gray-300">Checked In</span>
                   </div>
@@ -417,16 +454,16 @@ export default function UserCalendar({ isOpen, onClose }) {
       {/* Tooltip */}
       {hoveredDay && (
         <div
-          className="fixed bg-gray-900 dark:bg-gray-800 text-white p-3 rounded-lg shadow-lg text-sm z-50 pointer-events-none"
+          className="fixed bg-gray-900 dark:bg-gray-800 text-white px-1.5 py-0.5 sm:p-3 rounded sm:rounded-lg shadow-sm sm:shadow-lg text-xs z-50 pointer-events-none max-w-28 sm:max-w-xs"
           style={{
-            left: tooltipPosition.x,
+            left: Math.min(Math.max(tooltipPosition.x, 5), window.innerWidth - 120),
             top: tooltipPosition.y,
             transform: 'translate(-50%, -100%)'
           }}
         >
-          <div className="font-semibold">{hoveredDay.title}</div>
-          <div className="text-gray-200">{hoveredDay.content}</div>
-          <div className="text-gray-400 text-xs mt-1">{hoveredDay.detail}</div>
+          <div className="font-medium text-xs leading-none">{hoveredDay.title}</div>
+          <div className="text-gray-200 text-xs leading-none">{hoveredDay.content}</div>
+          <div className="text-gray-400 text-xs leading-none mt-0.5 sm:mt-1">{hoveredDay.detail}</div>
         </div>
       )}
     </div>

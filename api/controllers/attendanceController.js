@@ -4,6 +4,29 @@ const User = require('../models/User');
 const WorkingDays = require('../models/WorkingDays');
 const QRCode = require('qrcode');
 
+// Helper function to validate check-in/check-out time (8 AM - 8 PM)
+const isWithinAllowedTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    return hours >= 8 && hours < 20; // 8 AM (8) to 7:59 PM (19)
+};
+
+// Helper function to get time restriction message
+const getTimeRestrictionMessage = (action) => {
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString('en-US', { 
+        hour12: true, 
+        hour: 'numeric', 
+        minute: '2-digit' 
+    });
+    
+    if (action === 'check-in') {
+        return `Check-in is only allowed between 8:00 AM and 8:00 PM. Current time: ${currentTime}`;
+    } else {
+        return `Check-out is only allowed between 8:00 AM and 8:00 PM. Current time: ${currentTime}`;
+    }
+};
+
 // Get or generate current month's QR code (Admin only)
 exports.getCurrentQRCode = async (req, res) => {
     try {
@@ -117,6 +140,14 @@ exports.checkIn = async (req, res) => {
             });
         }
 
+        // Check if current time is within allowed check-in hours
+        if (!isWithinAllowedTime()) {
+            return res.status(400).json({
+                success: false,
+                message: getTimeRestrictionMessage('check-in')
+            });
+        }
+
         // Verify QR code
         const validQR = await AttendanceQR.verifyQRCode(qrCodeData);
         if (!validQR) {
@@ -179,6 +210,14 @@ exports.checkIn = async (req, res) => {
 // Check out
 exports.checkOut = async (req, res) => {
     try {
+        // Check if current time is within allowed check-out hours
+        if (!isWithinAllowedTime()) {
+            return res.status(400).json({
+                success: false,
+                message: getTimeRestrictionMessage('check-out')
+            });
+        }
+
         // Get today's attendance record
         const attendance = await Attendance.getTodayAttendance(req.user.userId);
 
@@ -262,14 +301,24 @@ exports.getAttendanceReports = async (req, res) => {
                     end.setHours(23, 59, 59, 999);
                     break;
                 case 'weekly':
-                    start = new Date(now);
-                    // Calculate start of week (Monday = 1, Sunday = 0)
-                    const dayOfWeek = now.getDay();
-                    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, go back 6 days to Monday
-                    start.setDate(now.getDate() - daysToMonday);
+                    // Business week: Saturday to Friday
+                    // Get local timezone offset to ensure proper date handling
+                    const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+                    start = new Date(localNow);
+                    // Calculate start of week (Saturday = 6, Sunday = 0, Monday = 1, etc.)
+                    const dayOfWeek = localNow.getDay();
+                    let daysToSaturday;
+                    if (dayOfWeek === 6) {
+                        // Today is Saturday - start of week
+                        daysToSaturday = 0;
+                    } else {
+                        // Go back to previous Saturday
+                        daysToSaturday = dayOfWeek + 1; // Sunday=1, Monday=2, ..., Friday=6
+                    }
+                    start.setDate(localNow.getDate() - daysToSaturday);
                     start.setHours(0, 0, 0, 0);
                     end = new Date(start);
-                    end.setDate(start.getDate() + 6); // End of week (Sunday)
+                    end.setDate(start.getDate() + 6); // End of week (Friday)
                     end.setHours(23, 59, 59, 999);
                     break;
                 case 'monthly':

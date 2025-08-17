@@ -969,8 +969,8 @@ export default function AttendancePanel() {
   const formatTime = (dateString) => {
     if (!dateString) return '--:--';
     return new Date(dateString).toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
+      hour12: true,
+      hour: 'numeric',
       minute: '2-digit'
     });
   };
@@ -2728,7 +2728,6 @@ export default function AttendancePanel() {
                 onChange={(date) => setReportFilters({...reportFilters, specificDate: date, period: 'custom'})}
                 placeholder="DD/MM/YYYY"
                 popupPosition="up"
-                max={new Date().toISOString().split('T')[0]}
               />
             </div>
             
@@ -3117,12 +3116,14 @@ function AttendanceEditModal({ isOpen, onClose, attendanceData, onSubmit, isLoad
             label="Check In Time"
             value={formData.checkInTime}
             onChange={(e) => handleChange('checkInTime', e.target.value)}
+            step="60"
           />
           <TextInput
             type="time"
             label="Check Out Time"
             value={formData.checkOutTime}
             onChange={(e) => handleChange('checkOutTime', e.target.value)}
+            step="60"
           />
         </div>
 
@@ -3234,12 +3235,14 @@ function AttendanceCreateModal({ isOpen, onClose, initialData, users, onSubmit, 
             label="Check In Time"
             value={formData.checkInTime}
             onChange={(e) => handleChange('checkInTime', e.target.value)}
+            step="60"
           />
           <TextInput
             type="time"
             label="Check Out Time"
             value={formData.checkOutTime}
             onChange={(e) => handleChange('checkOutTime', e.target.value)}
+            step="60"
           />
         </div>
 
