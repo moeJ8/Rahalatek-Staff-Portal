@@ -15,7 +15,10 @@ exports.getAllHolidays = async (req, res) => {
             holidays = await Holiday.find({ isActive: true })
                 .populate('createdBy', 'username')
                 .populate('updatedBy', 'username')
-                .sort({ date: 1 });
+                .sort({ 
+                    date: 1,
+                    startDate: 1
+                });
         }
 
         res.status(200).json({
@@ -43,38 +46,104 @@ exports.createHoliday = async (req, res) => {
             });
         }
 
-        const { name, description, date, isRecurring, recurrencePattern, type, color } = req.body;
+        const { name, description, holidayType, date, startDate, endDate, isRecurring, recurrencePattern, type, color } = req.body;
 
-        if (!name || !date) {
+        // Validate required fields based on holiday type
+        if (!name || !holidayType) {
             return res.status(400).json({
                 success: false,
-                message: 'Name and date are required'
+                message: 'Name and holiday type are required'
             });
         }
 
-        // Check if holiday already exists on this date
-        const existingHoliday = await Holiday.findOne({
-            date: new Date(date),
-            isActive: true
-        });
-
-        if (existingHoliday) {
+        if (holidayType === 'single-day' && !date) {
             return res.status(400).json({
                 success: false,
-                message: 'A holiday already exists on this date'
+                message: 'Date is required for single-day holidays'
             });
         }
 
-        const holiday = new Holiday({
+        if (holidayType === 'multiple-day' && (!startDate || !endDate)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Start date and end date are required for multiple-day holidays'
+            });
+        }
+
+        if (holidayType === 'multiple-day' && new Date(startDate) > new Date(endDate)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Start date cannot be after end date'
+            });
+        }
+
+        // Create holiday data object
+        const holidayData = {
             name,
             description,
-            date: new Date(date),
+            holidayType: holidayType || 'single-day',
             isRecurring: isRecurring || false,
             recurrencePattern: recurrencePattern || 'yearly',
             type: type || 'company',
             color: color || '#f87171',
             createdBy: req.user.userId
-        });
+        };
+
+        // Add date fields based on holiday type
+        if (holidayType === 'single-day') {
+            holidayData.date = new Date(date);
+            
+            // Check if holiday already exists on this date
+            const existingHoliday = await Holiday.findOne({
+                holidayType: 'single-day',
+                date: new Date(date),
+                isActive: true
+            });
+
+            if (existingHoliday) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A holiday already exists on this date'
+                });
+            }
+        } else {
+            holidayData.startDate = new Date(startDate);
+            holidayData.endDate = new Date(endDate);
+            
+            // Check for overlapping holidays
+            const overlappingHoliday = await Holiday.findOne({
+                $or: [
+                    // Single-day holidays within the range
+                    {
+                        holidayType: 'single-day',
+                        date: {
+                            $gte: new Date(startDate),
+                            $lte: new Date(endDate)
+                        }
+                    },
+                    // Multiple-day holidays that overlap
+                    {
+                        holidayType: 'multiple-day',
+                        $or: [
+                            {
+                                startDate: { $lte: new Date(endDate) },
+                                endDate: { $gte: new Date(startDate) }
+                            }
+                        ]
+                    }
+                ],
+                isActive: true
+            });
+
+            if (overlappingHoliday) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A holiday already overlaps with this date range'
+                });
+            }
+        }
+
+        const holiday = new Holiday(holidayData);
 
         await holiday.save();
 
@@ -236,10 +305,24 @@ exports.generateRecurringHolidays = async (req, res) => {
         const recurringHolidays = await Holiday.find({
             isRecurring: true,
             isActive: true,
-            date: {
-                $gte: new Date(previousYear, 0, 1),
-                $lt: new Date(year, 0, 1)
-            }
+            $or: [
+                // Single-day holidays
+                {
+                    holidayType: 'single-day',
+                    date: {
+                        $gte: new Date(previousYear, 0, 1),
+                        $lt: new Date(year, 0, 1)
+                    }
+                },
+                // Multiple-day holidays
+                {
+                    holidayType: 'multiple-day',
+                    startDate: {
+                        $gte: new Date(previousYear, 0, 1),
+                        $lt: new Date(year, 0, 1)
+                    }
+                }
+            ]
         });
 
         const generatedHolidays = [];

@@ -294,6 +294,7 @@ export default function Header() {
           <div className="lg:hidden flex items-center gap-2">
             <CustomDarkModeToggle />
             {user && <NotificationDropdown />}
+            {user && renderAttendanceIndicators()}
             <button 
               onClick={toggleMobileMenu}
               className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400 focus:outline-none"

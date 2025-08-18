@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Table } from 'flowbite-react';
-import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock } from 'react-icons/fa';
+import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock, FaUserCheck } from 'react-icons/fa';
 import { HiRefresh, HiPlus } from 'react-icons/hi';
 import CustomButton from './CustomButton';
 import RahalatekLoader from './RahalatekLoader';
 import CustomTable from './CustomTable';
 import SearchableSelect from './SearchableSelect';
+import Search from './Search';
 import CustomScrollbar from './CustomScrollbar';
 import Select from './Select';
 import CustomDatePicker from './CustomDatePicker';
@@ -15,6 +16,29 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 import CustomCheckbox from './CustomCheckbox';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+
+// Time conversion utility functions
+const convertTo24Hour = (time12h) => {
+  if (!time12h) return '';
+  const [time, modifier] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') {
+    hours = '00';
+  }
+  if (modifier === 'PM') {
+    hours = parseInt(hours, 10) + 12;
+  }
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+};
+
+const convertTo12Hour = (time24h) => {
+  if (!time24h) return '';
+  const [hours, minutes] = time24h.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+};
 
 export default function AttendancePanel() {
   const [qrCode, setQrCode] = useState(null);
@@ -31,11 +55,12 @@ export default function AttendancePanel() {
   const [reportSummary, setReportSummary] = useState(null);
   const [yearlyView, setYearlyView] = useState(false);
   const [settingsView, setSettingsView] = useState(false);
+  const [vacationsView, setVacationsView] = useState(false);
   const [yearlyData, setYearlyData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyLoading, setYearlyLoading] = useState(false);
   const [availableYears, setAvailableYears] = useState([]);
-  const [dayModal, setDayModal] = useState({ visible: false, data: null });
+  const [dayModal, setDayModal] = useState({ visible: false, data: null, activeTab: 'attendance' });
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [hoveredDay, setHoveredDay] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -50,6 +75,26 @@ export default function AttendancePanel() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, leaveId: null, leaveName: '' });
   const [holidayDeleteConfirmation, setHolidayDeleteConfirmation] = useState({ show: false, holidayId: null, holidayName: '' });
+  
+  // Vacations view states
+  const [vacationsData, setVacationsData] = useState({
+    allLeaves: [],
+    annualLeaveStats: [],
+    userAnnualStats: null,
+    holidays: []
+  });
+  const [vacationsLoading, setVacationsLoading] = useState(false);
+  const [selectedVacationYear, setSelectedVacationYear] = useState(new Date().getFullYear());
+  const [selectedVacationMonth, setSelectedVacationMonth] = useState('all');
+  const [selectedLeaveType, setSelectedLeaveType] = useState('all');
+  const [selectedLeaveCategory, setSelectedLeaveCategory] = useState('all');
+  const [activeVacationsTab, setActiveVacationsTab] = useState('overview');
+  const [availableVacationYears, setAvailableVacationYears] = useState([]);
+  const [availableVacationMonths, setAvailableVacationMonths] = useState([]);
+  const [availableLeaveTypes, setAvailableLeaveTypes] = useState([]);
+  const [availableLeaveCategories, setAvailableLeaveCategories] = useState([]);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [holidaySearchTerm, setHolidaySearchTerm] = useState('');
   const [workingDaysForm, setWorkingDaysForm] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -58,7 +103,10 @@ export default function AttendancePanel() {
   const [holidayForm, setHolidayForm] = useState({
     name: '',
     description: '',
-    date: '',
+    holidayType: 'single-day', // 'single-day' or 'multiple-day'
+    date: '',         // For single-day holidays
+    startDate: '',    // For multiple-day holidays
+    endDate: '',      // For multiple-day holidays
     type: 'company',
     isRecurring: false,
     color: '#f87171'
@@ -67,11 +115,13 @@ export default function AttendancePanel() {
     userId: '',
     leaveType: 'sick',
     customLeaveType: '',
-    startDate: '',
-    endDate: '',
-    reason: '',
-    isHalfDay: false,
-    halfDayPeriod: 'morning'
+    leaveCategory: 'single-day',
+    date: '',           // For single-day and hourly leaves
+    startDate: '',      // For multiple-day leaves
+    endDate: '',        // For multiple-day leaves  
+    startTime: '09:00 AM', // For hourly leaves
+    endTime: '05:00 PM',   // For hourly leaves
+    reason: ''
   });
   
   // Admin editing states
@@ -83,6 +133,7 @@ export default function AttendancePanel() {
 
   const authUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = authUser.isAdmin || false;
+  const isAccountant = authUser.isAccountant || false;
 
   // Fetch settings data (working days, holidays, leaves)
   const fetchSettingsData = useCallback(async (year, month) => {
@@ -147,10 +198,24 @@ export default function AttendancePanel() {
 
     // Check for holidays
     const holiday = holidays.find(h => {
+      if (h.holidayType === 'single-day') {
       const holidayDate = new Date(h.date);
       return holidayDate.getDate() === day && 
              holidayDate.getMonth() === month && 
              holidayDate.getFullYear() === year;
+      } else if (h.holidayType === 'multiple-day') {
+        // Normalize dates for comparison
+        const startDate = new Date(h.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(h.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const checkDate = new Date(year, month, day);
+        checkDate.setHours(12, 0, 0, 0); // Set to midday to avoid timezone issues
+        
+        return checkDate >= startDate && checkDate <= endDate;
+      }
+      return false;
     });
     if (holiday) {
       dayInfo.isHoliday = true;
@@ -159,9 +224,22 @@ export default function AttendancePanel() {
 
     // Check for user leaves
     const dayLeaves = userLeaves.filter(leave => {
+      if (leave.leaveCategory === 'multiple-day') {
+        // Normalize dates to start of day for proper comparison
       const startDate = new Date(leave.startDate);
+        startDate.setHours(0, 0, 0, 0);
       const endDate = new Date(leave.endDate);
-      return date >= startDate && date <= endDate;
+        endDate.setHours(23, 59, 59, 999);
+        
+        const currentDate = new Date(date);
+        currentDate.setHours(12, 0, 0, 0); // Set to midday to avoid timezone issues
+        
+        return currentDate >= startDate && currentDate <= endDate;
+      } else {
+        // For single-day and hourly leaves
+        const leaveDate = new Date(leave.date);
+        return date.toDateString() === leaveDate.toDateString();
+      }
     });
     if (dayLeaves.length > 0) {
       dayInfo.hasLeave = true;
@@ -174,9 +252,16 @@ export default function AttendancePanel() {
       dayInfo.textColor = 'text-purple-900 dark:text-purple-100';
       dayInfo.label = `Holiday: ${dayInfo.holidayInfo.name}`;
     } else if (dayInfo.hasLeave) {
+      const hasHourlyLeave = dayInfo.leaveInfo.some(leave => leave.leaveCategory === 'hourly');
+      if (hasHourlyLeave) {
+        dayInfo.bgColor = 'bg-orange-200 dark:bg-orange-800/50';
+        dayInfo.textColor = 'text-orange-900 dark:text-orange-100';
+        dayInfo.label = `${dayInfo.leaveInfo.length} employee(s) on leave (incl. hourly)`;
+      } else {
       dayInfo.bgColor = 'bg-yellow-200 dark:bg-yellow-800/50';
       dayInfo.textColor = 'text-yellow-900 dark:text-yellow-100';
       dayInfo.label = `${dayInfo.leaveInfo.length} employee(s) on leave`;
+      }
     } else if (!dayInfo.isWorkingDay) {
       dayInfo.bgColor = 'bg-gray-200 dark:bg-gray-800';
       dayInfo.textColor = 'text-gray-600 dark:text-gray-400';
@@ -223,6 +308,34 @@ export default function AttendancePanel() {
       loadWorkingDaysConfig();
     }
   }, [workingDaysForm.year, workingDaysForm.month, settingsView, activeSettingsTab, loadWorkingDaysConfig]);
+
+  // Load user's annual leave data for the main dashboard
+  useEffect(() => {
+    if (!yearlyView && !settingsView && !vacationsView) {
+      const loadUserAnnualData = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`/api/user-leave/annual-stats?year=${new Date().getFullYear()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setVacationsData(prev => ({
+              ...prev,
+              userAnnualStats: data.data
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading user annual leave data:', error);
+        }
+      };
+      
+      loadUserAnnualData();
+    }
+  }, [yearlyView, settingsView, vacationsView]);
+
+  // Reload vacations data when year changes (will be added after loadVacationsData is defined)
 
   const saveWorkingDaysConfig = useCallback(async (workingDays) => {
     try {
@@ -300,10 +413,91 @@ export default function AttendancePanel() {
     }
   }, []);
 
+  const loadVacationsData = useCallback(async () => {
+    try {
+      setVacationsLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Load all leaves (no filters - we'll filter on frontend)
+      const leavesResponse = await fetch(`/api/user-leave?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Load annual leave statistics for all users (admin only)
+      const annualStatsResponse = await fetch(`/api/user-leave/annual-stats/all?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      // Load current user's annual leave statistics
+      const userStatsResponse = await fetch(`/api/user-leave/annual-stats?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      // Load holidays
+      const holidaysResponse = await fetch('/api/holidays', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      let allLeaves = [];
+      let annualLeaveStats = [];
+      let userAnnualStats = null;
+      let holidays = [];
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        allLeaves = leavesData.data || [];
+      }
+      
+      if (annualStatsResponse.ok) {
+        const annualData = await annualStatsResponse.json();
+        annualLeaveStats = annualData.data?.users || [];
+      }
+      
+      if (userStatsResponse.ok) {
+        const userData = await userStatsResponse.json();
+        userAnnualStats = userData.data;
+      }
+
+      if (holidaysResponse.ok) {
+        const holidaysData = await holidaysResponse.json();
+        holidays = holidaysData.data || [];
+      }
+      
+      setVacationsData({
+        allLeaves,
+        annualLeaveStats,
+        userAnnualStats,
+        holidays
+      });
+      
+    } catch (error) {
+      console.error('Error loading vacations data:', error);
+    } finally {
+      setVacationsLoading(false);
+    }
+  }, [selectedVacationYear]);
+
   const saveHoliday = useCallback(async () => {
     try {
       setSettingsLoading(true);
       const token = localStorage.getItem('token');
+      
+      // Validate form based on holiday type
+      if (holidayForm.holidayType === 'single-day' && !holidayForm.date) {
+        alert('Please select a date for the holiday');
+        return;
+      }
+      
+      if (holidayForm.holidayType === 'multiple-day' && (!holidayForm.startDate || !holidayForm.endDate)) {
+        alert('Please select both start and end dates for the holiday');
+        return;
+      }
+      
+      if (holidayForm.holidayType === 'multiple-day' && new Date(holidayForm.startDate) > new Date(holidayForm.endDate)) {
+        alert('Start date cannot be after end date');
+        return;
+      }
+      
       const response = await fetch('/api/holidays', {
         method: 'POST',
         headers: {
@@ -317,19 +511,69 @@ export default function AttendancePanel() {
         setHolidayForm({
           name: '',
           description: '',
+          holidayType: 'single-day',
           date: '',
+          startDate: '',
+          endDate: '',
           type: 'company',
           isRecurring: false,
           color: '#f87171'
         });
         await loadHolidays();
+        if (vacationsView) {
+          await loadVacationsData();
+        }
+        toast.success('Holiday added successfully!', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#4CAF50'
+          },
+        });
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to add holiday', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#ffffff',
+            fontWeight: 'bold',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#f44336'
+          },
+        });
       }
     } catch (error) {
       console.error('Error saving holiday:', error);
+      toast.error('Error saving holiday', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#ffffff',
+          fontWeight: 'bold',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        },
+        iconTheme: {
+          primary: '#ffffff',
+          secondary: '#f44336'
+        },
+      });
     } finally {
       setSettingsLoading(false);
     }
-  }, [holidayForm, loadHolidays]);
+  }, [holidayForm, loadHolidays, vacationsView, loadVacationsData]);
 
   const deleteHoliday = useCallback(async (holidayId) => {
     try {
@@ -350,6 +594,10 @@ export default function AttendancePanel() {
           }
         });
         await loadHolidays();
+        // Also refresh vacations data if in vacations view
+        if (vacationsView) {
+          await loadVacationsData();
+        }
         setHolidayDeleteConfirmation({ show: false, holidayId: null, holidayName: '' });
       } else {
         toast.error('Failed to delete holiday', {
@@ -374,7 +622,7 @@ export default function AttendancePanel() {
     } finally {
       setSettingsLoading(false);
     }
-  }, [loadHolidays]);
+  }, [loadHolidays, vacationsView, loadVacationsData]);
 
   const loadUserLeaves = useCallback(async () => {
     try {
@@ -411,6 +659,222 @@ export default function AttendancePanel() {
     }
   }, []);
 
+  const loadAvailableVacationYears = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Load all leaves without year filter to get available years
+      const leavesResponse = await fetch('/api/user-leave', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        const allLeaves = leavesData.data || [];
+        
+        // Extract unique years from leaves
+        const years = new Set();
+        allLeaves.forEach(leave => {
+          if (leave.date) {
+            years.add(new Date(leave.date).getFullYear());
+          }
+          if (leave.startDate) {
+            years.add(new Date(leave.startDate).getFullYear());
+          }
+        });
+        
+        // Add current year if no data exists
+        const currentYear = new Date().getFullYear();
+        years.add(currentYear);
+        
+        // Sort years in descending order (newest first)
+        const sortedYears = Array.from(years).sort((a, b) => b - a);
+        setAvailableVacationYears(sortedYears);
+        
+        // Set current year as default if not already set
+        if (!selectedVacationYear && sortedYears.length > 0) {
+          setSelectedVacationYear(currentYear);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading available vacation years:', error);
+      // Fallback to current year
+      const currentYear = new Date().getFullYear();
+      setAvailableVacationYears([currentYear]);
+      setSelectedVacationYear(currentYear);
+    }
+  }, [selectedVacationYear]);
+
+  const loadAvailableVacationMonths = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Load leaves for the selected year to get available months
+      const leavesResponse = await fetch(`/api/user-leave?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        const allLeaves = leavesData.data || [];
+        
+        // Extract unique months from leaves
+        const months = new Set();
+        allLeaves.forEach(leave => {
+          let leaveDate;
+          if (leave.date) {
+            leaveDate = new Date(leave.date);
+          } else if (leave.startDate) {
+            leaveDate = new Date(leave.startDate);
+          }
+          
+          if (leaveDate) {
+            months.add(leaveDate.getMonth() + 1); // 1-12
+          }
+        });
+        
+        // Sort months in ascending order
+        const sortedMonths = Array.from(months).sort((a, b) => a - b);
+        setAvailableVacationMonths(sortedMonths);
+      }
+    } catch (error) {
+      console.error('Error loading available vacation months:', error);
+      setAvailableVacationMonths([]);
+    }
+  }, [selectedVacationYear]);
+
+  const loadAvailableLeaveTypes = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Load leaves for the selected year to get available leave types
+      const leavesResponse = await fetch(`/api/user-leave?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        const allLeaves = leavesData.data || [];
+        
+        // Extract unique leave types
+        const types = new Set();
+        allLeaves.forEach(leave => {
+          if (leave.leaveType) {
+            types.add(leave.leaveType);
+          }
+        });
+        
+        // Sort leave types alphabetically
+        const sortedTypes = Array.from(types).sort();
+        setAvailableLeaveTypes(sortedTypes);
+      }
+    } catch (error) {
+      console.error('Error loading available leave types:', error);
+      setAvailableLeaveTypes([]);
+    }
+  }, [selectedVacationYear]);
+
+  const loadAvailableLeaveCategories = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Load leaves for the selected year to get available leave categories
+      const leavesResponse = await fetch(`/api/user-leave?year=${selectedVacationYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        const allLeaves = leavesData.data || [];
+        
+        // Extract unique leave categories
+        const categories = new Set();
+        allLeaves.forEach(leave => {
+          if (leave.leaveCategory) {
+            categories.add(leave.leaveCategory);
+          }
+        });
+        
+        // Sort leave categories in a logical order
+        const categoryOrder = ['hourly', 'single-day', 'multiple-day'];
+        const sortedCategories = categoryOrder.filter(cat => categories.has(cat));
+        setAvailableLeaveCategories(sortedCategories);
+      }
+    } catch (error) {
+      console.error('Error loading available leave categories:', error);
+      setAvailableLeaveCategories([]);
+    }
+  }, [selectedVacationYear]);
+
+  // Load available years when vacations view opens
+  useEffect(() => {
+    if (vacationsView) {
+      loadAvailableVacationYears();
+    }
+  }, [vacationsView, loadAvailableVacationYears]);
+
+  // Load available months, types, and categories when year changes
+  useEffect(() => {
+    if (vacationsView && selectedVacationYear) {
+      loadAvailableVacationMonths();
+      loadAvailableLeaveTypes();
+      loadAvailableLeaveCategories();
+      setSelectedVacationMonth('all'); // Reset filters when year changes
+      setSelectedLeaveType('all');
+      setSelectedLeaveCategory('all');
+    }
+  }, [vacationsView, selectedVacationYear, loadAvailableVacationMonths, loadAvailableLeaveTypes, loadAvailableLeaveCategories]);
+
+  // Reload vacations data when year changes
+  useEffect(() => {
+    if (vacationsView && selectedVacationYear && availableVacationYears.length > 0) {
+      loadVacationsData();
+    }
+  }, [selectedVacationYear, vacationsView, availableVacationYears.length, loadVacationsData]);
+
+  // Clear search when changing tabs or years
+  useEffect(() => {
+    setUserSearchTerm('');
+    setHolidaySearchTerm('');
+  }, [activeVacationsTab, selectedVacationYear]);
+
+  // Reset all filters function
+  const resetAllFilters = useCallback(() => {
+    setSelectedVacationMonth('all');
+    setSelectedLeaveType('all');
+    setSelectedLeaveCategory('all');
+  }, []);
+
+  // Frontend filtering with useMemo for instant results
+  const filteredLeaves = useMemo(() => {
+    let filtered = vacationsData.allLeaves || [];
+    
+    // Filter by month
+    if (selectedVacationMonth !== 'all') {
+      filtered = filtered.filter(leave => {
+        let leaveDate;
+        if (leave.date) {
+          leaveDate = new Date(leave.date);
+        } else if (leave.startDate) {
+          leaveDate = new Date(leave.startDate);
+        }
+        return leaveDate && leaveDate.getMonth() + 1 === parseInt(selectedVacationMonth);
+      });
+    }
+    
+    // Filter by leave type
+    if (selectedLeaveType !== 'all') {
+      filtered = filtered.filter(leave => leave.leaveType === selectedLeaveType);
+    }
+    
+    // Filter by leave category
+    if (selectedLeaveCategory !== 'all') {
+      filtered = filtered.filter(leave => leave.leaveCategory === selectedLeaveCategory);
+    }
+    
+    return filtered;
+  }, [vacationsData.allLeaves, selectedVacationMonth, selectedLeaveType, selectedLeaveCategory]);
+
   const saveUserLeave = useCallback(async () => {
     try {
       setSettingsLoading(true);
@@ -429,11 +893,13 @@ export default function AttendancePanel() {
           userId: '',
           leaveType: 'sick',
           customLeaveType: '',
+          leaveCategory: 'single-day',
+          date: '',
           startDate: '',
           endDate: '',
-          reason: '',
-          isHalfDay: false,
-          halfDayPeriod: 'morning'
+          startTime: '09:00 AM',
+          endTime: '05:00 PM',
+          reason: ''
         });
         await loadUserLeaves();
         toast.success('Leave record added successfully', {
@@ -500,6 +966,10 @@ export default function AttendancePanel() {
 
       if (response.ok) {
         await loadUserLeaves();
+        // Also refresh vacations data if in vacations view
+        if (vacationsView) {
+          await loadVacationsData();
+        }
         toast.success('Leave record deleted successfully', {
           duration: 3000,
           style: {
@@ -549,7 +1019,7 @@ export default function AttendancePanel() {
     } finally {
       setSettingsLoading(false);
     }
-  }, [loadUserLeaves]);
+  }, [loadUserLeaves, vacationsView, loadVacationsData]);
 
   const fetchAttendanceReports = useCallback(async () => {
     try {
@@ -1002,6 +1472,7 @@ export default function AttendancePanel() {
   const handleDayClick = (dayData, day, month) => {
     setDayModal({
       visible: true,
+      activeTab: 'attendance',
       data: {
         day,
         month,
@@ -1012,7 +1483,7 @@ export default function AttendancePanel() {
   };
 
   const closeDayModal = () => {
-    setDayModal({ visible: false, data: null });
+    setDayModal({ visible: false, data: null, activeTab: 'attendance' });
   };
 
   const navigateMonth = (direction) => {
@@ -1303,12 +1774,12 @@ export default function AttendancePanel() {
           <Card className="bg-gray-50 dark:bg-slate-950">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
               <h3 className="text-lg font-semibold dark:text-white flex items-center">
-                <FaQrcode className="mr-2 text-purple-600 dark:text-purple-400" />
+                <FaQrcode className="mr-2 text-blue-800 dark:text-teal-400" />
                 QR Code
               </h3>
               <div className="flex flex-col sm:flex-row gap-2">
                 <CustomButton
-                  variant="gray"
+                  variant="orange"
                   size="sm"
                   onClick={fetchQRCode}
                   icon={HiRefresh}
@@ -1370,11 +1841,11 @@ export default function AttendancePanel() {
         {/* View Toggle - Responsive */}
         <div className="flex justify-center mb-6">
           <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm w-full sm:w-auto">
-            <div className={`${isAdmin ? 'grid grid-cols-3 sm:flex' : 'grid grid-cols-2 sm:flex'} gap-0 w-full`}>
+            <div className={`${isAdmin ? 'grid grid-cols-4 sm:flex' : 'grid grid-cols-2 sm:flex'} gap-0 w-full`}>
               <button
-                onClick={() => { setYearlyView(false); setSettingsView(false); }}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
-                  !yearlyView && !settingsView
+                onClick={() => { setYearlyView(false); setSettingsView(false); setVacationsView(false); }}
+                className={`flex-1 px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  !yearlyView && !settingsView && !vacationsView
                     ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
                 }`}
@@ -1387,13 +1858,14 @@ export default function AttendancePanel() {
                 onClick={() => { 
                   setYearlyView(true); 
                   setSettingsView(false); 
+                  setVacationsView(false);
                   // Fetch settings data for current month/year when calendar view is opened
                   setTimeout(() => {
                     fetchSettingsData(selectedYear, currentMonth);
                   }, 100); // Small delay to ensure state is updated
                 }}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
-                  yearlyView && !settingsView
+                className={`flex-1 px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  yearlyView && !settingsView && !vacationsView
                     ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
                 }`}
@@ -1402,11 +1874,31 @@ export default function AttendancePanel() {
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
               </button>
+              {(isAdmin || isAccountant) && (
+                <button
+                  onClick={() => { 
+                    setYearlyView(false); 
+                    setSettingsView(false);
+                    setVacationsView(true);
+                    loadVacationsData();
+                  }}
+                  className={`flex-1 px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 whitespace-nowrap ${
+                    vacationsView
+                      ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                  }`}
+                >
+                  <FaUserClock className="w-4 h-4" />
+                  <span className="hidden sm:inline">Vacations & Leaves</span>
+                  <span className="sm:hidden">Vacations</span>
+                </button>
+              )}
               {isAdmin && (
                 <button
                   onClick={() => { 
                     setYearlyView(false); 
                     setSettingsView(true);
+                    setVacationsView(false);
                     // Load initial settings data
                     if (activeSettingsTab === 'working-days') {
                       loadWorkingDaysConfig();
@@ -1418,7 +1910,7 @@ export default function AttendancePanel() {
                       loadUsers();
                     }
                   }}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  className={`flex-1 px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
                     settingsView
                       ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
@@ -1434,12 +1926,609 @@ export default function AttendancePanel() {
         </div>
 
         {/* Conditional Content Based on View */}
-        {settingsView && isAdmin ? (
+        {vacationsView && (isAdmin || isAccountant) ? (
+          /* Vacations & Leaves Section */
+          <Card className="bg-gray-50 dark:bg-slate-950">
+            <div className="p-3 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold dark:text-white flex items-center mb-4 sm:mb-6">
+                <FaUserClock className="mr-2 text-blue-800 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Vacations & Leaves Management</span>
+                <span className="sm:hidden">Vacations</span>
+              </h3>
+
+              {/* Year Selector */}
+              <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="w-full sm:w-48">
+                  <Select
+                    label="Year"
+                    value={selectedVacationYear}
+                    onChange={(value) => setSelectedVacationYear(parseInt(value))}
+                    options={availableVacationYears.map(year => ({
+                      value: year,
+                      label: year.toString()
+                    }))}
+                    placeholder="Select year..."
+                    disabled={vacationsLoading}
+                  />
+                </div>
+                <CustomButton
+                  variant="orange"
+                  size="sm"
+                  onClick={() => {
+                    loadAvailableVacationYears();
+                    loadAvailableVacationMonths();
+                    loadAvailableLeaveTypes();
+                    loadAvailableLeaveCategories();
+                    loadVacationsData();
+                  }}
+                  icon={HiRefresh}
+                  disabled={vacationsLoading}
+                >
+                  Refresh Data
+                </CustomButton>
+              </div>
+
+              {/* Vacations Navigation */}
+              <div className="mb-6">
+                <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm">
+                  <button 
+                    onClick={() => setActiveVacationsTab('overview')}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeVacationsTab === 'overview'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaCalendarCheck className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Annual Overview</span>
+                    <span className="sm:hidden">Overview</span>
+                  </button>
+                  <button 
+                    onClick={() => setActiveVacationsTab('leaves')}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeVacationsTab === 'leaves'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaList className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">All Leaves</span>
+                    <span className="sm:hidden">Leaves</span>
+                  </button>
+                  <button 
+                    onClick={() => setActiveVacationsTab('holidays')}
+                    className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                      activeVacationsTab === 'holidays'
+                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                    }`}
+                  >
+                    <FaGift className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Company Holidays</span>
+                    <span className="sm:hidden">Holidays</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Conditional Content Based on Active Vacations Tab */}
+              {vacationsLoading && (
+                <div className="flex justify-center py-8">
+                  <RahalatekLoader size="md" />
+                </div>
+              )}
+
+              {!vacationsLoading && activeVacationsTab === 'overview' && (
+                <div>
+                  {/* Annual Leave Statistics */}
+                  {vacationsData.annualLeaveStats.length > 0 ? (
+                    <div>
+                      <style>
+                        {`
+                          @keyframes progressScale {
+                            from {
+                              transform: scaleX(0);
+                            }
+                            to {
+                              transform: scaleX(1);
+                            }
+                          }
+                        `}
+                      </style>
+                      
+                                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <FaCalendarCheck className="w-5 h-5 mr-2 text-blue-800 dark:text-teal-400" />
+                          Annual Leave Overview ({selectedVacationYear})
+                        </div>
+                        {userSearchTerm && (
+                          <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                            {vacationsData.annualLeaveStats.filter(userStats => 
+                              userStats.username.toLowerCase().includes(userSearchTerm.toLowerCase())
+                            ).length} of {vacationsData.annualLeaveStats.length} employees
+                          </span>
+                        )}
+                      </h4>
+                      
+                      {/* Search Bar */}
+                      <div className="mb-6">
+                        <Search
+                          value={userSearchTerm}
+                          onChange={(e) => setUserSearchTerm(e.target.value)}
+                          placeholder="Search employees by name..."
+                          className="max-w-md"
+                        />
+                      </div>
+                      
+                      {(() => {
+                        const filteredStats = vacationsData.annualLeaveStats.filter(userStats => 
+                          userStats.username.toLowerCase().includes(userSearchTerm.toLowerCase())
+                        );
+                        
+                        if (filteredStats.length === 0 && userSearchTerm) {
+                          return (
+                            <div className="text-center py-12">
+                              <FaUsers className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                              <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No employees found</h4>
+                              <p className="text-gray-500 dark:text-gray-400">No employees match your search for "{userSearchTerm}"</p>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredStats.map((userStats, index) => {
+                           const progressPercentage = (userStats.daysUsed / userStats.maxAnnualDays) * 100;
+                           
+                           return (
+                             <div 
+                               key={userStats.userId} 
+                               className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                               style={{
+                                 animationDelay: `${index * 100}ms`
+                               }}
+                             >
+                               <div className="flex items-center justify-between mb-4">
+                                 <h5 className="font-semibold text-gray-900 dark:text-white">
+                                   {userStats.username}
+                                 </h5>
+                                 
+                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                   userStats.remainingDays > 7 
+                                     ? 'bg-green-500 text-white'
+                                     : userStats.remainingDays > 3
+                                     ? 'bg-yellow-500 text-white'
+                                     : 'bg-red-500 text-white'
+                                 }`}>
+                                   {userStats.remainingDays} left
+                                 </span>
+                               </div>
+                               
+                               <div className="space-y-3">
+                                 <div className="flex justify-between text-sm">
+                                   <span className="text-gray-600 dark:text-slate-300">Days Used:</span>
+                                   <span className="font-semibold text-gray-900 dark:text-white">
+                                     {userStats.daysUsed} / {userStats.maxAnnualDays}
+                                   </span>
+                                 </div>
+                                 
+                                 <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                                   <div 
+                                     className={`h-3 rounded-full transition-all duration-500 ease-out ${
+                                       progressPercentage > 80 
+                                         ? 'bg-gradient-to-r from-red-400 to-red-600' 
+                                         : progressPercentage > 60 
+                                         ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' 
+                                         : 'bg-gradient-to-r from-green-400 to-green-600'
+                                     }`}
+                                     style={{ 
+                                       width: `${progressPercentage}%`,
+                                       transform: `scaleX(0)`,
+                                       transformOrigin: 'left',
+                                       animation: `progressScale 0.6s ease-out ${index * 150}ms forwards`
+                                     }}
+                                   ></div>
+                                 </div>
+                               </div>
+                             </div>
+                           );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <FaCalendarCheck className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Annual Leave Data</h4>
+                      <p className="text-gray-500 dark:text-gray-400">Annual leave statistics will appear here once employees start taking annual leave.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!vacationsLoading && activeVacationsTab === 'leaves' && (
+                <div>
+                  {/* Title */}
+                  <div className="text-center mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center justify-center">
+                      <FaList className="w-5 h-5 mr-2 text-blue-800 dark:text-teal-400" />
+                      All Leaves ({selectedVacationYear}) - {filteredLeaves.length} records
+                    </h4>
+                  </div>
+                  
+                  {/* Centered Filters */}
+                  <div className="flex justify-center mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl w-full">
+                      {/* Month Filter */}
+                      <div>
+                        <Select
+                          label="Month"
+                          value={selectedVacationMonth}
+                          onChange={(value) => setSelectedVacationMonth(value)}
+                          options={[
+                            { value: 'all', label: 'All Months' },
+                            ...availableVacationMonths.map(month => ({
+                              value: month,
+                              label: new Date(2024, month - 1).toLocaleDateString('en-US', { month: 'long' })
+                            }))
+                          ]}
+                          placeholder="Select month..."
+                          disabled={vacationsLoading}
+                        />
+                      </div>
+                      
+                      {/* Leave Type Filter */}
+                      <div>
+                        <Select
+                          label="Leave Type"
+                          value={selectedLeaveType}
+                          onChange={(value) => setSelectedLeaveType(value)}
+                          options={[
+                            { value: 'all', label: 'All Types' },
+                            ...availableLeaveTypes.map(type => ({
+                              value: type,
+                              label: type.charAt(0).toUpperCase() + type.slice(1)
+                            }))
+                          ]}
+                          placeholder="Select type..."
+                          disabled={vacationsLoading}
+                        />
+                      </div>
+                      
+                      {/* Leave Category Filter */}
+                      <div>
+                        <Select
+                          label="Category"
+                          value={selectedLeaveCategory}
+                          onChange={(value) => setSelectedLeaveCategory(value)}
+                          options={[
+                            { value: 'all', label: 'All Categories' },
+                            ...availableLeaveCategories.map(category => ({
+                              value: category,
+                              label: category === 'hourly' ? 'Hourly' : 
+                                     category === 'single-day' ? 'Single Day' : 'Multiple Days'
+                            }))
+                          ]}
+                          placeholder="Select category..."
+                          disabled={vacationsLoading}
+                        />
+                      </div>
+                      
+                      {/* Reset Button */}
+                      <div className="relative w-full">
+                        <div className="mb-2 block">
+                          <label className="text-gray-700 dark:text-gray-200 font-medium">
+                            Actions
+                          </label>
+                        </div>
+                        <CustomButton
+                          variant="red"
+                          size="sm"
+                          onClick={resetAllFilters}
+                          disabled={vacationsLoading || (selectedVacationMonth === 'all' && selectedLeaveType === 'all' && selectedLeaveCategory === 'all')}
+                          className="w-full py-3 text-sm font-medium"
+                        >
+                          Reset Filters
+                        </CustomButton>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <CustomTable
+                    headers={['Employee', 'Leave Type', 'Category', 'Duration', 'Date(s)', 'Status', 'Reason', 'Actions']}
+                    data={filteredLeaves}
+                    renderRow={(leave) => (
+                      <>
+                        <Table.Cell className="font-medium text-gray-900 dark:text-white">
+                          {leave.userId?.username || 'Unknown User'}
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            leave.leaveType === 'annual' 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                              : leave.leaveType === 'sick'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                              : leave.leaveType === 'emergency'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                          }`}>
+                            {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)}
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            leave.leaveCategory === 'hourly'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                              : leave.leaveCategory === 'single-day'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                          }`}>
+                            {leave.leaveCategory === 'hourly' ? 'Hourly' : 
+                             leave.leaveCategory === 'single-day' ? 'Single Day' : 'Multiple Days'}
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell className="text-gray-900 dark:text-gray-200 font-medium">
+                          {leave.leaveCategory === 'hourly' 
+                            ? `${leave.hoursCount || 0}h (${leave.startTime} - ${leave.endTime})`
+                            : `${leave.daysCount || 1} day${(leave.daysCount || 1) > 1 ? 's' : ''}`
+                          }
+                        </Table.Cell>
+                        <Table.Cell className="text-gray-900 dark:text-gray-200 font-medium">
+                          {leave.leaveCategory === 'multiple-day' 
+                            ? `${new Date(leave.startDate).toLocaleDateString('en-GB')} to ${new Date(leave.endDate).toLocaleDateString('en-GB')}`
+                            : new Date(leave.date || leave.startDate).toLocaleDateString('en-GB')
+                          }
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            leave.status === 'approved' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                              : leave.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                              : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                          }`}>
+                            {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell className="max-w-xs truncate text-gray-900 dark:text-gray-200">
+                          {leave.reason || 'No reason provided'}
+                        </Table.Cell>
+                        <Table.Cell>
+                          {isAdmin ? (
+                            <CustomButton
+                              variant="red"
+                              size="sm"
+                              onClick={() => {
+                                setDeleteConfirmation({
+                                  show: true,
+                                  leaveId: leave._id,
+                                  leaveName: `${leave.userId?.username || 'Unknown'}'s ${leave.leaveType} leave`
+                                });
+                              }}
+                              icon={FaTrash}
+                              title="Delete Leave"
+                              disabled={vacationsLoading}
+                              className="!p-2"
+                            />
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-500 text-sm">View Only</span>
+                          )}
+                        </Table.Cell>
+                      </>
+                    )}
+                    emptyMessage="No leaves found for this year."
+                  />
+                </div>
+              )}
+
+              {!vacationsLoading && activeVacationsTab === 'holidays' && (
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FaGift className="w-5 h-5 mr-2 text-blue-800 dark:text-teal-400" />
+                      Company Holidays ({vacationsData.holidays.length})
+                    </div>
+                    {holidaySearchTerm && (
+                      <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                        {vacationsData.holidays.filter(holiday => 
+                          holiday.name.toLowerCase().includes(holidaySearchTerm.toLowerCase()) ||
+                          holiday.type.toLowerCase().includes(holidaySearchTerm.toLowerCase()) ||
+                          (holiday.description && holiday.description.toLowerCase().includes(holidaySearchTerm.toLowerCase()))
+                        ).length} of {vacationsData.holidays.length} holidays
+                      </span>
+                    )}
+                  </h4>
+                  
+                  {/* Search Bar */}
+                  <div className="mb-6">
+                    <Search
+                      value={holidaySearchTerm}
+                      onChange={(e) => setHolidaySearchTerm(e.target.value)}
+                      placeholder="Search holidays by name, type, or description..."
+                      className="max-w-md"
+                    />
+                  </div>
+                  
+                  {(() => {
+                    const filteredHolidays = vacationsData.holidays.filter(holiday => 
+                      holiday.name.toLowerCase().includes(holidaySearchTerm.toLowerCase()) ||
+                      holiday.type.toLowerCase().includes(holidaySearchTerm.toLowerCase()) ||
+                      (holiday.description && holiday.description.toLowerCase().includes(holidaySearchTerm.toLowerCase()))
+                    );
+                    
+                    if (filteredHolidays.length === 0 && holidaySearchTerm) {
+                      return (
+                        <div className="text-center py-12">
+                          <FaGift className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No holidays found</h4>
+                          <p className="text-gray-500 dark:text-gray-400">No holidays match your search for "{holidaySearchTerm}"</p>
+                        </div>
+                      );
+                    }
+                    
+                    if (filteredHolidays.length > 0) {
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {filteredHolidays.map((holiday, index) => (
+                        <div 
+                          key={holiday._id} 
+                          className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                          style={{
+                            animationDelay: `${index * 100}ms`
+                          }}
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="font-semibold text-gray-900 dark:text-white">
+                              {holiday.name}
+                            </h5>
+                            
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              holiday.type === 'company' 
+                                ? 'bg-blue-500 text-white'
+                                : holiday.type === 'public'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-purple-500 text-white'
+                            }`}>
+                              {holiday.type === 'company' ? 'Company' : 
+                               holiday.type === 'public' ? 'Public' : 'Other'}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600 dark:text-slate-300">
+                                {holiday.holidayType === 'multiple-day' ? 'Duration:' : 'Date:'}
+                              </span>
+                              <span className="font-semibold text-gray-900 dark:text-white">
+                                {holiday.holidayType === 'multiple-day' ? (
+                                  `${new Date(holiday.startDate).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })} - ${new Date(holiday.endDate).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })}`
+                                ) : (
+                                  new Date(holiday.date).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })
+                                )}
+                              </span>
+                            </div>
+                            
+                            {holiday.holidayType !== 'multiple-day' && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-slate-300">Day:</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  {new Date(holiday.date).toLocaleDateString('en-GB', {
+                                    weekday: 'long'
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600 dark:text-slate-300">Duration:</span>
+                              <span className="font-semibold text-gray-900 dark:text-white">
+                                {holiday.holidayType === 'multiple-day' ? (
+                                  (() => {
+                                    const start = new Date(holiday.startDate);
+                                    const end = new Date(holiday.endDate);
+                                    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                    return `${days} day${days > 1 ? 's' : ''}`;
+                                  })()
+                                ) : '1 day'}
+                              </span>
+                            </div>
+                            
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600 dark:text-slate-300">Recurring:</span>
+                              <span className="font-semibold text-gray-900 dark:text-white">
+                                {holiday.recurring ? 'Annual' : 'One-time'}
+                              </span>
+                            </div>
+                            
+                            {holiday.description && (
+                              <div className="pt-2 border-t border-gray-200 dark:border-slate-600">
+                                <p className="text-sm text-gray-600 dark:text-slate-300 italic">
+                                  {holiday.description}
+                                </p>
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between pt-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                (() => {
+                                  const now = new Date();
+                                  if (holiday.holidayType === 'multiple-day') {
+                                    const endDate = new Date(holiday.endDate);
+                                    return endDate > now ? 'bg-green-500 text-white' : 'bg-gray-500 text-white';
+                                  } else {
+                                    const holidayDate = new Date(holiday.date);
+                                    return holidayDate > now ? 'bg-green-500 text-white' : 'bg-gray-500 text-white';
+                                  }
+                                })()
+                              }`}>
+                                {(() => {
+                                  const now = new Date();
+                                  if (holiday.holidayType === 'multiple-day') {
+                                    const endDate = new Date(holiday.endDate);
+                                    return endDate > now ? '📅 Upcoming' : '📅 Past';
+                                  } else {
+                                    const holidayDate = new Date(holiday.date);
+                                    return holidayDate > now ? '📅 Upcoming' : '📅 Past';
+                                  }
+                                })()}
+                              </span>
+                              
+                              {isAdmin && (
+                                <CustomButton
+                                  variant="red"
+                                  size="sm"
+                                  onClick={() => {
+                                    setHolidayDeleteConfirmation({
+                                      show: true,
+                                      holidayId: holiday._id,
+                                      holidayName: holiday.holidayType === 'multiple-day' 
+                                        ? `${holiday.name} (${new Date(holiday.startDate).toLocaleDateString('en-GB')} - ${new Date(holiday.endDate).toLocaleDateString('en-GB')})`
+                                        : `${holiday.name} (${new Date(holiday.date).toLocaleDateString('en-GB')})`
+                                    });
+                                  }}
+                                  icon={FaTrash}
+                                  title="Delete Holiday"
+                                  className="!p-2"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="text-center py-12">
+                        <FaGift className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                        <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Company Holidays</h4>
+                        <p className="text-gray-500 dark:text-gray-400">Company holidays will appear here once they are configured in the settings.</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          </Card>
+        ) : settingsView && isAdmin ? (
           /* Settings Section */
           <Card className="bg-gray-50 dark:bg-slate-950">
             <div className="p-3 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold dark:text-white flex items-center mb-4 sm:mb-6">
-                <FaCog className="mr-2 text-blue-600 dark:text-blue-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <FaCog className="mr-2 text-blue-800 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="hidden sm:inline">Attendance Settings</span>
                 <span className="sm:hidden">Settings</span>
               </h3>
@@ -1557,6 +2646,26 @@ export default function AttendancePanel() {
                           {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][workingDaysForm.month - 1]} {workingDaysForm.year} - Working Days
                         </span>
                       </h4>
+                      
+                      {/* Month Working Days Count */}
+                      <div className="text-center mb-4">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {(() => {
+                            const daysInMonth = new Date(workingDaysForm.year, workingDaysForm.month, 0).getDate();
+                            let workingDaysCount = 0;
+                            
+                            for (let day = 1; day <= daysInMonth; day++) {
+                              const dayInfo = getDayInfo(workingDaysForm.year, workingDaysForm.month - 1, day);
+                              if (dayInfo.isWorkingDay && !dayInfo.isHoliday) {
+                                workingDaysCount++;
+                              }
+                            }
+                            
+                            const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][workingDaysForm.month - 1];
+                            return `${workingDaysCount} working days in ${monthName}`;
+                          })()}
+                        </span>
+                      </div>
                       
                       {/* Calendar Grid */}
                       <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
@@ -1703,13 +2812,41 @@ export default function AttendancePanel() {
                         />
                       </div>
                       <div>
+                        <Select
+                          label="Holiday Duration"
+                          value={holidayForm.holidayType}
+                          onChange={(value) => setHolidayForm({...holidayForm, holidayType: value, date: '', startDate: '', endDate: ''})}
+                          options={[
+                            { value: 'single-day', label: 'Single Day' },
+                            { value: 'multiple-day', label: 'Multiple Days' }
+                          ]}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Dynamic Date Inputs */}
+                    {holidayForm.holidayType === 'single-day' ? (
+                      <div className="grid grid-cols-1 gap-4 mb-4">
                         <CustomDatePicker
                           label="Date"
                           value={holidayForm.date}
                           onChange={(value) => setHolidayForm({...holidayForm, date: value})}
                         />
                       </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <CustomDatePicker
+                          label="Start Date"
+                          value={holidayForm.startDate}
+                          onChange={(value) => setHolidayForm({...holidayForm, startDate: value})}
+                        />
+                        <CustomDatePicker
+                          label="End Date"
+                          value={holidayForm.endDate}
+                          onChange={(value) => setHolidayForm({...holidayForm, endDate: value})}
+                        />
                     </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
@@ -1753,7 +2890,10 @@ export default function AttendancePanel() {
 
                     <CustomButton
                       onClick={saveHoliday}
-                      disabled={!holidayForm.name || !holidayForm.date}
+                      disabled={!holidayForm.name || 
+                        (holidayForm.holidayType === 'single-day' && !holidayForm.date) ||
+                        (holidayForm.holidayType === 'multiple-day' && (!holidayForm.startDate || !holidayForm.endDate))
+                      }
                       color="purple"
                       size="sm"
                     >
@@ -1761,61 +2901,7 @@ export default function AttendancePanel() {
                     </CustomButton>
                   </div>
 
-                  {/* Holidays List */}
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
-                      Company Holidays ({holidays.length})
-                    </h4>
-                    
-                    {holidays.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <FaCalendarDay className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>No holidays configured yet</p>
-                        <p className="text-sm">Add your first holiday above</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {holidays.map((holiday) => (
-                          <div key={holiday._id} className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900 dark:text-white">{holiday.name}</h5>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {new Date(holiday.date).toLocaleDateString('en-GB')} 
-                                {holiday.description && ` - ${holiday.description}`}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                holiday.type === 'national' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200' :
-                                holiday.type === 'religious' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
-                                'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
-                              }`}>
-                                {holiday.type}
-                              </span>
-                              {holiday.isRecurring && (
-                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200 rounded text-xs font-medium">
-                                  Recurring
-                                </span>
-                              )}
-                              <button 
-                                onClick={() => {
-                                  setHolidayDeleteConfirmation({
-                                    show: true,
-                                    holidayId: holiday._id,
-                                    holidayName: `${holiday.name} (${new Date(holiday.date).toLocaleDateString('en-GB')})`
-                                  });
-                                }}
-                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-all"
-                                title="Delete Holiday"
-                              >
-                                <FaTimes className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+
                 </div>
               )}
 
@@ -1858,8 +2944,70 @@ export default function AttendancePanel() {
                           ]}
                         />
                       </div>
+                      <div>
+                        <Select
+                          label="Leave Category"
+                          value={leaveForm.leaveCategory}
+                          onChange={(value) => setLeaveForm({...leaveForm, leaveCategory: value, date: '', startDate: '', endDate: ''})}
+                          options={[
+                            { value: 'hourly', label: 'Hourly Leave' },
+                            { value: 'single-day', label: 'Single Day Leave' },
+                            { value: 'multiple-day', label: 'Multiple Day Leave' }
+                          ]}
+                        />
+                      </div>
                     </div>
 
+                    {/* Dynamic Date/Time Inputs Based on Leave Category */}
+                    {leaveForm.leaveCategory === 'hourly' && (
+                      <>
+                        <div className="mb-4">
+                          <CustomDatePicker
+                            label="Date"
+                            value={leaveForm.date}
+                            onChange={(value) => setLeaveForm({...leaveForm, date: value})}
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <TextInput
+                              label="Start Time"
+                              type="time"
+                              value={leaveForm.startTime?.includes('AM') || leaveForm.startTime?.includes('PM') 
+                                ? convertTo24Hour(leaveForm.startTime) 
+                                : leaveForm.startTime || '09:00'}
+                              onChange={(e) => setLeaveForm({...leaveForm, startTime: convertTo12Hour(e.target.value)})}
+                              placeholder="09:00 AM"
+                              step="60"
+                            />
+                          </div>
+                          <div>
+                            <TextInput
+                              label="End Time"
+                              type="time"
+                              value={leaveForm.endTime?.includes('AM') || leaveForm.endTime?.includes('PM') 
+                                ? convertTo24Hour(leaveForm.endTime) 
+                                : leaveForm.endTime || '17:00'}
+                              onChange={(e) => setLeaveForm({...leaveForm, endTime: convertTo12Hour(e.target.value)})}
+                              placeholder="05:00 PM"
+                              step="60"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {leaveForm.leaveCategory === 'single-day' && (
+                      <div className="mb-4">
+                        <CustomDatePicker
+                          label="Date"
+                          value={leaveForm.date}
+                          onChange={(value) => setLeaveForm({...leaveForm, date: value})}
+                        />
+                      </div>
+                    )}
+                    
+                    {leaveForm.leaveCategory === 'multiple-day' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <CustomDatePicker
@@ -1875,28 +3023,8 @@ export default function AttendancePanel() {
                           onChange={(value) => setLeaveForm({...leaveForm, endDate: value})}
                         />
                       </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <CustomCheckbox
-                        id="leave-half-day"
-                        label="Half Day Leave"
-                        checked={leaveForm.isHalfDay}
-                        onChange={(checked) => setLeaveForm({...leaveForm, isHalfDay: checked})}
-                      />
-                      {leaveForm.isHalfDay && (
-                        <div className="mt-2">
-                          <Select
-                            value={leaveForm.halfDayPeriod}
-                            onChange={(value) => setLeaveForm({...leaveForm, halfDayPeriod: value})}
-                            options={[
-                              { value: 'morning', label: 'Morning' },
-                              { value: 'afternoon', label: 'Afternoon' }
-                            ]}
-                          />
                         </div>
                       )}
-                    </div>
 
                     <div className="mb-4">
                       <TextInput
@@ -1911,7 +3039,11 @@ export default function AttendancePanel() {
 
                     <CustomButton
                       onClick={saveUserLeave}
-                      disabled={!leaveForm.userId || !leaveForm.startDate || !leaveForm.endDate}
+                      disabled={!leaveForm.userId || 
+                        (leaveForm.leaveCategory === 'hourly' && (!leaveForm.date || !leaveForm.startTime || !leaveForm.endTime)) ||
+                        (leaveForm.leaveCategory === 'single-day' && !leaveForm.date) ||
+                        (leaveForm.leaveCategory === 'multiple-day' && (!leaveForm.startDate || !leaveForm.endDate))
+                      }
                       color="orange"
                       size="sm"
                     >
@@ -1919,68 +3051,7 @@ export default function AttendancePanel() {
                     </CustomButton>
                   </div>
 
-                  {/* Employee Leaves List */}
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
-                      Employee Leaves ({userLeaves.length})
-                    </h4>
-                    
-                    {userLeaves.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <FaUsers className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>No employee leaves recorded yet</p>
-                        <p className="text-sm">Add the first leave record above</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {userLeaves.map((leave) => (
-                          <div key={leave._id} className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900 dark:text-white">
-                                {leave.userId?.username || 'Unknown User'}
-                              </h5>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)} Leave - {leave.daysCount} day{leave.daysCount > 1 ? 's' : ''}
-                                {leave.isHalfDay && ` (${leave.halfDayPeriod})`}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(leave.startDate).toLocaleDateString('en-GB')} to {new Date(leave.endDate).toLocaleDateString('en-GB')}
-                              </p>
-                              {leave.reason && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  Reason: {leave.reason}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                leave.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' :
-                                leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200' :
-                                'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-                              }`}>
-                                {leave.status}
-                              </span>
-                              <button 
-                                onClick={() => {
-                                  const user = users.find(u => u._id === leave.user);
-                                  setDeleteConfirmation({
-                                    show: true,
-                                    leaveId: leave._id,
-                                    leaveName: `${user?.username || 'Unknown'}'s ${leave.leaveType} leave (${new Date(leave.startDate).toLocaleDateString('en-GB')} - ${new Date(leave.endDate).toLocaleDateString('en-GB')})`
-                                  });
-                                }}
-                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-all"
-                                title="Delete Leave"
-                                disabled={settingsLoading}
-                              >
-                                <FaTrash className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+
                 </div>
               )}
             </div>
@@ -1992,7 +3063,7 @@ export default function AttendancePanel() {
               {/* Title and Stats */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <h3 className="text-lg font-semibold dark:text-white flex items-center">
-                  <FaCalendarAlt className="mr-2 text-purple-600 dark:text-purple-400" />
+                  <FaCalendarAlt className="mr-2 text-blue-800 dark:text-teal-400" />
                   Yearly Attendance Calendar
                 </h3>
                 {yearlyData && (
@@ -2032,6 +3103,7 @@ export default function AttendancePanel() {
                   })()}
                 />
                 <CustomButton
+                  variant="orange"
                   onClick={() => {
                     fetchYearlyData();
                     // Also refresh settings data when refreshing calendar
@@ -2071,6 +3143,18 @@ export default function AttendancePanel() {
                       
                       return (
                         <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-2 sm:p-4 w-full">
+                        {/* Month Working Days Info */}
+                        <div className="text-center mb-3">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {(() => {
+                              // Admin calendar data only contains working days, so just count the days
+                              const workingDaysInMonth = Object.keys(monthData).length;
+                              const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                            })()}
+                          </span>
+                        </div>
+                        
                         {/* Responsive Calendar Grid */}
                         <div className="space-y-1 sm:space-y-2">
                           {/* Responsive Days Header */}
@@ -2295,6 +3379,18 @@ export default function AttendancePanel() {
                       
                       return (
                         <div className="bg-white dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700 p-8 w-full max-w-4xl">
+                        {/* Month Working Days Info */}
+                        <div className="text-center mb-6">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {(() => {
+                              // Admin calendar data only contains working days, so just count the days
+                              const workingDaysInMonth = Object.keys(monthData).length;
+                              const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                            })()}
+                          </span>
+                        </div>
+                        
                         {/* Calendar Grid */}
                         <div className="space-y-2">
                           {/* Days Header */}
@@ -2552,6 +3648,60 @@ export default function AttendancePanel() {
                   })() : ''}
                 >
                   <div className="space-y-4">
+                    {/* Tabs */}
+                    <div className="border-b border-gray-200 dark:border-gray-700">
+                      <nav className="flex justify-center space-x-8" aria-label="Tabs">
+                        <button
+                          onClick={() => setDayModal(prev => ({ ...prev, activeTab: 'attendance' }))}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                            dayModal.activeTab === 'attendance'
+                              ? 'border-teal-500 text-teal-600 dark:text-teal-400'
+                              : 'border-transparent text-gray-500 hover:text-teal-600 hover:border-teal-300 dark:text-gray-400 dark:hover:text-teal-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <FaUserCheck className="w-4 h-4" />
+                            Attendance
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => setDayModal(prev => ({ ...prev, activeTab: 'leaves' }))}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                            dayModal.activeTab === 'leaves'
+                              ? 'border-yellow-500 text-yellow-600 dark:text-yellow-400'
+                              : 'border-transparent text-gray-500 hover:text-orange-600 hover:border-orange-300 dark:text-gray-400 dark:hover:text-orange-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <FaUserClock className="w-4 h-4" />
+                            Leaves ({(() => {
+                              if (!dayModal.data?.date) return 0;
+                              const modalDate = new Date(dayModal.data.date);
+                              return userLeaves.filter(leave => {
+                                if (leave.leaveCategory === 'multiple-day') {
+                                  const leaveStart = new Date(leave.startDate);
+                                  leaveStart.setHours(0, 0, 0, 0);
+                                  const leaveEnd = new Date(leave.endDate);
+                                  leaveEnd.setHours(23, 59, 59, 999);
+                                  const currentDate = new Date(modalDate);
+                                  currentDate.setHours(12, 0, 0, 0);
+                                  return currentDate >= leaveStart && currentDate <= leaveEnd;
+                                } else {
+                                  const leaveDate = new Date(leave.date);
+                                  return modalDate.toDateString() === leaveDate.toDateString();
+                                }
+                              }).length;
+                            })()})
+                          </div>
+                        </button>
+                      </nav>
+                    </div>
+
+                    {/* Tab Content */}
+                    <CustomScrollbar className="max-h-96 space-y-6">
+                      {/* Attendance Tab */}
+                      {dayModal.activeTab === 'attendance' && (
+                        <>
                       {/* Present Employees */}
                       {(() => {
                         const presentUsers = dayModal.data?.users.filter(user => user.status !== 'absent') || [];
@@ -2623,14 +3773,147 @@ export default function AttendancePanel() {
                         ) : null;
                       })()}
 
+                          {/* No attendance data */}
+                          {(!dayModal.data?.users || dayModal.data.users.length === 0) && (
+                            <div className="text-center py-8">
+                              <FaUserCheck className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                              <p className="text-gray-500 dark:text-gray-400">No attendance data for this day</p>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Leaves Tab */}
+                      {dayModal.activeTab === 'leaves' && (
+                        <>
+                          {/* Employees on Leave */}
+                          {(() => {
+                            if (!dayModal.data?.date) return null;
+                            
+                            // Get employees on leave for this specific date
+                            const modalDate = new Date(dayModal.data.date);
+                            const employeesOnLeave = userLeaves.filter(leave => {
+                              if (leave.leaveCategory === 'multiple-day') {
+                                const leaveStart = new Date(leave.startDate);
+                                leaveStart.setHours(0, 0, 0, 0);
+                                const leaveEnd = new Date(leave.endDate);
+                                leaveEnd.setHours(23, 59, 59, 999);
+                                
+                                const currentDate = new Date(modalDate);
+                                currentDate.setHours(12, 0, 0, 0);
+                                
+                                return currentDate >= leaveStart && currentDate <= leaveEnd;
+                              } else {
+                                const leaveDate = new Date(leave.date);
+                                return modalDate.toDateString() === leaveDate.toDateString();
+                              }
+                            });
+
+                            return employeesOnLeave.length > 0 ? (
+                              <div>
+                                <h4 className="text-sm font-medium text-yellow-700 dark:text-yellow-400 mb-3 flex items-center">
+                                  <FaUserClock className="w-4 h-4 mr-2" />
+                                  Employees on Leave ({employeesOnLeave.length})
+                                </h4>
+                                <div className="space-y-3">
+                                  {employeesOnLeave.map(leave => (
+                                    <div key={leave._id} className={`p-3 rounded-lg border ${leave.leaveCategory === 'hourly' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800' : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'}`}>
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-medium text-gray-900 dark:text-white">
+                                              {leave.userId?.username || 'Unknown User'}
+                                            </span>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${leave.leaveCategory === 'hourly' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'}`}>
+                                              {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)} Leave
+                                            </span>
+                                          </div>
+                                          
+                                          <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                            {/* Duration Information */}
+                                            <div className="flex items-center gap-1">
+                                              <FaClock className="w-3 h-3" />
+                                              <span>
+                                                {leave.leaveCategory === 'hourly' && (
+                                                  `${leave.hoursCount || 0}h (${leave.startTime} - ${leave.endTime})`
+                                                )}
+                                                {leave.leaveCategory === 'single-day' && '1 day'}
+                                                {leave.leaveCategory === 'multiple-day' && `${leave.daysCount || 0} day${(leave.daysCount || 0) > 1 ? 's' : ''}`}
+                                              </span>
+                                            </div>
+                                            
+                                            {/* Date Information */}
+                                            <div className="flex items-center gap-1">
+                                              <FaCalendarAlt className="w-3 h-3" />
+                                              <span>
+                                                {leave.leaveCategory === 'multiple-day' 
+                                                  ? `${new Date(leave.startDate).toLocaleDateString('en-GB')} to ${new Date(leave.endDate).toLocaleDateString('en-GB')}`
+                                                  : new Date(leave.date || leave.startDate).toLocaleDateString('en-GB')
+                                                }
+                                              </span>
+                                            </div>
+                                            
+                                            {/* Reason */}
+                                            {leave.reason && (
+                                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <span className="font-medium">Reason:</span> {leave.reason}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-8">
+                                <FaUserClock className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                                <p className="text-gray-500 dark:text-gray-400">No employees on leave for this day</p>
+                              </div>
+                            );
+                          })()}
+                        </>
+                      )}
+                    </CustomScrollbar>
+
                       {/* Summary */}
                       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="grid grid-cols-2 gap-4 text-center">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                           <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                             <div className="text-xl font-bold text-gray-900 dark:text-white">
                               {dayModal.data?.users.length || 0}
                             </div>
                             <div className="text-xs text-gray-600 dark:text-gray-400">Total Employees</div>
+                          </div>
+                          <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                              {dayModal.data?.users.filter(u => u.status !== 'absent').length || 0}
+                            </div>
+                            <div className="text-xs text-green-600 dark:text-green-400">Present</div>
+                          </div>
+                          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                            <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+                              {(() => {
+                                if (!dayModal.data?.date) return 0;
+                                const modalDate = new Date(dayModal.data.date);
+                                return userLeaves.filter(leave => {
+                                  if (leave.leaveCategory === 'multiple-day') {
+                                    const leaveStart = new Date(leave.startDate);
+                                    leaveStart.setHours(0, 0, 0, 0);
+                                    const leaveEnd = new Date(leave.endDate);
+                                    leaveEnd.setHours(23, 59, 59, 999);
+                                    const currentDate = new Date(modalDate);
+                                    currentDate.setHours(12, 0, 0, 0);
+                                    return currentDate >= leaveStart && currentDate <= leaveEnd;
+                                  } else {
+                                    const leaveDate = new Date(leave.date);
+                                    return modalDate.toDateString() === leaveDate.toDateString();
+                                  }
+                                }).length;
+                              })()}
+                            </div>
+                            <div className="text-xs text-yellow-600 dark:text-yellow-400">On Leave</div>
                           </div>
                           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                             <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
@@ -2656,7 +3939,7 @@ export default function AttendancePanel() {
           {/* Responsive Report Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
             <h3 className="text-lg font-semibold dark:text-white flex items-center">
-              <FaChartLine className="mr-2 text-blue-600 dark:text-blue-400" />
+              <FaChartLine className="mr-2 text-blue-800 dark:text-teal-400" />
               Attendance Reports
             </h3>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -2685,7 +3968,7 @@ export default function AttendancePanel() {
                 <span className="hidden sm:inline">Export CSV</span>
               </CustomButton>
               <CustomButton
-                variant="purple"
+                variant="orange"
                 size="sm"
                 onClick={fetchAttendanceReports}
                 icon={HiRefresh}
@@ -2916,6 +4199,9 @@ export default function AttendancePanel() {
           )}
         </Card>
         )}
+
+        {/* User Annual Leave Section - Shows for all users when not in admin views */}
+
       </div>
 
       {/* Edit Attendance Modal */}

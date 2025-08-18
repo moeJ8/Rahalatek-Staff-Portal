@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Get all user leaves
 exports.getAllUserLeaves = async (req, res) => {
     try {
-        const { userId, startDate, endDate, status, leaveType, year, month } = req.query;
+        const { userId, startDate, endDate, status, leaveType, leaveCategory, year, month } = req.query;
         let query = {};
 
         // Build query based on filters
@@ -20,21 +20,41 @@ exports.getAllUserLeaves = async (req, res) => {
             query.leaveType = leaveType;
         }
 
+        if (leaveCategory) {
+            query.leaveCategory = leaveCategory;
+        }
+
         // Date filtering
         if (year && month) {
             const start = new Date(year, month - 1, 1);
             const end = new Date(year, month, 0);
             query.$or = [
+                // Multiple-day leaves
                 {
+                    leaveCategory: 'multiple-day',
                     startDate: { $lte: end },
                     endDate: { $gte: start }
+                },
+                // Single-day and hourly leaves
+                {
+                    leaveCategory: { $in: ['single-day', 'hourly'] },
+                    date: { $gte: start, $lte: end }
                 }
             ];
         } else if (startDate && endDate) {
+            const rangeStart = new Date(startDate);
+            const rangeEnd = new Date(endDate);
             query.$or = [
+                // Multiple-day leaves
                 {
-                    startDate: { $lte: new Date(endDate) },
-                    endDate: { $gte: new Date(startDate) }
+                    leaveCategory: 'multiple-day',
+                    startDate: { $lte: rangeEnd },
+                    endDate: { $gte: rangeStart }
+                },
+                // Single-day and hourly leaves
+                {
+                    leaveCategory: { $in: ['single-day', 'hourly'] },
+                    date: { $gte: rangeStart, $lte: rangeEnd }
                 }
             ];
         }
@@ -43,7 +63,7 @@ exports.getAllUserLeaves = async (req, res) => {
             .populate('userId', 'username email')
             .populate('createdBy', 'username')
             .populate('approvedBy', 'username')
-            .sort({ startDate: -1 });
+            .sort({ startDate: -1, date: -1 });
 
         res.status(200).json({
             success: true,
@@ -63,7 +83,19 @@ exports.getAllUserLeaves = async (req, res) => {
 exports.createUserLeave = async (req, res) => {
     try {
         // Check if user is admin or creating leave for themselves
-        const { userId, leaveType, customLeaveType, startDate, endDate, reason, isHalfDay, halfDayPeriod, color } = req.body;
+        const { 
+            userId, 
+            leaveType, 
+            customLeaveType, 
+            leaveCategory,
+            date,           // For single-day and hourly leaves
+            startDate,      // For multiple-day leaves
+            endDate,        // For multiple-day leaves
+            startTime,      // For hourly leaves
+            endTime,        // For hourly leaves
+            reason, 
+            color 
+        } = req.body;
 
         if (!req.user.isAdmin && req.user.userId !== userId) {
             return res.status(403).json({
@@ -72,11 +104,36 @@ exports.createUserLeave = async (req, res) => {
             });
         }
 
-        if (!userId || !leaveType || !startDate || !endDate) {
+        // Validate required fields based on leave category
+        if (!userId || !leaveType || !leaveCategory) {
             return res.status(400).json({
                 success: false,
-                message: 'User ID, leave type, start date, and end date are required'
+                message: 'User ID, leave type, and leave category are required'
             });
+        }
+
+        // Category-specific validation
+        if (leaveCategory === 'hourly') {
+            if (!date || !startTime || !endTime) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Date, start time, and end time are required for hourly leaves'
+                });
+            }
+        } else if (leaveCategory === 'single-day') {
+            if (!date) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Date is required for single day leaves'
+                });
+            }
+        } else if (leaveCategory === 'multiple-day') {
+            if (!startDate || !endDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Start date and end date are required for multiple day leaves'
+                });
+            }
         }
 
         // Validate user exists
@@ -88,17 +145,47 @@ exports.createUserLeave = async (req, res) => {
             });
         }
 
-        // Check for overlapping leaves
-        const overlappingLeave = await UserLeave.findOne({
+        // Check for overlapping leaves based on category
+        let overlapQuery = {
             userId,
-            status: { $in: ['pending', 'approved'] },
-            $or: [
+            status: { $in: ['pending', 'approved'] }
+        };
+
+        if (leaveCategory === 'multiple-day') {
+            overlapQuery.$or = [
+                // Check against other multiple-day leaves
                 {
+                    leaveCategory: 'multiple-day',
                     startDate: { $lte: new Date(endDate) },
                     endDate: { $gte: new Date(startDate) }
+                },
+                // Check against single-day and hourly leaves within the range
+                {
+                    leaveCategory: { $in: ['single-day', 'hourly'] },
+                    date: { $gte: new Date(startDate), $lte: new Date(endDate) }
                 }
-            ]
-        });
+            ];
+        } else {
+            // For single-day and hourly leaves
+            overlapQuery.$or = [
+                // Check against multiple-day leaves
+                {
+                    leaveCategory: 'multiple-day',
+                    startDate: { $lte: new Date(date) },
+                    endDate: { $gte: new Date(date) }
+                },
+                // Check against other single-day and hourly leaves on the same date
+                {
+                    leaveCategory: { $in: ['single-day', 'hourly'] },
+                    date: {
+                        $gte: new Date(date).setHours(0, 0, 0, 0),
+                        $lt: new Date(date).setHours(23, 59, 59, 999)
+                    }
+                }
+            ];
+        }
+
+        const overlappingLeave = await UserLeave.findOne(overlapQuery);
 
         if (overlappingLeave) {
             return res.status(400).json({
@@ -107,22 +194,58 @@ exports.createUserLeave = async (req, res) => {
             });
         }
 
-        const userLeave = new UserLeave({
+        // Create leave object based on category
+        const leaveData = {
             userId,
             leaveType,
             customLeaveType: leaveType === 'custom' ? customLeaveType : undefined,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            leaveCategory,
             reason,
-            isHalfDay: isHalfDay || false,
-            halfDayPeriod: isHalfDay ? halfDayPeriod : undefined,
             color: color || '#fbbf24',
             status: req.user.isAdmin ? 'approved' : 'pending',
             createdBy: req.user.userId,
             approvedBy: req.user.isAdmin ? req.user.userId : undefined,
             approvedAt: req.user.isAdmin ? new Date() : undefined
-        });
+        };
 
+        // Add category-specific fields
+        if (leaveCategory === 'hourly') {
+            leaveData.date = new Date(date);
+            leaveData.startTime = startTime;
+            leaveData.endTime = endTime;
+        } else if (leaveCategory === 'single-day') {
+            leaveData.date = new Date(date);
+        } else if (leaveCategory === 'multiple-day') {
+            leaveData.startDate = new Date(startDate);
+            leaveData.endDate = new Date(endDate);
+        }
+
+        // Check annual leave limit if this is an annual leave
+        if (leaveType === 'annual') {
+            const currentYear = leaveData.date ? new Date(leaveData.date).getFullYear() : 
+                               leaveData.startDate ? new Date(leaveData.startDate).getFullYear() : 
+                               new Date().getFullYear();
+            
+            // Create temporary leave to calculate days
+            const tempLeave = new UserLeave(leaveData);
+            const currentStats = await UserLeave.getAnnualLeaveStats(userId, currentYear);
+            const newLeaveDays = tempLeave.daysCount || 1;
+            
+            if (currentStats.daysUsed + newLeaveDays > 14) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot create leave. This would exceed the annual leave limit of 14 days. You have ${currentStats.remainingDays} days remaining.`,
+                    data: {
+                        maxAnnualDays: 14,
+                        daysUsed: currentStats.daysUsed,
+                        remainingDays: currentStats.remainingDays,
+                        requestedDays: newLeaveDays
+                    }
+                });
+            }
+        }
+
+        const userLeave = new UserLeave(leaveData);
         await userLeave.save();
 
         // Populate the response
@@ -169,23 +292,59 @@ exports.updateUserLeave = async (req, res) => {
             });
         }
 
-        // If updating dates, check for overlaps
-        if (updateData.startDate || updateData.endDate) {
+        // Get the new category or use existing
+        const newCategory = updateData.leaveCategory || userLeave.leaveCategory;
+
+        // Check for overlaps based on category
+        let shouldCheckOverlap = false;
+        let overlapQuery = {
+            _id: { $ne: id },
+            userId: userLeave.userId,
+            status: { $in: ['pending', 'approved'] }
+        };
+
+        if (newCategory === 'multiple-day') {
             const newStartDate = updateData.startDate ? new Date(updateData.startDate) : userLeave.startDate;
             const newEndDate = updateData.endDate ? new Date(updateData.endDate) : userLeave.endDate;
-
-            const overlappingLeave = await UserLeave.findOne({
-                _id: { $ne: id },
-                userId: userLeave.userId,
-                status: { $in: ['pending', 'approved'] },
-                $or: [
+            
+            if (updateData.startDate || updateData.endDate) {
+                shouldCheckOverlap = true;
+                overlapQuery.$or = [
                     {
+                        leaveCategory: 'multiple-day',
                         startDate: { $lte: newEndDate },
                         endDate: { $gte: newStartDate }
+                    },
+                    {
+                        leaveCategory: { $in: ['single-day', 'hourly'] },
+                        date: { $gte: newStartDate, $lte: newEndDate }
                     }
-                ]
-            });
+                ];
+            }
+        } else {
+            const newDate = updateData.date ? new Date(updateData.date) : userLeave.date;
+            
+            if (updateData.date) {
+                shouldCheckOverlap = true;
+                overlapQuery.$or = [
+                    {
+                        leaveCategory: 'multiple-day',
+                        startDate: { $lte: newDate },
+                        endDate: { $gte: newDate }
+                    },
+                    {
+                        leaveCategory: { $in: ['single-day', 'hourly'] },
+                        date: {
+                            $gte: new Date(newDate).setHours(0, 0, 0, 0),
+                            $lt: new Date(newDate).setHours(23, 59, 59, 999)
+                        }
+                    }
+                ];
+            }
+        }
 
+        if (shouldCheckOverlap) {
+            const overlappingLeave = await UserLeave.findOne(overlapQuery);
             if (overlappingLeave) {
                 return res.status(400).json({
                     success: false,
@@ -379,6 +538,72 @@ exports.getUserLeaveStats = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch leave statistics',
+            error: error.message
+        });
+    }
+};
+
+// Get annual leave statistics for a user
+exports.getUserAnnualLeaveStats = async (req, res) => {
+    try {
+        const { userId, year } = req.query;
+        const currentYear = year ? parseInt(year) : new Date().getFullYear();
+
+        // If no userId provided, use current user's ID
+        const targetUserId = userId || req.user.userId;
+
+        // Check permissions
+        if (!req.user.isAdmin && req.user.userId !== targetUserId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You can only view your own annual leave statistics or admin privileges required.'
+            });
+        }
+
+        const stats = await UserLeave.getAnnualLeaveStats(targetUserId, currentYear);
+
+        res.status(200).json({
+            success: true,
+            data: stats
+        });
+    } catch (error) {
+        console.error('Error fetching annual leave statistics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch annual leave statistics',
+            error: error.message
+        });
+    }
+};
+
+// Get annual leave statistics for all users (admin/accountant only)
+exports.getAllUsersAnnualLeaveStats = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const { year } = req.query;
+        const currentYear = year ? parseInt(year) : new Date().getFullYear();
+
+        const stats = await UserLeave.getAllUsersAnnualLeaveStats(currentYear);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                year: currentYear,
+                users: stats
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching all users annual leave statistics:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch annual leave statistics',
             error: error.message
         });
     }

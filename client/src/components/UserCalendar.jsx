@@ -83,7 +83,7 @@ export default function UserCalendar({ isOpen, onClose }) {
   };
 
   const getDayColor = (dayData) => {
-    const { status, attendance, leave, holiday, isWorkingDay } = dayData;
+    const { status, leave, holiday, isWorkingDay } = dayData;
     
     if (holiday) {
       return 'bg-purple-200 dark:bg-purple-800/50 text-purple-900 dark:text-purple-100 border-purple-400';
@@ -94,6 +94,9 @@ export default function UserCalendar({ isOpen, onClose }) {
     }
     
     if (leave) {
+      if (leave.leaveCategory === 'hourly') {
+        return 'bg-orange-200 dark:bg-orange-800/50 text-orange-900 dark:text-orange-100 border-orange-400';
+      }
       return 'bg-yellow-200 dark:bg-yellow-800/50 text-yellow-900 dark:text-yellow-100 border-yellow-400';
     }
     
@@ -114,7 +117,12 @@ export default function UserCalendar({ isOpen, onClose }) {
     
     if (holiday) return <FaGift className="w-3 h-3" />;
     if (!isWorkingDay) return null;
-    if (leave) return <FaClock className="w-3 h-3" />;
+    if (leave) {
+      if (leave.leaveCategory === 'hourly') {
+        return <FaClock className="w-3 h-3" />;
+      }
+      return <FaClock className="w-3 h-3" />;
+    }
     
     switch (status) {
       case 'checked-out':
@@ -164,10 +172,22 @@ export default function UserCalendar({ isOpen, onClose }) {
     }
     
     if (leave) {
+      let content = `On Leave: ${leave.leaveType}`;
+      let detail = leave.reason || 'Personal leave';
+      
+      if (leave.leaveCategory === 'hourly') {
+        content = `Hourly Leave: ${leave.leaveType}`;
+        detail = `${leave.startTime} - ${leave.endTime} (${leave.hoursCount || 0}h)${leave.reason ? ` | ${leave.reason}` : ''}`;
+      } else if (leave.leaveCategory === 'single-day') {
+        content = `Day Leave: ${leave.leaveType}`;
+      } else if (leave.leaveCategory === 'multiple-day') {
+        content = `Multi-day Leave: ${leave.leaveType}`;
+      }
+      
       return {
         title: `${dayName}, ${formattedDate}`,
-        content: `On Leave: ${leave.leaveType}`,
-        detail: leave.reason || 'Personal leave'
+        content,
+        detail
       };
     }
     
@@ -233,15 +253,47 @@ export default function UserCalendar({ isOpen, onClose }) {
             </div>
           ) : calendarData ? (
             <div className="space-y-4 sm:space-y-6">
-              {/* Year and Summary Info */}
+              {/* Year Navigation */}
+              <div className="flex justify-center items-center gap-2 mb-4">
+                <button
+                  onClick={() => setSelectedYear(selectedYear - 1)}
+                  disabled={selectedYear <= 2025}
+                  className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
+                    selectedYear <= 2025 
+                      ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
+                      : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {selectedYear - 1}
+                </button>
+                <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white px-1 sm:px-2">
+                  {selectedYear}
+                </span>
+                <button
+                  onClick={() => setSelectedYear(selectedYear + 1)}
+                  disabled={selectedYear >= 2026}
+                  className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
+                    selectedYear >= 2026 
+                      ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
+                      : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  {selectedYear + 1}
+                </button>
+              </div>
+
+              {/* Summary Statistics */}
               <div className="text-center">
-                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4">
-                  {monthNames[currentMonth]} {selectedYear}
-                </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-gray-600 dark:text-gray-400">
+                      {calendarData.summary.totalWorkingDays}
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Total Working Days</div>
+                  </div>
                   <div className="bg-green-50 dark:bg-green-900/20 p-2 sm:p-3 rounded-lg">
                     <div className="text-base sm:text-lg font-semibold text-green-600 dark:text-green-400">
-                      {calendarData.summary.attendanceDays}
+                      {calendarData.summary.presentDays}
                     </div>
                     <div className="text-xs sm:text-sm text-green-700 dark:text-green-300">Present Days</div>
                   </div>
@@ -266,52 +318,38 @@ export default function UserCalendar({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* Year and Month Navigation */}
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mb-4">
-                {/* Year Navigation */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setSelectedYear(selectedYear - 1)}
-                    disabled={selectedYear <= 2025}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
-                      selectedYear <= 2025 
-                        ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
-                        : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    {selectedYear - 1}
-                  </button>
-                  <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white px-1 sm:px-2">
-                    {selectedYear}
-                  </span>
-                  <button
-                    onClick={() => setSelectedYear(selectedYear + 1)}
-                    disabled={selectedYear >= 2026}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-all ${
-                      selectedYear >= 2026 
-                        ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-50'
-                        : 'bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    {selectedYear + 1}
-                  </button>
-                </div>
-                
-                {/* Month Navigation */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigateMonth('prev')}
-                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
-                  >
-                    <FaChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                  <button
-                    onClick={() => navigateMonth('next')}
-                    className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
-                  >
-                    <FaChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
+              {/* Month Navigation */}
+              <div className="flex justify-center items-center gap-2 mb-2">
+                <button
+                  onClick={() => navigateMonth('prev')}
+                  className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                >
+                  <FaChevronLeft className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => navigateMonth('next')}
+                  className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all"
+                >
+                  <FaChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* Month Name and Working Days Info */}
+              <div className="text-center mb-2">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  {monthNames[currentMonth]}
+                </h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {(() => {
+                    if (!calendarData) return '';
+                    const monthData = calendarData.calendar[currentMonth];
+                    if (!monthData) return '';
+                    const workingDaysInMonth = Object.values(monthData).filter(day => 
+                      day.isWorkingDay && !day.holiday
+                    ).length;
+                    return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                  })()}
+                </span>
               </div>
 
               {/* Calendar Grid */}
@@ -416,7 +454,13 @@ export default function UserCalendar({ isOpen, onClose }) {
                     <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-yellow-200 border border-yellow-400 flex items-center justify-center">
                       <FaClock className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-yellow-600" />
                     </div>
-                    <span className="text-gray-700 dark:text-gray-300">On Leave</span>
+                    <span className="text-gray-700 dark:text-gray-300">Day Leave</span>
+                  </div>
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-orange-200 border border-orange-400 flex items-center justify-center">
+                      <FaClock className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-orange-600" />
+                    </div>
+                    <span className="text-gray-700 dark:text-gray-300">Hourly Leave</span>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-2">
                     <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-red-200 border border-red-400 flex items-center justify-center">

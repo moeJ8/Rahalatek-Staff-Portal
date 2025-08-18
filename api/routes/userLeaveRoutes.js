@@ -15,6 +15,12 @@ router.get('/check', userLeaveController.checkUserLeave);
 // Get leave statistics for a user
 router.get('/stats', userLeaveController.getUserLeaveStats);
 
+// Get annual leave statistics for a user
+router.get('/annual-stats', userLeaveController.getUserAnnualLeaveStats);
+
+// Get annual leave statistics for all users (admin only)
+router.get('/annual-stats/all', userLeaveController.getAllUsersAnnualLeaveStats);
+
 // Create new user leave
 router.post('/', userLeaveController.createUserLeave);
 

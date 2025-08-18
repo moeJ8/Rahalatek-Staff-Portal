@@ -829,9 +829,16 @@ exports.getUserYearlyAttendance = async (req, res) => {
             userId: userId,
             status: 'approved',
             $or: [
+                // Multiple-day leaves
                 {
+                    leaveCategory: 'multiple-day',
                     startDate: { $lte: endDate },
                     endDate: { $gte: startDate }
+                },
+                // Single-day and hourly leaves
+                {
+                    leaveCategory: { $in: ['single-day', 'hourly'] },
+                    date: { $gte: startDate, $lte: endDate }
                 }
             ]
         }).lean();
@@ -839,10 +846,30 @@ exports.getUserYearlyAttendance = async (req, res) => {
         // Get holidays for the year
         const Holiday = require('../models/Holiday');
         const holidays = await Holiday.find({
-            date: {
-                $gte: startDate,
-                $lte: endDate
-            },
+            $or: [
+                // Single-day holidays
+                {
+                    holidayType: 'single-day',
+                    date: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                },
+                // Multiple-day holidays that overlap with the year
+                {
+                    holidayType: 'multiple-day',
+                    startDate: { $lte: endDate },
+                    endDate: { $gte: startDate }
+                },
+                // Backward compatibility for old holidays without holidayType
+                {
+                    holidayType: { $exists: false },
+                    date: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            ],
             isActive: true
         }).lean();
         
@@ -882,17 +909,44 @@ exports.getUserYearlyAttendance = async (req, res) => {
         // Helper function to check if user is on leave on a specific date
         const isOnLeave = (date) => {
             return userLeaves.find(leave => {
-                const leaveStart = new Date(leave.startDate);
-                const leaveEnd = new Date(leave.endDate);
-                return date >= leaveStart && date <= leaveEnd;
+                if (leave.leaveCategory === 'multiple-day') {
+                    // Normalize dates to start of day for proper comparison
+                    const leaveStart = new Date(leave.startDate);
+                    leaveStart.setHours(0, 0, 0, 0);
+                    const leaveEnd = new Date(leave.endDate);
+                    leaveEnd.setHours(23, 59, 59, 999);
+                    
+                    const currentDate = new Date(date);
+                    currentDate.setHours(12, 0, 0, 0); // Set to midday to avoid timezone issues
+                    
+                    return currentDate >= leaveStart && currentDate <= leaveEnd;
+                } else {
+                    // For single-day and hourly leaves, check if the date matches
+                    const leaveDate = new Date(leave.date);
+                    return date.toDateString() === leaveDate.toDateString();
+                }
             });
         };
 
         // Helper function to check if date is a holiday
         const isHoliday = (date) => {
             return holidays.find(holiday => {
-                const holidayDate = new Date(holiday.date);
-                return date.toDateString() === holidayDate.toDateString();
+                if (holiday.holidayType === 'single-day') {
+                    const holidayDate = new Date(holiday.date);
+                    return date.toDateString() === holidayDate.toDateString();
+                } else if (holiday.holidayType === 'multiple-day') {
+                    // Normalize dates for comparison
+                    const startDate = new Date(holiday.startDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    const endDate = new Date(holiday.endDate);
+                    endDate.setHours(23, 59, 59, 999);
+                    
+                    const checkDate = new Date(date);
+                    checkDate.setHours(12, 0, 0, 0); // Set to midday to avoid timezone issues
+                    
+                    return checkDate >= startDate && checkDate <= endDate;
+                }
+                return false;
             });
         };
 
@@ -930,24 +984,46 @@ exports.getUserYearlyAttendance = async (req, res) => {
         }
         
         // Calculate summary statistics
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today for comparison
+        
+        // Total working days in the year (excluding holidays)
         const totalWorkingDays = Object.values(calendarData).reduce((total, month) => {
             return total + Object.values(month).filter(day => day.isWorkingDay && !day.holiday).length;
         }, 0);
         
-        const attendanceDays = Object.values(calendarData).reduce((total, month) => {
+        // Present days (attendance recorded)
+        const presentDays = Object.values(calendarData).reduce((total, month) => {
             return total + Object.values(month).filter(day => 
                 day.attendance && (day.attendance.status === 'checked-in' || day.attendance.status === 'checked-out')
             ).length;
         }, 0);
         
+        // Leave days
         const leaveDays = Object.values(calendarData).reduce((total, month) => {
             return total + Object.values(month).filter(day => day.leave).length;
         }, 0);
         
+        // Absent days - only count past working days without attendance or leave
         const absentDays = Object.values(calendarData).reduce((total, month) => {
-            return total + Object.values(month).filter(day => 
-                day.isWorkingDay && !day.holiday && !day.leave && !day.attendance
-            ).length;
+            return total + Object.values(month).filter(day => {
+                const dayDate = new Date(day.date);
+                return day.isWorkingDay && 
+                       !day.holiday && 
+                       !day.leave && 
+                       !day.attendance && 
+                       dayDate <= today; // Only count past and today
+            }).length;
+        }, 0);
+        
+        // Past working days (for calculating attendance rate accurately)
+        const pastWorkingDays = Object.values(calendarData).reduce((total, month) => {
+            return total + Object.values(month).filter(day => {
+                const dayDate = new Date(day.date);
+                return day.isWorkingDay && 
+                       !day.holiday && 
+                       dayDate <= today; // Only count past and today
+            }).length;
         }, 0);
         
         res.json({
@@ -957,10 +1033,11 @@ exports.getUserYearlyAttendance = async (req, res) => {
                 calendar: calendarData,
                 summary: {
                     totalWorkingDays,
-                    attendanceDays,
+                    presentDays,
                     leaveDays,
                     absentDays,
-                    attendanceRate: totalWorkingDays > 0 ? Math.round((attendanceDays / totalWorkingDays) * 100) : 0
+                    pastWorkingDays,
+                    attendanceRate: pastWorkingDays > 0 ? Math.round((presentDays / pastWorkingDays) * 100) : 0
                 }
             }
         });
