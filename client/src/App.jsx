@@ -108,7 +108,7 @@ function App() {
               <Route path="/vouchers/new" element={<CreateVoucherPage />} />
               <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
               <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />
-              <Route path="/trash" element={<TrashPage />} />
+              <Route path="/vouchers/trash" element={<TrashPage />} />
               <Route path="/tours" element={<ToursPage />} />
               <Route path="/hotels" element={<HotelsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />

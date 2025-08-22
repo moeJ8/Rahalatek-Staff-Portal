@@ -2285,45 +2285,189 @@ export default function AdminPanel() {
             const voucherTracker = {}; // Track vouchers per office-month to avoid double counting
             
             filteredVouchers.forEach(voucher => {
-                if (!voucher.payments) return;
-                
                 const voucherDate = new Date(voucher.createdAt);
                 const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
-                
-                // Process each payment type
-                Object.keys(voucher.payments).forEach(paymentType => {
-                    const payment = voucher.payments[paymentType];
-                    if (payment.officeName && payment.price > 0) {
-                        const key = `${payment.officeName}-${monthYear}`;
-                        
-                        if (!aggregatedData[key]) {
-                            aggregatedData[key] = {
-                                officeName: payment.officeName,
-                                month: monthYear,
-                                year: voucherDate.getFullYear(),
-                                monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                hotels: 0,
-                                transfers: 0,
-                                trips: 0,
-                                flights: 0,
-                                total: 0,
-                                currency: voucher.currency || 'USD',
-                                voucherCount: 0,
-                                voucherIds: new Set()
-                            };
-                            voucherTracker[key] = new Set();
+
+                // Process each payment type from the old payments structure
+                if (voucher.payments) {
+                    Object.keys(voucher.payments).forEach(paymentType => {
+                        const payment = voucher.payments[paymentType];
+                        if (payment.officeName && payment.price > 0) {
+                            const key = `${payment.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: payment.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key][paymentType] += payment.price;
+                            aggregatedData[key].total += payment.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
                         }
-                        
-                        aggregatedData[key][paymentType] += payment.price;
-                        aggregatedData[key].total += payment.price;
-                        
-                        // Track unique vouchers
-                        if (!voucherTracker[key].has(voucher._id)) {
-                            voucherTracker[key].add(voucher._id);
-                            aggregatedData[key].voucherCount++;
+                    });
+                }
+
+                // Process hotels array for office payments
+                if (voucher.hotels && Array.isArray(voucher.hotels)) {
+                    voucher.hotels.forEach(hotel => {
+                        if (hotel.officeName && hotel.price > 0) {
+                            const key = `${hotel.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: hotel.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].hotels += hotel.price;
+                            aggregatedData[key].total += hotel.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
+                // Process transfers array for office payments
+                if (voucher.transfers && Array.isArray(voucher.transfers)) {
+                    voucher.transfers.forEach(transfer => {
+                        if (transfer.officeName && transfer.price > 0) {
+                            const key = `${transfer.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: transfer.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].transfers += transfer.price;
+                            aggregatedData[key].total += transfer.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process trips array for office payments
+                if (voucher.trips && Array.isArray(voucher.trips)) {
+                    voucher.trips.forEach(trip => {
+                        if (trip.officeName && trip.price > 0) {
+                            const key = `${trip.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: trip.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].trips += trip.price;
+                            aggregatedData[key].total += trip.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process flights array for office payments
+                if (voucher.flights && Array.isArray(voucher.flights)) {
+                    voucher.flights.forEach(flight => {
+                        if (flight.officeName && flight.price > 0) {
+                            const key = `${flight.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: flight.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].flights += flight.price;
+                            aggregatedData[key].total += flight.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
             });
             
             // Convert to array, clean up, and sort
@@ -4654,7 +4798,7 @@ export default function AdminPanel() {
                                     </h2>
                                     
                                     {/* Overview Cards */}
-                                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-6' : 'lg:grid-cols-5'} gap-4 mb-6`}>
+                                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 mb-6`}>
                                         {financialFilters.viewType === 'providers' ? (
                                             <>
                                                 {/* Total Revenue */}
@@ -4702,24 +4846,7 @@ export default function AdminPanel() {
                                                     </div>
                                                 </div>
 
-                                                {/* Average Revenue per Supplier */}
-                                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Supplier</p>
-                                                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                                                                {getCurrencySymbol(financialFilters.currency)}{
-                                                                    [...new Set(filteredFinancialData.map(item => item.officeName))].length > 0 
-                                                                        ? (financialTotals.total / [...new Set(filteredFinancialData.map(item => item.officeName))].length).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                                                                        : '0'
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                        <div className="w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
-                                                            <FaCalendarDay className="w-6 h-6 text-white" />
-                                                        </div>
-                                                    </div>
-                                                </div>
+
 
                                                 {/* Profit */}
                                                 <div className={`bg-gradient-to-br p-6 rounded-xl border ${
@@ -4814,24 +4941,7 @@ export default function AdminPanel() {
                                                     </div>
                                                 </div>
 
-                                                {/* Average Revenue per Client */}
-                                                <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-6 rounded-xl border border-orange-200 dark:border-orange-700">
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Avg per Client</p>
-                                                            <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                                                                {getCurrencySymbol(financialFilters.currency)}{
-                                                                    [...new Set(clientOfficeData.map(office => office.officeName))].length > 0 
-                                                                        ? (clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0) / [...new Set(clientOfficeData.map(office => office.officeName))].length).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                                                                        : '0'
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                        <div className="w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-lg flex items-center justify-center">
-                                                            <FaCalendarDay className="w-6 h-6 text-white" />
-                                                        </div>
-                                                    </div>
-                                                </div>
+
 
                                                 {/* Profit */}
                                                 <div className={`bg-gradient-to-br p-6 rounded-xl border ${
@@ -5187,6 +5297,8 @@ export default function AdminPanel() {
                                     clientOfficeData={clientOfficeData}
                                     currency={financialFilters.currency}
                                     getCurrencySymbol={getCurrencySymbol}
+                                    totalClientRevenue={totalClientRevenue}
+                                    totalSupplierRevenue={totalSupplierRevenue}
                                 />
                             )}
 

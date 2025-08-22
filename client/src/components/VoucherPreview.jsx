@@ -18,6 +18,27 @@ const getCurrencySymbol = (currency) => {
   }
 };
 
+// Helper function to format passenger display
+const formatPassengers = (pax, adults = null, children = null) => {
+  if (adults !== null && children !== null && (adults > 0 || children > 0)) {
+    // If adults and children are specified, show breakdown
+    const adultText = adults === 1 ? 'adult' : 'adults';
+    const childText = children === 1 ? 'child' : 'children';
+    return `${pax} ${adults} ${adultText} ${children} ${childText}`;
+  } else if (adults !== null && adults > 0) {
+    // If only adults are specified
+    const adultText = adults === 1 ? 'adult' : 'adults';
+    return `${pax} ${adults} ${adultText}`;
+  } else if (children !== null && children > 0) {
+    // If only children are specified
+    const childText = children === 1 ? 'child' : 'children';
+    return `${pax} ${children} ${childText}`;
+  } else {
+    // Default behavior - just show PAX number
+    return pax;
+  }
+};
+
 const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) => {
   const voucherRef = useRef(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
@@ -447,17 +468,43 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           hotel.nights,
           formatDisplayDate(hotel.checkIn),
           formatDisplayDate(hotel.checkOut),
-          hotel.pax,
+          {
+            pax: hotel.pax,
+            breakdown: hotel.adults !== null && hotel.children !== null && hotel.children > 0
+              ? ` (${hotel.adults} ${hotel.adults === 1 ? 'adult' : 'adults'} ${hotel.children} ${hotel.children === 1 ? 'child' : 'children'})`
+              : null
+          },
           hotel.confirmationNumber || ''
         ];
-        
+
         hotelData.forEach(cellData => {
           const td = document.createElement('td');
-          td.textContent = cellData;
+          if (typeof cellData === 'object' && cellData.pax) {
+            // Create main pax text
+            const paxText = document.createElement('span');
+            paxText.textContent = cellData.pax;
+            paxText.style.fontSize = '12px';
+            paxText.style.fontWeight = 'bold';
+            paxText.style.color = '#000000';
+            td.appendChild(paxText);
+
+            // Create breakdown text if exists
+            if (cellData.breakdown) {
+              const breakdownText = document.createElement('span');
+              breakdownText.textContent = cellData.breakdown;
+              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontWeight = 'normal';
+              breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
+              td.appendChild(breakdownText);
+            }
+          } else {
+            td.textContent = cellData;
+            td.style.fontSize = '12px';
+            td.style.fontWeight = 'bold';
+            td.style.color = '#000000';
+          }
           td.style.padding = '12px 16px';
           td.style.border = '1px solid #f8fafc';
-          td.style.fontSize = '12px';
-          td.style.fontWeight = 'bold';
           row.appendChild(td);
         });
         
@@ -540,17 +587,43 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           transfer.flightNumber || '',
           transfer.from,
           transfer.to,
-          transfer.pax,
+          {
+            pax: transfer.pax,
+            breakdown: transfer.adults !== null && transfer.children !== null && transfer.children > 0
+              ? ` (${transfer.adults} ${transfer.adults === 1 ? 'adult' : 'adults'} ${transfer.children} ${transfer.children === 1 ? 'child' : 'children'})`
+              : null
+          },
           transfer.vehicleType
         ];
-        
+
         transferData.forEach(cellData => {
           const td = document.createElement('td');
-          td.textContent = cellData;
+          if (typeof cellData === 'object' && cellData.pax) {
+            // Create main pax text
+            const paxText = document.createElement('span');
+            paxText.textContent = cellData.pax;
+            paxText.style.fontSize = '12px';
+            paxText.style.fontWeight = 'bold';
+            paxText.style.color = '#000000';
+            td.appendChild(paxText);
+
+            // Create breakdown text if exists
+            if (cellData.breakdown) {
+              const breakdownText = document.createElement('span');
+              breakdownText.textContent = cellData.breakdown;
+              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontWeight = 'normal';
+              breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
+              td.appendChild(breakdownText);
+            }
+          } else {
+            td.textContent = cellData;
+            td.style.fontSize = '12px';
+            td.style.fontWeight = 'bold';
+            td.style.color = '#000000';
+          }
           td.style.padding = '12px 16px';
           td.style.border = '1px solid #f8fafc';
-          td.style.fontSize = '12px';
-          td.style.fontWeight = 'bold';
           row.appendChild(td);
         });
         
@@ -629,16 +702,42 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           trip.city,
           trip.tourName,
           trip.type || '',
-          trip.pax
+          {
+            pax: trip.pax,
+            breakdown: trip.adults !== null && trip.children !== null && trip.children > 0
+              ? ` (${trip.adults} ${trip.adults === 1 ? 'adult' : 'adults'} ${trip.children} ${trip.children === 1 ? 'child' : 'children'})`
+              : null
+          }
         ];
-        
+
         tripData.forEach(cellData => {
           const td = document.createElement('td');
-          td.textContent = cellData;
+          if (typeof cellData === 'object' && cellData.pax) {
+            // Create main pax text
+            const paxText = document.createElement('span');
+            paxText.textContent = cellData.pax;
+            paxText.style.fontSize = '12px';
+            paxText.style.fontWeight = 'bold';
+            paxText.style.color = '#000000';
+            td.appendChild(paxText);
+
+            // Create breakdown text if exists
+            if (cellData.breakdown) {
+              const breakdownText = document.createElement('span');
+              breakdownText.textContent = cellData.breakdown;
+              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontWeight = 'normal';
+              breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
+              td.appendChild(breakdownText);
+            }
+          } else {
+            td.textContent = cellData;
+            td.style.fontSize = '12px';
+            td.style.fontWeight = 'bold';
+            td.style.color = '#000000';
+          }
           td.style.padding = '12px 16px';
           td.style.border = '1px solid #f8fafc';
-          td.style.fontSize = '12px';
-          td.style.fontWeight = 'bold';
           row.appendChild(td);
         });
         
@@ -1415,7 +1514,16 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.nights}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(hotel.checkIn)}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(hotel.checkOut)}</td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.pax}</td>
+                    <td className="px-2 md:px-4 py-2 border">
+                      <div className="text-xs md:text-sm">
+                        {hotel.pax}
+                        {hotel.adults !== null && hotel.children !== null && hotel.children > 0 && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({`${hotel.adults} ${hotel.adults === 1 ? 'adult' : 'adults'} ${hotel.children} ${hotel.children === 1 ? 'child' : 'children'}`})
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.confirmationNumber}</td>
                   </tr>
                 ))}
@@ -1481,7 +1589,16 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.flightNumber || ''}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.from}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.to}</td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.pax}</td>
+                    <td className="px-2 md:px-4 py-2 border">
+                      <div className="text-xs md:text-sm">
+                        {transfer.pax}
+                        {transfer.adults !== null && transfer.children !== null && transfer.children > 0 && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({`${transfer.adults} ${transfer.adults === 1 ? 'adult' : 'adults'} ${transfer.children} ${transfer.children === 1 ? 'child' : 'children'}`})
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.vehicleType}</td>
                   </tr>
                 ))}
@@ -1540,7 +1657,16 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.city}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.tourName}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.type}</td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.pax}</td>
+                    <td className="px-2 md:px-4 py-2 border">
+                      <div className="text-xs md:text-sm">
+                        {trip.pax}
+                        {trip.adults !== null && trip.children !== null && trip.children > 0 && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({`${trip.adults} ${trip.adults === 1 ? 'adult' : 'adults'} ${trip.children} ${trip.children === 1 ? 'child' : 'children'}`})
+                          </span>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FaEdit, FaTimes, FaCheck, FaUser } from 'react-icons/fa';
 
 const CreatedByControls = ({ 
@@ -51,9 +52,19 @@ const CreatedByControls = ({
   if (!canEdit) {
     return (
       <div className={`flex items-center ${className}`}>
-        <span className="font-semibold text-indigo-600 dark:text-indigo-300">
-          {getUserDisplayName()}
-        </span>
+        {currentUserId ? (
+          <Link 
+            to={`/profile/${currentUserId}`}
+            className="font-semibold text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 hover:underline transition-colors duration-200"
+            title={`View ${currentUsername}'s profile`}
+          >
+            {getUserDisplayName()}
+          </Link>
+        ) : (
+          <span className="font-semibold text-gray-500 dark:text-gray-400">
+            {getUserDisplayName()}
+          </span>
+        )}
       </div>
     );
   }
@@ -61,9 +72,19 @@ const CreatedByControls = ({
   if (!isEditing) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <span className="font-semibold text-indigo-600 dark:text-indigo-300">
-          {getUserDisplayName()}
-        </span>
+        {currentUserId ? (
+          <Link 
+            to={`/profile/${currentUserId}`}
+            className="font-semibold text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 hover:underline transition-colors duration-200"
+            title={`View ${currentUsername}'s profile`}
+          >
+            {getUserDisplayName()}
+          </Link>
+        ) : (
+          <span className="font-semibold text-gray-500 dark:text-gray-400">
+            {getUserDisplayName()}
+          </span>
+        )}
         <button
           onClick={handleStartEdit}
           className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-all duration-200"

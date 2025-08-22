@@ -16,7 +16,7 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
 import { updateVoucherStatus, getAllVouchers } from '../utils/voucherApi';
-import { FaTrash, FaEye, FaPen, FaCalendarAlt, FaPlane, FaMoneyBill, FaUser, FaSearch, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaPen, FaCalendarAlt, FaPlane, FaMoneyBill, FaUser, FaSearch, FaPlus, FaTimes } from 'react-icons/fa';
 
 export default function VouchersPage() {
   const navigate = useNavigate();
@@ -524,7 +524,7 @@ export default function VouchersPage() {
         <div className="flex gap-2 sm:gap-3">
           <CustomButton 
             variant="gray"
-            onClick={() => navigate('/trash')}
+            onClick={() => navigate('/vouchers/trash')}
             icon={FaTrash}
           >
             <span className="hidden sm:inline">View Trash</span>
@@ -833,8 +833,14 @@ export default function VouchersPage() {
                     const voucher = item;
                     return (
                       <>
-                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {voucher.voucherNumber}
+                        <Table.Cell className="px-4 py-3">
+                          <Link 
+                            to={`/vouchers/${voucher._id}`}
+                            className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                            title={`View voucher #${voucher.voucherNumber} details`}
+                          >
+                            {voucher.voucherNumber}
+                          </Link>
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <div className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
@@ -846,22 +852,28 @@ export default function VouchersPage() {
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           {voucher.officeName ? (
-                            (isAdmin || isAccountant) ? (
-                              <Link 
-                                to={`/office/${encodeURIComponent(voucher.officeName)}`}
-                                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline truncate max-w-[150px] block"
-                                title={`View ${voucher.officeName} office details`}
-                              >
-                                {voucher.officeName}
-                              </Link>
-                            ) : (
+                            voucher.officeName.toLowerCase() === 'direct client' ? (
                               <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
-                                {voucher.officeName}
+                                Direct Client
                               </div>
+                            ) : (
+                              (isAdmin || isAccountant) ? (
+                                <Link 
+                                  to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline truncate max-w-[150px] block"
+                                  title={`View ${voucher.officeName} office details`}
+                                >
+                                  {voucher.officeName}
+                                </Link>
+                              ) : (
+                                <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                                  {voucher.officeName}
+                                </div>
+                              )
                             )
                           ) : (
                             <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
-                              -
+                              Direct Client
                             </div>
                           )}
                         </Table.Cell>
@@ -900,29 +912,25 @@ export default function VouchersPage() {
                           </Table.Cell>
                         )}
                         <Table.Cell className="px-4 py-3">
-                          <div className="flex space-x-4">
-                            <Link 
-                              to={`/vouchers/${voucher._id}`}
-                              className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                            >
-                              View
-                            </Link>
-                            
+                          <div className="flex items-center gap-2">
                             {canManageVoucher(voucher) && (
                               <>
-                                <Link 
+                                <CustomButton
+                                  as={Link}
                                   to={`/edit-voucher/${voucher._id}`}
-                                  className="font-medium text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
-                                >
-                                  Edit
-                                </Link>
+                                  variant="teal"
+                                  size="xs"
+                                  icon={FaPen}
+                                  title="Edit voucher"
+                                />
                                 {canDeleteVoucher() && (
-                                  <button
-                                    className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  <CustomButton
                                     onClick={() => handleDeleteClick(voucher)}
-                                  >
-                                    Delete
-                                  </button>
+                                    variant="red"
+                                    size="xs"
+                                    icon={FaTrash}
+                                    title="Delete voucher"
+                                  />
                                 )}
                               </>
                             )}
@@ -944,22 +952,38 @@ export default function VouchersPage() {
                     <Card key={voucher._id} className="overflow-hidden shadow-sm hover:shadow dark:border-gray-700">
                       <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
                         <div>
-                          <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
+                          <Link 
+                            to={`/vouchers/${voucher._id}`}
+                            className="text-lg font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                            title={`View voucher #${voucher.voucherNumber} details`}
+                          >
+                            #{voucher.voucherNumber}
+                          </Link>
                           <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
-                          {voucher.officeName && (
-                            (isAdmin || isAccountant) ? (
-                              <Link 
-                                to={`/office/${encodeURIComponent(voucher.officeName)}`}
-                                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
-                                title={`View ${voucher.officeName} office details`}
-                              >
-                                {voucher.officeName}
-                              </Link>
-                            ) : (
+                          {voucher.officeName ? (
+                            voucher.officeName.toLowerCase() === 'direct client' ? (
                               <div className="text-xs text-gray-800 dark:text-gray-200">
-                                {voucher.officeName}
+                                Direct Client
                               </div>
+                            ) : (
+                              (isAdmin || isAccountant) ? (
+                                <Link 
+                                  to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                  className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                                  title={`View ${voucher.officeName} office details`}
+                                >
+                                  {voucher.officeName}
+                                </Link>
+                              ) : (
+                                <div className="text-xs text-gray-800 dark:text-gray-200">
+                                  {voucher.officeName}
+                                </div>
+                              )
                             )
+                          ) : (
+                            <div className="text-xs text-gray-800 dark:text-gray-200">
+                              Direct Client
+                            </div>
                           )}
                         </div>
                         <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">
@@ -1067,36 +1091,31 @@ export default function VouchersPage() {
                         )}
                       </div>
                       
-                      <div className="flex justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <Link 
-                          to={`/vouchers/${voucher._id}`}
-                          className="flex items-center justify-center text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        >
-                          <FaEye className="mr-1" />
-                          <span>View</span>
-                        </Link>
-                        
-                        {canManageVoucher(voucher) && (
-                          <>
-                            <Link
-                              to={`/edit-voucher/${voucher._id}`}
-                              className="flex items-center justify-center text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                      {canManageVoucher(voucher) && (
+                        <div className="flex justify-center gap-3 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <CustomButton
+                            as={Link}
+                            to={`/edit-voucher/${voucher._id}`}
+                            variant="teal"
+                            size="sm"
+                            icon={FaPen}
+                            title="Edit voucher"
+                          >
+                            Edit
+                          </CustomButton>
+                          {canDeleteVoucher() && (
+                            <CustomButton
+                              onClick={() => handleDeleteClick(voucher)}
+                              variant="red"
+                              size="sm"
+                              icon={FaTrash}
+                              title="Delete voucher"
                             >
-                              <FaPen className="mr-1" />
-                              <span>Edit</span>
-                            </Link>
-                            {canDeleteVoucher() && (
-                              <button
-                                className="flex items-center justify-center text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                onClick={() => handleDeleteClick(voucher)}
-                              >
-                                <FaTrash className="mr-1" />
-                                <span>Delete</span>
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                              Delete
+                            </CustomButton>
+                          )}
+                        </div>
+                      )}
                     </Card>
                   ))}
                 </div>

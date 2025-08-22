@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, Button, Select as FlowbiteSelect, Label, Checkbox, Modal, Alert } from 'flowbite-react';
+import CustomModal from '../components/CustomModal';
 import CustomButton from '../components/CustomButton';
 import RahalatekLoader from '../components/RahalatekLoader';
 import TextInput from '../components/TextInput';
@@ -96,6 +97,7 @@ export default function EditVoucherPage() {
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [selectedVoucherToDuplicate, setSelectedVoucherToDuplicate] = useState('');
   const [availableVouchers, setAvailableVouchers] = useState([]);
+  const [duplicateModalLoading, setDuplicateModalLoading] = useState(false);
   
   // Date formatting functions
   const formatDateForDisplay = (isoDate) => {
@@ -171,18 +173,24 @@ export default function EditVoucherPage() {
             checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
             checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : '',
             officeName: hotel.officeName || '',
-            price: hotel.price || 0
+            price: hotel.price || 0,
+            adults: hotel.adults !== undefined ? hotel.adults : null,
+            children: hotel.children !== undefined ? hotel.children : null
           })),
           transfers: (voucherData.transfers || []).map(transfer => ({
             ...transfer,
             date: transfer.date ? new Date(transfer.date).toISOString().split('T')[0] : '',
             officeName: transfer.officeName || '',
-            price: transfer.price || 0
+            price: transfer.price || 0,
+            adults: transfer.adults !== undefined ? transfer.adults : null,
+            children: transfer.children !== undefined ? transfer.children : null
           })),
           trips: Array.isArray(voucherData.trips) ? voucherData.trips.map(trip => ({
             ...trip,
             officeName: trip.officeName || '',
-            price: trip.price || 0
+            price: trip.price || 0,
+            adults: trip.adults !== undefined ? trip.adults : null,
+            children: trip.children !== undefined ? trip.children : null
           })) : [],
           flights: voucherData.flights ? voucherData.flights.map(flight => ({
             ...flight,
@@ -277,10 +285,12 @@ export default function EditVoucherPage() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [id]);
-  
+
+
+
   // Input change handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -896,6 +906,74 @@ export default function EditVoucherPage() {
     }
   }, [formData.totalAmount, formData.advancedAmount, formData.advancedPayment]);
   
+  // Validation function for adults/children requirement
+  const validateAdultsChildrenRequirement = () => {
+    const allSections = [...formData.hotels, ...formData.transfers, ...formData.trips];
+
+    for (const item of allSections) {
+      if (item.pax) {
+        const hasAdults = item.adults !== null && item.adults > 0;
+        const hasChildren = item.children !== null && item.children > 0;
+        const isTransfer = formData.transfers.includes(item);
+
+        // Check if only one of them is filled (not both or neither) - but exclude transfers
+        if (!isTransfer && ((hasAdults && !hasChildren) || (!hasAdults && hasChildren))) {
+          const sectionName = formData.hotels.includes(item) ? 'Hotels' :
+                            formData.trips.includes(item) ? 'Trips' : 'Transfers';
+
+          toast.error(
+            `${sectionName} section: Both Adults and Children must be filled together, or leave both empty. You cannot fill only one of them.`,
+            {
+              duration: 4000,
+              style: {
+                background: '#f44336',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                padding: '16px',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#f44336',
+              },
+            }
+          );
+          return false;
+        }
+
+        // If both are filled, check the sum matches PAX
+        if (hasAdults && hasChildren) {
+          const total = item.adults + item.children;
+          if (total !== item.pax) {
+            const remaining = item.pax - total;
+            const sectionName = formData.hotels.includes(item) ? 'Hotels' :
+                              formData.transfers.includes(item) ? 'Transfers' : 'Trips';
+
+            toast.error(
+              `${sectionName} section: PAX mismatch! Total PAX: ${item.pax}, Adults + Children: ${total}. ${remaining > 0 ? `Missing ${remaining}` : `Exceeding by ${Math.abs(remaining)}`}`,
+              {
+                duration: 4000,
+                style: {
+                  background: '#f44336',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  padding: '16px',
+                },
+                iconTheme: {
+                  primary: '#fff',
+                  secondary: '#f44336',
+                },
+              }
+            );
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
   // Save voucher
   const handleSave = async () => {
     // Validate form
@@ -934,7 +1012,12 @@ export default function EditVoucherPage() {
       });
       return;
     }
-    
+
+    // Validate adults/children requirement
+    if (!validateAdultsChildrenRequirement()) {
+      return;
+    }
+
     try {
       setSaving(true);
       
@@ -955,7 +1038,7 @@ export default function EditVoucherPage() {
         clientName: formData.clientName,
         nationality: formData.nationality,
         phoneNumber: formData.phoneNumber,
-        officeName: formData.officeName,
+        officeName: formData.officeName || 'direct client',
         arrivalDate: formData.arrivalDate,
         departureDate: formData.departureDate,
         capital: formData.capital,
@@ -1036,22 +1119,24 @@ export default function EditVoucherPage() {
   
   // Function to open duplicate modal
   const openDuplicateModal = async () => {
+    // Open modal immediately
+    setDuplicateModalOpen(true);
+    setDuplicateModalLoading(true);
+
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get('/api/vouchers', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       // Filter out the current voucher from available vouchers
       const filteredVouchers = response.data.data.filter(v => v._id !== id);
       setAvailableVouchers(filteredVouchers);
-      setDuplicateModalOpen(true);
     } catch (err) {
       console.error('Error fetching vouchers:', err);
       toast.error('Failed to load vouchers for duplication.');
     } finally {
-      setLoading(false);
+      setDuplicateModalLoading(false);
     }
   };
 
@@ -1538,7 +1623,68 @@ export default function EditVoucherPage() {
                     min="1"
                   />
                 </div>
-                
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label value="Adults" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={hotel.adults !== null ? hotel.adults : ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // Clear both adults and children if adults is cleared
+                          handleHotelChange(index, 'adults', null);
+                          handleHotelChange(index, 'children', null);
+                        } else if (value >= 1 && hotel.children !== null && hotel.children >= 0) {
+                          // Both adults and children must be filled together
+                          const maxAdults = hotel.pax - hotel.children;
+                          if (value <= maxAdults) {
+                            handleHotelChange(index, 'adults', value);
+                          }
+                        } else if (hotel.children === null && value >= 1) {
+                          // If children is not set, set both to 1
+                          handleHotelChange(index, 'adults', value);
+                          handleHotelChange(index, 'children', 0);
+                        }
+                      }}
+                      min="0"
+                      max={hotel.pax - (hotel.children || 0)}
+                      disabled={!hotel.pax || hotel.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label value="Children" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={hotel.children || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // Clear both adults and children if children is cleared
+                          handleHotelChange(index, 'adults', null);
+                          handleHotelChange(index, 'children', null);
+                        } else if (value >= 0 && hotel.adults !== null && hotel.adults >= 1) {
+                          // Both adults and children must be filled together
+                          const maxChildren = hotel.pax - hotel.adults;
+                          if (value <= maxChildren) {
+                            handleHotelChange(index, 'children', value);
+                          }
+                        } else if (hotel.adults === null && value >= 0) {
+                          // If adults is not set, set both to 1 and 0
+                          handleHotelChange(index, 'adults', 1);
+                          handleHotelChange(index, 'children', value);
+                        }
+                      }}
+                      min="0"
+                      max={hotel.pax - (hotel.adults !== null ? hotel.adults : 1)}
+                      disabled={!hotel.pax || hotel.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label value="Confirmation Number" className="mb-2 block" />
                   <TextInput
@@ -1706,9 +1852,54 @@ export default function EditVoucherPage() {
                     min="1"
                   />
                 </div>
-                
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label value="Adults" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={transfer.adults !== null ? transfer.adults : ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // For transfers, allow clearing just adults
+                          handleTransferChange(index, 'adults', null);
+                        } else if (value >= 0) {
+                          // For transfers, allow setting just adults
+                          handleTransferChange(index, 'adults', value);
+                        }
+                      }}
+                      min="0"
+                      max={transfer.pax - (transfer.children || 0)}
+                      disabled={!transfer.pax || transfer.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label value="Children" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={transfer.children || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // For transfers, allow clearing just children
+                          handleTransferChange(index, 'children', null);
+                        } else if (value >= 0) {
+                          // For transfers, allow setting just children
+                          handleTransferChange(index, 'children', value);
+                        }
+                      }}
+                      min="0"
+                      max={transfer.pax - (transfer.adults !== null ? transfer.adults : 1)}
+                      disabled={!transfer.pax || transfer.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Select 
+                  <Select
                     label="Vehicle Type"
                     value={transfer.vehicleType} 
                     onChange={(value) => handleTransferChange(index, 'vehicleType', value)}
@@ -1874,6 +2065,67 @@ export default function EditVoucherPage() {
                     onChange={(e) => handleTripChange(index, 'pax', parseInt(e.target.value))}
                     min="1"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label value="Adults" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={trip.adults !== null ? trip.adults : ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // Clear both adults and children if adults is cleared
+                          handleTripChange(index, 'adults', null);
+                          handleTripChange(index, 'children', null);
+                        } else if (value >= 1 && trip.children !== null && trip.children >= 0) {
+                          // Both adults and children must be filled together
+                          const maxAdults = trip.pax - trip.children;
+                          if (value <= maxAdults) {
+                            handleTripChange(index, 'adults', value);
+                          }
+                        } else if (trip.children === null && value >= 1) {
+                          // If children is not set, set both to 1
+                          handleTripChange(index, 'adults', value);
+                          handleTripChange(index, 'children', 0);
+                        }
+                      }}
+                      min="0"
+                      max={trip.pax - (trip.children || 0)}
+                      disabled={!trip.pax || trip.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <div>
+                    <Label value="Children" className="mb-2 block" />
+                    <TextInput
+                      type="number"
+                      value={trip.children || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseInt(e.target.value) : null;
+                        if (value === null) {
+                          // Clear both adults and children if children is cleared
+                          handleTripChange(index, 'adults', null);
+                          handleTripChange(index, 'children', null);
+                        } else if (value >= 0 && trip.adults !== null && trip.adults >= 1) {
+                          // Both adults and children must be filled together
+                          const maxChildren = trip.pax - trip.adults;
+                          if (value <= maxChildren) {
+                            handleTripChange(index, 'children', value);
+                          }
+                        } else if (trip.adults === null && value >= 0) {
+                          // If adults is not set, set both to 1 and 0
+                          handleTripChange(index, 'adults', 1);
+                          handleTripChange(index, 'children', value);
+                        }
+                      }}
+                      min="0"
+                      max={trip.pax - (trip.adults !== null ? trip.adults : 1)}
+                      disabled={!trip.pax || trip.pax < 1}
+                      placeholder="Optional"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2418,62 +2670,54 @@ export default function EditVoucherPage() {
         </div>
 
         {/* Voucher Duplication Modal */}
-        <Modal
-          show={duplicateModalOpen}
+        <CustomModal
+          isOpen={duplicateModalOpen}
           onClose={closeDuplicateModal}
-          dismissible
-          size="md"
-          theme={{
-            content: {
-              base: "relative h-full w-full p-4 h-auto",
-              inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
-            }
-          }}
+          title="Import Data From Another Voucher"
+          subtitle="Select a voucher to import its data. You can modify the imported data before saving."
+          maxWidth="md:max-w-2xl"
         >
-          <Modal.Header className="border-b border-gray-200 dark:border-gray-700">
-            Import Data From Another Voucher
-          </Modal.Header>
-          <Modal.Body>
-            <div className="space-y-6">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Select a voucher to import its data. You can modify the imported data before saving.
-              </p>
-              
-              {availableVouchers.length > 0 ? (
-                <div className="space-y-2">
-                  <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
-                  <FlowbiteSelect
-                    id="selectVoucherToDuplicate"
-                    value={selectedVoucherToDuplicate}
-                    onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
-                    className="w-full"
-                  >
-                    <option value="">Choose a voucher</option>
-                    {availableVouchers.map(voucher => (
-                      <option key={voucher._id} value={voucher._id}>
-                        #{voucher.voucherNumber} - {voucher.clientName} ({formatDateForDisplay(voucher.arrivalDate)} to {formatDateForDisplay(voucher.departureDate)})
-                      </option>
-                    ))}
-                  </FlowbiteSelect>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500">
-                  No other vouchers available to import data from.
-                </div>
-              )}
+          <div className="space-y-6">
+            {duplicateModalLoading ? (
+              <div className="text-center py-12">
+                <RahalatekLoader size="sm" />
+                <p className="text-base text-gray-600 mt-4">Loading vouchers...</p>
+              </div>
+            ) : availableVouchers.length > 0 ? (
+              <div className="space-y-2 relative">
+                <Label htmlFor="selectVoucherToDuplicate" value="Select Voucher" />
+                <SearchableSelect
+                  id="selectVoucherToDuplicate"
+                  value={selectedVoucherToDuplicate}
+                  onChange={(e) => setSelectedVoucherToDuplicate(e.target.value)}
+                  options={[
+                    { value: '', label: 'Choose a voucher' },
+                    ...availableVouchers.map(voucher => ({
+                      value: voucher._id,
+                      label: `#${voucher.voucherNumber} - ${voucher.clientName} (${formatDateForDisplay(voucher.arrivalDate)} to ${formatDateForDisplay(voucher.departureDate)})`
+                    }))
+                  ]}
+                  placeholder="Search for a voucher to duplicate..."
+                />
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">
+                No other vouchers available to import data from.
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <CustomButton variant="gray" onClick={closeDuplicateModal}>
+                Cancel
+              </CustomButton>
+              <CustomButton variant="gray" onClick={handleDuplicateVoucher}
+                disabled={!selectedVoucherToDuplicate || duplicateModalLoading}
+                icon={HiDuplicate}>
+                Import Data
+              </CustomButton>
             </div>
-          </Modal.Body>
-                  <Modal.Footer className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
-                     <CustomButton variant="gray" onClick={closeDuplicateModal}>
-                      Cancel 
-                    </CustomButton>
-                    <CustomButton variant="gray" onClick={handleDuplicateVoucher} 
-                      disabled={!selectedVoucherToDuplicate}
-                      icon={HiDuplicate}>
-                      Import Data
-                    </CustomButton>
-                  </Modal.Footer>
-        </Modal>
+          </div>
+          </CustomModal>
       </Card>
     </div>
   );

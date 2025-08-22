@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { toast } from 'react-hot-toast';
-import { FaTrash, FaTrashRestore, FaEye, FaCalendarAlt, FaSearch, FaUser, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaTrash, FaTrashRestore, FaCalendarAlt, FaSearch, FaUser, FaTimes, FaCheck } from 'react-icons/fa';
 
 export default function TrashPage() {
   const [trashedVouchers, setTrashedVouchers] = useState([]);
@@ -744,8 +744,14 @@ export default function TrashPage() {
                             />
                           </Table.Cell>
                         )}
-                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {voucher.voucherNumber}
+                        <Table.Cell className="px-4 py-3">
+                          <Link 
+                            to={`/vouchers/${voucher._id}`}
+                            className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                            title={`View voucher #${voucher.voucherNumber} details`}
+                          >
+                            {voucher.voucherNumber}
+                          </Link>
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <div className="text-sm text-gray-900 dark:text-white truncate max-w-[200px]">
@@ -756,8 +762,22 @@ export default function TrashPage() {
                           </div>
                         </Table.Cell>
                         <Table.Cell className="px-4 py-3">
-                          <div className="text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
-                            {voucher.officeName || '-'}
+                          <div className="text-sm truncate max-w-[150px]">
+                            {voucher.officeName ? (
+                              (isAdmin || isAccountant) ? (
+                                <Link 
+                                  to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                                  title={`View ${voucher.officeName} office details`}
+                                >
+                                  {voucher.officeName}
+                                </Link>
+                              ) : (
+                                <span className="text-gray-900 dark:text-white">{voucher.officeName}</span>
+                              )
+                            ) : (
+                              <span className="text-gray-500 dark:text-gray-400">-</span>
+                            )}
                           </div>
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.arrivalDate)}</Table.Cell>
@@ -774,8 +794,18 @@ export default function TrashPage() {
                             '-'
                           }
                         </Table.Cell>
-                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                          {voucher.createdBy ? (voucher.createdBy.username.length > 10 ? voucher.createdBy.username.substring(0, 10) + '...' : voucher.createdBy.username) : 'N/A'}
+                        <Table.Cell className="text-sm px-4 py-3">
+                          {voucher.createdBy ? (
+                            <Link 
+                              to={`/profile/${voucher.createdBy._id}`}
+                              className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 hover:underline transition-colors duration-200"
+                              title={`View ${voucher.createdBy.username}'s profile`}
+                            >
+                              {voucher.createdBy.username.length > 10 ? voucher.createdBy.username.substring(0, 10) + '...' : voucher.createdBy.username}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400">N/A</span>
+                          )}
                         </Table.Cell>
                         <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">{formatDate(voucher.deletedAt)}</Table.Cell>
                         {(isAdmin || isAccountant) && (
@@ -784,28 +814,23 @@ export default function TrashPage() {
                           </Table.Cell>
                         )}
                         <Table.Cell className="px-4 py-3">
-                          <div className="flex items-center gap-3 min-w-[200px]">
-                            <Link 
-                              to={`/vouchers/${voucher._id}`}
-                              className="font-medium text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 whitespace-nowrap"
-                            >
-                              View
-                            </Link>
-                            
+                          <div className="flex items-center gap-2">
                             {canManageVoucher() && (
                               <>
-                                <button
-                                  className="font-medium text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 whitespace-nowrap"
+                                <CustomButton
                                   onClick={() => handleRestoreClick(voucher)}
-                                >
-                                  Restore
-                                </button>
-                                <button
-                                  className="font-medium text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 whitespace-nowrap"
+                                  variant="green"
+                                  size="xs"
+                                  icon={FaTrashRestore}
+                                  title="Restore voucher"
+                                />
+                                <CustomButton
                                   onClick={() => handlePermanentDeleteClick(voucher)}
-                                >
-                                  Delete Forever
-                                </button>
+                                  variant="red"
+                                  size="xs"
+                                  icon={FaTrash}
+                                  title="Delete forever"
+                                />
                               </>
                             )}
                           </div>
@@ -839,10 +864,26 @@ export default function TrashPage() {
                               />
                             )}
                             <div className="flex-1">
-                              <div className="text-lg font-medium text-gray-900 dark:text-white">#{voucher.voucherNumber}</div>
+                              <Link 
+                                to={`/vouchers/${voucher._id}`}
+                                className="text-lg font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                                title={`View voucher #${voucher.voucherNumber} details`}
+                              >
+                                #{voucher.voucherNumber}
+                              </Link>
                               <div className="text-sm text-gray-800 dark:text-gray-200">{voucher.clientName}</div>
                               {voucher.officeName && (
-                                <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                                (isAdmin || isAccountant) ? (
+                                  <Link 
+                                    to={`/office/${encodeURIComponent(voucher.officeName)}`}
+                                    className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors duration-200"
+                                    title={`View ${voucher.officeName} office details`}
+                                  >
+                                    {voucher.officeName}
+                                  </Link>
+                                ) : (
+                                  <div className="text-xs text-gray-600 dark:text-gray-400">{voucher.officeName}</div>
+                                )
                               )}
                             </div>
                           </div>
@@ -872,8 +913,18 @@ export default function TrashPage() {
                             <FaUser className="mr-2 text-blue-600 dark:text-blue-400" />
                             <div>
                               <div className="text-xs text-gray-600 dark:text-gray-400">Created By</div>
-                              <div className="text-sm text-gray-900 dark:text-gray-100">
-                                {voucher.createdBy ? voucher.createdBy.username : 'N/A'}
+                              <div className="text-sm">
+                                {voucher.createdBy ? (
+                                  <Link 
+                                    to={`/profile/${voucher.createdBy._id}`}
+                                    className="text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-100 hover:underline transition-colors duration-200"
+                                    title={`View ${voucher.createdBy.username}'s profile`}
+                                  >
+                                    {voucher.createdBy.username}
+                                  </Link>
+                                ) : (
+                                  <span className="text-gray-500 dark:text-gray-400">N/A</span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -912,31 +963,26 @@ export default function TrashPage() {
                             }
                           </div>
                           
-                          <div className="flex space-x-2">
-                            <Link to={`/vouchers/${voucher._id}`}>
-                              <CustomButton size="xs" variant="blue" icon={FaEye}>
+                          {canManageVoucher() && (
+                            <div className="flex space-x-2">
+                              <CustomButton 
+                                size="xs" 
+                                variant="green"
+                                onClick={() => handleRestoreClick(voucher)}
+                                icon={FaTrashRestore}
+                                title="Restore voucher"
+                              >
                               </CustomButton>
-                            </Link>
-                            
-                            {canManageVoucher() && (
-                              <>
-                                <CustomButton 
-                                  size="xs" 
-                                  variant="green"
-                                  onClick={() => handleRestoreClick(voucher)}
-                                  icon={FaTrashRestore}
-                                >
-                                </CustomButton>
-                                <CustomButton 
-                                  size="xs" 
-                                  variant="red"
-                                  onClick={() => handlePermanentDeleteClick(voucher)}
-                                  icon={FaTrash}
-                                >
-                                </CustomButton>
-                              </>
-                            )}
-                          </div>
+                              <CustomButton 
+                                size="xs" 
+                                variant="red"
+                                onClick={() => handlePermanentDeleteClick(voucher)}
+                                icon={FaTrash}
+                                title="Delete forever"
+                              >
+                              </CustomButton>
+                            </div>
+                          )}
                         </div>
                       </Card>
                     );

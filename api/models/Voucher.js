@@ -60,6 +60,8 @@ const voucherSchema = new mongoose.Schema({
         checkIn: Date,
         checkOut: Date,
         pax: Number,
+        adults: { type: Number, default: null },
+        children: { type: Number, default: null },
         confirmationNumber: String,
         // Add payment info to each hotel
         officeName: { type: String, default: '' },
@@ -74,6 +76,8 @@ const voucherSchema = new mongoose.Schema({
         from: String,
         to: String,
         pax: Number,
+        adults: { type: Number, default: null },
+        children: { type: Number, default: null },
         vehicleType: String,
         // Add payment info to each transfer
         officeName: { type: String, default: '' },

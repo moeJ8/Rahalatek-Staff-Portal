@@ -40,8 +40,8 @@ const CustomScrollbar = ({ children, className = '', maxHeight = "70vh" }) => {
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <div 
-        className={`custom-scrollbar overflow-auto ${className}`}
+      <div
+        className={`custom-scrollbar ${className.includes('overflow-visible') ? 'overflow-visible' : 'overflow-auto'} ${className}`}
         style={{ maxHeight }}
       >
         {children}

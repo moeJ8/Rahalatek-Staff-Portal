@@ -3,12 +3,14 @@ import { Card } from 'flowbite-react';
 import CustomScrollbar from './CustomScrollbar';
 import { FaCalculator, FaTimes } from 'react-icons/fa';
 
-const FinancialFloatingTotalsPanel = ({ 
+const FinancialFloatingTotalsPanel = ({
   viewType,
   totals,
   clientOfficeData,
   currency,
-  getCurrencySymbol
+  getCurrencySymbol,
+  totalClientRevenue,
+  totalSupplierRevenue
 }) => {
   // Local state for panel visibility and animations
   const [showFloatingTotals, setShowFloatingTotals] = useState(false);
@@ -36,6 +38,10 @@ const FinancialFloatingTotalsPanel = ({
     totalVouchers: clientOfficeData.reduce((sum, office) => sum + office.voucherCount, 0),
     totalRevenue: clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0)
   };
+
+  // Calculate profit
+  const profit = totalClientRevenue - totalSupplierRevenue;
+  const isProfitPositive = profit >= 0;
 
   return (
     <>
@@ -65,7 +71,7 @@ const FinancialFloatingTotalsPanel = ({
 
       {/* Mobile Modal - Centered */}
       {showFloatingTotals && (
-        <div className="block sm:hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div className="sm:hidden fixed inset-0 flex items-center justify-center p-4 z-50">
           <Card className={`w-[95vw] max-h-[85vh] overflow-y-auto p-3 shadow-2xl border-2 border-green-200 dark:border-emerald-700 dark:bg-slate-900 transform transition-all duration-300 ease-in-out will-change-transform ${
             showFloatingTotals && !isAnimating ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-8'
           } animate-in slide-in-from-bottom-5 fade-in`}>
@@ -90,37 +96,54 @@ const FinancialFloatingTotalsPanel = ({
                 <>
                   {/* Supplier Breakdown */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
                       <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400">Hotels</h4>
-                      <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                      <p className="text-sm font-bold text-blue-900 dark:text-blue-100">
                         {getCurrencySymbol(currency)}{totals.hotels.toFixed(2)}
                       </p>
                     </div>
-                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                    <div className="p-2 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-700">
                       <h4 className="text-xs font-semibold text-green-600 dark:text-green-400">Transfers</h4>
-                      <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                      <p className="text-sm font-bold text-green-900 dark:text-green-100">
                         {getCurrencySymbol(currency)}{totals.transfers.toFixed(2)}
                       </p>
                     </div>
-                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <div className="p-2 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
                       <h4 className="text-xs font-semibold text-purple-600 dark:text-purple-400">Trips</h4>
-                      <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                      <p className="text-sm font-bold text-purple-900 dark:text-purple-100">
                         {getCurrencySymbol(currency)}{totals.trips.toFixed(2)}
                       </p>
                     </div>
-                    <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <div className="p-2 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-700">
                       <h4 className="text-xs font-semibold text-orange-600 dark:text-orange-400">Flights</h4>
-                      <p className="text-sm font-bold text-orange-700 dark:text-orange-300">
+                      <p className="text-sm font-bold text-orange-900 dark:text-orange-100">
                         {getCurrencySymbol(currency)}{totals.flights.toFixed(2)}
                       </p>
                     </div>
                   </div>
 
                   {/* Total */}
-                  <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
-                    <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">Total Revenue</h4>
-                    <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                  <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Total Revenue</h4>
+                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
                       {getCurrencySymbol(currency)}{totals.total.toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Profit */}
+                  <div className={`p-3 rounded-lg border ${isProfitPositive
+                    ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                    : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                  }`}>
+                    <h4 className={`text-sm font-semibold ${isProfitPositive
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                    }`}>Profit</h4>
+                    <p className={`text-lg font-bold ${isProfitPositive
+                      ? 'text-green-900 dark:text-green-100'
+                      : 'text-red-900 dark:text-red-100'
+                    }`}>
+                      {getCurrencySymbol(currency)}{profit.toFixed(2)}
                     </p>
                   </div>
                 </>
@@ -128,30 +151,47 @@ const FinancialFloatingTotalsPanel = ({
                 <>
                   {/* Client Office Stats */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400">Clients</h4>
-                      <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                    <div className="p-2 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                      <h4 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Clients</h4>
+                      <p className="text-sm font-bold text-indigo-900 dark:text-indigo-100">
                         {clientStats.uniqueOffices}
                       </p>
                     </div>
-                    <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-700">
+                    <div className="p-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 rounded-lg border border-rose-200 dark:border-rose-700">
                       <h4 className="text-xs font-semibold text-rose-600 dark:text-rose-400">Direct</h4>
-                      <p className="text-sm font-bold text-rose-700 dark:text-rose-300">
+                      <p className="text-sm font-bold text-rose-900 dark:text-rose-100">
                         {clientStats.directClients}
                       </p>
                     </div>
-                    <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
-                      <h4 className="text-xs font-semibold text-green-600 dark:text-green-400">Vouchers</h4>
-                      <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                    <div className="p-2 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-lg border border-teal-200 dark:border-teal-700">
+                      <h4 className="text-xs font-semibold text-teal-600 dark:text-teal-400">Vouchers</h4>
+                      <p className="text-sm font-bold text-teal-900 dark:text-teal-100">
                         {clientStats.totalVouchers}
                       </p>
                     </div>
-                    <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                      <h4 className="text-xs font-semibold text-purple-600 dark:text-purple-400">Revenue</h4>
-                      <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                    <div className="p-2 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 rounded-lg border border-cyan-200 dark:border-cyan-700">
+                      <h4 className="text-xs font-semibold text-cyan-600 dark:text-cyan-400">Revenue</h4>
+                      <p className="text-sm font-bold text-cyan-900 dark:text-cyan-100">
                         {getCurrencySymbol(currency)}{clientStats.totalRevenue.toFixed(2)}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Profit for Clients */}
+                  <div className={`p-3 rounded-lg border ${isProfitPositive
+                    ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                    : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                  }`}>
+                    <h4 className={`text-sm font-semibold ${isProfitPositive
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                    }`}>Profit</h4>
+                    <p className={`text-lg font-bold ${isProfitPositive
+                      ? 'text-green-900 dark:text-green-100'
+                      : 'text-red-900 dark:text-red-100'
+                    }`}>
+                      {getCurrencySymbol(currency)}{profit.toFixed(2)}
+                    </p>
                   </div>
                 </>
               )}
@@ -188,37 +228,54 @@ const FinancialFloatingTotalsPanel = ({
                   <>
                     {/* Supplier Breakdown */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
                         <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Hotels</h4>
-                        <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                        <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
                           {getCurrencySymbol(currency)}{totals.hotels.toFixed(2)}
                         </p>
                       </div>
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                      <div className="p-3 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg border border-green-200 dark:border-green-700">
                         <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">Transfers</h4>
-                        <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                        <p className="text-lg font-bold text-green-900 dark:text-green-100">
                           {getCurrencySymbol(currency)}{totals.transfers.toFixed(2)}
                         </p>
                       </div>
-                      <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+                      <div className="p-3 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border border-purple-200 dark:border-purple-700">
                         <h4 className="text-sm font-semibold text-purple-600 dark:text-purple-400">Trips</h4>
-                        <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                        <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
                           {getCurrencySymbol(currency)}{totals.trips.toFixed(2)}
                         </p>
                       </div>
-                      <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700">
+                      <div className="p-3 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg border border-orange-200 dark:border-orange-700">
                         <h4 className="text-sm font-semibold text-orange-600 dark:text-orange-400">Flights</h4>
-                        <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                        <p className="text-lg font-bold text-orange-900 dark:text-orange-100">
                           {getCurrencySymbol(currency)}{totals.flights.toFixed(2)}
                         </p>
                       </div>
                     </div>
 
                     {/* Total */}
-                    <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
-                      <h4 className="text-base font-semibold text-gray-600 dark:text-gray-400">Total Revenue</h4>
-                      <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <h4 className="text-base font-semibold text-blue-600 dark:text-blue-400">Total Revenue</h4>
+                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                         {getCurrencySymbol(currency)}{totals.total.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Profit */}
+                    <div className={`p-4 rounded-lg border ${isProfitPositive
+                      ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                      : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                    }`}>
+                      <h4 className={`text-base font-semibold ${isProfitPositive
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                      }`}>Profit</h4>
+                      <p className={`text-2xl font-bold ${isProfitPositive
+                        ? 'text-green-900 dark:text-green-100'
+                        : 'text-red-900 dark:text-red-100'
+                      }`}>
+                        {getCurrencySymbol(currency)}{profit.toFixed(2)}
                       </p>
                     </div>
                   </>
@@ -226,30 +283,47 @@ const FinancialFloatingTotalsPanel = ({
                   <>
                     {/* Client Office Stats */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Total Clients</h4>
-                        <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                      <div className="p-3 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                        <h4 className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Total Clients</h4>
+                        <p className="text-lg font-bold text-indigo-900 dark:text-indigo-100">
                           {clientStats.uniqueOffices}
                         </p>
                       </div>
-                      <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-200 dark:border-rose-700">
+                      <div className="p-3 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 rounded-lg border border-rose-200 dark:border-rose-700">
                         <h4 className="text-sm font-semibold text-rose-600 dark:text-rose-400">Direct Clients</h4>
-                        <p className="text-lg font-bold text-rose-700 dark:text-rose-300">
+                        <p className="text-lg font-bold text-rose-900 dark:text-rose-100">
                           {clientStats.directClients}
                         </p>
                       </div>
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
-                        <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">Total Vouchers</h4>
-                        <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                      <div className="p-3 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-lg border border-teal-200 dark:border-teal-700">
+                        <h4 className="text-sm font-semibold text-teal-600 dark:text-teal-400">Total Vouchers</h4>
+                        <p className="text-lg font-bold text-teal-900 dark:text-teal-100">
                           {clientStats.totalVouchers}
                         </p>
                       </div>
-                      <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
-                        <h4 className="text-sm font-semibold text-purple-600 dark:text-purple-400">Total Revenue</h4>
-                        <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                      <div className="p-3 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 rounded-lg border border-cyan-200 dark:border-cyan-700">
+                        <h4 className="text-sm font-semibold text-cyan-600 dark:text-cyan-400">Total Revenue</h4>
+                        <p className="text-lg font-bold text-cyan-900 dark:text-cyan-100">
                           {getCurrencySymbol(currency)}{clientStats.totalRevenue.toFixed(2)}
                         </p>
                       </div>
+                    </div>
+
+                    {/* Profit for Clients */}
+                    <div className={`p-4 rounded-lg border ${isProfitPositive
+                      ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                      : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                    }`}>
+                      <h4 className={`text-base font-semibold ${isProfitPositive
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                      }`}>Profit</h4>
+                      <p className={`text-2xl font-bold ${isProfitPositive
+                        ? 'text-green-900 dark:text-green-100'
+                        : 'text-red-900 dark:text-red-100'
+                      }`}>
+                        {getCurrencySymbol(currency)}{profit.toFixed(2)}
+                      </p>
                     </div>
                   </>
                 )}

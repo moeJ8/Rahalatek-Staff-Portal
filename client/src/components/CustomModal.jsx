@@ -32,7 +32,7 @@ const CustomModal = ({
   return (
     <div className={`fixed top-0 right-0 left-0 z-50 h-screen overflow-y-auto overflow-x-hidden md:inset-0 ${modalEnter ? 'backdrop-blur-md' : 'backdrop-blur-0'} transition-all duration-300 flex items-center justify-center bg-gray-900 bg-opacity-50`}>
       <div className={`relative w-full p-4 max-w-md ${maxWidth} ${className}`}>
-        <div className={`relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[85vh] transform transition-all duration-300 ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+        <div className={`relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[85vh] transform transition-all duration-300 overflow-visible ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* Header */}
           <div className="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
             <div>
@@ -58,9 +58,9 @@ const CustomModal = ({
           </div>
           
           {/* Body */}
-          <div className="max-h-[70vh] overflow-hidden">
-            <CustomScrollbar>
-              <div className="p-4 space-y-4">
+          <div className="max-h-[70vh] overflow-visible">
+            <CustomScrollbar className="overflow-visible">
+              <div className="p-4 space-y-4 relative">
                 {children}
               </div>
             </CustomScrollbar>
