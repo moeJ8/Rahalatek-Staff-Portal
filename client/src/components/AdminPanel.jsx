@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
-import { Checkbox, Textarea, Card, Label, Alert, Select, Table, Accordion, Modal } from 'flowbite-react'
+import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -13,6 +13,8 @@ import Search from './Search'
 import CustomTable from './CustomTable'
 import CustomScrollbar from './CustomScrollbar'
 import CustomSelect from './Select'
+import CustomDatePicker from './CustomDatePicker'
+import CustomModal from './CustomModal'
 import TextInput from './TextInput'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
@@ -2478,7 +2480,7 @@ export default function AdminPanel() {
             }).sort((a, b) => {
                 if (a.year !== b.year) return b.year - a.year;
                 if (a.month !== b.month) return b.month.localeCompare(a.month);
-                return a.officeName.localeCompare(b.officeName);
+                return b.total - a.total;
             });
             
             setFinancialData(financialArray);
@@ -5186,6 +5188,7 @@ export default function AdminPanel() {
                             {financialFilters.viewType === 'providers' ? (
                                 <CustomTable
                                     headers={[
+                                        { label: '#', className: 'text-center' },
                                         { label: 'Office', className: '' },
                                         { label: 'Month', className: '' },
                                         { label: 'Hotels', className: 'text-blue-600 dark:text-blue-400' },
@@ -5196,8 +5199,11 @@ export default function AdminPanel() {
                                         { label: 'Vouchers', className: '' }
                                     ]}
                                     data={filteredFinancialData}
-                                    renderRow={(item) => (
+                                    renderRow={(item, index) => (
                                         <>
+                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
+                                                {index + 1}
+                                            </Table.Cell>
                                             <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
                                                 <Link 
                                                     to={`/office/${encodeURIComponent(item.officeName)}`}
@@ -5239,14 +5245,18 @@ export default function AdminPanel() {
                             ) : (
                                 <CustomTable
                                     headers={[
+                                        { label: '#', className: 'text-center' },
                                         { label: 'Client', className: '' },
                                         { label: 'Month', className: '' },
                                         { label: 'Total Amount', className: 'text-gray-900 dark:text-white' },
                                         { label: 'Vouchers', className: 'text-gray-900 dark:text-white' }
                                     ]}
                                     data={clientOfficeData}
-                                    renderRow={(office) => (
+                                    renderRow={(office, index) => (
                                         <>
+                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
+                                                {index + 1}
+                                            </Table.Cell>
                                             <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
                                                 <div className="flex items-center gap-2">
                                                     <Link 
@@ -5457,7 +5467,7 @@ export default function AdminPanel() {
                                                 inline-flex items-center justify-center rounded-lg 
                                                 ${debt.status === 'OPEN' 
                                                     ? 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
-                                                    : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                    : 'bg-gray-500 text-white border border-gray-600 shadow-md'
                                                 }
                                                 text-[11px] px-2 py-0.5 font-semibold
                                                 transition-all duration-200 
@@ -6670,43 +6680,29 @@ export default function AdminPanel() {
                             </Modal>
 
                             {/* Debt Modal */}
-                            <Modal
-                                show={showDebtModal}
+                            <CustomModal
+                                isOpen={showDebtModal}
                                 onClose={() => setShowDebtModal(false)}
-                                size="lg"
-                                popup
-                                theme={{
-                                    content: {
-                                        base: "relative h-full w-full p-4 h-auto",
-                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
-                                    }
-                                }}
+                                title={editingDebt ? 'Edit Debt' : 'Add New Debt'}
+                                maxWidth="md:max-w-2xl"
                             >
-                                <Modal.Header>
-                                    <div className="text-center">
-                                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-                                            {editingDebt ? 'Edit Debt' : 'Add New Debt'}
-                                        </h3>
-                                    </div>
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <form onSubmit={handleDebtSubmit} className="space-y-4">
+                                <form onSubmit={handleDebtSubmit} className="space-y-4">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <Label htmlFor="debt-office" value="Office" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id="debt-office"
+                                                    label="Office"
                                                     value={debtForm.officeName}
-                                                    onChange={(e) => setDebtForm({ ...debtForm, officeName: e.target.value })}
+                                                    onChange={(value) => setDebtForm({ ...debtForm, officeName: value })}
+                                                    options={[
+                                                        { value: "", label: "Select an office" },
+                                                        ...offices.map(office => ({
+                                                            value: office.name,
+                                                            label: office.name
+                                                        }))
+                                                    ]}
                                                     required
-                                                >
-                                                    <option value="">Select an office</option>
-                                                    {offices.map(office => (
-                                                        <option key={office._id} value={office.name}>
-                                                            {office.name}
-                                                        </option>
-                                                    ))}
-                                                </Select>
+                                                />
                                             </div>
                                             <div>
                                                 <CustomSelect
@@ -6737,17 +6733,18 @@ export default function AdminPanel() {
                                                 />
                                             </div>
                                             <div>
-                                                <Label htmlFor="debt-currency" value="Currency" className="mb-2" />
-                                                <Select
+                                                <CustomSelect
                                                     id="debt-currency"
+                                                    label="Currency"
                                                     value={debtForm.currency}
-                                                    onChange={(e) => setDebtForm({ ...debtForm, currency: e.target.value })}
+                                                    onChange={(value) => setDebtForm({ ...debtForm, currency: value })}
+                                                    options={[
+                                                        { value: "USD", label: "USD ($)" },
+                                                        { value: "EUR", label: "EUR (€)" },
+                                                        { value: "TRY", label: "TRY (₺)" }
+                                                    ]}
                                                     required
-                                                >
-                                                    <option value="USD">USD ($)</option>
-                                                    <option value="EUR">EUR (€)</option>
-                                                    <option value="TRY">TRY (₺)</option>
-                                                </Select>
+                                                />
                                             </div>
                                         </div>
 
@@ -6762,19 +6759,20 @@ export default function AdminPanel() {
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="debt-due-date" value="Due Date (Optional)" className="mb-2" />
-                                            <TextInput
+                                            <CustomDatePicker
                                                 id="debt-due-date"
-                                                type="date"
+                                                label="Due Date (Optional)"
                                                 value={debtForm.dueDate}
-                                                onChange={(e) => setDebtForm({ ...debtForm, dueDate: e.target.value })}
+                                                onChange={(value) => setDebtForm({ ...debtForm, dueDate: value })}
+                                                placeholder="DD/MM/YYYY"
                                             />
                                         </div>
 
                                         <div>
                                             <Label htmlFor="debt-notes" value="Notes (Optional)" className="mb-2" />
-                                            <Textarea
+                                            <TextInput
                                                 id="debt-notes"
+                                                as="textarea"
                                                 rows={3}
                                                 value={debtForm.notes}
                                                 onChange={(e) => setDebtForm({ ...debtForm, notes: e.target.value })}
@@ -6799,9 +6797,8 @@ export default function AdminPanel() {
                                                 {debtLoading ? 'Saving...' : (editingDebt ? 'Update Debt' : 'Create Debt')}
                                             </CustomButton>
                                         </div>
-                                    </form>
-                                </Modal.Body>
-                            </Modal>
+                                </form>
+                            </CustomModal>
 
                             {/* Delete Debt Confirmation Modal */}
                             <DeleteConfirmationModal

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiChevronDown, HiLogout, HiCog, HiUser } from 'react-icons/hi';
-import { FaQrcode, FaCalendarAlt } from 'react-icons/fa';
+import { HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
+import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane } from 'react-icons/fa';
 import UserBadge from './UserBadge';
 
 export default function UserDropdown({ user, onLogout, onCalendarClick }) {
@@ -27,9 +27,14 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     setDropdownOpen(!dropdownOpen);
   };
 
-  const handleDashboardClick = () => {
+  const handleHotelsClick = () => {
     setDropdownOpen(false);
-    navigate('/dashboard');
+    navigate('/hotels');
+  };
+
+  const handleToursClick = () => {
+    setDropdownOpen(false);
+    navigate('/tours');
   };
 
   const handleProfileClick = () => {
@@ -127,15 +132,21 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
               Profile
             </button>
 
-            {(user.isAdmin || user.isAccountant) && (
-              <button
-                onClick={handleDashboardClick}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
-              >
-                <HiCog className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
-                Dashboard
-              </button>
-            )}
+            <button
+              onClick={handleHotelsClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            >
+              <FaHotel className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              Hotels
+            </button>
+
+            <button
+              onClick={handleToursClick}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            >
+              <FaPlane className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              Tours
+            </button>
 
             <button
               onClick={handleAttendanceClick}

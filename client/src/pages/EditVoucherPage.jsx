@@ -1029,6 +1029,8 @@ export default function EditVoucherPage() {
         count: Number(trip.count),
         type: trip.type,
         pax: Number(trip.pax),
+        adults: trip.adults,
+        children: trip.children,
         officeName: trip.officeName || '',
         price: Number(trip.price) || 0
       }));

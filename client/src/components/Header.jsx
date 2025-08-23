@@ -199,7 +199,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-20">
-            <Link to="/home" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"} 
                 alt="Logo" 
@@ -217,42 +217,29 @@ export default function Header() {
             {user ? (
               <>
                 <Link 
-                  to="/home" 
+                  to="/" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/home') 
+                    isActive('/') 
                       ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                   }`}
                 >
                   Home
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/home') ? 'w-full' : 'w-0 group-hover:w-full'
+                    isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
                 <Link 
-                  to="/hotels" 
+                  to="/booking" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/hotels') 
+                    isActive('/booking') 
                       ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                   }`}
                 >
-                  Hotels
+                  Booking
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}></span>
-                </Link>
-                <Link 
-                  to="/tours" 
-                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/tours') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                  }`}
-                >
-                  Tours
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/tours') ? 'w-full' : 'w-0 group-hover:w-full'
+                    isActive('/booking') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
                 <Link 
@@ -268,6 +255,21 @@ export default function Header() {
                     isActive('/vouchers') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
+                {(user?.isAdmin || user?.isAccountant) && (
+                  <Link 
+                    to="/dashboard" 
+                    className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                      isActive('/dashboard') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                    }`}
+                  >
+                    Dashboard
+                    <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                      isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}></span>
+                  </Link>
+                )}
                 <CustomDarkModeToggle />
                 <NotificationDropdown />
                 {renderAttendanceIndicators()}
@@ -332,47 +334,32 @@ export default function Header() {
               {user ? (
                 <>
                   <Link 
-                    to="/home"
+                    to="/"
                     onClick={closeMobileMenu}
                     className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
-                      isActive('/home') 
+                      isActive('/') 
                         ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                     }`}
                   >
                     Home
                     <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/home') ? 'w-8' : 'w-0 group-hover:w-8'
+                      isActive('/') ? 'w-8' : 'w-0 group-hover:w-8'
                     }`}></span>
                   </Link>
                   
                   <Link 
-                    to="/hotels"
+                    to="/booking"
                     onClick={closeMobileMenu}
                     className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
-                      isActive('/hotels') 
+                      isActive('/booking') 
                         ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                     }`}
                   >
-                    Hotels
+                    Booking
                     <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/hotels') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
-                  </Link>
-                  
-                  <Link 
-                    to="/tours"
-                    onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
-                      isActive('/tours') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                    }`}
-                  >
-                    Tours
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/tours') ? 'w-8' : 'w-0 group-hover:w-8'
+                      isActive('/booking') ? 'w-8' : 'w-0 group-hover:w-8'
                     }`}></span>
                   </Link>
                   
@@ -388,21 +375,6 @@ export default function Header() {
                     Vouchers
                     <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                       isActive('/vouchers') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
-                  </Link>
-                  
-                  <Link 
-                    to="/profile"
-                    onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
-                      isActive('/profile') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                    }`}
-                  >
-                    Profile
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/profile') ? 'w-8' : 'w-0 group-hover:w-8'
                     }`}></span>
                   </Link>
                   
@@ -422,7 +394,22 @@ export default function Header() {
                       }`}></span>
                     </Link>
                   )}
-
+                  
+                  <Link 
+                    to="/profile"
+                    onClick={closeMobileMenu}
+                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                      isActive('/profile') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                    }`}
+                  >
+                    Profile
+                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                      isActive('/profile') ? 'w-8' : 'w-0 group-hover:w-8'
+                    }`}></span>
+                  </Link>
+                  
                   <Link 
                     to="/attendance"
                     onClick={closeMobileMenu}

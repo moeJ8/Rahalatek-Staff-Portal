@@ -10,4 +10,7 @@ router.use(verifyToken);
 // Get user analytics data
 router.get('/user/:userId', analyticsController.getUserAnalytics);
 
+// Get dashboard statistics
+router.get('/dashboard-stats', analyticsController.getDashboardStats);
+
 module.exports = router;

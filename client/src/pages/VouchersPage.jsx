@@ -27,6 +27,8 @@ export default function VouchersPage() {
   const [uniqueUsers, setUniqueUsers] = useState([]);
   const [officeFilter, setOfficeFilter] = useState('');
   const [uniqueOffices, setUniqueOffices] = useState([]);
+  const [yearFilter, setYearFilter] = useState('');
+  const [availableYears, setAvailableYears] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
@@ -222,6 +224,14 @@ export default function VouchersPage() {
         .sort();
       
       setUniqueOffices(offices);
+      
+      // Extract unique years for filter dropdown (from created date)
+      const years = vouchersToShow
+        .map(voucher => new Date(voucher.createdAt).getFullYear())
+        .filter((year, index, arr) => arr.indexOf(year) === index)
+        .sort((a, b) => b - a); // Sort descending (newest first)
+      
+      setAvailableYears(years);
       setError('');
     } catch (err) {
       console.error('Error fetching vouchers:', err);
@@ -304,8 +314,9 @@ export default function VouchersPage() {
     
     const monthIndex = monthNames.indexOf(range);
     if (monthIndex !== -1) {
-      // Check if the date is in the specified month of the current year
-      return date.getMonth() === monthIndex && date.getFullYear() === now.getFullYear();
+      // If year filter is active, use that year; otherwise use current year
+      const targetYear = yearFilter ? parseInt(yearFilter) : now.getFullYear();
+      return date.getMonth() === monthIndex && date.getFullYear() === targetYear;
     }
     
     // Handle year-based filtering
@@ -327,7 +338,7 @@ export default function VouchersPage() {
   useEffect(() => {
     const applyFilters = async () => {
       // Show loading if there are active filters
-      const hasActiveFilters = searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter;
+      const hasActiveFilters = searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter;
       
       if (hasActiveFilters && vouchers.length > 0) {
         setFilterLoading(true);
@@ -363,6 +374,13 @@ export default function VouchersPage() {
         );
       }
       
+      // Apply year filter
+      if (yearFilter) {
+        filtered = filtered.filter(voucher => 
+          new Date(voucher.createdAt).getFullYear() === parseInt(yearFilter)
+        );
+      }
+      
       // Apply creation date filter
       if (dateFilter) {
         filtered = filtered.filter(voucher => 
@@ -389,7 +407,7 @@ export default function VouchersPage() {
     };
 
     applyFilters();
-  }, [searchQuery, userFilter, officeFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
+  }, [searchQuery, userFilter, officeFilter, yearFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -427,6 +445,7 @@ export default function VouchersPage() {
     setSearchQuery('');
     setUserFilter('');
     setOfficeFilter('');
+    setYearFilter('');
     setDateFilter('');
     setCustomDate('');
     setArrivalDateFilter('');
@@ -552,6 +571,25 @@ export default function VouchersPage() {
 
           {/* Filters Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row gap-2 sm:gap-4 lg:justify-center">
+            {/* Year Filter */}
+            <div className="flex gap-2">
+              <div className="w-full sm:w-48">
+                <Select
+                  id="yearFilter"
+                  value={yearFilter}
+                  onChange={(value) => setYearFilter(value)}
+                  placeholder="Year - All Years"
+                  options={[
+                    { value: '', label: 'Year - All Years' },
+                    ...availableYears.map(year => ({
+                      value: year.toString(),
+                      label: year.toString()
+                    }))
+                  ]}
+                />
+              </div>
+            </div>
+
             {/* Creation Date Filter */}
             <div className="flex gap-2">
               <div className="w-full sm:w-48">
@@ -574,8 +612,6 @@ export default function VouchersPage() {
                     { value: 'october', label: 'Created - October' },
                     { value: 'november', label: 'Created - November' },
                     { value: 'december', label: 'Created - December' },
-                    { value: 'this-year', label: 'Created - This Year' },
-                    { value: 'last-year', label: 'Created - Last Year' },
                     { value: 'custom', label: 'Created - Custom Date' }
                   ]}
                 />
@@ -615,8 +651,6 @@ export default function VouchersPage() {
                     { value: 'october', label: 'Arrival - October' },
                     { value: 'november', label: 'Arrival - November' },
                     { value: 'december', label: 'Arrival - December' },
-                    { value: 'this-year', label: 'Arrival - This Year' },
-                    { value: 'last-year', label: 'Arrival - Last Year' },
                     { value: 'custom', label: 'Arrival - Custom Date' }
                   ]}
                 />
@@ -689,7 +723,7 @@ export default function VouchersPage() {
             )}
 
             {/* Clear Filters Button */}
-            {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+            {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
                 <button
                   onClick={handleClearFilters}
@@ -703,7 +737,7 @@ export default function VouchersPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+          {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {searchQuery && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -720,14 +754,19 @@ export default function VouchersPage() {
                   Office: {officeFilter}
                 </span>
               )}
+              {yearFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                  Year: {yearFilter}
+                </span>
+              )}
               {dateFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                  Created: {dateFilter === 'custom' ? formatDate(customDate) : formatFilterLabel(dateFilter)}
+                  Created: {dateFilter === 'custom' ? formatDate(customDate) : formatFilterLabel(dateFilter)}{yearFilter && ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'].includes(dateFilter) ? ` ${yearFilter}` : ''}
                 </span>
               )}
               {arrivalDateFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                  Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : formatFilterLabel(arrivalDateFilter)}
+                  Arrival: {arrivalDateFilter === 'custom' ? formatDate(customArrivalDate) : formatFilterLabel(arrivalDateFilter)}{yearFilter && ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'].includes(arrivalDateFilter) ? ` ${yearFilter}` : ''}
                 </span>
               )}
               {statusFilter && (
@@ -751,10 +790,15 @@ export default function VouchersPage() {
           </div>
         ) : filteredVouchers.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            {(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+            {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
           </div>
         ) : (
           <>
+            {/* Voucher Count Display */}
+            <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+              Showing {filteredVouchers.length} voucher{filteredVouchers.length !== 1 ? 's' : ''}
+            </div>
+
             {/* Desktop Table View (visible on sm screens and up) */}
             <div className="hidden sm:block">
               <CustomScrollbar>
@@ -939,7 +983,7 @@ export default function VouchersPage() {
                       </>
                     );
                   }}
-                  emptyMessage={(searchQuery || userFilter || officeFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
+                  emptyMessage={(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter) ? 'No vouchers match your filter criteria.' : 'No vouchers found. Click "Create New Voucher" to create one.'}
                 />
               </CustomScrollbar>
             </div>
@@ -1187,6 +1231,9 @@ export default function VouchersPage() {
           officeFilter={officeFilter}
           setOfficeFilter={setOfficeFilter}
           uniqueOffices={uniqueOffices}
+          yearFilter={yearFilter}
+          setYearFilter={setYearFilter}
+          availableYears={availableYears}
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
           customDate={customDate}

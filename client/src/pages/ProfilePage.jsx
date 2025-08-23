@@ -12,6 +12,7 @@ import CustomSelect from '../components/Select';
 import UserAnalytics from '../components/UserAnalytics';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomModal from '../components/CustomModal';
+import CustomScrollbar from '../components/CustomScrollbar';
 import { getMyBonuses, getUserBonuses } from '../utils/profileApi';
 
 const securityQuestions = [
@@ -1195,7 +1196,7 @@ export default function ProfilePage() {
                     isOpen={salaryModalOpen}
                     onClose={closeSalariesModal}
                     title="Monthly Salaries"
-                    size="md"
+                    size="lg"
                 >
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
@@ -1231,27 +1232,29 @@ export default function ProfilePage() {
                             </div>
 
                             {/* Breakdown table */}
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full text-sm">
-                                    <thead>
-                                        <tr className="text-left text-gray-600 dark:text-gray-300">
-                                            <th className="py-2 pr-4">Month</th>
-                                            <th className="py-2 pr-4">Base</th>
-                                            <th className="py-2 pr-4">Bonus</th>
-                                            <th className="py-2 pr-4">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-gray-800 dark:text-gray-100">
-                                        {computeMonthlySalaryData(selectedSalaryYear).map((row, idx) => (
-                                            <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
-                                                <td className="py-2 pr-4">{row.month}</td>
-                                                <td className="py-2 pr-4">{row.base} {row.baseCurrency || row.currency || salaryData.salaryCurrency}</td>
-                                                <td className="py-2 pr-4">{row.bonus} {row.bonusCurrency || row.currency || salaryData.salaryCurrency}</td>
-                                                <td className="py-2 pr-4 font-semibold">{row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency}</td>
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <CustomScrollbar maxHeight="256px">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                                            <tr className="text-left text-gray-600 dark:text-gray-300">
+                                                <th className="py-3 px-4 font-medium">Month</th>
+                                                <th className="py-3 px-4 font-medium">Base</th>
+                                                <th className="py-3 px-4 font-medium">Bonus</th>
+                                                <th className="py-3 px-4 font-medium">Total</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="text-gray-800 dark:text-gray-100">
+                                            {computeMonthlySalaryData(selectedSalaryYear).map((row, idx) => (
+                                                <tr key={idx} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                    <td className="py-3 px-4">{row.month}</td>
+                                                    <td className="py-3 px-4 whitespace-nowrap">{row.base} {row.baseCurrency || row.currency || salaryData.salaryCurrency}</td>
+                                                    <td className="py-3 px-4 whitespace-nowrap">{row.bonus} {row.bonusCurrency || row.currency || salaryData.salaryCurrency}</td>
+                                                    <td className="py-3 px-4 font-semibold whitespace-nowrap">{row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </CustomScrollbar>
                             </div>
                         </div>
                 </CustomModal>

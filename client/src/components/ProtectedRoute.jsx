@@ -19,7 +19,7 @@ export default function ProtectedRoute({ requireAdmin, requireFullAdmin }) {
   }
   
   if ((requireAdmin || requireFullAdmin) && !hasRequiredRole) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

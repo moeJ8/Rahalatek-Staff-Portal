@@ -76,7 +76,10 @@ export default function SignInPage() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      navigate('/home', { replace: true });
+      // Trigger auth state update
+      window.dispatchEvent(new Event('auth-change'));
+      
+      navigate('/', { replace: true });
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.isPendingApproval) {
         setError('Your account is pending approval by an administrator.');

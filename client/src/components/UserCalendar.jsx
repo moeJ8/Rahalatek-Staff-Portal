@@ -284,7 +284,7 @@ export default function UserCalendar({ isOpen, onClose }) {
 
               {/* Summary Statistics */}
               <div className="text-center">
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-3 mb-4 sm:mb-6">
                   <div className="bg-gray-50 dark:bg-gray-800/50 p-2 sm:p-3 rounded-lg">
                     <div className="text-base sm:text-lg font-semibold text-gray-600 dark:text-gray-400">
                       {calendarData.summary.totalWorkingDays}
@@ -314,6 +314,53 @@ export default function UserCalendar({ isOpen, onClose }) {
                       {calendarData.summary.attendanceRate}%
                     </div>
                     <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">Attendance Rate</div>
+                  </div>
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-2 sm:p-3 rounded-lg">
+                    <div className="text-base sm:text-lg font-semibold text-purple-600 dark:text-purple-400">
+                      {(() => {
+                        const today = new Date();
+                        const isCurrentYear = today.getFullYear() === selectedYear;
+                        
+                        if (!isCurrentYear) {
+                          // For past years, show 0. For future years, show total year working days
+                          const isPastYear = selectedYear < today.getFullYear();
+                          if (isPastYear) return '0';
+                          
+                          // For future years, calculate total working days for the year
+                          let totalYearDays = 0;
+                          for (let month = 0; month < 12; month++) {
+                            const monthData = calendarData.calendar[month] || {};
+                            totalYearDays += Object.values(monthData).filter(day => day.isWorkingDay).length;
+                          }
+                          return totalYearDays;
+                        }
+                        
+                        // For current year, count remaining working days from today onwards
+                        const currentMonth = today.getMonth();
+                        const currentDay = today.getDate();
+                        let remainingDays = 0;
+                        
+                        // Count remaining days in current month (from today onwards)
+                        const currentMonthData = calendarData.calendar[currentMonth] || {};
+                        const daysInCurrentMonth = new Date(selectedYear, currentMonth + 1, 0).getDate();
+                        
+                        for (let day = currentDay; day <= daysInCurrentMonth; day++) {
+                          const dayData = currentMonthData[day];
+                          if (dayData && dayData.isWorkingDay) {
+                            remainingDays++;
+                          }
+                        }
+                        
+                        // Count all working days in remaining months of the year
+                        for (let month = currentMonth + 1; month < 12; month++) {
+                          const monthData = calendarData.calendar[month] || {};
+                          remainingDays += Object.values(monthData).filter(day => day.isWorkingDay).length;
+                        }
+                        
+                        return remainingDays;
+                      })()}
+                    </div>
+                    <div className="text-xs sm:text-sm text-purple-700 dark:text-purple-300">Days Left</div>
                   </div>
                 </div>
               </div>
@@ -350,6 +397,33 @@ export default function UserCalendar({ isOpen, onClose }) {
                     return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
                   })()}
                 </span>
+                <div className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
+                  {(() => {
+                    if (!calendarData) return '';
+                    const monthData = calendarData.calendar[currentMonth] || {};
+                    const today = new Date();
+                    const isCurrentMonth = today.getMonth() === currentMonth && today.getFullYear() === selectedYear;
+                    
+                    if (!isCurrentMonth) {
+                      // For past/future months, don't show remaining days
+                      return '';
+                    }
+                    
+                    // For current month, count remaining working days from today onwards
+                    const currentDay = today.getDate();
+                    const daysInMonth = new Date(selectedYear, currentMonth + 1, 0).getDate();
+                    let remainingDays = 0;
+                    
+                    for (let day = currentDay; day <= daysInMonth; day++) {
+                      const dayData = monthData[day];
+                      if (dayData && dayData.isWorkingDay) {
+                        remainingDays++;
+                      }
+                    }
+                    
+                    return `${remainingDays} left`;
+                  })()}
+                </div>
               </div>
 
               {/* Calendar Grid */}

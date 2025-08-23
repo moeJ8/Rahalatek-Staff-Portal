@@ -19,17 +19,17 @@ import {
 } from '../utils/pricingUtils'
 import { generateBookingMessage } from '../utils/messageGenerator'
 
-export default function WorkerForm() {
+export default function BookingForm() {
     // Initial state from localStorage or defaults
     const getSavedState = () => {
       try {
-        const savedData = localStorage.getItem('workerFormData');
+        const savedData = localStorage.getItem('bookingFormData');
         if (savedData) {
           return JSON.parse(savedData);
         }
       } catch (err) {
         console.error('Failed to load saved form data:', err);
-        localStorage.removeItem('workerFormData');
+        localStorage.removeItem('bookingFormData');
       }
       return null;
     };
@@ -99,7 +99,7 @@ export default function WorkerForm() {
       _setSelectedAirport('');
       
       // Clear localStorage
-      localStorage.removeItem('workerFormData');
+      localStorage.removeItem('bookingFormData');
     };
 
     // Save form data to localStorage whenever relevant state changes
@@ -125,7 +125,7 @@ export default function WorkerForm() {
             selectedAirport
           };
           
-          localStorage.setItem('workerFormData', JSON.stringify(formData));
+          localStorage.setItem('bookingFormData', JSON.stringify(formData));
         } catch (err) {
           console.error('Failed to save form data:', err);
         }
@@ -464,7 +464,7 @@ export default function WorkerForm() {
     setMessage(message);
     
     // Clear the saved form data after successfully generating the message
-    localStorage.removeItem('workerFormData');
+    localStorage.removeItem('bookingFormData');
   };
 
   const allRoomAllocationsComplete = () => {

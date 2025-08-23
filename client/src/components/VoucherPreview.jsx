@@ -21,18 +21,14 @@ const getCurrencySymbol = (currency) => {
 // Helper function to format passenger display
 const formatPassengers = (pax, adults = null, children = null) => {
   if (adults !== null && children !== null && (adults > 0 || children > 0)) {
-    // If adults and children are specified, show breakdown
-    const adultText = adults === 1 ? 'adult' : 'adults';
-    const childText = children === 1 ? 'child' : 'children';
-    return `${pax} ${adults} ${adultText} ${children} ${childText}`;
+    // If adults and children are specified, show breakdown in compact format
+    return `${pax} (${adults}A ${children}C)`;
   } else if (adults !== null && adults > 0) {
     // If only adults are specified
-    const adultText = adults === 1 ? 'adult' : 'adults';
-    return `${pax} ${adults} ${adultText}`;
+    return `${pax} (${adults}A)`;
   } else if (children !== null && children > 0) {
     // If only children are specified
-    const childText = children === 1 ? 'child' : 'children';
-    return `${pax} ${children} ${childText}`;
+    return `${pax} (${children}C)`;
   } else {
     // Default behavior - just show PAX number
     return pax;
@@ -471,7 +467,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: hotel.pax,
             breakdown: hotel.adults !== null && hotel.children !== null && hotel.children > 0
-              ? ` (${hotel.adults} ${hotel.adults === 1 ? 'adult' : 'adults'} ${hotel.children} ${hotel.children === 1 ? 'child' : 'children'})`
+              ? ` (${hotel.adults}A ${hotel.children}C)`
               : null
           },
           hotel.confirmationNumber || ''
@@ -590,7 +586,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: transfer.pax,
             breakdown: transfer.adults !== null && transfer.children !== null && transfer.children > 0
-              ? ` (${transfer.adults} ${transfer.adults === 1 ? 'adult' : 'adults'} ${transfer.children} ${transfer.children === 1 ? 'child' : 'children'})`
+              ? ` (${transfer.adults}A ${transfer.children}C)`
               : null
           },
           transfer.vehicleType
@@ -705,7 +701,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: trip.pax,
             breakdown: trip.adults !== null && trip.children !== null && trip.children > 0
-              ? ` (${trip.adults} ${trip.adults === 1 ? 'adult' : 'adults'} ${trip.children} ${trip.children === 1 ? 'child' : 'children'})`
+              ? ` (${trip.adults}A ${trip.children}C)`
               : null
           }
         ];
@@ -1519,7 +1515,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {hotel.pax}
                         {hotel.adults !== null && hotel.children !== null && hotel.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({`${hotel.adults} ${hotel.adults === 1 ? 'adult' : 'adults'} ${hotel.children} ${hotel.children === 1 ? 'child' : 'children'}`})
+                            ({hotel.adults}A {hotel.children}C)
                           </span>
                         )}
                       </div>
@@ -1594,7 +1590,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {transfer.pax}
                         {transfer.adults !== null && transfer.children !== null && transfer.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({`${transfer.adults} ${transfer.adults === 1 ? 'adult' : 'adults'} ${transfer.children} ${transfer.children === 1 ? 'child' : 'children'}`})
+                            ({transfer.adults}A {transfer.children}C)
                           </span>
                         )}
                       </div>
@@ -1662,7 +1658,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {trip.pax}
                         {trip.adults !== null && trip.children !== null && trip.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({`${trip.adults} ${trip.adults === 1 ? 'adult' : 'adults'} ${trip.children} ${trip.children === 1 ? 'child' : 'children'}`})
+                            ({trip.adults}A {trip.children}C)
                           </span>
                         )}
                       </div>

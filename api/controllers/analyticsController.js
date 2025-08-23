@@ -1,4 +1,5 @@
 const Voucher = require('../models/Voucher');
+const OfficePayment = require('../models/OfficePayment');
 const mongoose = require('mongoose');
 
 // Get user analytics data
@@ -269,5 +270,200 @@ exports.getUserAnalytics = async (req, res) => {
     } catch (err) {
         console.error('Error fetching user analytics:', err);
         res.status(500).json({ message: 'Error fetching analytics data' });
+    }
+};
+
+// Get dashboard statistics
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const { userId, isAdmin, isAccountant } = req.user;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        // Start of current month
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        let vouchersQuery = {
+            isDeleted: { $ne: true }
+        };
+        
+        // For regular users, only show their own vouchers
+        if (!isAdmin && !isAccountant) {
+            vouchersQuery.createdBy = new mongoose.Types.ObjectId(userId);
+        }
+        
+        // Today's arrivals
+        const todayArrivals = await Voucher.countDocuments({
+            ...vouchersQuery,
+            arrivalDate: {
+                $gte: today,
+                $lte: todayEnd
+            }
+        });
+        
+        // Today's departures
+        const todayDepartures = await Voucher.countDocuments({
+            ...vouchersQuery,
+            departureDate: {
+                $gte: today,
+                $lte: todayEnd
+            }
+        });
+        
+        // Active vouchers (status: await only)
+        const activeVouchers = await Voucher.countDocuments({
+            ...vouchersQuery,
+            status: 'await'
+        });
+        
+        let stats = {
+            todayArrivals,
+            todayDepartures,
+            activeVouchers
+        };
+        
+        // Additional stats for admin/accountant
+        if (isAdmin || isAccountant) {
+            // This month's revenue by currency
+            const monthlyRevenue = await Voucher.aggregate([
+                {
+                    $match: {
+                        isDeleted: { $ne: true },
+                        createdAt: { $gte: monthStart },
+                        totalAmount: { $exists: true, $ne: null }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$currency',
+                        totalAmount: { $sum: '$totalAmount' },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { totalAmount: -1 }
+                }
+            ]);
+            
+            // Get main currency (highest revenue)
+            const mainRevenue = monthlyRevenue.length > 0 ? monthlyRevenue[0] : null;
+            stats.thisMonthRevenue = mainRevenue ? {
+                amount: mainRevenue.totalAmount,
+                currency: mainRevenue._id || 'USD',
+                count: mainRevenue.count
+            } : { amount: 0, currency: 'USD', count: 0 };
+
+            // Calculate supplier costs from voucher payments (matching AdminPanel logic)
+            const monthlyVouchers = await Voucher.find({
+                isDeleted: { $ne: true },
+                createdAt: { $gte: monthStart }
+            });
+
+            // Calculate supplier costs by aggregating payment data by currency
+            const supplierCostsByCurrency = {};
+            
+            monthlyVouchers.forEach(voucher => {
+                const currency = voucher.currency || 'USD';
+                
+                if (!supplierCostsByCurrency[currency]) {
+                    supplierCostsByCurrency[currency] = 0;
+                }
+                
+                // Sum all payment amounts from the old payments structure
+                if (voucher.payments) {
+                    Object.keys(voucher.payments).forEach(paymentType => {
+                        const payment = voucher.payments[paymentType];
+                        if (payment.officeName && payment.price > 0) {
+                            supplierCostsByCurrency[currency] += payment.price;
+                        }
+                    });
+                }
+                
+                // Sum individual service payments (new structure)
+                ['hotels', 'transfers', 'flights'].forEach(serviceType => {
+                    if (voucher[serviceType] && Array.isArray(voucher[serviceType])) {
+                        voucher[serviceType].forEach(service => {
+                            if (service.officeName && service.price > 0) {
+                                supplierCostsByCurrency[currency] += service.price;
+                            }
+                        });
+                    }
+                });
+                
+                // Handle trips (mixed structure)
+                if (voucher.trips && Array.isArray(voucher.trips)) {
+                    voucher.trips.forEach(trip => {
+                        if (trip.officeName && trip.price > 0) {
+                            supplierCostsByCurrency[currency] += trip.price;
+                        }
+                    });
+                }
+            });
+
+            // Get main currency supplier costs (same currency as revenue)
+            const mainCurrency = mainRevenue ? mainRevenue._id || 'USD' : 'USD';
+            const supplierCosts = supplierCostsByCurrency[mainCurrency] || 0;
+            const clientRevenue = mainRevenue ? mainRevenue.totalAmount : 0;
+            const profit = clientRevenue - supplierCosts;
+
+            stats.thisMonthSupplierCosts = {
+                amount: supplierCosts,
+                currency: mainCurrency,
+                count: mainRevenue ? mainRevenue.count : 0
+            };
+
+            stats.thisMonthProfit = {
+                amount: profit,
+                currency: mainCurrency,
+                count: mainRevenue ? mainRevenue.count : 0
+            };
+            
+            // Pending payments (vouchers without payment date)
+            const pendingPayments = await Voucher.aggregate([
+                {
+                    $match: {
+                        isDeleted: { $ne: true },
+                        paymentDate: null,
+                        status: { $in: ['await', 'arrived'] },
+                        totalAmount: { $exists: true, $ne: null }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$currency',
+                        totalAmount: { $sum: '$totalAmount' },
+                        count: { $sum: 1 }
+                    }
+                },
+                {
+                    $sort: { totalAmount: -1 }
+                }
+            ]);
+            
+            const mainPending = pendingPayments.length > 0 ? pendingPayments[0] : null;
+            stats.pendingPayments = mainPending ? {
+                amount: mainPending.totalAmount,
+                currency: mainPending._id || 'USD',
+                count: mainPending.count
+            } : { amount: 0, currency: 'USD', count: 0 };
+            
+        } else {
+            // For regular users, show their voucher count
+            const myVouchers = await Voucher.countDocuments({
+                createdBy: new mongoose.Types.ObjectId(userId),
+                isDeleted: { $ne: true }
+            });
+            
+            stats.myVouchers = myVouchers;
+        }
+        
+        res.json(stats);
+        
+    } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        res.status(500).json({ message: 'Error fetching dashboard statistics' });
     }
 };

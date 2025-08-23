@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
-import WorkerPage from './pages/WorkerPage'
+import BookingPage from './pages/BookingPage'
+import HomePage from './pages/HomePage'
 import SignInPage from './pages/SignInPage'
 import ToursPage from './pages/ToursPage'
 import EditTourPage from './pages/EditTourPage'
@@ -87,9 +88,6 @@ function App() {
         
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={
-              user ? <Navigate to="/home" /> : <Navigate to="/signin" />
-            } />
             <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
             
             {/* Protected Routes - Admin and Accountant access */}
@@ -103,7 +101,9 @@ function App() {
             </Route>
             
             <Route element={<ProtectedRoute requireAdmin={false} />}>
-              <Route path="/home" element={<WorkerPage />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/booking" element={<BookingPage />} />
+              <Route path="/home" element={<Navigate to="/booking" replace />} />
               <Route path="/vouchers" element={<VouchersPage />} />
               <Route path="/vouchers/new" element={<CreateVoucherPage />} />
               <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
@@ -117,7 +117,7 @@ function App() {
               <Route path="/profile/:userId" element={<ProfilePage />} />
             </Route>
             
-            <Route path="*" element={user ? <Navigate to="/home" /> : <Navigate to="/signin" />} />
+            <Route path="*" element={user ? <Navigate to="/" /> : <Navigate to="/signin" />} />
           </Routes>
         </main>
         

@@ -15,6 +15,12 @@ const FloatingTotalsPanel = ({
   userFilter, 
   setUserFilter,
   uniqueUsers,
+  officeFilter,
+  setOfficeFilter,
+  uniqueOffices,
+  yearFilter,
+  setYearFilter,
+  availableYears,
   dateFilter, 
   customDate, 
   setCustomDate,
@@ -156,7 +162,23 @@ const FloatingTotalsPanel = ({
                 />
               </div>
 
-              {/* Filters Grid - 2x2 Layout */}
+              {/* Year Filter - Full Width */}
+              <div className="mb-2">
+                <Select
+                  value={yearFilter}
+                  onChange={setYearFilter}
+                  placeholder="Year - All Years"
+                  options={[
+                    { value: '', label: 'Year - All Years' },
+                    ...availableYears.map(year => ({
+                      value: year.toString(),
+                      label: year.toString()
+                    }))
+                  ]}
+                />
+              </div>
+
+              {/* Filters Grid - 2x3 Layout */}
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {/* Status Filter */}
                 <div>
@@ -206,8 +228,6 @@ const FloatingTotalsPanel = ({
                       { value: 'october', label: 'Created - October' },
                       { value: 'november', label: 'Created - November' },
                       { value: 'december', label: 'Created - December' },
-                      { value: 'this-year', label: 'Created - This Year' },
-                      { value: 'last-year', label: 'Created - Last Year' },
                       { value: 'custom', label: 'Created - Custom Date' }
                     ]}
                   />
@@ -233,8 +253,6 @@ const FloatingTotalsPanel = ({
                       { value: 'october', label: 'Arrival - October' },
                       { value: 'november', label: 'Arrival - November' },
                       { value: 'december', label: 'Arrival - December' },
-                      { value: 'this-year', label: 'Arrival - This Year' },
-                      { value: 'last-year', label: 'Arrival - Last Year' },
                       { value: 'custom', label: 'Arrival - Custom Date' }
                     ]}
                   />
@@ -273,7 +291,7 @@ const FloatingTotalsPanel = ({
               )}
 
               {/* Clear Filters Button */}
-              {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+              {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
                 <div className="pt-1 sm:pt-2">
                   <button
                     onClick={handleClearFilters}
@@ -327,7 +345,7 @@ const FloatingTotalsPanel = ({
           <div className="mt-2 sm:mt-4 pt-2 sm:pt-4 border-t border-gray-200 dark:border-slate-700">
             <div className="flex justify-between text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
               <span>{filteredVouchers.length} of {vouchers.length} vouchers</span>
-              {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+              {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
                 <span className="text-blue-600 dark:text-cyan-400">Filtered</span>
               )}
             </div>
@@ -372,6 +390,22 @@ const FloatingTotalsPanel = ({
                     placeholder="Search by client name or voucher number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {/* Year Filter - Full Width */}
+                <div className="mb-3">
+                  <Select
+                    value={yearFilter}
+                    onChange={setYearFilter}
+                    placeholder="Year - All Years"
+                    options={[
+                      { value: '', label: 'Year - All Years' },
+                      ...availableYears.map(year => ({
+                        value: year.toString(),
+                        label: year.toString()
+                      }))
+                    ]}
                   />
                 </div>
 
@@ -425,8 +459,6 @@ const FloatingTotalsPanel = ({
                         { value: 'october', label: 'Created - October' },
                         { value: 'november', label: 'Created - November' },
                         { value: 'december', label: 'Created - December' },
-                        { value: 'this-year', label: 'Created - This Year' },
-                        { value: 'last-year', label: 'Created - Last Year' },
                         { value: 'custom', label: 'Created - Custom Date' }
                       ]}
                     />
@@ -452,8 +484,6 @@ const FloatingTotalsPanel = ({
                         { value: 'october', label: 'Arrival - October' },
                         { value: 'november', label: 'Arrival - November' },
                         { value: 'december', label: 'Arrival - December' },
-                        { value: 'this-year', label: 'Arrival - This Year' },
-                        { value: 'last-year', label: 'Arrival - Last Year' },
                         { value: 'custom', label: 'Arrival - Custom Date' }
                       ]}
                     />
@@ -492,7 +522,7 @@ const FloatingTotalsPanel = ({
                 )}
 
                 {/* Clear Filters Button */}
-                {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+                {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
                   <div className="pt-2">
                     <button
                       onClick={handleClearFilters}
@@ -544,12 +574,12 @@ const FloatingTotalsPanel = ({
 
             {/* Footer Info */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                <span>{filteredVouchers.length} of {vouchers.length} vouchers</span>
-                {(searchQuery || userFilter || dateFilter || arrivalDateFilter || statusFilter) && (
-                  <span className="text-blue-600 dark:text-cyan-400">Filtered</span>
-                )}
-              </div>
+                          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>{filteredVouchers.length} of {vouchers.length} vouchers</span>
+              {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+                <span className="text-blue-600 dark:text-cyan-400">Filtered</span>
+              )}
+            </div>
             </div>
             </CustomScrollbar>
           </Card>
