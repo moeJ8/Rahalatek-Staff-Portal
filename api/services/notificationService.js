@@ -511,30 +511,18 @@ class NotificationService {
             }).populate('targetUsers', 'username email')
               .populate('actionPerformedBy', 'username');
 
-            // Only log if there are reminders to process or if in verbose mode
-            if (dueReminders.length > 0) {
-                console.log(`⏰ Found ${dueReminders.length} due reminders to process at ${now.toISOString()}`);
-            }
-
             const processedReminders = [];
 
             for (const reminder of dueReminders) {
                 try {
-                    console.log(`📤 Processing reminder: "${reminder.title}" (scheduled for ${reminder.scheduledFor})`);
-                    
                     // Mark as sent
                     reminder.reminderStatus = 'sent';
                     await reminder.save();
 
-                    console.log(`📅 ✅ Sent custom reminder: "${reminder.title}" scheduled for ${reminder.scheduledFor}`);
                     processedReminders.push(reminder);
                 } catch (error) {
                     console.error(`❌ Error processing reminder ${reminder._id}:`, error);
                 }
-            }
-
-            if (processedReminders.length > 0) {
-                console.log(`✅ Successfully processed ${processedReminders.length} scheduled reminder(s)`);
             }
 
             return processedReminders;

@@ -6377,11 +6377,11 @@ export default function AdminPanel() {
                                     
                                     <div className="space-y-6">
                                         {/* Notification Tools */}
-                                        <div className="bg-teal-50 dark:bg-teal-900/20 p-6 rounded-lg border border-teal-200 dark:border-teal-700">
+                                        <div className="bg-teal-50 dark:bg-teal-900/20 p-4 sm:p-6 rounded-lg border border-teal-200 dark:border-teal-700">
                                             <h3 className="text-lg font-semibold mb-4 text-teal-800 dark:text-teal-300">
                                                 System Tools
                                             </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="space-y-3">
                                                     <h4 className="font-medium text-gray-900 dark:text-white">
                                                         Arrival Reminders
@@ -6405,7 +6405,10 @@ export default function AdminPanel() {
                                                                 Generating...
                                                             </>
                                                         ) : (
-                                                            "Generate Arrival Reminders"
+                                                            <>
+                                                                <span className="hidden sm:inline">Generate Arrival Reminders</span>
+                                                                <span className="sm:hidden">Arrival Reminders</span>
+                                                            </>
                                                         )}
                                                     </CustomButton>
                                                 </div>
@@ -6433,7 +6436,10 @@ export default function AdminPanel() {
                                                                 Generating...
                                                             </>
                                                         ) : (
-                                                            "Generate Departure Reminders"
+                                                            <>
+                                                                <span className="hidden sm:inline">Generate Departure Reminders</span>
+                                                                <span className="sm:hidden">Departure Reminders</span>
+                                                            </>
                                                         )}
                                                     </CustomButton>
                                                 </div>
@@ -6461,7 +6467,10 @@ export default function AdminPanel() {
                                                                 Generating...
                                                             </>
                                                         ) : (
-                                                            "Generate Daily Summary"
+                                                            <>
+                                                                <span className="hidden sm:inline">Generate Daily Summary</span>
+                                                                <span className="sm:hidden">Daily Summary</span>
+                                                            </>
                                                         )}
                                                     </CustomButton>
                                                 </div>
@@ -6489,7 +6498,10 @@ export default function AdminPanel() {
                                                                 Cleaning...
                                                             </>
                                                         ) : (
-                                                            "Cleanup Expired"
+                                                            <>
+                                                                <span className="hidden sm:inline">Cleanup Expired</span>
+                                                                <span className="sm:hidden">Cleanup</span>
+                                                            </>
                                                         )}
                                                     </CustomButton>
                                                 </div>
