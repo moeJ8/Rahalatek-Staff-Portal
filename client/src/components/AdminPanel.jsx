@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo } from 'react'
-import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal } from 'flowbite-react'
+import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -16,6 +16,8 @@ import CustomSelect from './Select'
 import CustomDatePicker from './CustomDatePicker'
 import CustomModal from './CustomModal'
 import TextInput from './TextInput'
+import CheckBoxDropDown from './CheckBoxDropDown'
+import CustomReminderManager from './CustomReminderManager'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
@@ -176,6 +178,8 @@ export default function AdminPanel() {
     
     // Add state for notification management
     const [notificationLoading, setNotificationLoading] = useState(false);
+    
+
     
     // Add state for office vouchers functionality
     const [selectedOfficeForVouchers, setSelectedOfficeForVouchers] = useState('');
@@ -2144,6 +2148,22 @@ export default function AdminPanel() {
             setNotificationLoading(false);
         }
     };
+
+    // Fetch all users for reminder targeting
+    const fetchAllUsersForReminders = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get('/api/notifications/users', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAllUsers(response.data.data);
+        } catch (error) {
+            console.error('Error fetching users for reminders:', error);
+            toast.error('Failed to load users for targeting');
+        }
+    };
+
+
 
     // Helper functions for vouchers
     const getCurrencySymbol = (currency) => {
@@ -6476,6 +6496,12 @@ export default function AdminPanel() {
                                             </div>
                                         </div>
 
+                                        {/* Custom Reminders Section */}
+                                        <CustomReminderManager
+                                            allUsers={allUsers}
+                                            fetchAllUsersForReminders={fetchAllUsersForReminders}
+                                        />
+
                                     </div>
                                 </Card>
                             )}
@@ -6810,6 +6836,8 @@ export default function AdminPanel() {
                                 itemName={debtToDelete ? `${getCurrencySymbol(debtToDelete.currency)}${debtToDelete.amount.toFixed(2)} for ${debtToDelete.officeName}` : ''}
                                 itemExtra={debtToDelete ? debtToDelete.description : ''}
                             />
+
+
                         </div>
                     </div>
                 </div>

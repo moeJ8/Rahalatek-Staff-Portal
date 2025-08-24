@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
-        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary', 'attendance_checkout_reminder'],
+        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary', 'attendance_checkout_reminder', 'custom_reminder'],
         required: true
     },
     title: {
@@ -70,6 +70,26 @@ const notificationSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    // Custom reminder specific fields
+    scheduledFor: {
+        type: Date,
+        default: null
+    },
+    targetUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    isSystemWide: {
+        type: Boolean,
+        default: false
+    },
+    reminderStatus: {
+        type: String,
+        enum: ['scheduled', 'sent', 'cancelled'],
+        default: function() {
+            return this.type === 'custom_reminder' ? 'scheduled' : undefined;
+        }
     }
 }, { 
     timestamps: true,
@@ -77,7 +97,10 @@ const notificationSchema = new mongoose.Schema({
         { type: 1, createdAt: -1 },
         { relatedVoucher: 1 },
         { voucherCreatedBy: 1 },
-        { isActive: 1, createdAt: -1 }
+        { isActive: 1, createdAt: -1 },
+        { scheduledFor: 1, reminderStatus: 1 },
+        { targetUsers: 1 },
+        { isSystemWide: 1 }
     ]
 });
 
@@ -114,10 +137,24 @@ notificationSchema.statics.getUserNotifications = async function(userId, userRol
                     ]
                 },
                 // Show all non-role-change notifications OR role changes targeted at this user
+                // For custom reminders, only show sent ones (not scheduled or cancelled)
                 {
                     $or: [
-                        { type: { $ne: 'user_role_change' } },
-                        { type: 'user_role_change', targetUser: userId }
+                        { 
+                            type: { $nin: ['user_role_change', 'custom_reminder'] }
+                        },
+                        { 
+                            type: 'user_role_change', 
+                            targetUser: userId 
+                        },
+                        { 
+                            type: 'custom_reminder',
+                            reminderStatus: 'sent',
+                            $or: [
+                                { isSystemWide: true },
+                                { targetUsers: userId }
+                            ]
+                        }
                     ]
                 }
             ]
@@ -135,10 +172,19 @@ notificationSchema.statics.getUserNotifications = async function(userId, userRol
                     ]
                 },
                 // Show vouchers they created OR notifications targeted at them
+                // For custom reminders, only show sent ones (not scheduled or cancelled)
                 {
                     $or: [
                         { voucherCreatedBy: userId },
-                        { targetUser: userId }
+                        { targetUser: userId },
+                        { 
+                            type: 'custom_reminder',
+                            reminderStatus: 'sent',
+                            $or: [
+                                { isSystemWide: true },
+                                { targetUsers: userId }
+                            ]
+                        }
                     ]
                 }
             ]
@@ -154,4 +200,5 @@ notificationSchema.statics.getUserNotifications = async function(userId, userRol
         .limit(50); // Limit to recent 50 notifications
 };
 
+module.exports = mongoose.model('Notification', notificationSchema); 
 module.exports = mongoose.model('Notification', notificationSchema); 

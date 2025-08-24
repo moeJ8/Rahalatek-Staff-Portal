@@ -442,6 +442,109 @@ class NotificationService {
     }
 
     /**
+     * Create custom reminder
+     */
+    static async createCustomReminder({
+        title,
+        message,
+        scheduledFor,
+        targetUsers = [],
+        isSystemWide = false,
+        createdBy,
+        priority = 'medium'
+    }) {
+        try {
+            // Validate input
+            if (!title || !message || !scheduledFor || !createdBy) {
+                throw new Error('Missing required fields for custom reminder');
+            }
+
+            // Validate scheduledFor is not too far in the past (allow for instant sending)
+            const scheduledTime = new Date(scheduledFor);
+            const now = new Date();
+            const oneMinuteAgo = new Date(now.getTime() - 60000); // 1 minute ago
+            
+            if (scheduledTime < oneMinuteAgo) {
+                throw new Error('Scheduled time cannot be more than 1 minute in the past');
+            }
+
+            // Create the reminder notification
+            const reminder = new Notification({
+                type: 'custom_reminder',
+                title,
+                message,
+                actionPerformedBy: createdBy,
+                priority,
+                scheduledFor: new Date(scheduledFor),
+                targetUsers: isSystemWide ? [] : targetUsers,
+                isSystemWide,
+                reminderStatus: 'scheduled',
+                isActive: true,
+                metadata: {
+                    createdAt: new Date(),
+                    scheduledFor: new Date(scheduledFor),
+                    targetUserCount: isSystemWide ? 'all' : targetUsers.length
+                }
+            });
+
+            await reminder.save();
+            return reminder;
+        } catch (error) {
+            console.error('Error creating custom reminder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Process and send scheduled reminders
+     */
+    static async processScheduledReminders() {
+        try {
+            const now = new Date();
+            
+            // Find reminders that are due to be sent (more efficient query first)
+            const dueReminders = await Notification.find({
+                type: 'custom_reminder',
+                reminderStatus: 'scheduled',
+                scheduledFor: { $lte: now },
+                isActive: true
+            }).populate('targetUsers', 'username email')
+              .populate('actionPerformedBy', 'username');
+
+            // Only log if there are reminders to process or if in verbose mode
+            if (dueReminders.length > 0) {
+                console.log(`⏰ Found ${dueReminders.length} due reminders to process at ${now.toISOString()}`);
+            }
+
+            const processedReminders = [];
+
+            for (const reminder of dueReminders) {
+                try {
+                    console.log(`📤 Processing reminder: "${reminder.title}" (scheduled for ${reminder.scheduledFor})`);
+                    
+                    // Mark as sent
+                    reminder.reminderStatus = 'sent';
+                    await reminder.save();
+
+                    console.log(`📅 ✅ Sent custom reminder: "${reminder.title}" scheduled for ${reminder.scheduledFor}`);
+                    processedReminders.push(reminder);
+                } catch (error) {
+                    console.error(`❌ Error processing reminder ${reminder._id}:`, error);
+                }
+            }
+
+            if (processedReminders.length > 0) {
+                console.log(`✅ Successfully processed ${processedReminders.length} scheduled reminder(s)`);
+            }
+
+            return processedReminders;
+        } catch (error) {
+            console.error('❌ Error processing scheduled reminders:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Clean up expired notifications
      */
     static async cleanupExpiredNotifications() {

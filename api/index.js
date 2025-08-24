@@ -47,16 +47,25 @@ mongoose.connect(process.env.MONGO_URI)
         console.error('Notification system error:', err);
       }
       
-      // Schedule arrival and departure reminder generation every hour
+      // Schedule custom reminder processing every 30 seconds for precise timing
+      setInterval(async () => {
+        try {
+          await NotificationService.processScheduledReminders();
+        } catch (err) {
+          console.error('Custom reminder processing error:', err);
+        }
+      }, 30 * 1000); // Run every 30 seconds for precise custom reminder delivery
+
+      // Schedule other notification tasks every hour (arrival/departure reminders, cleanup)
       setInterval(async () => {
         try {
           await NotificationService.generateArrivalReminders();
           await NotificationService.generateDepartureReminders();
           await NotificationService.cleanupExpiredNotifications();
         } catch (err) {
-          console.error('Scheduled task error:', err);
+          console.error('Scheduled notification task error:', err);
         }
-      }, 1 * 60 * 60 * 1000);
+      }, 60 * 60 * 1000); // Run every hour for less time-sensitive tasks
       
       // Schedule daily arrivals and departures summary generation every morning at 8 AM
       const scheduleDailySummary = () => {

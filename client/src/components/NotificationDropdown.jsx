@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Spinner, Badge } from 'flowbite-react';
-import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaClock } from 'react-icons/fa';
+import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaClock, FaCalendarCheck } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -88,6 +88,10 @@ const NotificationDropdown = () => {
         return notifs.filter(notif => 
           notif.type === 'attendance_checkout_reminder'
         );
+      case 'reminders':
+        return notifs.filter(notif => 
+          notif.type === 'custom_reminder'
+        );
       case 'all':
       default:
         return notifs;
@@ -118,9 +122,10 @@ const NotificationDropdown = () => {
       });
 
       // Update local state
+      const userId = JSON.parse(localStorage.getItem('user'))?.id;
       const updatedNotifications = notifications.map(notif => 
         notif._id === notificationId 
-          ? { ...notif, readBy: [...(notif.readBy || []), { user: 'current_user', readAt: new Date() }] }
+          ? { ...notif, readBy: [...(notif.readBy || []), { user: userId, readAt: new Date() }] }
           : notif
       );
       setNotifications(updatedNotifications);
@@ -216,6 +221,8 @@ const NotificationDropdown = () => {
         return <FaUser className={iconClass} />;
       case 'attendance_checkout_reminder':
         return <FaClock className="w-4 h-4 text-yellow-500" />;
+      case 'custom_reminder':
+        return <FaCalendarCheck className={iconClass} />;
       default:
         return <FaBell className={iconClass} />;
     }
@@ -241,7 +248,56 @@ const NotificationDropdown = () => {
 
   // Check if notification is read by current user
   const isRead = (notification) => {
-    return notification.readBy && notification.readBy.length > 0;
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return false;
+    
+    const user = JSON.parse(userStr);
+    const userId = user?.id;
+    
+    // Check if readBy array exists and has entries
+    if (!notification.readBy || !Array.isArray(notification.readBy) || notification.readBy.length === 0) {
+      return false;
+    }
+    
+    // Check if current user ID is in the readBy array
+    return notification.readBy.some(readUser => {
+      // Handle both string IDs and objects with user property
+      if (typeof readUser === 'string') {
+        return readUser === userId;
+      }
+      if (readUser && readUser.user) {
+        return readUser.user === userId;
+      }
+      if (readUser && readUser._id) {
+        return readUser._id === userId;
+      }
+      return false;
+    });
+  };
+
+  // Get priority badge styling
+  const getPriorityBadge = (priority) => {
+    if (!priority) return null; // Don't show badge if no priority is set
+    
+    const styles = {
+      low: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+      medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      high: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+      urgent: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+    };
+    
+    const labels = {
+      low: 'Low',
+      medium: 'Medium',
+      high: 'High', 
+      urgent: 'Urgent'
+    };
+    
+    return (
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[priority] || styles.medium}`}>
+        {labels[priority] || priority}
+      </span>
+    );
   };
 
   const toggleDropdown = () => {
@@ -271,17 +327,18 @@ const NotificationDropdown = () => {
 
       {/* Dropdown Menu */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+        <div className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full mt-2 w-80 sm:w-96 lg:w-[28rem] max-w-[calc(100vw-2rem)] max-h-[70vh] sm:max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
               <FaBell className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
-              Notifications
+              <span className="hidden sm:inline">Notifications</span>
+              <span className="sm:hidden">Notifs</span>
             </h3>
             
             {unreadCount > 0 && (
-              <span className="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
-                {unreadCount} unread
+              <span className="inline-flex items-center px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
+                {unreadCount} <span className="hidden sm:inline ml-1">unread</span>
               </span>
             )}
           </div>
@@ -312,47 +369,58 @@ const NotificationDropdown = () => {
           <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
             <button
               onClick={() => setActiveFilter('all')}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+              className={`flex-1 px-1 sm:px-2 py-2 text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-0.5 sm:gap-1 ${
                 activeFilter === 'all'
                   ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
             >
               <FaBell className="w-3 h-3" />
-              All
+              <span className="hidden sm:inline">All</span>
             </button>
             <button
               onClick={() => setActiveFilter('arrival')}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+              className={`flex-1 px-1 sm:px-2 py-2 text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-0.5 sm:gap-1 ${
                 activeFilter === 'arrival'
                   ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
             >
               <FaPlaneArrival className="w-3 h-3" />
-              Arrival
+              <span className="hidden sm:inline">Arrival</span>
             </button>
             <button
               onClick={() => setActiveFilter('departure')}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+              className={`flex-1 px-1 sm:px-2 py-2 text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-0.5 sm:gap-1 ${
                 activeFilter === 'departure'
                   ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
             >
               <FaPlaneDeparture className="w-3 h-3" />
-              Departure
+              <span className="hidden sm:inline">Departure</span>
             </button>
             <button
               onClick={() => setActiveFilter('attendance')}
-              className={`flex-1 px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 ${
+              className={`flex-1 px-1 sm:px-2 py-2 text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-0.5 sm:gap-1 ${
                 activeFilter === 'attendance'
                   ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
             >
               <FaClock className="w-3 h-3" />
-              Attendance
+              <span className="hidden sm:inline">Attendance</span>
+            </button>
+            <button
+              onClick={() => setActiveFilter('reminders')}
+              className={`flex-1 px-1 sm:px-2 py-2 text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-0.5 sm:gap-1 ${
+                activeFilter === 'reminders'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 border-b-2 border-teal-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <FaCalendarCheck className="w-3 h-3" />
+              <span className="hidden sm:inline">Reminders</span>
             </button>
           </div>
 
@@ -382,9 +450,12 @@ const NotificationDropdown = () => {
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
-                        !isRead(notification) ? 'bg-teal-50/50 dark:bg-teal-900/10 border-l-4 border-teal-500' : ''
-                      }`}
+                                              className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
+                          !isRead(notification) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
+                        }`}
+                        style={{
+                          borderLeft: !isRead(notification) ? '4px solid rgb(20 184 166)' : 'none'
+                        }}
                     >
                       <div className="flex items-start space-x-3">
                         {/* Icon */}
@@ -396,9 +467,12 @@ const NotificationDropdown = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className={`text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                                {notification.title}
-                              </p>
+                              <div className="flex items-center justify-between">
+                                <p className={`text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                  {notification.title}
+                                </p>
+                                {getPriorityBadge(notification.priority)}
+                              </div>
                               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                 {notification.message}
                               </p>

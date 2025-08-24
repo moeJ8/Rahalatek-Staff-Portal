@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Label } from 'flowbite-react';
+import CustomScrollbar from './CustomScrollbar';
 
 const CheckBoxDropDown = ({ 
     label,
@@ -85,31 +86,35 @@ const CheckBoxDropDown = ({
                 </button>
                 
                 {showDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in-0 zoom-in-95 duration-200">
-                        {options.map(option => (
-                            <label key={option.value} className="flex items-center px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 cursor-pointer transition-all duration-200 rounded-lg mx-1 my-0.5">
-                                <div className="relative mr-3">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only"
-                                        checked={value.includes(option.value)}
-                                        onChange={() => handleToggle(option.value)}
-                                    />
-                                    <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
-                                        value.includes(option.value)
-                                            ? 'bg-blue-500/20 dark:bg-blue-400/30 border-blue-500 dark:border-blue-400 shadow-sm'
-                                            : 'bg-gray-50/50 dark:bg-gray-700/50 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
-                                    } backdrop-blur-sm`}>
-                                        {value.includes(option.value) && (
-                                            <svg className="w-3 h-3 text-blue-600 dark:text-blue-400 m-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                </div>
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 select-none">{option.label}</span>
-                            </label>
-                        ))}
+                    <div className="absolute z-10 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
+                        <CustomScrollbar maxHeight="240px">
+                            <div className="p-1">
+                                {options.map(option => (
+                                    <label key={option.value} className="flex items-center px-4 py-3 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 cursor-pointer transition-all duration-200 rounded-lg mx-1 my-0.5">
+                                        <div className="relative mr-3">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={value.includes(option.value)}
+                                                onChange={() => handleToggle(option.value)}
+                                            />
+                                            <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 ${
+                                                value.includes(option.value)
+                                                    ? 'bg-blue-500/20 dark:bg-blue-400/30 border-blue-500 dark:border-blue-400 shadow-sm'
+                                                    : 'bg-gray-50/50 dark:bg-gray-700/50 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500'
+                                            } backdrop-blur-sm`}>
+                                                {value.includes(option.value) && (
+                                                    <svg className="w-3 h-3 text-blue-600 dark:text-blue-400 m-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 select-none">{option.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </CustomScrollbar>
                     </div>
                 )}
             </div>

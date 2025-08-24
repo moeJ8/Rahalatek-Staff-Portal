@@ -43,7 +43,7 @@ export default function WeatherCarouselWidget() {
       setLoading(true);
       setError('');
       
-      // Using OpenWeatherMap API - Get your free key at: https://openweathermap.org/api
+      // Using OpenWeatherMap API
       const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
       
       // Check if API key exists

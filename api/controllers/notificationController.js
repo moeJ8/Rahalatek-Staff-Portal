@@ -287,4 +287,269 @@ exports.cleanupExpired = async (req, res) => {
             error: error.message
         });
     }
-}; 
+};
+
+/**
+ * Create custom reminder (admin and accountant only)
+ */
+exports.createReminder = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const { title, message, scheduledFor, targetUsers, isSystemWide, priority } = req.body;
+        const createdBy = req.user.userId;
+
+        // Validate required fields
+        if (!title || !message || !scheduledFor) {
+            return res.status(400).json({
+                success: false,
+                message: 'Title, message, and scheduled time are required'
+            });
+        }
+
+        // Validate scheduledFor is not too far in the past (allow for instant sending)
+        const scheduledTime = new Date(scheduledFor);
+        const now = new Date();
+        const oneMinuteAgo = new Date(now.getTime() - 60000); // 1 minute ago
+        
+        if (scheduledTime < oneMinuteAgo) {
+            return res.status(400).json({
+                success: false,
+                message: 'Scheduled time cannot be more than 1 minute in the past'
+            });
+        }
+
+        // If not system-wide, validate targetUsers
+        if (!isSystemWide && (!targetUsers || targetUsers.length === 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Target users are required when not sending system-wide'
+            });
+        }
+
+        // Validate target users exist if provided
+        if (!isSystemWide && targetUsers && targetUsers.length > 0) {
+            const User = require('../models/User');
+            const existingUsers = await User.find({ _id: { $in: targetUsers } });
+            if (existingUsers.length !== targetUsers.length) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'One or more target users do not exist'
+                });
+            }
+        }
+
+        const reminder = await NotificationService.createCustomReminder({
+            title,
+            message,
+            scheduledFor,
+            targetUsers: isSystemWide ? [] : targetUsers,
+            isSystemWide: Boolean(isSystemWide),
+            createdBy,
+            priority: priority || 'medium'
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Reminder created successfully',
+            data: reminder
+        });
+    } catch (error) {
+        console.error('Error creating reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to create reminder'
+        });
+    }
+};
+
+/**
+ * Get all users for target selection (admin and accountant only)
+ */
+exports.getAllUsers = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const User = require('../models/User');
+        const users = await User.find({ isApproved: true })
+            .select('_id username email isAdmin isAccountant')
+            .sort({ username: 1 });
+        
+        res.json({
+            success: true,
+            data: users
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch users'
+        });
+    }
+};
+
+exports.getAllReminders = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const Notification = require('../models/Notification');
+        const reminders = await Notification.find({ 
+            type: 'custom_reminder',
+            isActive: true 
+        })
+        .populate('actionPerformedBy', 'username')
+        .populate('targetUsers', 'username email')
+        .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: reminders
+        });
+    } catch (error) {
+        console.error('Error fetching reminders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch reminders',
+            error: error.message
+        });
+    }
+};
+
+exports.updateReminder = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const { id } = req.params;
+        const { title, message, scheduledFor, targetUsers, isSystemWide, priority, reminderStatus } = req.body;
+
+        const Notification = require('../models/Notification');
+        const reminder = await Notification.findOne({ 
+            _id: id, 
+            type: 'custom_reminder',
+            isActive: true 
+        });
+
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found'
+            });
+        }
+
+        // Update fields
+        if (title) reminder.title = title;
+        if (message) reminder.message = message;
+        if (scheduledFor) {
+            const scheduledTime = new Date(scheduledFor);
+            const currentScheduledTime = new Date(reminder.scheduledFor);
+            const now = new Date();
+            
+            // Only validate future time if the scheduled time is actually being changed
+            if (scheduledTime.getTime() !== currentScheduledTime.getTime()) {
+                // If changing the time, require it to be in the future
+                if (scheduledTime < now) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'New scheduled time must be in the future'
+                    });
+                }
+                
+                // If rescheduling a sent reminder, change status back to scheduled
+                if (reminder.reminderStatus === 'sent') {
+                    reminder.reminderStatus = 'scheduled';
+                }
+            }
+            
+            reminder.scheduledFor = scheduledTime;
+        }
+        if (targetUsers !== undefined) reminder.targetUsers = isSystemWide ? [] : targetUsers;
+        if (isSystemWide !== undefined) reminder.isSystemWide = isSystemWide;
+        if (priority) reminder.priority = priority;
+        if (reminderStatus) reminder.reminderStatus = reminderStatus;
+
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder updated successfully',
+            data: reminder
+        });
+    } catch (error) {
+        console.error('Error updating reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update reminder',
+            error: error.message
+        });
+    }
+};
+
+exports.deleteReminder = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const { id } = req.params;
+        const Notification = require('../models/Notification');
+        
+        const reminder = await Notification.findOne({ 
+            _id: id, 
+            type: 'custom_reminder',
+            isActive: true 
+        });
+
+        if (!reminder) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reminder not found'
+            });
+        }
+
+        // Soft delete by setting isActive to false
+        reminder.isActive = false;
+        await reminder.save();
+
+        res.json({
+            success: true,
+            message: 'Reminder deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete reminder',
+            error: error.message
+        });
+    }
+};
+
+ 

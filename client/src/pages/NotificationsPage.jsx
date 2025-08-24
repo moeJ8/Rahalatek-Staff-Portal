@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Spinner, Badge, Alert, Modal, Select, TextInput } from 'flowbite-react';
+import { Card, Button, Spinner, Badge, Alert, Modal } from 'flowbite-react';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import Search from '../components/Search';
+import Select from '../components/Select';
 import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -247,7 +249,8 @@ const NotificationsPage = () => {
       voucher_arrival_reminder: 'Arrival Reminder',
       voucher_departure_reminder: 'Departure Reminder',
       daily_arrivals_summary: 'Daily Summary',
-      user_role_change: 'Role Change'
+      user_role_change: 'Role Change',
+      custom_reminder: 'Reminder'
     };
     return types[type] || type;
   };
@@ -313,56 +316,58 @@ const NotificationsPage = () => {
       <Card className="mb-6 dark:bg-slate-900">
         <div className="space-y-4">
           {/* Search Bar */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <TextInput
-              type="text"
-              placeholder="Search notifications by title, message, client name, or voucher number..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <Search
+            id="notificationSearch"
+            placeholder="Search notifications by title, message, client name, or voucher number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
 
           {/* Filters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <Select
+                id="typeFilter"
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                icon={FaFilter}
-              >
-                <option value="">All Types</option>
-                <option value="voucher_arrival_reminder">Arrival Reminders</option>
-                <option value="voucher_departure_reminder">Departure Reminders</option>
-                {(isAdmin || isAccountant) && (
-                  <option value="daily_arrivals_summary">Daily Summaries</option>
-                )}
-                <option value="user_role_change">Role Changes</option>
-              </Select>
+                onChange={(value) => setTypeFilter(value)}
+                placeholder="All Types"
+                options={[
+                  { value: '', label: 'All Types' },
+                  { value: 'voucher_arrival_reminder', label: 'Arrival Reminders' },
+                  { value: 'voucher_departure_reminder', label: 'Departure Reminders' },
+                  ...(isAdmin || isAccountant ? [{ value: 'daily_arrivals_summary', label: 'Daily Summaries' }] : []),
+                  { value: 'user_role_change', label: 'Role Changes' },
+                  { value: 'custom_reminder', label: 'Reminders' }
+                ]}
+              />
             </div>
 
             <div>
               <Select
+                id="statusFilter"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="unread">Unread Only</option>
-                <option value="read">Read Only</option>
-              </Select>
+                onChange={(value) => setStatusFilter(value)}
+                placeholder="All Status"
+                options={[
+                  { value: '', label: 'All Status' },
+                  { value: 'unread', label: 'Unread Only' },
+                  { value: 'read', label: 'Read Only' }
+                ]}
+              />
             </div>
 
             <div>
               <Select
+                id="sortBy"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                icon={FaSort}
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="type">By Type</option>
-              </Select>
+                onChange={(value) => setSortBy(value)}
+                placeholder="Newest First"
+                options={[
+                  { value: 'newest', label: 'Newest First' },
+                  { value: 'oldest', label: 'Oldest First' },
+                  { value: 'type', label: 'By Type' }
+                ]}
+              />
             </div>
 
             <div className="flex gap-2">

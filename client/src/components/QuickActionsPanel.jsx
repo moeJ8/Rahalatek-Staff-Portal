@@ -14,7 +14,8 @@ import {
   FaBuilding,
   FaUserTie,
   FaBell,
-  FaTrash
+  FaTrash,
+  FaBellSlash
 } from 'react-icons/fa';
 
 export default function QuickActionsPanel() {
@@ -171,6 +172,15 @@ export default function QuickActionsPanel() {
           link: '/notifications',
           color: 'bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
           hoverColor: 'hover:bg-orange-100 dark:hover:bg-orange-900/50'
+        },
+        {
+          id: 'create-reminder',
+          title: 'Create Reminder',
+          description: 'Custom notifications',
+          icon: <FaBellSlash className="w-5 h-5" />,
+          link: '/dashboard?tab=notifications',
+          color: 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
+          hoverColor: 'hover:bg-teal-100 dark:hover:bg-teal-900/50'
         },
         {
           id: 'trash',
