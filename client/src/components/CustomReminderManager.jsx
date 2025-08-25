@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Label, Badge } from 'flowbite-react';
+import RahalatekLoader from './RahalatekLoader';
 import { FaBell, FaEdit, FaTrash, FaClock, FaCheckCircle, FaTimesCircle, FaUsers, FaUser, FaCalendarCheck } from 'react-icons/fa';
 import CustomButton from './CustomButton';
 import CustomModal from './CustomModal';
@@ -14,6 +15,9 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 export default function CustomReminderManager({ allUsers, fetchAllUsersForReminders }) {
+    // Check user role
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = user.isAdmin || false;
     const [showReminderModal, setShowReminderModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -81,7 +85,20 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
             setReminders(response.data.data || []);
         } catch (error) {
             console.error('Error fetching reminders:', error);
-            toast.error('Failed to fetch reminders');
+            toast.error('Failed to fetch reminders', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setLoadingReminders(false);
         }
@@ -109,13 +126,39 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                 headers: { Authorization: `Bearer ${token}` }
             });
             
-            toast.success('Reminder deleted successfully');
+            toast.success('Reminder deleted successfully', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             setShowDeleteModal(false);
             setDeletingReminder(null);
             fetchReminders(); // Refresh the list
         } catch (error) {
             console.error('Error deleting reminder:', error);
-            toast.error(error.response?.data?.message || 'Failed to delete reminder');
+            toast.error(error.response?.data?.message || 'Failed to delete reminder', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setDeletingLoading(false);
         }
@@ -140,7 +183,20 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
 
     const handleBulkDelete = () => {
         if (selectedReminders.length === 0) {
-            toast.error('Please select reminders to delete');
+            toast.error('Please select reminders to delete', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
             return;
         }
         setShowBulkDeleteModal(true);
@@ -162,13 +218,39 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                 )
             );
             
-            toast.success(`${selectedReminders.length} reminder${selectedReminders.length !== 1 ? 's' : ''} deleted successfully`);
+            toast.success(`${selectedReminders.length} reminder${selectedReminders.length !== 1 ? 's' : ''} deleted successfully`, {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             setShowBulkDeleteModal(false);
             setSelectedReminders([]);
             fetchReminders(); // Refresh the list
         } catch (error) {
             console.error('Error deleting reminders:', error);
-            toast.error('Failed to delete some reminders');
+            toast.error('Failed to delete some reminders', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setBulkDeletingLoading(false);
         }
@@ -213,7 +295,20 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                 scheduledDateTime = new Date();
             } else {
                 if (!reminderForm.scheduledDate || !reminderForm.scheduledTime) {
-                    toast.error('Please select both date and time for the reminder');
+                    toast.error('Please select both date and time for the reminder', {
+                        duration: 3000,
+                        style: {
+                            background: '#f44336',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                            padding: '16px',
+                        },
+                        iconTheme: {
+                            primary: '#fff',
+                            secondary: '#f44336',
+                        },
+                    });
                     return;
                 }
                 scheduledDateTime = new Date(`${reminderForm.scheduledDate}T${reminderForm.scheduledTime}`);
@@ -223,33 +318,77 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                 if (originalScheduledTime && scheduledDateTime.getTime() !== originalScheduledTime.getTime()) {
                     // If changing the time, require it to be in the future
                     if (scheduledDateTime <= new Date()) {
-                        toast.error('New scheduled time must be in the future');
+                        toast.error('New scheduled time must be in the future', {
+                            duration: 3000,
+                            style: {
+                                background: '#f44336',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: '16px',
+                                padding: '16px',
+                            },
+                            iconTheme: {
+                                primary: '#fff',
+                                secondary: '#f44336',
+                            },
+                        });
                         return;
                     }
                 }
             }
             
+            // Build payload based on user role
             const payload = {
                 title: reminderForm.title,
                 message: reminderForm.message,
                 scheduledFor: scheduledDateTime.toISOString(),
-                targetUsers: reminderForm.isSystemWide ? [] : reminderForm.targetUsers.filter(id => id !== ''),
-                isSystemWide: reminderForm.isSystemWide,
                 priority: reminderForm.priority
             };
+
+            // Only include targetUsers and isSystemWide for admin users
+            if (isAdmin) {
+                payload.targetUsers = reminderForm.isSystemWide ? [] : reminderForm.targetUsers.filter(id => id !== '');
+                payload.isSystemWide = reminderForm.isSystemWide;
+            }
             
             await axios.put(`/api/notifications/reminders/${editingReminder._id}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            toast.success('Reminder updated successfully');
+            toast.success('Reminder updated successfully', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
             setShowEditModal(false);
             setEditingReminder(null);
             resetReminderForm();
             fetchReminders(); // Refresh the list
         } catch (error) {
             console.error('Error updating reminder:', error);
-            toast.error(error.response?.data?.message || 'Failed to update reminder');
+            toast.error(error.response?.data?.message || 'Failed to update reminder', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setReminderLoading(false);
         }
@@ -390,27 +529,80 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
         e.preventDefault();
         
         if (!reminderForm.title || !reminderForm.message) {
-            toast.error('Please fill in title and message');
+            toast.error('Please fill in title and message', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
             return;
         }
 
         // Only validate date/time if not sending instantly
         if (!reminderForm.sendInstantly) {
             if (!reminderForm.scheduledDate || !reminderForm.scheduledTime) {
-                toast.error('Please select date and time for scheduling');
+                toast.error('Please select date and time for scheduling', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 return;
             }
 
             // Combine date and time and validate future time
             const scheduledDateTime = new Date(`${reminderForm.scheduledDate}T${reminderForm.scheduledTime}`);
             if (scheduledDateTime <= new Date()) {
-                toast.error('Scheduled time must be in the future');
+                toast.error('Scheduled time must be in the future', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 return;
             }
         }
 
-        if (!reminderForm.isSystemWide && (reminderForm.targetUsers.length === 0 || (reminderForm.targetUsers.length === 1 && reminderForm.targetUsers[0] === ''))) {
-            toast.error('Please select target users or make it system-wide');
+        // For admin users, validate target users or system-wide
+        if (isAdmin && !reminderForm.isSystemWide && (reminderForm.targetUsers.length === 0 || (reminderForm.targetUsers.length === 1 && reminderForm.targetUsers[0] === ''))) {
+            toast.error('Please select target users or make it system-wide', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
             return;
         }
 
@@ -432,9 +624,12 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
             const payload = {
                 ...reminderForm,
                 scheduledFor: scheduledDateTime.toISOString(),
-                // If "All Users" is selected (empty string), filter it out and make it system-wide
-                targetUsers: reminderForm.targetUsers.includes('') ? [] : reminderForm.targetUsers.filter(id => id !== ''),
-                isSystemWide: reminderForm.isSystemWide || reminderForm.targetUsers.includes('')
+                // For admin users: If "All Users" is selected (empty string), filter it out and make it system-wide
+                // For non-admin users: Always target themselves only
+                targetUsers: isAdmin 
+                    ? (reminderForm.targetUsers.includes('') ? [] : reminderForm.targetUsers.filter(id => id !== ''))
+                    : [], // Non-admin users don't specify target users, backend will handle it
+                isSystemWide: isAdmin ? (reminderForm.isSystemWide || reminderForm.targetUsers.includes('')) : false
             };
             
             // Remove the separate date/time fields and sendInstantly from payload
@@ -493,14 +688,19 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                     Custom Reminders
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Create custom notifications with scheduled delivery to specific users or system-wide.
+                    {isAdmin 
+                        ? "Create custom notifications with scheduled delivery to specific users or system-wide."
+                        : "Create custom reminders for yourself with scheduled delivery."
+                    }
                 </p>
                 
                 <CustomButton
                     variant="blueToTeal"
                     onClick={() => {
                         setShowReminderModal(true);
-                        fetchAllUsersForReminders();
+                        if (isAdmin) {
+                            fetchAllUsersForReminders();
+                        }
                     }}
                     icon={FaBell}
                     title="Create custom reminder"
@@ -547,8 +747,8 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                     </div>
                     
                     {loadingReminders ? (
-                        <div className="text-center py-8">
-                            <div className="text-gray-500 dark:text-gray-400">Loading reminders...</div>
+                        <div className="flex justify-center py-8">
+                            <RahalatekLoader size="md" />
                         </div>
                     ) : reminders.length === 0 ? (
                         <div className="text-center py-8">
@@ -579,21 +779,26 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                                                         <span className={`text-xs font-medium ${getPriorityColor(reminder.priority)} flex-shrink-0`}>
                                                             {reminder.priority?.toUpperCase()}
                                                         </span>
-                                                        {reminder.isSystemWide ? (
-                                                            <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-                                                                <FaUsers className="w-3 h-3" />
-                                                                <span className="hidden sm:inline">All Users</span>
-                                                                <span className="sm:hidden">All</span>
-                                                            </span>
-                                                        ) : (
-                                                            <span 
-                                                                className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors flex-shrink-0"
-                                                                onMouseEnter={(e) => handleUsersBadgeHover(e, reminder)}
-                                                                onMouseLeave={handleUsersBadgeLeave}
-                                                            >
-                                                                <FaUser className="w-3 h-3" />
-                                                                {reminder.targetUsers?.length || 0} <span className="hidden sm:inline">User{(reminder.targetUsers?.length || 0) !== 1 ? 's' : ''}</span>
-                                                            </span>
+                                                        {/* Only show user targeting badges for admins */}
+                                                        {isAdmin && (
+                                                            <>
+                                                                {reminder.isSystemWide ? (
+                                                                    <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                                                                        <FaUsers className="w-3 h-3" />
+                                                                        <span className="hidden sm:inline">All Users</span>
+                                                                        <span className="sm:hidden">All</span>
+                                                                    </span>
+                                                                ) : (
+                                                                    <span 
+                                                                        className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full flex items-center gap-1 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors flex-shrink-0"
+                                                                        onMouseEnter={(e) => handleUsersBadgeHover(e, reminder)}
+                                                                        onMouseLeave={handleUsersBadgeLeave}
+                                                                    >
+                                                                        <FaUser className="w-3 h-3" />
+                                                                        {reminder.targetUsers?.length || 0} <span className="hidden sm:inline">User{(reminder.targetUsers?.length || 0) !== 1 ? 's' : ''}</span>
+                                                                    </span>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
@@ -667,44 +872,59 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                             />
                         </div>
 
-                        <div>
-                            <CustomCheckbox
-                                id="reminder-system-wide"
-                                label="Send to all users (system-wide)"
-                                checked={reminderForm.isSystemWide}
-                                onChange={(checked) => handleReminderFormChange('isSystemWide', checked)}
-                            />
-                        </div>
+                        {/* Only show user selection for admins */}
+                        {isAdmin && (
+                            <>
+                                <div>
+                                    <CustomCheckbox
+                                        id="reminder-system-wide"
+                                        label="Send to all users (system-wide)"
+                                        checked={reminderForm.isSystemWide}
+                                        onChange={(checked) => handleReminderFormChange('isSystemWide', checked)}
+                                    />
+                                </div>
 
-                        {!reminderForm.isSystemWide && (
-                            <div>
-                                {allUsers.length === 0 ? (
+                                {!reminderForm.isSystemWide && (
                                     <div>
-                                        <Label value="Target Users *" />
-                                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-center">
-                                            Loading users...
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div
-                                        onMouseEnter={handleDropdownHover}
-                                        onMouseLeave={handleDropdownLeave}
-                                    >
-                                        <CheckBoxDropDown
-                                            label="Target Users *"
-                                            options={allUsers.map(user => ({
-                                                value: user._id,
-                                                label: `${user.username} ${user.isAdmin ? '(Admin)' : user.isAccountant ? '(Accountant)' : ''}`
-                                            }))}
-                                            value={reminderForm.targetUsers}
-                                            onChange={handleReminderTargetUsersChange}
-                                            placeholder="Select users to send reminder to..."
-                                            allowMultiple={true}
-                                            allOptionsLabel="All Users"
-                                            id="reminder-target-users"
-                                        />
+                                        {allUsers.length === 0 ? (
+                                            <div>
+                                                <Label value="Target Users *" />
+                                                <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-center">
+                                                    Loading users...
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onMouseEnter={handleDropdownHover}
+                                                onMouseLeave={handleDropdownLeave}
+                                            >
+                                                <CheckBoxDropDown
+                                                    label="Target Users *"
+                                                    options={allUsers.map(user => ({
+                                                        value: user._id,
+                                                        label: `${user.username} ${user.isAdmin ? '(Admin)' : user.isAccountant ? '(Accountant)' : ''}`
+                                                    }))}
+                                                    value={reminderForm.targetUsers}
+                                                    onChange={handleReminderTargetUsersChange}
+                                                    placeholder="Select users to send reminder to..."
+                                                    allowMultiple={true}
+                                                    allOptionsLabel="All Users"
+                                                    id="reminder-target-users"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
+                            </>
+                        )}
+
+                        {/* Show information for non-admins */}
+                        {!isAdmin && (
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                                <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                                    <FaUser className="w-4 h-4" />
+                                    This reminder will be sent to yourself only.
+                                </p>
                             </div>
                         )}
 
@@ -814,44 +1034,59 @@ export default function CustomReminderManager({ allUsers, fetchAllUsersForRemind
                         />
                     </div>
 
-                    <div>
-                        <CustomCheckbox
-                            id="edit-reminder-system-wide"
-                            label="Send to all users (system-wide)"
-                            checked={reminderForm.isSystemWide}
-                            onChange={(checked) => handleReminderFormChange('isSystemWide', checked)}
-                        />
-                    </div>
+                    {/* Only show user selection for admins */}
+                    {isAdmin && (
+                        <>
+                            <div>
+                                <CustomCheckbox
+                                    id="edit-reminder-system-wide"
+                                    label="Send to all users (system-wide)"
+                                    checked={reminderForm.isSystemWide}
+                                    onChange={(checked) => handleReminderFormChange('isSystemWide', checked)}
+                                />
+                            </div>
 
-                    {!reminderForm.isSystemWide && (
-                        <div>
-                            {allUsers.length === 0 ? (
+                            {!reminderForm.isSystemWide && (
                                 <div>
-                                    <Label value="Target Users *" />
-                                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-center">
-                                        Loading users...
-                                    </div>
-                                </div>
-                            ) : (
-                                <div
-                                    onMouseEnter={handleDropdownHover}
-                                    onMouseLeave={handleDropdownLeave}
-                                >
-                                    <CheckBoxDropDown
-                                        label="Target Users *"
-                                        options={allUsers.map(user => ({
-                                            value: user._id,
-                                            label: `${user.username} ${user.isAdmin ? '(Admin)' : user.isAccountant ? '(Accountant)' : ''}`
-                                        }))}
-                                        value={reminderForm.targetUsers}
-                                        onChange={handleReminderTargetUsersChange}
-                                        placeholder="Select users to send reminder to..."
-                                        allowMultiple={true}
-                                        allOptionsLabel="All Users"
-                                        id="edit-reminder-target-users"
-                                    />
+                                    {allUsers.length === 0 ? (
+                                        <div>
+                                            <Label value="Target Users *" />
+                                            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-center">
+                                                Loading users...
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onMouseEnter={handleDropdownHover}
+                                            onMouseLeave={handleDropdownLeave}
+                                        >
+                                            <CheckBoxDropDown
+                                                label="Target Users *"
+                                                options={allUsers.map(user => ({
+                                                    value: user._id,
+                                                    label: `${user.username} ${user.isAdmin ? '(Admin)' : user.isAccountant ? '(Accountant)' : ''}`
+                                                }))}
+                                                value={reminderForm.targetUsers}
+                                                onChange={handleReminderTargetUsersChange}
+                                                placeholder="Select users to send reminder to..."
+                                                allowMultiple={true}
+                                                allOptionsLabel="All Users"
+                                                id="edit-reminder-target-users"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
+                        </>
+                    )}
+
+                    {/* Show information for non-admins */}
+                    {!isAdmin && (
+                        <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                            <p className="text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                                <FaUser className="w-4 h-4" />
+                                This reminder targets yourself only.
+                            </p>
                         </div>
                     )}
 

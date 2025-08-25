@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from 'flowbite-react';
 import axios from 'axios';
-import { FaPlane, FaMoneyBillWave, FaTicketAlt, FaUser, FaShoppingCart, FaChartLine } from 'react-icons/fa';
+import { FaPlane, FaMoneyBillWave, FaTicketAlt, FaUser, FaShoppingCart, FaChartLine, FaBell, FaPlus } from 'react-icons/fa';
 import RahalatekLoader from './RahalatekLoader';
 import HomeCalendar from './HomeCalendar';
 import RecentVoucherActivity from './RecentVoucherActivity';
@@ -182,6 +182,45 @@ export default function Home() {
         <div className="lg:ml-12 mb-6">
           <QuickActionsPanel />
         </div>
+
+        {/* Notifications Section for Normal Users */}
+        {!user?.isAdmin && !user?.isAccountant && (
+          <div className="lg:ml-12 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-500/10 dark:bg-blue-400/10 rounded-xl">
+                    <FaBell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                      Personal Notifications
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      View your notifications and create personal reminders
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => window.location.href = '/notifications'}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    <FaBell className="w-4 h-4" />
+                    View Notifications
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/notifications/manage'}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    <FaPlus className="w-4 h-4" />
+                    Create Reminder
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Second Row - Notifications, Upcoming Events, and Weather */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

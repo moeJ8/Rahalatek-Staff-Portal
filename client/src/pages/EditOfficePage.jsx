@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Label, TextInput, Textarea, Alert } from 'flowbite-react';
+import { Card, Alert } from 'flowbite-react';
+import TextInput from '../components/TextInput';
 import { HiArrowLeft } from 'react-icons/hi';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -55,7 +56,7 @@ const EditOfficePage = () => {
         setIsSubmitting(true);
         
         try {
-            const response = await axios.put(`/api/offices/${id}`, officeData);
+            await axios.put(`/api/offices/${id}`, officeData);
             
             toast.success('Office updated successfully!', {
                 duration: 3000,
@@ -84,14 +85,14 @@ const EditOfficePage = () => {
     
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
                 <RahalatekLoader size="lg" />
             </div>
         );
     }
     
     return (
-        <div className="min-h-screen bg-slate-950 p-4">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-4">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -105,10 +106,10 @@ const EditOfficePage = () => {
                             Back
                         </CustomButton>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                                 Edit Office
                             </h1>
-                            <p className="text-sm text-gray-400">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Update office information
                             </p>
                         </div>
@@ -116,83 +117,63 @@ const EditOfficePage = () => {
                 </div>
                 
                 {/* Office Form */}
-                <Card className="bg-slate-900 border-slate-700">
+                <Card className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && <Alert color="failure">{error}</Alert>}
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Office Name */}
                             <div>
-                                <Label 
-                                    htmlFor="name" 
-                                    value="Office Name" 
-                                    className="mb-2 text-white"
-                                />
                                 <TextInput
                                     id="name"
                                     name="name"
+                                    label="Office Name"
                                     type="text"
                                     value={officeData.name}
                                     onChange={handleChange}
                                     required
-                                    className="bg-slate-800 border-slate-600 text-white"
                                     placeholder="Enter office name"
                                 />
                             </div>
                             
                             {/* Location */}
                             <div>
-                                <Label 
-                                    htmlFor="location" 
-                                    value="Location" 
-                                    className="mb-2 text-white"
-                                />
                                 <TextInput
                                     id="location"
                                     name="location"
+                                    label="Location"
                                     type="text"
                                     value={officeData.location}
                                     onChange={handleChange}
                                     required
-                                    className="bg-slate-800 border-slate-600 text-white"
                                     placeholder="Enter location"
                                 />
                             </div>
                             
                             {/* Email */}
                             <div>
-                                <Label 
-                                    htmlFor="email" 
-                                    value="Email" 
-                                    className="mb-2 text-white"
-                                />
                                 <TextInput
                                     id="email"
                                     name="email"
+                                    label="Email"
                                     type="email"
                                     value={officeData.email}
                                     onChange={handleChange}
                                     required
-                                    className="bg-slate-800 border-slate-600 text-white"
                                     placeholder="Enter email address"
                                 />
                             </div>
                             
                             {/* Phone Number */}
                             <div>
-                                <Label 
-                                    htmlFor="phoneNumber" 
-                                    value="Phone Number" 
-                                    className="mb-2 text-white"
-                                />
                                 <TextInput
                                     id="phoneNumber"
                                     name="phoneNumber"
+                                    label="Phone Number"
                                     type="tel"
                                     value={officeData.phoneNumber}
                                     onChange={handleChange}
                                     required
-                                    className="bg-slate-800 border-slate-600 text-white"
                                     placeholder="Enter phone number"
                                 />
                             </div>
@@ -200,18 +181,14 @@ const EditOfficePage = () => {
                         
                         {/* Description */}
                         <div>
-                            <Label 
-                                htmlFor="description" 
-                                value="Description (Optional)" 
-                                className="mb-2 text-white"
-                            />
-                            <Textarea
+                            <TextInput
                                 id="description"
                                 name="description"
+                                label="Description (Optional)"
+                                as="textarea"
                                 rows={4}
                                 value={officeData.description}
                                 onChange={handleChange}
-                                className="bg-slate-800 border-slate-600 text-white placeholder-gray-400"
                                 placeholder="Enter office description"
                             />
                         </div>

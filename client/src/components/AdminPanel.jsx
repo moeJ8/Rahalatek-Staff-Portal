@@ -35,15 +35,21 @@ export default function AdminPanel() {
     const authUser = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = authUser.isAdmin || false;
     const isAccountant = authUser.isAccountant || false;
+    const isNotificationsOnlyRoute = window.location.pathname === '/notifications/manage';
     
     const getInitialTab = () => {
         if (typeof window !== 'undefined') {
+            // Check if accessed from the notifications/manage route
+            if (window.location.pathname === '/notifications/manage') {
+                return 'notifications';
+            }
+            
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
             ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance']; // Accountants can access financials, debts, salaries, and attendance but not users/requests
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'notifications']; // Accountants and users can access notifications but not users/requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -2939,8 +2945,9 @@ export default function AdminPanel() {
                 <div className="w-full">
                     {/* Modern layout with sidebar and content */}
                     <div className="flex flex-col md:flex-row w-full">
-                        {/* Sidebar for desktop */}
-                                                    <div className="hidden md:block w-64 bg-white dark:bg-slate-900 shadow-lg rounded-lg mr-4 h-fit sticky top-4">
+                        {/* Sidebar for desktop - Hide for notifications-only route */}
+                        {!isNotificationsOnlyRoute && (
+                            <div className="hidden md:block w-64 bg-white dark:bg-slate-900 shadow-lg rounded-lg mr-4 h-fit sticky top-4">
                             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
@@ -3158,33 +3165,33 @@ export default function AdminPanel() {
                                     </button>
                                 )}
                                 
-                                {/* Only show Notifications tab to full admins */}
-                                {isAdmin && (
-                                    <button
-                                        id="tab-notifications"
-                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                            activeTab === 'notifications' 
-                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                        }`}
-                                        onClick={() => handleTabChange('notifications')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'notifications'}
-                                        aria-controls="notifications-panel"
-                                    >
-                                        <FaBell className="h-5 w-5 mr-3" />
-                                        Notifications
-                                    </button>
-                                )}
+                                {/* Show Notifications tab to all users */}
+                                <button
+                                    id="tab-notifications"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'notifications' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('notifications')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'notifications'}
+                                    aria-controls="notifications-panel"
+                                >
+                                    <FaBell className="h-5 w-5 mr-3" />
+                                    Notifications
+                                </button>
                             </nav>
-                        </div>
+                            </div>
+                        )}
                         
                         {/* Main content area */}
                         <div className="flex-1">
-                            {/* Mobile tabs - only visible on small screens */}
-                            <div className="md:hidden border-b border-gray-200 dark:border-gray-700 mb-4">
+                            {/* Mobile tabs - only visible on small screens and not for notifications-only */}
+                            {!isNotificationsOnlyRoute && (
+                                <div className="md:hidden border-b border-gray-200 dark:border-gray-700 mb-4">
                                 <div className="flex flex-wrap justify-center gap-1" role="tablist" aria-label="Admin Sections">
                                     <button
                                         id="tab-hotels-mobile"
@@ -3331,22 +3338,21 @@ export default function AdminPanel() {
                                             </span>
                                         </button>
                                     )}
-                                    {isAdmin && (
-                                        <button
-                                            id="tab-notifications-mobile"
-                                            className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                                            onClick={() => handleTabChange('notifications')}
-                                            onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
-                                            tabIndex={0}
-                                            role="tab"
-                                            aria-selected={activeTab === 'notifications'}
-                                            aria-controls="notifications-panel"
-                                        >
-                                            Notifications
-                                        </button>
-                                    )}
+                                    <button
+                                        id="tab-notifications-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('notifications')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'notifications'}
+                                        aria-controls="notifications-panel"
+                                    >
+                                        Notifications
+                                    </button>
                                 </div>
-                            </div>
+                                </div>
+                            )}
                             
                             {/* Tab panels */}
                             {activeTab === 'hotels' && (
@@ -6368,7 +6374,7 @@ export default function AdminPanel() {
                             )}
                             
                             {/* Notifications Panel */}
-                            {activeTab === 'notifications' && isAdmin && (
+                            {activeTab === 'notifications' && (
                                 <Card className="w-full dark:bg-slate-950" id="notifications-panel" role="tabpanel" aria-labelledby="tab-notifications">
                                     <h2 className="text-2xl font-bold mb-6 dark:text-white text-center flex items-center justify-center">
                                         <FaBell className="mr-3 text-teal-600 dark:text-teal-400" />
@@ -6376,11 +6382,12 @@ export default function AdminPanel() {
                                     </h2>
                                     
                                     <div className="space-y-6">
-                                        {/* Notification Tools */}
-                                        <div className="bg-teal-50 dark:bg-teal-900/20 p-4 sm:p-6 rounded-lg border border-teal-200 dark:border-teal-700">
-                                            <h3 className="text-lg font-semibold mb-4 text-teal-800 dark:text-teal-300">
-                                                System Tools
-                                            </h3>
+                                        {/* System Tools - Admin Only */}
+                                        {isAdmin && (
+                                            <div className="bg-teal-50 dark:bg-teal-900/20 p-4 sm:p-6 rounded-lg border border-teal-200 dark:border-teal-700">
+                                                <h3 className="text-lg font-semibold mb-4 text-teal-800 dark:text-teal-300">
+                                                    System Tools
+                                                </h3>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="space-y-3">
                                                     <h4 className="font-medium text-gray-900 dark:text-white">
@@ -6506,7 +6513,8 @@ export default function AdminPanel() {
                                                     </CustomButton>
                                                 </div>
                                             </div>
-                                        </div>
+                                            </div>
+                                        )}
 
                                         {/* Custom Reminders Section */}
                                         <CustomReminderManager

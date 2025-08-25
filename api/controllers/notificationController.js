@@ -290,20 +290,14 @@ exports.cleanupExpired = async (req, res) => {
 };
 
 /**
- * Create custom reminder (admin and accountant only)
+ * Create custom reminder (all authenticated users)
  */
 exports.createReminder = async (req, res) => {
     try {
-        // Check if user is admin or accountant
-        if (!req.user.isAdmin && !req.user.isAccountant) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Admin or accountant privileges required.'
-            });
-        }
-
         const { title, message, scheduledFor, targetUsers, isSystemWide, priority } = req.body;
         const createdBy = req.user.userId;
+        const isAdmin = req.user.isAdmin || false;
+        const isAccountant = req.user.isAccountant || false;
 
         // Validate required fields
         if (!title || !message || !scheduledFor) {
@@ -325,23 +319,42 @@ exports.createReminder = async (req, res) => {
             });
         }
 
-        // If not system-wide, validate targetUsers
-        if (!isSystemWide && (!targetUsers || targetUsers.length === 0)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Target users are required when not sending system-wide'
-            });
-        }
+        // For non-admin users (normal users and accountants), restrict to self-only reminders
+        let finalTargetUsers = targetUsers;
+        let finalIsSystemWide = isSystemWide;
 
-        // Validate target users exist if provided
-        if (!isSystemWide && targetUsers && targetUsers.length > 0) {
-            const User = require('../models/User');
-            const existingUsers = await User.find({ _id: { $in: targetUsers } });
-            if (existingUsers.length !== targetUsers.length) {
+        if (!isAdmin) {
+            // Non-admin users can only send reminders to themselves
+            finalTargetUsers = [createdBy];
+            finalIsSystemWide = false;
+            
+            // If they tried to send to others or system-wide, return error
+            if (isSystemWide || (targetUsers && targetUsers.length > 0 && !targetUsers.includes(createdBy))) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'You can only create reminders for yourself'
+                });
+            }
+        } else {
+            // Admin logic (existing validation)
+            // If not system-wide, validate targetUsers
+            if (!isSystemWide && (!targetUsers || targetUsers.length === 0)) {
                 return res.status(400).json({
                     success: false,
-                    message: 'One or more target users do not exist'
+                    message: 'Target users are required when not sending system-wide'
                 });
+            }
+
+            // Validate target users exist if provided
+            if (!isSystemWide && targetUsers && targetUsers.length > 0) {
+                const User = require('../models/User');
+                const existingUsers = await User.find({ _id: { $in: targetUsers } });
+                if (existingUsers.length !== targetUsers.length) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'One or more target users do not exist'
+                    });
+                }
             }
         }
 
@@ -349,8 +362,8 @@ exports.createReminder = async (req, res) => {
             title,
             message,
             scheduledFor,
-            targetUsers: isSystemWide ? [] : targetUsers,
-            isSystemWide: Boolean(isSystemWide),
+            targetUsers: finalIsSystemWide ? [] : finalTargetUsers,
+            isSystemWide: Boolean(finalIsSystemWide),
             createdBy,
             priority: priority || 'medium'
         });
@@ -402,19 +415,22 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getAllReminders = async (req, res) => {
     try {
-        // Check if user is admin or accountant
-        if (!req.user.isAdmin && !req.user.isAccountant) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Admin or accountant privileges required.'
-            });
-        }
+        const isAdmin = req.user.isAdmin || false;
+        const userId = req.user.userId;
 
         const Notification = require('../models/Notification');
-        const reminders = await Notification.find({ 
+        
+        let query = { 
             type: 'custom_reminder',
             isActive: true 
-        })
+        };
+
+        // Non-admin users can only see reminders they created
+        if (!isAdmin) {
+            query.actionPerformedBy = userId;
+        }
+
+        const reminders = await Notification.find(query)
         .populate('actionPerformedBy', 'username')
         .populate('targetUsers', 'username email')
         .sort({ createdAt: -1 });
@@ -435,29 +451,43 @@ exports.getAllReminders = async (req, res) => {
 
 exports.updateReminder = async (req, res) => {
     try {
-        // Check if user is admin or accountant
-        if (!req.user.isAdmin && !req.user.isAccountant) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Admin or accountant privileges required.'
-            });
-        }
-
         const { id } = req.params;
         const { title, message, scheduledFor, targetUsers, isSystemWide, priority, reminderStatus } = req.body;
+        const isAdmin = req.user.isAdmin || false;
+        const userId = req.user.userId;
 
         const Notification = require('../models/Notification');
-        const reminder = await Notification.findOne({ 
+        
+        let query = { 
             _id: id, 
             type: 'custom_reminder',
             isActive: true 
-        });
+        };
+
+        // Non-admin users can only update reminders they created
+        if (!isAdmin) {
+            query.actionPerformedBy = userId;
+        }
+
+        const reminder = await Notification.findOne(query);
 
         if (!reminder) {
             return res.status(404).json({
                 success: false,
-                message: 'Reminder not found'
+                message: 'Reminder not found or you do not have permission to edit it'
             });
+        }
+
+        // For non-admin users, enforce restrictions
+        if (!isAdmin) {
+            // They can only edit title, message, scheduledFor, and priority
+            // Cannot change target users or make it system-wide
+            if (targetUsers !== undefined || isSystemWide !== undefined) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'You can only edit title, message, scheduled time, and priority'
+                });
+            }
         }
 
         // Update fields
@@ -486,10 +516,15 @@ exports.updateReminder = async (req, res) => {
             
             reminder.scheduledFor = scheduledTime;
         }
-        if (targetUsers !== undefined) reminder.targetUsers = isSystemWide ? [] : targetUsers;
-        if (isSystemWide !== undefined) reminder.isSystemWide = isSystemWide;
+        
+        // Only admins can update these fields
+        if (isAdmin) {
+            if (targetUsers !== undefined) reminder.targetUsers = isSystemWide ? [] : targetUsers;
+            if (isSystemWide !== undefined) reminder.isSystemWide = isSystemWide;
+            if (reminderStatus) reminder.reminderStatus = reminderStatus;
+        }
+        
         if (priority) reminder.priority = priority;
-        if (reminderStatus) reminder.reminderStatus = reminderStatus;
 
         await reminder.save();
 
@@ -510,27 +545,29 @@ exports.updateReminder = async (req, res) => {
 
 exports.deleteReminder = async (req, res) => {
     try {
-        // Check if user is admin or accountant
-        if (!req.user.isAdmin && !req.user.isAccountant) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied. Admin or accountant privileges required.'
-            });
-        }
-
         const { id } = req.params;
+        const isAdmin = req.user.isAdmin || false;
+        const userId = req.user.userId;
+
         const Notification = require('../models/Notification');
         
-        const reminder = await Notification.findOne({ 
+        let query = { 
             _id: id, 
             type: 'custom_reminder',
             isActive: true 
-        });
+        };
+
+        // Non-admin users can only delete reminders they created
+        if (!isAdmin) {
+            query.actionPerformedBy = userId;
+        }
+
+        const reminder = await Notification.findOne(query);
 
         if (!reminder) {
             return res.status(404).json({
                 success: false,
-                message: 'Reminder not found'
+                message: 'Reminder not found or you do not have permission to delete it'
             });
         }
 

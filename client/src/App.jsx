@@ -112,6 +112,7 @@ function App() {
               <Route path="/tours" element={<ToursPage />} />
               <Route path="/hotels" element={<HotelsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/notifications/manage" element={<AdminPage />} />
               <Route path="/attendance" element={<AttendancePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />

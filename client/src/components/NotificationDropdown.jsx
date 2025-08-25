@@ -327,17 +327,16 @@ const NotificationDropdown = () => {
 
       {/* Dropdown Menu */}
       {showDropdown && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full mt-2 w-80 sm:w-96 lg:w-[28rem] max-w-[calc(100vw-2rem)] max-h-[70vh] sm:max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+        <div className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full mt-2 w-72 sm:w-96 lg:w-[28rem] max-w-[calc(100vw-1rem)] max-h-[60vh] sm:max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
               <FaBell className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
-              <span className="hidden sm:inline">Notifications</span>
-              <span className="sm:hidden">Notifs</span>
+              <span>Notifications</span>
             </h3>
             
             {unreadCount > 0 && (
-              <span className="inline-flex items-center px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
+              <span className="inline-flex items-center px-1.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
                 {unreadCount} <span className="hidden sm:inline ml-1">unread</span>
               </span>
             )}
@@ -352,7 +351,7 @@ const NotificationDropdown = () => {
                 markAllAsRead();
               }}
               disabled={markingAllRead}
-              className="w-full py-2 px-3 text-center bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 border-b border-gray-200 dark:border-slate-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-1.5 sm:py-2 px-2 sm:px-3 text-center text-sm sm:text-base bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/30 border-b border-gray-200 dark:border-slate-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {markingAllRead ? (
                 <div className="flex items-center justify-center gap-2">
@@ -450,14 +449,14 @@ const NotificationDropdown = () => {
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification._id}
-                                              className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
+                                              className={`px-3 sm:px-4 py-2 sm:py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
                           !isRead(notification) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
                         }`}
                         style={{
                           borderLeft: !isRead(notification) ? '4px solid rgb(20 184 166)' : 'none'
                         }}
                     >
-                      <div className="flex items-start space-x-3">
+                      <div className="flex items-start space-x-2 sm:space-x-3">
                         {/* Icon */}
                         <div className="flex-shrink-0 mt-1">
                           {getNotificationIcon(notification.type, notification.priority)}
@@ -468,20 +467,20 @@ const NotificationDropdown = () => {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <p className={`text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                <p className={`text-xs sm:text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {notification.title}
                                 </p>
                                 {getPriorityBadge(notification.priority)}
                               </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
                                 {notification.message}
                               </p>
                               
                               {/* Metadata */}
                               {notification.metadata && (
-                                <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center space-x-1 sm:space-x-2 mt-1 sm:mt-2 text-xs text-gray-500 dark:text-gray-400">
                                   {notification.metadata.voucherNumber && (
-                                    <span className="bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                    <span className="bg-gray-100 dark:bg-slate-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">
                                       #{notification.metadata.voucherNumber}
                                     </span>
                                   )}
@@ -492,7 +491,7 @@ const NotificationDropdown = () => {
                                     </span>
                                   )}
                                   {notification.metadata.oldRole && notification.metadata.newRole && (
-                                    <span className="bg-teal-100 dark:bg-teal-900 px-2 py-1 rounded text-teal-700 dark:text-teal-300">
+                                    <span className="bg-teal-100 dark:bg-teal-900 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs text-teal-700 dark:text-teal-300">
                                       {notification.metadata.oldRole} → {notification.metadata.newRole}
                                     </span>
                                   )}
@@ -501,7 +500,7 @@ const NotificationDropdown = () => {
                             </div>
                             
                             {/* Actions */}
-                            <div className="flex items-center space-x-1 ml-2">
+                            <div className="flex items-center space-x-1 ml-1 sm:ml-2">
                               {!isRead(notification) && (
                                 <button
                                   onClick={() => markAsRead(notification._id)}
@@ -515,7 +514,7 @@ const NotificationDropdown = () => {
                           </div>
                           
                           {/* Footer */}
-                          <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center justify-between mt-1 sm:mt-2">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {formatDate(notification.createdAt)}
                             </span>
@@ -557,14 +556,14 @@ const NotificationDropdown = () => {
           </div>
 
           {/* Footer with view all */}
-          <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
+          <div className="flex-shrink-0 px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
             <Link
               to="/notifications"
-              className="flex items-center justify-center w-full text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors duration-200"
+              className="flex items-center justify-center w-full text-sm sm:text-base text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors duration-200"
               onClick={() => setShowDropdown(false)}
             >
               View all
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
