@@ -147,7 +147,7 @@ export default function RecentNotificationsWidget() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[850px] flex flex-col">
+    <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[400px] sm:min-h-[850px] flex flex-col">
       {/* Header */}
       <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -177,7 +177,7 @@ export default function RecentNotificationsWidget() {
             <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">You're all caught up!</p>
           </div>
         ) : (
-          <div className="space-y-4 flex-1">
+          <div className="space-y-3 sm:space-y-4 flex-1">
             {notifications.map((notification) => {
               const colorInfo = getNotificationColor(notification.type);
               const unread = isUnread(notification);
@@ -243,7 +243,7 @@ export default function RecentNotificationsWidget() {
 
         {/* Quick Action */}
         {!loading && notifications.length > 0 && (
-          <div className="mt-auto">
+          <div className="mt-4 sm:mt-auto">
             <Link
               to="/notifications"
               className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-50 dark:bg-slate-700/50 text-blue-600 dark:text-teal-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
