@@ -52,6 +52,18 @@ export default function UserCalendar({ isOpen, onClose }) {
     }
   }, [isOpen, fetchCalendarData]);
 
+  // Listen for working days updates to refresh calendar
+  useEffect(() => {
+    const handleWorkingDaysUpdate = () => {
+      if (isOpen) {
+        fetchCalendarData();
+      }
+    };
+
+    window.addEventListener('workingDaysUpdated', handleWorkingDaysUpdate);
+    return () => window.removeEventListener('workingDaysUpdated', handleWorkingDaysUpdate);
+  }, [isOpen, fetchCalendarData]);
+
   // Handle close with animation
   const handleClose = () => {
     setModalEnter(false);
@@ -394,7 +406,9 @@ export default function UserCalendar({ isOpen, onClose }) {
                     const workingDaysInMonth = Object.values(monthData).filter(day => 
                       day.isWorkingDay && !day.holiday
                     ).length;
-                    return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                    const dailyHours = calendarData.monthlyDailyHours?.[currentMonth + 1] || 8;
+                    const totalHours = workingDaysInMonth * dailyHours;
+                    return `${workingDaysInMonth} working days in ${monthNames[currentMonth]} (${totalHours} hours)`;
                   })()}
                 </span>
                 <div className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">

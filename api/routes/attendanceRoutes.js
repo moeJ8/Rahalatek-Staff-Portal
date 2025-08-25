@@ -17,6 +17,7 @@ router.post('/check-out', attendanceController.checkOut);
 // Admin/Accountant reports
 router.get('/reports', attendanceController.getAttendanceReports);
 router.get('/users', attendanceController.getAttendanceUsers);
+router.get('/working-hours-tracking', attendanceController.getWorkingHoursTracking);
 router.get('/yearly-calendar', attendanceController.getYearlyAttendance);
 router.get('/available-years', attendanceController.getAvailableYears);
 

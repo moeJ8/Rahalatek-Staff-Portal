@@ -43,6 +43,16 @@ export default function HomeCalendar() {
     fetchCalendarData();
   }, [fetchCalendarData]);
 
+  // Listen for working days updates to refresh calendar
+  useEffect(() => {
+    const handleWorkingDaysUpdate = () => {
+      fetchCalendarData();
+    };
+
+    window.addEventListener('workingDaysUpdated', handleWorkingDaysUpdate);
+    return () => window.removeEventListener('workingDaysUpdated', handleWorkingDaysUpdate);
+  }, [fetchCalendarData]);
+
   const navigateMonth = (direction) => {
     if (direction === 'prev') {
       if (currentMonth === 0) {
@@ -200,7 +210,9 @@ export default function HomeCalendar() {
                     {(() => {
                       const monthData = calendarData.calendar[currentMonth] || {};
                       const workingDaysInMonth = Object.values(monthData).filter(day => day.isWorkingDay).length;
-                      return `${workingDaysInMonth} working days`;
+                      const dailyHours = calendarData.monthlyDailyHours?.[currentMonth + 1] || 8;
+                      const totalHours = workingDaysInMonth * dailyHours;
+                      return `${workingDaysInMonth} working days (${totalHours}h)`;
                     })()}
                   </div>
                   <div className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">

@@ -2,6 +2,7 @@ const Attendance = require('../models/Attendance');
 const AttendanceQR = require('../models/AttendanceQR');
 const User = require('../models/User');
 const WorkingDays = require('../models/WorkingDays');
+const UserWorkingDays = require('../models/UserWorkingDays');
 const QRCode = require('qrcode');
 
 // Helper function to validate check-in/check-out time (8 AM - 8 PM)
@@ -406,6 +407,139 @@ exports.getAttendanceUsers = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to get users',
+            error: error.message
+        });
+    }
+};
+
+// Get working hours tracking data (Admin/Accountant only)
+exports.getWorkingHoursTracking = async (req, res) => {
+    try {
+        // Check if user is admin or accountant
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const {
+            userId,
+            year = new Date().getFullYear(),
+            month = new Date().getMonth() + 1,
+            period = 'monthly' // daily, monthly, yearly
+        } = req.query;
+
+        // Get users to track
+        let usersToTrack = [];
+        if (userId && userId !== '') {
+            const user = await User.findById(userId, 'username email');
+            if (user) {
+                usersToTrack = [user];
+            }
+        } else {
+            usersToTrack = await User.find({}, 'username email').sort({ username: 1 });
+        }
+
+        const trackingData = [];
+
+        for (const user of usersToTrack) {
+            let dateRange = {};
+            let totalWorkingDays = 0;
+            let totalHoursWorked = 0;
+            let userDailyHours = 8; // Default 8 hours
+
+            if (period === 'daily') {
+                // Single day
+                const targetDate = new Date(year, month - 1, 1); // Default to 1st of month if no specific day
+                dateRange = {
+                    startDate: new Date(targetDate),
+                    endDate: new Date(targetDate)
+                };
+                
+                // Get working days config for this user and check if this day is a working day
+                const workingDaysConfig = await UserWorkingDays.getWorkingDaysForUser(user._id, year, month);
+                userDailyHours = workingDaysConfig.dailyHours || 8;
+                const dayConfig = workingDaysConfig.workingDays.find(wd => wd.day === targetDate.getDate());
+                if (dayConfig && dayConfig.isWorkingDay) {
+                    totalWorkingDays = 1;
+                }
+            } else if (period === 'monthly') {
+                // Entire month
+                dateRange = {
+                    startDate: new Date(year, month - 1, 1),
+                    endDate: new Date(year, month, 0) // Last day of month
+                };
+                
+                // Calculate working days in the month for this user
+                const workingDaysConfig = await UserWorkingDays.getWorkingDaysForUser(user._id, year, month);
+                userDailyHours = workingDaysConfig.dailyHours || 8;
+                totalWorkingDays = workingDaysConfig.workingDays.filter(wd => wd.isWorkingDay).length;
+            } else if (period === 'yearly') {
+                // Entire year
+                dateRange = {
+                    startDate: new Date(year, 0, 1),
+                    endDate: new Date(year, 11, 31)
+                };
+                
+                // Calculate working days for the entire year
+                // For yearly calculation, we'll use the average dailyHours from all months
+                let totalDailyHours = 0;
+                let monthsWithConfig = 0;
+                
+                for (let m = 1; m <= 12; m++) {
+                    const workingDaysConfig = await UserWorkingDays.getWorkingDaysForUser(user._id, year, m);
+                    totalWorkingDays += workingDaysConfig.workingDays.filter(wd => wd.isWorkingDay).length;
+                    totalDailyHours += (workingDaysConfig.dailyHours || 8);
+                    monthsWithConfig++;
+                }
+                
+                // Average daily hours across all months
+                userDailyHours = monthsWithConfig > 0 ? totalDailyHours / monthsWithConfig : 8;
+            }
+
+            // Get attendance records for this user in the date range
+            const filters = {
+                userId: user._id,
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate
+            };
+            
+            const attendanceRecords = await Attendance.getAttendanceReport(filters);
+            totalHoursWorked = attendanceRecords.reduce((sum, record) => sum + (record.hoursWorked || 0), 0);
+
+            const totalRequiredHours = totalWorkingDays * userDailyHours; // Use user's specific daily hours
+            const percentage = totalRequiredHours > 0 ? Math.round((totalHoursWorked / totalRequiredHours) * 100) : 0;
+
+            trackingData.push({
+                userId: user._id,
+                username: user.username,
+                email: user.email,
+                totalWorkingDays,
+                totalRequiredHours,
+                totalHoursWorked: Math.round(totalHoursWorked * 10) / 10, // Round to 1 decimal
+                dailyHours: userDailyHours,
+                percentage,
+                attendanceRecords: attendanceRecords.length,
+                period,
+                year: parseInt(year),
+                month: parseInt(month)
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                trackingData,
+                period,
+                filters: { userId, year: parseInt(year), month: parseInt(month) }
+            }
+        });
+    } catch (error) {
+        console.error('Error getting working hours tracking:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get working hours tracking',
             error: error.message
         });
     }
@@ -873,11 +1007,11 @@ exports.getUserYearlyAttendance = async (req, res) => {
             isActive: true
         }).lean();
         
-        // Pre-load all working days configurations for the year
+        // Pre-load all working days configurations for the user and year
         const workingDaysConfigs = {};
         for (let month = 1; month <= 12; month++) {
             try {
-                const config = await WorkingDays.getWorkingDaysForMonth(year, month);
+                const config = await UserWorkingDays.getWorkingDaysForUser(userId, year, month);
                 workingDaysConfigs[month] = config;
             } catch (error) {
                 console.error(`Error loading working days for ${year}-${month}:`, error);
@@ -1026,6 +1160,13 @@ exports.getUserYearlyAttendance = async (req, res) => {
             }).length;
         }, 0);
         
+        // Extract daily hours for each month
+        const monthlyDailyHours = {};
+        for (let month = 1; month <= 12; month++) {
+            const config = workingDaysConfigs[month];
+            monthlyDailyHours[month] = config?.dailyHours || 8;
+        }
+
         res.json({
             success: true,
             data: {
@@ -1038,7 +1179,8 @@ exports.getUserYearlyAttendance = async (req, res) => {
                     absentDays,
                     pastWorkingDays,
                     attendanceRate: pastWorkingDays > 0 ? Math.round((presentDays / pastWorkingDays) * 100) : 0
-                }
+                },
+                monthlyDailyHours // Include user's daily hours for each month
             }
         });
         

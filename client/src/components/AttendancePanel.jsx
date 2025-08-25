@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Table } from 'flowbite-react';
-import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock, FaUserCheck } from 'react-icons/fa';
+import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock, FaUserCheck, FaGlobe, FaUser } from 'react-icons/fa';
 import { HiRefresh, HiPlus } from 'react-icons/hi';
 import CustomButton from './CustomButton';
 import RahalatekLoader from './RahalatekLoader';
@@ -56,6 +56,19 @@ export default function AttendancePanel() {
   const [yearlyView, setYearlyView] = useState(false);
   const [settingsView, setSettingsView] = useState(false);
   const [vacationsView, setVacationsView] = useState(false);
+  const [activeReportsTab, setActiveReportsTab] = useState('attendance');
+  
+  // Working Hours Tracking states
+  const [workingHoursData, setWorkingHoursData] = useState([]);
+  const [workingHoursLoading, setWorkingHoursLoading] = useState(false);
+  const [workingHoursFilters, setWorkingHoursFilters] = useState({
+    userId: '',
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1
+  });
+  
+  // Per-User Working Days Configuration states
+  const [userDailyHours, setUserDailyHours] = useState(8);
   const [yearlyData, setYearlyData] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyLoading, setYearlyLoading] = useState(false);
@@ -100,6 +113,12 @@ export default function AttendancePanel() {
     month: new Date().getMonth() + 1,
     defaultWorkingDays: [0, 1, 2, 3, 4, 6] // Sunday, Monday to Thursday, Saturday (Friday is non-working)
   });
+  
+  // Per-user working days states
+  const [workingDaysMode, setWorkingDaysMode] = useState('global'); // 'global' or 'user'
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [customConfigUsers, setCustomConfigUsers] = useState([]);
+  const [showCustomConfigsModal, setShowCustomConfigsModal] = useState(false);
   const [holidayForm, setHolidayForm] = useState({
     name: '',
     description: '',
@@ -300,14 +319,194 @@ export default function AttendancePanel() {
     }
   }, [workingDaysForm.year, workingDaysForm.month]);
 
+  // Load user-specific working days configuration
+  const loadUserWorkingDaysConfig = useCallback(async (userId) => {
+    try {
+      setSettingsLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/working-days/user?year=${workingDaysForm.year}&month=${workingDaysForm.month}&userId=${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWorkingDaysConfig(data.data);
+        
+        // Update the form's defaultWorkingDays
+        if (data.data && data.data.defaultWorkingDaysOfWeek) {
+          setWorkingDaysForm(prev => ({
+            ...prev,
+            defaultWorkingDays: data.data.defaultWorkingDaysOfWeek
+          }));
+        }
+        
+        // Update daily hours
+        if (data.data && data.data.dailyHours) {
+          setUserDailyHours(data.data.dailyHours);
+        } else {
+          setUserDailyHours(8); // Default to 8 hours
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user working days:', error);
+      toast.error('Failed to load user working days configuration');
+      setUserDailyHours(8); // Default to 8 hours on error
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, [workingDaysForm.year, workingDaysForm.month]);
+
+  // Update user-specific working days configuration
+  const updateUserWorkingDays = useCallback(async (userId, year, month, workingDays, defaultWorkingDaysOfWeek, dailyHours) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put('/api/working-days/user', {
+        userId,
+        year,
+        month,
+        workingDays,
+        defaultWorkingDaysOfWeek,
+        dailyHours
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast.success('User working days updated successfully');
+        // Reload the user's configuration to reflect changes
+        await loadUserWorkingDaysConfig(userId);
+        // Trigger calendar refresh
+        window.dispatchEvent(new CustomEvent('workingDaysUpdated'));
+      } else {
+        throw new Error(response.data.message || 'Update failed');
+      }
+    } catch (error) {
+      console.error('Error updating user working days:', error);
+      toast.error('Failed to update user working days: ' + (error.response?.data?.message || error.message));
+      throw error;
+    }
+  }, [loadUserWorkingDaysConfig]);
+
+  // Load users with custom configurations
+  const loadCustomConfigUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/working-days/custom-configs?year=${workingDaysForm.year}&month=${workingDaysForm.month}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCustomConfigUsers(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading custom configs:', error);
+    }
+  }, [workingDaysForm.year, workingDaysForm.month]);
+
+  // Apply global configuration to a specific user
+  const handleApplyGlobalToUser = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/working-days/apply-global', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userIds: [userId],
+          year: workingDaysForm.year,
+          month: workingDaysForm.month
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        
+        // Reload the user's configuration and custom configs list
+        if (selectedUserId === userId) {
+          loadUserWorkingDaysConfig(userId);
+        }
+        loadCustomConfigUsers();
+        
+        // Trigger refresh for user calendars
+        window.dispatchEvent(new CustomEvent('workingDaysUpdated', {
+          detail: { 
+            userId: userId,
+            year: workingDaysForm.year,
+            month: workingDaysForm.month
+          }
+        }));
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to apply global configuration');
+      }
+    } catch (error) {
+      console.error('Error applying global config:', error);
+      toast.error('Failed to apply global configuration');
+    }
+  };
+
+  // Apply global configuration to all users
+  const handleApplyGlobalToAllUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/working-days/apply-global-all', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          year: workingDaysForm.year,
+          month: workingDaysForm.month
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message);
+        
+        // Reload configurations
+        if (selectedUserId) {
+          loadUserWorkingDaysConfig(selectedUserId);
+        }
+        loadCustomConfigUsers();
+        
+        // Trigger refresh for all user calendars since this affects all users
+        window.dispatchEvent(new CustomEvent('workingDaysUpdated', {
+          detail: { 
+            userId: null, // null means all users
+            year: workingDaysForm.year,
+            month: workingDaysForm.month
+          }
+        }));
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to apply global configuration to all users');
+      }
+    } catch (error) {
+      console.error('Error applying global config to all:', error);
+      toast.error('Failed to apply global configuration to all users');
+    }
+  };
+
   // Auto-load working days configuration when year/month changes
   // This prevents the calendar corruption bug where switching months would
   // show incorrect non-working days due to stale defaultWorkingDays state
   useEffect(() => {
     if (settingsView && activeSettingsTab === 'working-days') {
-      loadWorkingDaysConfig();
+      if (workingDaysMode === 'global') {
+        loadWorkingDaysConfig();
+      } else if (workingDaysMode === 'user' && selectedUserId) {
+        loadUserWorkingDaysConfig(selectedUserId);
+      }
+      // Always load custom configs to show bulk actions
+      loadCustomConfigUsers();
     }
-  }, [workingDaysForm.year, workingDaysForm.month, settingsView, activeSettingsTab, loadWorkingDaysConfig]);
+  }, [workingDaysForm.year, workingDaysForm.month, settingsView, activeSettingsTab, workingDaysMode, selectedUserId, loadWorkingDaysConfig, loadUserWorkingDaysConfig, loadCustomConfigUsers]);
 
   // Load user's annual leave data for the main dashboard
   useEffect(() => {
@@ -341,22 +540,33 @@ export default function AttendancePanel() {
     try {
       setSettingsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/working-days', {
+      
+      // Choose the appropriate endpoint based on mode
+      const endpoint = workingDaysMode === 'user' ? '/api/working-days/user' : '/api/working-days';
+      const requestBody = {
+        year: workingDaysForm.year,
+        month: workingDaysForm.month,
+        workingDays,
+        defaultWorkingDaysOfWeek: workingDaysForm.defaultWorkingDays
+      };
+      
+      // Add userId for user-specific saves
+      if (workingDaysMode === 'user' && selectedUserId) {
+        requestBody.userId = selectedUserId;
+      }
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          year: workingDaysForm.year,
-          month: workingDaysForm.month,
-          workingDays,
-          defaultWorkingDaysOfWeek: workingDaysForm.defaultWorkingDays
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (response.ok) {
-        toast.success('Working days configuration saved successfully!', {
+        const data = await response.json();
+        toast.success(data.message || 'Working days configuration saved successfully!', {
           duration: 3000,
           style: {
             background: '#4CAF50',
@@ -364,13 +574,33 @@ export default function AttendancePanel() {
             fontWeight: 'bold',
           }
         });
-        await loadWorkingDaysConfig();
+        
+        // Reload the appropriate configuration
+        if (workingDaysMode === 'global') {
+          await loadWorkingDaysConfig();
+        } else if (workingDaysMode === 'user' && selectedUserId) {
+          await loadUserWorkingDaysConfig(selectedUserId);
+        }
+        
+        // Reload custom configs list
+        loadCustomConfigUsers();
+        
         // Refresh calendar data if in calendar view
         if (yearlyView) {
           fetchSettingsData(selectedYear, currentMonth);
         }
+        
+        // Trigger refresh for user calendars
+        window.dispatchEvent(new CustomEvent('workingDaysUpdated', {
+          detail: { 
+            userId: workingDaysMode === 'user' ? selectedUserId : null,
+            year: workingDaysForm.year,
+            month: workingDaysForm.month
+          }
+        }));
       } else {
-        toast.error('Failed to save working days configuration', {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to save working days configuration', {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -392,7 +622,7 @@ export default function AttendancePanel() {
     } finally {
       setSettingsLoading(false);
     }
-  }, [workingDaysForm, loadWorkingDaysConfig, yearlyView, selectedYear, currentMonth, fetchSettingsData]);
+  }, [workingDaysForm, workingDaysMode, selectedUserId, loadWorkingDaysConfig, loadUserWorkingDaysConfig, loadCustomConfigUsers, yearlyView, selectedYear, currentMonth, fetchSettingsData]);
 
   const loadHolidays = useCallback(async () => {
     try {
@@ -1118,6 +1348,47 @@ export default function AttendancePanel() {
     }
   }, [reportFilters]);
 
+  const fetchWorkingHoursTracking = useCallback(async () => {
+    try {
+      setWorkingHoursLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const queryParams = {
+        userId: workingHoursFilters.userId || '',
+        year: workingHoursFilters.year,
+        month: workingHoursFilters.month,
+        period: 'monthly'
+      };
+      
+      const params = new URLSearchParams(queryParams);
+      const response = await axios.get(`/api/attendance/working-hours-tracking?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setWorkingHoursData(response.data.data.trackingData);
+    } catch (error) {
+      console.error('Error fetching working hours tracking:', error);
+      toast.error('Failed to load working hours tracking', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setWorkingHoursLoading(false);
+    }
+  }, [workingHoursFilters]);
+
+
+
   useEffect(() => {
     fetchUsers();
     fetchAttendanceReports();
@@ -1125,6 +1396,8 @@ export default function AttendancePanel() {
       fetchQRCode();
     }
   }, [fetchAttendanceReports, isAdmin]);
+
+
 
   const fetchAvailableYears = useCallback(async (skipYearValidation = false) => {
     try {
@@ -1158,6 +1431,14 @@ export default function AttendancePanel() {
       }
     }
   }, []);
+
+  // Effect to fetch available years when working hours tab is activated
+  useEffect(() => {
+    if (activeReportsTab === 'working-hours') {
+      fetchAvailableYears(true); // Load available years for the dropdown
+      fetchWorkingHoursTracking();
+    }
+  }, [activeReportsTab, fetchWorkingHoursTracking, fetchAvailableYears]);
 
   const fetchYearlyData = useCallback(async () => {
     try {
@@ -2635,6 +2916,249 @@ export default function AttendancePanel() {
                     </div>
                   </div>
 
+                  {/* User Configuration Section */}
+                  <div className="mb-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-slate-700">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <FaUsers className="mr-2 text-blue-600 dark:text-teal-400" />
+                        Configuration Mode
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        {/* Mode Selection */}
+                        <div className="flex flex-wrap gap-2">
+                          <CustomButton
+                            onClick={() => {
+                              setWorkingDaysMode('global');
+                              setSelectedUserId(null);
+                              loadWorkingDaysConfig();
+                            }}
+                            variant={workingDaysMode === 'global' ? 'blue' : 'gray'}
+                            size="sm"
+                          >
+                            Global Configuration
+                          </CustomButton>
+                          <CustomButton
+                            onClick={() => {
+                              setWorkingDaysMode('user');
+                              loadUsers();
+                            }}
+                            variant={workingDaysMode === 'user' ? 'blue' : 'gray'}
+                            size="sm"
+                          >
+                            Per-User Configuration
+                          </CustomButton>
+                        </div>
+
+                        {/* User Selection (only visible in user mode) */}
+                        {workingDaysMode === 'user' && (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <SearchableSelect
+                                  label="Select User"
+                                  placeholder="Search and select a user..."
+                                  value={selectedUserId || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setSelectedUserId(value || null);
+                                    if (value) {
+                                      loadUserWorkingDaysConfig(value);
+                                    }
+                                  }}
+                                  options={users.map(user => ({
+                                    value: user._id,
+                                    label: `${user.username} (${user.email})`
+                                  }))}
+                                />
+                              </div>
+                              
+                              {selectedUserId && (
+                                <div className="flex items-end">
+                                  <CustomButton
+                                    onClick={() => handleApplyGlobalToUser(selectedUserId)}
+                                    variant="green"
+                                    size="md"
+                                    icon={FaGlobe}
+                                    className="!py-3"
+                                  >
+                                    Apply Global Config
+                                  </CustomButton>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Daily Hours Configuration (only visible when user is selected) */}
+                            {selectedUserId && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <TextInput
+                                    label="Daily Working Hours"
+                                    type="number"
+                                    min="1"
+                                    max="24"
+                                    step="0.5"
+                                    value={userDailyHours}
+                                    onChange={(e) => setUserDailyHours(parseFloat(e.target.value) || 8)}
+                                    placeholder="8"
+                                    className="text-center"
+                                  />
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Hours per working day (default: 8)
+                                  </p>
+                                </div>
+                                <div className="flex items-start pt-8">
+                                  <CustomButton
+                                    onClick={async () => {
+                                      try {
+                                        // Use the selected year and month from the UI, not current date
+                                        const selectedYear = workingDaysForm.year;
+                                        const selectedMonth = workingDaysForm.month;
+                                        
+                                        // Get current working days configuration first
+                                        const token = localStorage.getItem('token');
+                                        const response = await axios.get(`/api/working-days/user?userId=${selectedUserId}&year=${selectedYear}&month=${selectedMonth}`, {
+                                          headers: { Authorization: `Bearer ${token}` }
+                                        });
+                                        
+                                        const currentConfig = response.data.data;
+                                        
+                                        // Update with new daily hours, keeping existing working days
+                                        await updateUserWorkingDays(
+                                          selectedUserId,
+                                          selectedYear,
+                                          selectedMonth,
+                                          currentConfig.workingDays || [],
+                                          currentConfig.defaultWorkingDaysOfWeek,
+                                          userDailyHours
+                                        );
+                                      } catch (error) {
+                                        console.error('Error updating daily hours:', error);
+                                        toast.error('Failed to update daily hours');
+                                      }
+                                    }}
+                                    variant="blue"
+                                    size="md"
+                                    icon={FaClock}
+                                    className="!py-3"
+                                  >
+                                    Update Daily Hours
+                                  </CustomButton>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Global Apply Options (only visible in user mode with custom configs) */}
+                        {workingDaysMode === 'user' && customConfigUsers.length > 0 && (
+                          <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
+                            <h5 className="font-medium text-gray-900 dark:text-white mb-3">
+                              Bulk Actions
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              <CustomButton
+                                onClick={() => handleApplyGlobalToAllUsers()}
+                                variant="blue"
+                                size="sm"
+                                icon={FaGlobe}
+                              >
+                                Apply Global to All Users
+                              </CustomButton>
+                              <CustomButton
+                                onClick={() => setShowCustomConfigsModal(true)}
+                                variant="teal"
+                                size="sm"
+                                icon={FaEye}
+                              >
+                                View Custom Configs ({customConfigUsers.length})
+                              </CustomButton>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Configuration Status */}
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {workingDaysMode === 'global' ? (
+                            <span className="flex items-center gap-2">
+                              <FaGlobe className="w-4 h-4" />
+                              Editing global configuration (affects all users without custom settings)
+                            </span>
+                          ) : selectedUserId ? (
+                            <span className="flex items-center gap-2">
+                              <FaUser className="w-4 h-4" />
+                              Editing configuration for: {users.find(u => u._id === selectedUserId)?.username}
+                              {workingDaysConfig?.isGlobal && (
+                                <span className="text-gray-500">(using global settings)</span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">Select a user to configure their working days</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom Configurations Modal */}
+      <CustomModal
+        isOpen={showCustomConfigsModal}
+        onClose={() => setShowCustomConfigsModal(false)}
+        title="Users with Custom Working Days"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {customConfigUsers.length > 0 ? (
+            <div className="space-y-3">
+              {customConfigUsers.map((config) => (
+                <div key={config._id} className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="font-medium text-gray-900 dark:text-white">
+                        {config.userId?.username}
+                      </h5>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {config.userId?.email}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        Updated by: {config.updatedBy?.username} • {new Date(config.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <CustomButton
+                        onClick={() => {
+                          setSelectedUserId(config.userId._id);
+                          setWorkingDaysMode('user');
+                          loadUserWorkingDaysConfig(config.userId._id);
+                          setShowCustomConfigsModal(false);
+                        }}
+                        variant="blue"
+                        size="xs"
+                      >
+                        Edit
+                      </CustomButton>
+                      <CustomButton
+                        onClick={() => handleApplyGlobalToUser(config.userId._id)}
+                        variant="green"
+                        size="xs"
+                      >
+                        Revert to Global
+                      </CustomButton>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FaUser className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Custom Configurations</h4>
+              <p className="text-gray-500 dark:text-gray-400">All users are using the global working days configuration.</p>
+            </div>
+          )}
+        </div>
+      </CustomModal>
+
                   {/* Monthly Calendar Grid */}
                   {workingDaysConfig && (
                     <div className="mb-6">
@@ -2662,7 +3186,9 @@ export default function AttendancePanel() {
                             }
                             
                             const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][workingDaysForm.month - 1];
-                            return `${workingDaysCount} working days in ${monthName}`;
+                            const dailyHours = workingDaysMode === 'user' && selectedUserId ? userDailyHours : 8;
+                            const totalHours = workingDaysCount * dailyHours;
+                            return `${workingDaysCount} working days in ${monthName} (${totalHours} hours)`;
                           })()}
                         </span>
                       </div>
@@ -3074,7 +3600,7 @@ export default function AttendancePanel() {
                     </span>
                     <span className="flex items-center gap-1">
                       <FaCalendarDay className="w-4 h-4" />
-                      {yearlyData.summary?.totalWorkingDays || 0} Working Days
+                      {yearlyData.summary?.totalWorkingDays || 0} Working Days ({(yearlyData.summary?.totalWorkingDays || 0) * 8} Hours)
                     </span>
                   </div>
                 )}
@@ -3149,8 +3675,9 @@ export default function AttendancePanel() {
                             {(() => {
                               // Admin calendar data only contains working days, so just count the days
                               const workingDaysInMonth = Object.keys(monthData).length;
+                              const totalHours = workingDaysInMonth * 8;
                               const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]} (${totalHours} hours)`;
                             })()}
                           </span>
                         </div>
@@ -3309,6 +3836,9 @@ export default function AttendancePanel() {
                                 <span className="sm:hidden">Days</span>
                                 <span className="hidden sm:inline">Working Days</span>
                               </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                                ({Object.keys(monthData).length * 8} Hours)
+                              </div>
                             </div>
                             <div>
                               <div className="text-sm sm:text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
@@ -3385,8 +3915,9 @@ export default function AttendancePanel() {
                             {(() => {
                               // Admin calendar data only contains working days, so just count the days
                               const workingDaysInMonth = Object.keys(monthData).length;
+                              const totalHours = workingDaysInMonth * 8;
                               const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]}`;
+                              return `${workingDaysInMonth} working days in ${monthNames[currentMonth]} (${totalHours} hours)`;
                             })()}
                           </span>
                         </div>
@@ -3537,6 +4068,9 @@ export default function AttendancePanel() {
                                 {Object.keys(monthData).length}
                               </div>
                               <div className="text-sm text-gray-600 dark:text-gray-400">Working Days</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                                ({Object.keys(monthData).length * 8} Hours)
+                              </div>
                             </div>
                             <div>
                               <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -3936,12 +4470,51 @@ export default function AttendancePanel() {
         ) : (
           /* Reports Section */
           <Card className="bg-gray-50 dark:bg-slate-950">
-          {/* Responsive Report Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+          {/* Reports Subtabs Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-6">
             <h3 className="text-lg font-semibold dark:text-white flex items-center">
               <FaChartLine className="mr-2 text-blue-800 dark:text-teal-400" />
-              Attendance Reports
+              Reports
             </h3>
+          </div>
+
+          {/* Reports Subtabs */}
+          <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveReportsTab('attendance')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeReportsTab === 'attendance'
+                    ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <FaList className="w-4 h-4 inline-block mr-2" />
+                Attendance Reports
+              </button>
+              <button
+                onClick={() => setActiveReportsTab('working-hours')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeReportsTab === 'working-hours'
+                    ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+              >
+                <FaClock className="w-4 h-4 inline-block mr-2" />
+                Working Hours Tracking
+              </button>
+            </nav>
+          </div>
+
+          {/* Attendance Reports Tab */}
+          {activeReportsTab === 'attendance' && (
+            <>
+              {/* Responsive Report Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4">
+                <h4 className="text-md font-semibold dark:text-white flex items-center">
+                  <FaList className="mr-2 text-blue-600 dark:text-teal-400" />
+                  Attendance Records
+                </h4>
             <div className="flex flex-col sm:flex-row gap-2">
               {isAdmin && (
                 <CustomButton
@@ -4196,6 +4769,196 @@ export default function AttendancePanel() {
                 </div>
               </CustomScrollbar>
             </div>
+          )}
+            </>
+          )}
+
+          {/* Working Hours Tracking Tab */}
+          {activeReportsTab === 'working-hours' && (
+            <>
+              {/* Working Hours Filters */}
+              <div className="mb-6">
+                <h4 className="text-md font-semibold dark:text-white mb-4 flex items-center">
+                  <FaClock className="mr-2 text-blue-600 dark:text-teal-400" />
+                  Working Hours Analysis
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* User Filter */}
+                  <div>
+                    <SearchableSelect
+                      label="Select Employee"
+                      placeholder="All Employees"
+                      value={workingHoursFilters.userId}
+                      onChange={(e) => setWorkingHoursFilters(prev => ({ ...prev, userId: e.target.value }))}
+                      options={[
+                        { value: '', label: 'All Employees' },
+                        ...users.map(user => ({ 
+                          value: user._id, 
+                          label: `${user.username} (${user.email})` 
+                        }))
+                      ]}
+                    />
+                  </div>
+                  
+                  {/* Year Filter */}
+                  <div>
+                    <Select
+                      label="Year"
+                      value={workingHoursFilters.year}
+                      onChange={(value) => setWorkingHoursFilters(prev => ({ ...prev, year: parseInt(value) }))}
+                      options={availableYears.length > 0 
+                        ? availableYears.map(year => ({ value: year, label: year.toString() }))
+                        : [
+                            { value: new Date().getFullYear(), label: new Date().getFullYear().toString() },
+                            { value: new Date().getFullYear() - 1, label: (new Date().getFullYear() - 1).toString() }
+                          ]
+                      }
+                    />
+                  </div>
+                  
+                  {/* Month Filter */}
+                  <div>
+                    <Select
+                      label="Month"
+                      value={workingHoursFilters.month}
+                      onChange={(value) => setWorkingHoursFilters(prev => ({ ...prev, month: parseInt(value) }))}
+                      options={[
+                        { value: 1, label: 'January' },
+                        { value: 2, label: 'February' },
+                        { value: 3, label: 'March' },
+                        { value: 4, label: 'April' },
+                        { value: 5, label: 'May' },
+                        { value: 6, label: 'June' },
+                        { value: 7, label: 'July' },
+                        { value: 8, label: 'August' },
+                        { value: 9, label: 'September' },
+                        { value: 10, label: 'October' },
+                        { value: 11, label: 'November' },
+                        { value: 12, label: 'December' }
+                      ]}
+                    />
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2">
+                  <CustomButton
+                    variant="red"
+                    size="sm"
+                    onClick={() => {
+                      setWorkingHoursFilters({
+                        userId: '',
+                        year: new Date().getFullYear(),
+                        month: new Date().getMonth() + 1
+                      });
+                    }}
+                    icon={FaTimes}
+                    disabled={
+                      workingHoursLoading || 
+                      (workingHoursFilters.userId === '' && 
+                       workingHoursFilters.year === new Date().getFullYear() && 
+                       workingHoursFilters.month === new Date().getMonth() + 1)
+                    }
+                  >
+                    Reset Filters
+                  </CustomButton>
+                  <CustomButton
+                    variant="orange"
+                    size="sm"
+                    onClick={fetchWorkingHoursTracking}
+                    icon={HiRefresh}
+                    disabled={workingHoursLoading}
+                  >
+                    Refresh Data
+                  </CustomButton>
+                </div>
+              </div>
+
+              {/* Working Hours Table */}
+              {workingHoursLoading ? (
+                <div className="flex justify-center py-8">
+                  <RahalatekLoader size="lg" />
+                </div>
+              ) : workingHoursData.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No working hours data found for the selected criteria.
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                  <CustomScrollbar>
+                    <div className="min-w-full">
+                      <CustomTable
+                        headers={[
+                          { label: 'Employee', className: 'text-left w-1/4' },
+                          { label: 'Required Hours', className: 'text-center w-1/5' },
+                          { label: 'Hours Worked', className: 'text-center w-1/5' },
+                          { label: 'Progress', className: 'text-center w-1/4' },
+                          { label: 'Records', className: 'text-center w-1/12' }
+                        ]}
+                        data={workingHoursData}
+                        renderRow={(data) => (
+                          <>
+                            <Table.Cell className="font-medium text-gray-900 dark:text-white text-left w-1/4">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-sm">{data.username}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{data.email}</span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="text-center w-1/5">
+                              <div className="flex flex-col items-center">
+                                <span className="font-bold text-blue-600 dark:text-blue-500 text-sm">
+                                  {data.totalRequiredHours}h
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  ({data.totalWorkingDays} days × {data.dailyHours || 8}h)
+                                </span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="text-center w-1/5">
+                              <span className={`font-bold text-sm ${
+                                data.totalHoursWorked >= data.totalRequiredHours 
+                                  ? 'text-green-600 dark:text-green-500' 
+                                  : 'text-red-600 dark:text-red-500'
+                              }`}>
+                                {data.totalHoursWorked}h
+                              </span>
+                            </Table.Cell>
+                            <Table.Cell className="text-center w-1/4">
+                              <div className="flex items-center justify-center">
+                                <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                  <div 
+                                    className={`h-2 rounded-full ${
+                                      data.percentage >= 100 ? 'bg-green-600' :
+                                      data.percentage >= 80 ? 'bg-yellow-600' :
+                                      'bg-red-700'
+                                    }`}
+                                    style={{ width: `${Math.min(data.percentage, 100)}%` }}
+                                  ></div>
+                                </div>
+                                <span className={`text-xs font-medium ${
+                                  data.percentage >= 100 ? 'text-green-600 dark:text-green-400' :
+                                  data.percentage >= 80 ? 'text-yellow-600 dark:text-yellow-400' :
+                                  'text-red-600 dark:text-red-400'
+                                }`}>
+                                  {data.percentage}%
+                                </span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell className="text-center w-1/12">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {data.attendanceRecords}
+                              </span>
+                            </Table.Cell>
+                          </>
+                        )}
+                        emptyMessage="No working hours data found."
+                      />
+                    </div>
+                  </CustomScrollbar>
+                </div>
+              )}
+            </>
           )}
         </Card>
         )}
