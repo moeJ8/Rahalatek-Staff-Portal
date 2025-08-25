@@ -210,36 +210,38 @@ export default function QuickActionsPanel() {
   return (
     <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
-            <FaCog className="text-blue-600 dark:text-teal-400 text-lg" />
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
+            <FaCog className="text-blue-600 dark:text-teal-400 text-base sm:text-lg" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Quick Actions</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white">Quick Actions</h3>
         </div>
       </div>
 
       {/* Actions Grid */}
-      <div className="p-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {quickActions.map((action) => (
             <Link
               key={action.id}
               to={action.link}
               className={`
-                group flex flex-col items-center gap-3 p-4 rounded-xl transition-all duration-200 
+                group flex flex-col items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl transition-all duration-200 
                 ${action.color} ${action.hoverColor}
                 hover:shadow-md hover:scale-105 transform
               `}
             >
               <div className="flex items-center justify-center">
-                {action.icon}
+                <div className="w-4 h-4 sm:w-5 sm:h-5">
+                  {React.cloneElement(action.icon, { className: "w-4 h-4 sm:w-5 sm:h-5" })}
+                </div>
               </div>
               <div className="text-center">
-                <div className="font-medium text-sm mb-1">
+                <div className="font-medium text-xs sm:text-sm mb-0.5 sm:mb-1">
                   {action.title}
                 </div>
-                <div className="text-xs opacity-75">
+                <div className="text-xs opacity-75 hidden sm:block">
                   {action.description}
                 </div>
               </div>
@@ -248,10 +250,11 @@ export default function QuickActionsPanel() {
         </div>
 
         {/* Role Badge */}
-        <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-600">
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-200 dark:border-slate-600">
           <div className="flex items-center justify-center">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              {user.isAdmin ? '👑 Administrator' : user.isAccountant ? '💼 Accountant' : '👤 User'} • {quickActions.length} actions available
+            <span className="text-xs text-slate-500 dark:text-slate-400 text-center">
+              {user.isAdmin ? '👑 Administrator' : user.isAccountant ? '💼 Accountant' : '👤 User'} 
+              <span className="hidden sm:inline"> • {quickActions.length} actions available</span>
             </span>
           </div>
         </div>

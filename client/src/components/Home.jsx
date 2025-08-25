@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from 'flowbite-react';
 import axios from 'axios';
-import { FaPlane, FaMoneyBillWave, FaTicketAlt, FaUser, FaShoppingCart, FaChartLine, FaBell, FaPlus } from 'react-icons/fa';
+import { FaPlane, FaTicketAlt, FaUser, FaBell, FaPlus } from 'react-icons/fa';
 import RahalatekLoader from './RahalatekLoader';
 import HomeCalendar from './HomeCalendar';
 import RecentVoucherActivity from './RecentVoucherActivity';
@@ -49,10 +49,7 @@ export default function Home() {
     }
   };
 
-  const formatCurrency = (amount, currency = 'USD') => {
-    const symbols = { USD: '$', EUR: '€', TRY: '₺' };
-    return `${symbols[currency] || '$'}${Number(amount).toLocaleString()}`;
-  };
+
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -117,39 +114,7 @@ export default function Home() {
               <span className="font-bold text-green-600 dark:text-green-400">{stats?.activeVouchers || 0}</span>
             </div>
 
-                        {(user?.isAdmin || user?.isAccountant) && (
-              <>
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                    <FaMoneyBillWave className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <span className="text-gray-600 dark:text-gray-400">Client Revenue:</span>
-                  <span className="font-bold text-purple-600 dark:text-purple-400">
-                    {stats?.thisMonthRevenue ? formatCurrency(stats.thisMonthRevenue.amount, stats.thisMonthRevenue.currency) : '$0'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 bg-red-100 dark:bg-red-900/50 rounded-lg">
-                    <FaShoppingCart className="w-3 h-3 text-red-600 dark:text-red-400" />
-                  </div>
-                  <span className="text-gray-600 dark:text-gray-400">Supplier Costs:</span>
-                  <span className="font-bold text-red-600 dark:text-red-400">
-                    {stats?.thisMonthSupplierCosts ? formatCurrency(stats.thisMonthSupplierCosts.amount, stats.thisMonthSupplierCosts.currency) : '$0'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
-                    <FaChartLine className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-gray-600 dark:text-gray-400">Net Profit:</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                    {stats?.thisMonthProfit ? formatCurrency(stats.thisMonthProfit.amount, stats.thisMonthProfit.currency) : '$0'}
-                  </span>
-                </div>
-              </>
-            )}
+            
 
             {!user?.isAdmin && !user?.isAccountant && (
               <div className="flex items-center gap-1.5">
@@ -166,14 +131,14 @@ export default function Home() {
 
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-6 mb-6">
           {/* Recent Voucher Activity */}
-          <div className="lg:ml-12">
+          <div className="lg:ml-12 lg:col-span-4">
             <RecentVoucherActivity />
           </div>
           
           {/* User Calendar */}
-          <div className="lg:ml-12">
+          <div className="lg:ml-12 lg:col-span-3">
             <HomeCalendar />
           </div>
         </div>

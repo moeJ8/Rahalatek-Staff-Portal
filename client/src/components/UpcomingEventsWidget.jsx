@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FaCalendarAlt, 
@@ -34,13 +34,7 @@ export default function UpcomingEventsWidget() {
     }
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchUpcomingEvents();
-    }
-  }, [user]);
-
-  const fetchUpcomingEvents = async () => {
+  const fetchUpcomingEvents = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -132,7 +126,13 @@ export default function UpcomingEventsWidget() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUpcomingEvents();
+    }
+  }, [user, fetchUpcomingEvents]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -300,18 +300,18 @@ export default function UpcomingEventsWidget() {
   return (
     <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[400px] flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
-            <FaCalendarAlt className="text-blue-600 dark:text-teal-400 text-lg" />
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
+            <FaCalendarAlt className="text-blue-600 dark:text-teal-400 text-base sm:text-lg" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Upcoming Events</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white">Upcoming Events</h3>
         </div>
         <Link 
           to="/dashboard"
-          className="p-2 text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300 transition-all duration-200 rounded-xl hover:bg-blue-50 dark:hover:bg-teal-900/20"
+          className="p-1.5 sm:p-2 text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300 transition-all duration-200 rounded-xl hover:bg-blue-50 dark:hover:bg-teal-900/20"
         >
-          <FaExternalLinkAlt className="w-5 h-5" />
+          <FaExternalLinkAlt className="w-4 h-4 sm:w-5 sm:h-5" />
         </Link>
       </div>
 
@@ -319,48 +319,48 @@ export default function UpcomingEventsWidget() {
       <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
         <button
           onClick={() => setActiveTab('departures')}
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+          className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
             activeTab === 'departures'
               ? 'bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 border-b-2 border-orange-500'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
           }`}
         >
-          <FaPlaneDeparture className="w-4 h-4" />
-          Departures
+          <FaPlaneDeparture className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Departures</span>
           {events.departures.length > 0 && (
-            <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full text-xs">
+            <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1 sm:px-2 py-0.5 rounded-full text-xs">
               {events.departures.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab('arrivals')}
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+          className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
             activeTab === 'arrivals'
               ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
           }`}
         >
-          <FaPlaneArrival className="w-4 h-4" />
-          Arrivals
+          <FaPlaneArrival className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Arrivals</span>
           {events.arrivals.length > 0 && (
-            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs">
+            <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1 sm:px-2 py-0.5 rounded-full text-xs">
               {events.arrivals.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab('holidays')}
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+          className={`flex-1 px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
             activeTab === 'holidays'
               ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700'
           }`}
         >
-          <FaGift className="w-4 h-4" />
-          Holidays
+          <FaGift className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Holidays</span>
           {events.holidays.length > 0 && (
-            <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full text-xs">
+            <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-1 sm:px-2 py-0.5 rounded-full text-xs">
               {events.holidays.length}
             </span>
           )}
@@ -368,7 +368,7 @@ export default function UpcomingEventsWidget() {
       </div>
 
       {/* Content */}
-      <div className="p-6 flex-1">
+      <div className="p-4 sm:p-6 flex-1">
         {loading ? (
           <div className="flex justify-center py-8">
             <RahalatekLoader size="md" />

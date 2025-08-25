@@ -149,23 +149,23 @@ export default function RecentNotificationsWidget() {
   return (
     <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[850px] flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
-            <FaBell className="text-blue-600 dark:text-teal-400 text-lg" />
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
+            <FaBell className="text-blue-600 dark:text-teal-400 text-base sm:text-lg" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Recent Notifications</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white">Recent Notifications</h3>
         </div>
         <Link 
           to="/notifications"
-          className="p-2 text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300 transition-all duration-200 rounded-xl hover:bg-blue-50 dark:hover:bg-teal-900/20"
+          className="p-1.5 sm:p-2 text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300 transition-all duration-200 rounded-xl hover:bg-blue-50 dark:hover:bg-teal-900/20"
         >
-          <FaExternalLinkAlt className="w-5 h-5" />
+          <FaExternalLinkAlt className="w-4 h-4 sm:w-5 sm:h-5" />
         </Link>
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-5 flex-1 flex flex-col">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 flex-1 flex flex-col">
         {loading ? (
           <div className="flex justify-center py-8">
             <RahalatekLoader size="md" />
@@ -186,34 +186,34 @@ export default function RecentNotificationsWidget() {
                 <div 
                   key={notification._id}
                   className={`
-                    p-4 rounded-xl transition-colors shadow-sm hover:shadow-md
+                    p-3 sm:p-4 rounded-xl transition-colors shadow-sm hover:shadow-md
                     ${unread 
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400' 
                       : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }
                   `}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2 sm:gap-3">
                     {/* Notification Icon */}
-                    <div className={`flex items-center justify-center p-2 rounded-lg ${colorInfo.bgColor}`}>
-                      <div className={colorInfo.textColor}>
-                        {getNotificationIcon(notification.type)}
+                    <div className={`flex items-center justify-center p-1.5 sm:p-2 rounded-lg ${colorInfo.bgColor}`}>
+                      <div className={`${colorInfo.textColor} w-3 h-3 sm:w-4 sm:h-4`}>
+                        {React.cloneElement(getNotificationIcon(notification.type), { className: "w-3 h-3 sm:w-4 sm:h-4" })}
                       </div>
                     </div>
 
                     {/* Notification Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h4 className={`font-medium text-sm mb-1 ${unread ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`font-medium text-xs sm:text-sm mb-1 ${unread ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'} truncate`}>
                             {notification.title}
                           </h4>
-                          <p className={`text-xs leading-relaxed ${unread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                          <p className={`text-xs leading-relaxed ${unread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'} line-clamp-2`}>
                             {notification.message}
                           </p>
                         </div>
                         {unread && (
-                          <div className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${colorInfo.dotColor}`}></div>
+                          <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mt-1 flex-shrink-0 ${colorInfo.dotColor}`}></div>
                         )}
                       </div>
                       
@@ -222,8 +222,8 @@ export default function RecentNotificationsWidget() {
                         <span className="text-xs text-slate-400 dark:text-slate-500">
                           {formatTimeAgo(notification.createdAt)}
                         </span>
-                                                 {notification.relatedVoucher && (
-                           <Link to={`/vouchers/${notification.relatedVoucher._id}`}>
+                        {notification.relatedVoucher && (
+                           <Link to={`/vouchers/${notification.relatedVoucher._id}`} className="flex-shrink-0">
                              <CustomButton
                                variant="teal"
                                size="xs"

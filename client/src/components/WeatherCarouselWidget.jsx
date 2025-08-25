@@ -95,27 +95,25 @@ export default function WeatherCarouselWidget() {
     }
   };
 
-  const getWeatherIcon = (weatherMain) => {
-    const iconClass = "w-8 h-8";
-    
+  const getWeatherIcon = (weatherMain, sizeClass = "w-8 h-8") => {
     switch (weatherMain?.toLowerCase()) {
       case 'clear':
-        return <FaSun className={`${iconClass} text-yellow-500`} />;
+        return <FaSun className={`${sizeClass} text-yellow-500`} />;
       case 'clouds':
-        return <FaCloud className={`${iconClass} text-gray-500`} />;
+        return <FaCloud className={`${sizeClass} text-gray-500`} />;
       case 'rain':
       case 'drizzle':
-        return <FaCloudRain className={`${iconClass} text-blue-500`} />;
+        return <FaCloudRain className={`${sizeClass} text-blue-500`} />;
       case 'snow':
-        return <FaSnowflake className={`${iconClass} text-blue-200`} />;
+        return <FaSnowflake className={`${sizeClass} text-blue-200`} />;
       case 'thunderstorm':
-        return <FaBolt className={`${iconClass} text-purple-500`} />;
+        return <FaBolt className={`${sizeClass} text-purple-500`} />;
       case 'mist':
       case 'fog':
       case 'haze':
-        return <FaCloudSun className={`${iconClass} text-gray-400`} />;
+        return <FaCloudSun className={`${sizeClass} text-gray-400`} />;
       default:
-        return <FaSun className={`${iconClass} text-yellow-500`} />;
+        return <FaSun className={`${sizeClass} text-yellow-500`} />;
     }
   };
 
