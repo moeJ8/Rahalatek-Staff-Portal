@@ -101,6 +101,7 @@ export default function AttendancePanel() {
   const [selectedVacationMonth, setSelectedVacationMonth] = useState('all');
   const [selectedLeaveType, setSelectedLeaveType] = useState('all');
   const [selectedLeaveCategory, setSelectedLeaveCategory] = useState('all');
+  const [selectedLeaveUser, setSelectedLeaveUser] = useState('all');
   const [activeVacationsTab, setActiveVacationsTab] = useState('overview');
   const [availableVacationYears, setAvailableVacationYears] = useState([]);
   const [availableVacationMonths, setAvailableVacationMonths] = useState([]);
@@ -1073,11 +1074,23 @@ export default function AttendancePanel() {
     setSelectedVacationMonth('all');
     setSelectedLeaveType('all');
     setSelectedLeaveCategory('all');
+    setSelectedLeaveUser('all');
   }, []);
 
   // Frontend filtering with useMemo for instant results
   const filteredLeaves = useMemo(() => {
     let filtered = vacationsData.allLeaves || [];
+    
+    // Filter by year first
+    filtered = filtered.filter(leave => {
+      let leaveDate;
+      if (leave.date) {
+        leaveDate = new Date(leave.date);
+      } else if (leave.startDate) {
+        leaveDate = new Date(leave.startDate);
+      }
+      return leaveDate && leaveDate.getFullYear() === selectedVacationYear;
+    });
     
     // Filter by month
     if (selectedVacationMonth !== 'all') {
@@ -1102,8 +1115,13 @@ export default function AttendancePanel() {
       filtered = filtered.filter(leave => leave.leaveCategory === selectedLeaveCategory);
     }
     
+    // Filter by user
+    if (selectedLeaveUser !== 'all') {
+      filtered = filtered.filter(leave => leave.userId?._id === selectedLeaveUser);
+    }
+    
     return filtered;
-  }, [vacationsData.allLeaves, selectedVacationMonth, selectedLeaveType, selectedLeaveCategory]);
+  }, [vacationsData.allLeaves, selectedVacationMonth, selectedLeaveType, selectedLeaveCategory, selectedLeaveUser]);
 
   const saveUserLeave = useCallback(async () => {
     try {
@@ -2439,7 +2457,7 @@ export default function AttendancePanel() {
                   
                   {/* Centered Filters */}
                   <div className="flex justify-center mb-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-6xl w-full">
                       {/* Month Filter */}
                       <div>
                         <Select
@@ -2495,6 +2513,24 @@ export default function AttendancePanel() {
                         />
                       </div>
                       
+                      {/* User Filter */}
+                      <div>
+                        <Select
+                          label="User"
+                          value={selectedLeaveUser}
+                          onChange={(value) => setSelectedLeaveUser(value)}
+                          options={[
+                            { value: 'all', label: 'All Users' },
+                            ...users.map(user => ({
+                              value: user._id,
+                              label: user.username
+                            }))
+                          ]}
+                          placeholder="Select user..."
+                          disabled={vacationsLoading}
+                        />
+                      </div>
+                      
                       {/* Reset Button */}
                       <div className="relative w-full">
                         <div className="mb-2 block">
@@ -2506,7 +2542,7 @@ export default function AttendancePanel() {
                           variant="red"
                           size="sm"
                           onClick={resetAllFilters}
-                          disabled={vacationsLoading || (selectedVacationMonth === 'all' && selectedLeaveType === 'all' && selectedLeaveCategory === 'all')}
+                          disabled={vacationsLoading || (selectedVacationMonth === 'all' && selectedLeaveType === 'all' && selectedLeaveCategory === 'all' && selectedLeaveUser === 'all')}
                           className="w-full py-3 text-sm font-medium"
                         >
                           Reset Filters

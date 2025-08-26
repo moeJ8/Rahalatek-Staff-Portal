@@ -368,7 +368,7 @@ exports.editPreviousMonthSalary = async (req, res) => {
         }
         
         const { userId } = req.params;
-        const { year, month, amount, note = '' } = req.body;
+        const { year, month, amount, currency, note = '' } = req.body;
         
         // Validation
         if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
@@ -383,7 +383,7 @@ exports.editPreviousMonthSalary = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const currency = user.salaryCurrency || 'USD';
+        const entryCurrency = currency || user.salaryCurrency || 'USD';
         const entryIndex = (user.salaryBaseEntries || []).findIndex(e => e.year === year && e.month === month);
         
         if (entryIndex === -1) {
@@ -394,7 +394,7 @@ exports.editPreviousMonthSalary = async (req, res) => {
         const updatedEntry = {
             ...user.salaryBaseEntries[entryIndex]._doc,
             amount,
-            currency,
+            currency: entryCurrency,
             note: note,
             setBy: req.user.userId,
             updatedAt: new Date()

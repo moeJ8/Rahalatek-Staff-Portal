@@ -42,9 +42,9 @@ export const getUserSalaryBaseEntries = async (userId) => {
   return response.data;
 };
 
-export const editMonthSalary = async (userId, { year, month, amount, note }) => {
+export const editMonthSalary = async (userId, { year, month, amount, currency, note }) => {
   const response = await axios.put(`/api/profile/${userId}/salary/edit`, {
-    year, month, amount, note
+    year, month, amount, currency, note
   });
   return response.data;
 };

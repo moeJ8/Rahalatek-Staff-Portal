@@ -1,9 +1,9 @@
 import React from 'react'
 import axios from 'axios'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
-import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins } from 'react-icons/fa'
+import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate, HiRefresh } from 'react-icons/hi'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -295,11 +295,19 @@ export default function AdminPanel() {
     const [saveBonusAmountLoading, setSaveBonusAmountLoading] = useState(false);
     
     // Inner tabs for salaries section
-    const [salaryInnerTab, setSalaryInnerTab] = useState('salary');
+    const [salaryInnerTab, setSalaryInnerTab] = useState('salaries'); // 'salaries' for cards view, 'salary'/'bonus' for settings functionality
     
     // Month editor state
     const [selectedMonthToEdit, setSelectedMonthToEdit] = useState('');
     const [selectedBonusMonthToEdit, setSelectedBonusMonthToEdit] = useState('');
+    
+    // Cards view state
+    const [salaryCardsYear, setSalaryCardsYear] = useState(new Date().getFullYear());
+    const [salaryCardsMonth, setSalaryCardsMonth] = useState(new Date().getMonth().toString()); // Current month (0-11)
+    const [allUsersSalaryData, setAllUsersSalaryData] = useState([]);
+    const [salaryCardsLoading, setSalaryCardsLoading] = useState(false);
+    const [availableSalaryYears, setAvailableSalaryYears] = useState([]);
+    const [availableSalaryMonths, setAvailableSalaryMonths] = useState([]);
 
     // Generate month options from salary base entries
     const getMonthOptions = () => {
@@ -580,6 +588,158 @@ export default function AdminPanel() {
         setEditingBonusAmount(null);
         setEditBonusAmount('');
     };
+
+    // Load available years and months from all users' salary data
+    const loadAvailableSalaryOptions = useCallback(async () => {
+        try {
+            const yearsSet = new Set();
+            const monthsSet = new Set();
+            
+            // Filter users based on role permissions
+            const filteredUsers = isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users;
+            
+            // Make all API calls in parallel instead of sequential
+            const userPromises = filteredUsers.map(async (user) => {
+                try {
+                    // Get user's salary base entries and bonuses in parallel
+                    const [baseEntriesRes, bonusesRes] = await Promise.all([
+                        getUserSalaryBaseEntries(user._id),
+                        getUserBonuses(user._id)
+                    ]);
+                    const baseEntries = baseEntriesRes.salaryBaseEntries || [];
+                    const bonuses = bonusesRes.bonuses || [];
+                    
+                    return { baseEntries, bonuses };
+                } catch (userError) {
+                    console.error(`Error loading data for user ${user.username}:`, userError);
+                    return { baseEntries: [], bonuses: [] };
+                }
+            });
+            
+            // Wait for all user data to load in parallel
+            const allUserData = await Promise.all(userPromises);
+            
+            // Process all the data to collect years and months
+            allUserData.forEach(({ baseEntries, bonuses }) => {
+                // Collect years and months from base entries
+                baseEntries.forEach(entry => {
+                    yearsSet.add(entry.year);
+                    monthsSet.add(entry.month);
+                });
+                
+                // Collect years and months from bonuses
+                bonuses.forEach(bonus => {
+                    yearsSet.add(bonus.year);
+                    monthsSet.add(bonus.month);
+                });
+            });
+            
+            // Convert sets to sorted arrays
+            const sortedYears = Array.from(yearsSet).sort((a, b) => b - a); // Newest first
+            const sortedMonths = Array.from(monthsSet).sort((a, b) => a - b); // January to December
+            
+            setAvailableSalaryYears(sortedYears);
+            setAvailableSalaryMonths(sortedMonths);
+            
+        } catch (error) {
+            console.error('Error loading available salary options:', error);
+        }
+    }, [users, isAccountant, isAdmin]);
+
+    // Load all users salary data for cards view
+    const loadAllUsersSalaryData = useCallback(async () => {
+        try {
+            setSalaryCardsLoading(true);
+            
+            // Filter users based on role permissions
+            const filteredUsers = isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users;
+            
+            // Make all API calls in parallel for all users
+            const userPromises = filteredUsers.map(async (user) => {
+                try {
+                    // Get all user data in parallel
+                    const [salaryRes, baseEntriesRes, bonusesRes] = await Promise.all([
+                        getUserSalary(user._id),
+                        getUserSalaryBaseEntries(user._id),
+                        getUserBonuses(user._id)
+                    ]);
+                    
+                    const baseEntries = baseEntriesRes.salaryBaseEntries || [];
+                    const bonuses = bonusesRes.bonuses || [];
+                    
+                    // Calculate current salary for the selected month
+                    let currentSalary = salaryRes.salaryAmount || 0;
+                    let currentCurrency = salaryRes.salaryCurrency || 'USD';
+                    
+                    if (salaryCardsMonth !== 'all') {
+                        // Find specific month's salary
+                        const monthEntry = baseEntries.find(entry => 
+                            entry.year === salaryCardsYear && entry.month === parseInt(salaryCardsMonth)
+                        );
+                        if (monthEntry) {
+                            currentSalary = monthEntry.amount;
+                            currentCurrency = monthEntry.currency;
+                        }
+                    }
+                    
+                    // Filter bonuses for the selected year and month
+                    const filteredBonuses = bonuses.filter(bonus => {
+                        if (bonus.year !== salaryCardsYear) return false;
+                        if (salaryCardsMonth !== 'all' && bonus.month !== parseInt(salaryCardsMonth)) return false;
+                        return true;
+                    });
+                    
+                    // Calculate total bonus for the period
+                    const totalBonus = filteredBonuses.reduce((sum, bonus) => sum + (bonus.amount || 0), 0);
+                    
+                    return {
+                        userId: user._id,
+                        username: user.username,
+                        isAdmin: user.isAdmin || false,
+                        isAccountant: user.isAccountant || false,
+                        salary: currentSalary,
+                        currency: currentCurrency,
+                        totalBonus: totalBonus,
+                        bonuses: filteredBonuses,
+                        salaryDay: salaryRes.salaryDayOfMonth,
+                        salaryNotes: salaryRes.salaryNotes
+                    };
+                } catch (userError) {
+                    console.error(`Error loading data for user ${user.username}:`, userError);
+                    // Return user with default/empty data
+                    return {
+                        userId: user._id,
+                        username: user.username,
+                        isAdmin: user.isAdmin || false,
+                        isAccountant: user.isAccountant || false,
+                        salary: 0,
+                        currency: 'USD',
+                        totalBonus: 0,
+                        bonuses: [],
+                        salaryDay: null,
+                        salaryNotes: ''
+                    };
+                }
+            });
+            
+            // Wait for all user data to load in parallel
+            const allUsersData = await Promise.all(userPromises);
+            
+            setAllUsersSalaryData(allUsersData);
+        } catch (error) {
+            console.error('Error loading all users salary data:', error);
+            toast.error('Failed to load salary data', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryCardsLoading(false);
+        }
+    }, [users, isAccountant, isAdmin, salaryCardsYear, salaryCardsMonth]);
 
     const handleSaveBonusAmount = async (bonus) => {
         if (!selectedUserForSalary || saveBonusAmountLoading) return;
@@ -895,6 +1055,15 @@ export default function AdminPanel() {
             fetchFinancialData();
         }
     }, [financialFilters.currency, activeTab, dataLoaded]);
+
+    // Single useEffect to handle all salary data loading
+    useEffect(() => {
+        if (activeTab === 'salaries' && salaryInnerTab === 'salaries' && dataLoaded && users.length > 0) {
+            loadAvailableSalaryOptions().then(() => {
+                loadAllUsersSalaryData();
+            });
+        }
+    }, [activeTab, salaryInnerTab, dataLoaded, users.length, salaryCardsYear, salaryCardsMonth]);
 
     const fetchTours = async () => {
         setLoading(true);
@@ -4829,11 +4998,11 @@ export default function AdminPanel() {
                                     <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 mb-6`}>
                                         {financialFilters.viewType === 'providers' ? (
                                             <>
-                                                {/* Total Revenue */}
+                                                {/* Suppliers Cost */}
                                                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Revenue</p>
+                                                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Suppliers Cost</p>
                                                             <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toLocaleString()}
                                                             </p>
@@ -5700,78 +5869,330 @@ export default function AdminPanel() {
                                 <Card className="w-full dark:bg-slate-950" id="salaries-panel" role="tabpanel" aria-labelledby="tab-salaries">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Salaries & Bonuses</h2>
                                     
-                                    {/* User Selection (common for both tabs) */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                        <div>
-                                            <Label value="Select User" className="mb-2" />
-                                            <SearchableSelect
-                                                id="salaryUserSelect"
-                                                value={selectedUserForSalary}
-                                                onChange={async (val) => { 
-                                                    const v = val?.target?.value ?? val; 
-                                                    const selected = users.find(u => u._id === v); 
-                                                    if (isAccountant && !isAdmin && selected?.isAdmin) { 
-                                                        toast.error('Accountants cannot manage admin salaries', {
-                                                            duration: 3000,
-                                                            style: {
-                                                                background: '#f44336',
-                                                                color: '#fff',
-                                                                fontWeight: '500'
-                                                            }
-                                                        }); 
-                                                        setSelectedUserForSalary(''); 
-                                                        return; 
-                                                    } 
-                                                    setSelectedUserForSalary(v); 
-                                                    if (v) { 
-                                                        // Reset month selections when switching users
-                                                        setSelectedMonthToEdit('');
-                                                        setSelectedBonusMonthToEdit('');
-                                                        
-                                                        // Load data in parallel
-                                                        await Promise.all([
-                                                            handleLoadUserSalary(v),
-                                                            handleLoadUserBonuses(v), 
-                                                            handleLoadUserSalaryBaseEntries(v, true) // Auto-select current month on initial load
-                                                        ]);
-                                                    } 
+                                    {/* Inner Tab Navigation - Always visible */}
+                                    <div className="mb-6">
+                                        <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm">
+                                            <button 
+                                                onClick={() => setSalaryInnerTab('salaries')}
+                                                className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                                                    salaryInnerTab === 'salaries'
+                                                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                                                }`}
+                                            >
+                                                <FaCoins className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">Salaries Overview</span>
+                                                <span className="sm:hidden">Salaries</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setSalaryInnerTab('salary'); // Default to salary management when switching to settings
                                                 }}
-                                                options={(isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users).map(u => ({ value: u._id, label: u.username }))}
-                                                placeholder="Search user..."
-                                                clearable
-                                            />
+                                                className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                                                    salaryInnerTab === 'salary' || salaryInnerTab === 'bonus'
+                                                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                                                }`}
+                                            >
+                                                <FaCog className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">Salary Management</span>
+                                                <span className="sm:hidden">Settings</span>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    {/* Inner Tab Navigation */}
-                                    {selectedUserForSalary && (
-                                        <div className="mb-6">
-                                            <div className="border-b border-gray-200 dark:border-gray-700">
-                                                <nav className="-mb-px flex space-x-8">
-                                                    <button
-                                                        onClick={() => setSalaryInnerTab('salary')}
-                                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                                                            salaryInnerTab === 'salary'
-                                                                ? 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                                        }`}
-                                                    >
-                                                        💰 Salary Management
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setSalaryInnerTab('bonus')}
-                                                        className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                                                            salaryInnerTab === 'bonus'
-                                                                ? 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                                                        }`}
-                                                    >
-                                                        🎁 Bonus Management
-                                                    </button>
-                                                </nav>
+                                    {/* Salaries Cards View */}
+                                    {salaryInnerTab === 'salaries' && (
+                                        <div>
+                                            {/* Year and Month Filters */}
+                                            <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto">
+                                                    <div>
+                                                        <Label value="Year" className="mb-2" />
+                                                        <CustomSelect
+                                                            value={salaryCardsYear}
+                                                            onChange={(value) => setSalaryCardsYear(parseInt(value))}
+                                                            options={availableSalaryYears.length > 0 ? availableSalaryYears.map(year => ({
+                                                                value: year,
+                                                                label: year.toString()
+                                                            })) : [{ value: new Date().getFullYear(), label: new Date().getFullYear().toString() }]}
+                                                            placeholder="Select year..."
+                                                            disabled={salaryCardsLoading}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <Label value="Month" className="mb-2" />
+                                                        <CustomSelect
+                                                            value={salaryCardsMonth}
+                                                            onChange={(value) => setSalaryCardsMonth(value)}
+                                                            options={[
+                                                                { value: 'all', label: 'All Months' },
+                                                                ...availableSalaryMonths.map(month => ({
+                                                                    value: month.toString(),
+                                                                    label: new Date(2024, month).toLocaleDateString('en-US', { month: 'long' })
+                                                                }))
+                                                            ]}
+                                                            placeholder="Select month..."
+                                                            disabled={salaryCardsLoading}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <CustomButton
+                                                    variant="orange"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        // Force refresh by clearing state first
+                                                        setAllUsersSalaryData([]);
+                                                        setAvailableSalaryYears([]);
+                                                        setAvailableSalaryMonths([]);
+                                                        
+                                                        // Then reload everything
+                                                        loadAvailableSalaryOptions().then(() => {
+                                                            loadAllUsersSalaryData();
+                                                        });
+                                                    }}
+                                                    icon={HiRefresh}
+                                                    disabled={salaryCardsLoading}
+                                                >
+                                                    Refresh Data
+                                                </CustomButton>
                                             </div>
+
+                                            {/* Loading State */}
+                                            {salaryCardsLoading && (
+                                                <div className="flex justify-center py-8">
+                                                    <RahalatekLoader size="md" />
+                                                </div>
+                                            )}
+
+                                            {/* Salary Cards */}
+                                            {!salaryCardsLoading && allUsersSalaryData.length > 0 && (
+                                                <div>
+                                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                                                        <div className="flex items-center">
+                                                            <FaCoins className="w-5 h-5 mr-2 text-blue-800 dark:text-teal-400" />
+                                                            Salary Overview ({salaryCardsYear})
+                                                            {salaryCardsMonth !== 'all' && (
+                                                                <span className="ml-2 text-sm font-normal text-gray-600 dark:text-gray-400">
+                                                                    - {new Date(2024, parseInt(salaryCardsMonth)).toLocaleDateString('en-US', { month: 'long' })}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
+                                                            {allUsersSalaryData.length} employees
+                                                        </span>
+                                                    </h4>
+                                                    
+                                                    <style>
+                                                        {`
+                                                            @keyframes progressScale {
+                                                                from {
+                                                                    transform: scaleX(0);
+                                                                }
+                                                                to {
+                                                                    transform: scaleX(1);
+                                                                }
+                                                            }
+                                                        `}
+                                                    </style>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                                                        {allUsersSalaryData.map((userData, index) => {
+                                                            const totalCompensation = userData.salary + userData.totalBonus;
+                                                            const bonusPercentage = userData.salary > 0 ? (userData.totalBonus / userData.salary) * 100 : 0;
+                                                            
+                                                            return (
+                                                                <div 
+                                                                    key={userData.userId} 
+                                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                                    style={{
+                                                                        animationDelay: `${index * 100}ms`
+                                                                    }}
+                                                                >
+                                                                    <div className="flex items-center justify-between mb-4">
+                                                                        <div className="flex items-center">
+                                                                            <h5 className="font-semibold text-gray-900 dark:text-white mr-2">
+                                                                                {userData.username}
+                                                                            </h5>
+                                                                            {userData.isAdmin && (
+                                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                                                    Admin
+                                                                                </span>
+                                                                            )}
+                                                                            {userData.isAccountant && !userData.isAdmin && (
+                                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                                                                    Accountant
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        
+                                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                                            userData.salary > 0 
+                                                                                ? 'bg-green-500 text-white'
+                                                                                : 'bg-gray-500 text-white'
+                                                                        }`}>
+                                                                            {userData.currency}
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    <div className="space-y-3">
+                                                                        <div className="flex justify-between text-sm">
+                                                                            <span className="text-gray-600 dark:text-slate-300">Base Salary:</span>
+                                                                            <span className="font-semibold text-gray-900 dark:text-white">
+                                                                                {getCurrencySymbol(userData.currency)}{userData.salary.toFixed(2)}
+                                                                            </span>
+                                                                        </div>
+                                                                        
+                                                                        {userData.totalBonus > 0 && (
+                                                                            <div className="flex justify-between text-sm">
+                                                                                <span className="text-gray-600 dark:text-slate-300">Bonuses:</span>
+                                                                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                                                                    +{getCurrencySymbol(userData.currency)}{userData.totalBonus.toFixed(2)}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        
+                                                                        <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                                                                            <span className="text-gray-900 dark:text-white">Total:</span>
+                                                                            <span className="text-blue-600 dark:text-teal-400">
+                                                                                {getCurrencySymbol(userData.currency)}{totalCompensation.toFixed(2)}
+                                                                            </span>
+                                                                        </div>
+                                                                        
+                                                                        {userData.totalBonus > 0 && (
+                                                                            <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                                                                                <div 
+                                                                                    className="h-3 rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-green-400 to-green-600"
+                                                                                    style={{ 
+                                                                                        width: `${Math.min(bonusPercentage, 100)}%`,
+                                                                                        transform: `scaleX(0)`,
+                                                                                        transformOrigin: 'left',
+                                                                                        animation: `progressScale 0.6s ease-out ${index * 150}ms forwards`
+                                                                                    }}
+                                                                                ></div>
+                                                                            </div>
+                                                                        )}
+                                                                        
+                                                                        {userData.totalBonus > 0 && (
+                                                                            <div className="text-xs text-center text-gray-500 dark:text-gray-400">
+                                                                                Bonus: {bonusPercentage.toFixed(1)}% of base salary
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    
+                                                                    {/* Individual Bonuses List */}
+                                                                    {userData.bonuses.length > 0 && (
+                                                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+                                                                            <h6 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Bonus Details:</h6>
+                                                                            <div className="space-y-1">
+                                                                                {userData.bonuses.map((bonus, bonusIndex) => (
+                                                                                    <div key={bonusIndex} className="flex justify-between text-xs">
+                                                                                        <span className="text-gray-600 dark:text-gray-400">
+                                                                                            {new Date(bonus.year, bonus.month, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                                                                        </span>
+                                                                                        <span className="font-medium text-green-600 dark:text-green-400">
+                                                                                            +{getCurrencySymbol(bonus.currency)}{bonus.amount.toFixed(2)}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Empty State */}
+                                            {!salaryCardsLoading && allUsersSalaryData.length === 0 && (
+                                                <div className="text-center py-12">
+                                                    <FaCoins className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+                                                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Salary Data</h4>
+                                                    <p className="text-gray-500 dark:text-gray-400">Salary information will appear here once configured for employees.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
+
+                                    {/* Settings Tab Content */}
+                                    {(salaryInnerTab === 'salary' || salaryInnerTab === 'bonus') && (
+                                        <div>
+                                            {/* User Selection */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                                <div>
+                                                    <Label value="Select User" className="mb-2" />
+                                                    <SearchableSelect
+                                                        id="salaryUserSelect"
+                                                        value={selectedUserForSalary}
+                                                        onChange={async (val) => { 
+                                                            const v = val?.target?.value ?? val; 
+                                                            const selected = users.find(u => u._id === v); 
+                                                            if (isAccountant && !isAdmin && selected?.isAdmin) { 
+                                                                toast.error('Accountants cannot manage admin salaries', {
+                                                                    duration: 3000,
+                                                                    style: {
+                                                                        background: '#f44336',
+                                                                        color: '#fff',
+                                                                        fontWeight: '500'
+                                                                    }
+                                                                }); 
+                                                                setSelectedUserForSalary(''); 
+                                                                return; 
+                                                            } 
+                                                            setSelectedUserForSalary(v); 
+                                                            if (v) { 
+                                                                // Reset month selections when switching users
+                                                                setSelectedMonthToEdit('');
+                                                                setSelectedBonusMonthToEdit('');
+                                                                
+                                                                // Load data in parallel
+                                                                await Promise.all([
+                                                                    handleLoadUserSalary(v),
+                                                                    handleLoadUserBonuses(v), 
+                                                                    handleLoadUserSalaryBaseEntries(v, true) // Auto-select current month on initial load
+                                                                ]);
+                                                            } 
+                                                        }}
+                                                        options={(isAccountant && !isAdmin ? users.filter(u => !u.isAdmin) : users).map(u => ({ value: u._id, label: u.username }))}
+                                                        placeholder="Search user..."
+                                                        clearable
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Settings Inner Tab Navigation */}
+                                            {selectedUserForSalary && (
+                                                <div className="mb-6">
+                                                    <div className="border-b border-gray-200 dark:border-gray-700">
+                                                        <nav className="-mb-px flex space-x-8">
+                                                            <button
+                                                                onClick={() => setSalaryInnerTab('salary')}
+                                                                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                                                                    salaryInnerTab === 'salary'
+                                                                        ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                                                                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                                                                }`}
+                                                            >
+                                                                <FaCog className="w-4 h-4 inline-block mr-2" />
+                                                                Salary Management
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setSalaryInnerTab('bonus')}
+                                                                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                                                                    salaryInnerTab === 'bonus'
+                                                                        ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                                                                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                                                                }`}
+                                                            >
+                                                                <FaGift className="w-4 h-4 inline-block mr-2" />
+                                                                Bonus Management
+                                                            </button>
+                                                        </nav>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                     {/* Salary Tab Content */}
                                     {selectedUserForSalary && salaryInnerTab === 'salary' && (
@@ -6003,32 +6424,17 @@ export default function AdminPanel() {
                                                             };
                                                             await updateUserSalary(selectedUserForSalary, payload);
                                                         } else if (selectedMonthToEdit) {
-                                                            // If editing a specific month, check if currency is being changed
+                                                            // If editing a specific month, always use month edit API
                                                             const [year, month] = selectedMonthToEdit.split('-').map(Number);
                                                             
-                                                            // Get current user currency to compare
-                                                            const currentUserCurrency = selectedUserData?.salaryCurrency || 'USD';
-                                                            const isCurrencyChanging = salaryForm.salaryCurrency !== currentUserCurrency;
-                                                            
-                                                            if (isCurrencyChanging) {
-                                                                // If currency is changing, use regular salary update API
-                                                                const payload = {
-                                                                    salaryAmount: parseFloat(salaryForm.salaryAmount) || 0,
-                                                                    salaryCurrency: salaryForm.salaryCurrency,
-                                                                    salaryDayOfMonth: parseInt(salaryForm.salaryDayOfMonth,10) || undefined,
-                                                                    salaryNotes: salaryForm.salaryNotes || '',
-                                                                    updateFromNextCycle: false
-                                                                };
-                                                                await updateUserSalary(selectedUserForSalary, payload);
-                                                            } else {
-                                                                // If only amount/note changing, use month edit API
-                                                                await editMonthSalary(selectedUserForSalary, {
-                                                                    year,
-                                                                    month,
-                                                                    amount: parseFloat(salaryForm.salaryAmount) || 0,
-                                                                    note: salaryForm.salaryNotes || ''
-                                                                });
-                                                            }
+                                                            // Use editMonthSalary for specific month updates (handles currency changes too)
+                                                            await editMonthSalary(selectedUserForSalary, {
+                                                                year,
+                                                                month,
+                                                                amount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                currency: salaryForm.salaryCurrency,
+                                                                note: salaryForm.salaryNotes || ''
+                                                            });
                                                         } else {
                                                             // Normal salary update for current month
                                                             const payload = {
@@ -6293,6 +6699,10 @@ export default function AdminPanel() {
                                             emptyMessage="No bonuses recorded"
                                         />
                                     </div>
+                                        </div>
+                                    )}
+
+
                                         </div>
                                     )}
                                 </Card>
@@ -6865,4 +7275,5 @@ export default function AdminPanel() {
         </div>
     );
 }
+    
     

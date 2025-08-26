@@ -127,7 +127,7 @@ export default function RecentVoucherActivity() {
             <FaTicketAlt className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
             <p className="text-gray-500 dark:text-gray-400 text-sm">No vouchers found</p>
             <Link 
-              to="/booking"
+              to="/vouchers/new"
               className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300"
             >
               <FaPlus className="w-3 h-3" />
@@ -168,6 +168,12 @@ export default function RecentVoucherActivity() {
                       <span className="sm:hidden">{formatDate(voucher.arrivalDate)}</span>
                       <span className="hidden sm:inline">•</span>
                       <span className="truncate">{formatCurrency(voucher.totalAmount, voucher.currency)}</span>
+                      {(user?.isAdmin || user?.isAccountant) && voucher.createdBy && (
+                        <>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="truncate">by {voucher.createdBy.username || voucher.createdBy}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -191,7 +197,7 @@ export default function RecentVoucherActivity() {
         {!loading && (
           <div className="mt-4 sm:mt-auto">
             <Link
-              to="/booking"
+              to="/vouchers/new"
               className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-50 dark:bg-slate-700/50 text-blue-600 dark:text-teal-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
             >
               <FaPlus className="w-3 h-3" />

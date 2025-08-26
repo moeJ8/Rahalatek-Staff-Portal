@@ -13,12 +13,13 @@ import CustomDatePicker from './CustomDatePicker';
 import CustomScrollbar from './CustomScrollbar';
 import PaymentDateControls from './PaymentDateControls';
 
-const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVouchers = [], clientVouchers = [] }) => {
+const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, serviceVouchers = [], clientVouchers = [] }) => {
     const [payments, setPayments] = useState([]);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentForm, setPaymentForm] = useState({
         type: 'INCOMING', // INCOMING or OUTGOING
         amount: '',
+        currency: 'USD', // Add currency field back
         notes: '',
         voucherId: '',
         paymentDate: ''
@@ -49,6 +50,46 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
         return symbols[curr] || curr;
     };
 
+    // Filter payments by month and year filters
+    const filterPaymentsByDateFilters = (payments) => {
+        if (!filters) return payments;
+        
+        return payments.filter(payment => {
+            const paymentDate = new Date(payment.createdAt);
+            const paymentMonth = paymentDate.getMonth() + 1; // 1-based month
+            const paymentYear = paymentDate.getFullYear();
+            
+            // Year filter
+            if (filters.year && paymentYear.toString() !== filters.year) return false;
+            
+            // Month filter - only apply if specific months are selected
+            if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
+                if (!filters.month.includes(paymentMonth.toString())) return false;
+            }
+            
+            return true;
+        });
+    };
+
+    // Group payments by currency for display when 'ALL' is selected
+    const groupPaymentsByCurrency = (payments) => {
+        // First filter by date filters
+        const filteredPayments = filterPaymentsByDateFilters(payments);
+        
+        if (currency !== 'ALL') {
+            return { [currency]: filteredPayments };
+        }
+        
+        return filteredPayments.reduce((groups, payment) => {
+            const payCurrency = payment.currency || 'USD';
+            if (!groups[payCurrency]) {
+                groups[payCurrency] = [];
+            }
+            groups[payCurrency].push(payment);
+            return groups;
+        }, {});
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -58,7 +99,7 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
         return `${day}/${month}/${year}`;
     };
 
-    // Load payments from backend API (currency-specific)
+    // Load payments from backend API (currency-specific or all currencies)
     useEffect(() => {
         fetchPayments();
     }, [officeName, currency]);
@@ -87,13 +128,17 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
                 return;
             }
 
+            const params = {};
+            // Only add currency param if not 'ALL'
+            if (currency && currency !== 'ALL') {
+                params.currency = currency;
+            }
+
             const response = await axios.get(`/api/office-payments/${encodeURIComponent(officeName)}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 },
-                params: {
-                    currency: currency
-                }
+                params: params
             });
 
             const fetchedPayments = response.data || [];
@@ -116,6 +161,21 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
             resetPaymentForm();
         }
     }, [currency]);
+
+    // Reset voucher selection if selected voucher doesn't match current form currency
+    useEffect(() => {
+        if (paymentForm.voucherId && showPaymentModal) {
+            const allVouchers = [...serviceVouchers, ...clientVouchers];
+            const selectedVoucher = allVouchers.find(v => v._id === paymentForm.voucherId);
+            
+            if (selectedVoucher && selectedVoucher.currency !== paymentForm.currency) {
+                setPaymentForm(prev => ({
+                    ...prev,
+                    voucherId: ''
+                }));
+            }
+        }
+    }, [paymentForm.currency, paymentForm.voucherId, serviceVouchers, clientVouchers, showPaymentModal]);
 
     const handlePaymentSubmit = async (e) => {
         e.preventDefault();
@@ -163,7 +223,7 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
             const paymentData = {
                 type: paymentForm.type,
                 amount: parseFloat(paymentForm.amount),
-                currency: currency,
+                currency: currency === 'ALL' ? paymentForm.currency : currency, // Use form currency when 'ALL' is selected
                 notes: paymentForm.notes,
                 officeName: officeName,
                 voucherId: paymentForm.voucherId || null,
@@ -180,7 +240,7 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
             // Refresh payments from server
             await fetchPayments();
             
-            toast.success(`${paymentForm.type === 'INCOMING' ? 'Incoming' : 'Outgoing'} payment added successfully!`, {
+            toast.success(`${paymentForm.type === 'INCOMING' ? 'Incoming' : 'Outgoing'} payment of ${getCurrencySymbol(paymentForm.currency)}${parseFloat(paymentForm.amount).toFixed(2)} added successfully!`, {
                 duration: 3000,
                 style: {
                     background: '#4CAF50',
@@ -204,18 +264,19 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
         }
     };
 
-    const resetPaymentForm = () => {
+    const resetPaymentForm = (selectedCurrency = null) => {
         setPaymentForm({
             type: 'INCOMING',
             amount: '',
+            currency: selectedCurrency || (currency === 'ALL' ? 'USD' : currency),
             notes: '',
             voucherId: '',
             paymentDate: ''
         });
     };
 
-    const openPaymentModal = () => {
-        resetPaymentForm();
+    const openPaymentModal = (selectedCurrency = null) => {
+        resetPaymentForm(selectedCurrency);
         setShowPaymentModal(true);
     };
 
@@ -437,27 +498,63 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
 
     return (
         <div>
-            {/* Add Payment Button */}
-            <CustomButton
-                variant="green"
-                onClick={openPaymentModal}
-                icon={HiPlus}
-                title={`Add payment record in ${currency}`}
-            >
-                Add Payment ({currency})
-            </CustomButton>
 
 
 
             {/* Payments List */}
-            {payments.length > 0 && (
-                <div className="mt-6">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                        <HiCurrencyDollar className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                        Payment History ({currency})
+            {(() => {
+                const filteredPayments = filterPaymentsByDateFilters(payments);
+                return filteredPayments.length > 0;
+            })() && (
+                <div>
+                    {/* Main Payment History Header */}
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                        Payment History
                     </h4>
-                    <div className="space-y-3">
-                        {payments.map((payment) => (
+                    
+                    {(() => {
+                        const groupedPayments = groupPaymentsByCurrency(payments);
+                        const currencyOrder = ['USD', 'EUR', 'TRY'];
+                        const currencies = Object.keys(groupedPayments).sort((a, b) => {
+                            const indexA = currencyOrder.indexOf(a);
+                            const indexB = currencyOrder.indexOf(b);
+                            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+                            if (indexA === -1) return 1;
+                            if (indexB === -1) return -1;
+                            return indexA - indexB;
+                        });
+                        
+                        return currencies.map((payCurrency, index) => (
+                            <div key={payCurrency} className={index > 0 ? "mt-8" : ""}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h5 className="text-md font-medium text-gray-800 dark:text-gray-200 flex items-center">
+                                        {currency === 'ALL' ? (
+                                            <span className="flex items-center">
+                                                <span className="bg-purple-100 dark:bg-purple-900/50 px-3 py-1 rounded-full text-sm">
+                                                    {payCurrency} ({getCurrencySymbol(payCurrency)})
+                                                </span>
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
+                                                    {groupedPayments[payCurrency].length} payment{groupedPayments[payCurrency].length !== 1 ? 's' : ''}
+                                                </span>
+                                            </span>
+                                        ) : (
+                                            `${currency} Payments`
+                                        )}
+                                    </h5>
+                                    {/* Add Payment Button for each currency */}
+                                    <CustomButton
+                                        variant="green"
+                                        size="sm"
+                                        onClick={() => openPaymentModal(currency === 'ALL' ? payCurrency : currency)}
+                                        icon={HiPlus}
+                                        title={`Add payment record in ${currency === 'ALL' ? payCurrency : currency}`}
+                                    >
+                                        Add Payment ({currency === 'ALL' ? payCurrency : currency})
+                                    </CustomButton>
+                                </div>
+                                <div className="space-y-3">
+                                    {groupedPayments[payCurrency].map((payment) => (
                             <div 
                                 key={payment._id} 
                                 className={`p-3 sm:p-4 rounded-lg border relative ${
@@ -726,7 +823,69 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
                                     )}
                                 </div>
                             </div>
-                        ))}
+                                    ))}
+                                </div>
+                            </div>
+                        ));
+                    })()}
+                </div>
+            )}
+
+            {/* Single currency with no payments */}
+            {currency !== 'ALL' && (() => {
+                const filteredPayments = filterPaymentsByDateFilters(payments);
+                return filteredPayments.length === 0;
+            })() && (
+                <div>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                        Payment History
+                    </h4>
+                    <div className="flex justify-between items-center mb-4">
+                        <h5 className="text-md font-medium text-gray-800 dark:text-gray-200 flex items-center">
+                            {currency} Payments
+                        </h5>
+                        <CustomButton
+                            variant="green"
+                            size="sm"
+                            onClick={() => openPaymentModal(currency)}
+                            icon={HiPlus}
+                            title={`Add payment record in ${currency}`}
+                        >
+                            Add Payment ({currency})
+                        </CustomButton>
+                    </div>
+                    <div className="text-center py-8">
+                        <p className="text-gray-500 dark:text-gray-400">No {currency} payments yet.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Payment Buttons for each currency when ALL is selected and no payments exist */}
+            {currency === 'ALL' && (() => {
+                const filteredPayments = filterPaymentsByDateFilters(payments);
+                return filteredPayments.length === 0;
+            })() && (
+                <div>
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                        Payment History
+                    </h4>
+                    <div className="text-center py-8">
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">No payment history yet. Start by adding a payment:</p>
+                        <div className="flex flex-wrap justify-center gap-3">
+                            {['USD', 'EUR', 'TRY'].map((curr) => (
+                                <CustomButton
+                                    key={curr}
+                                    variant="green"
+                                    onClick={() => openPaymentModal(curr)}
+                                    icon={HiPlus}
+                                    title={`Add payment record in ${curr}`}
+                                >
+                                    Add Payment ({curr})
+                                </CustomButton>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
@@ -735,7 +894,7 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
             <CustomModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
-                title={`Add Payment (${getCurrencySymbol(currency)} - ${currency})`}
+                title={`Add Payment (${getCurrencySymbol(paymentForm.currency)} - ${paymentForm.currency})`}
                 maxWidth="md:max-w-2xl"
             >
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
@@ -753,28 +912,47 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
                             />
                         </div>
 
-                        {(paymentForm.type === 'OUTGOING' || paymentForm.type === 'INCOMING') && (serviceVouchers.length > 0 || clientVouchers.length > 0) && (
+                        {(paymentForm.type === 'OUTGOING' || paymentForm.type === 'INCOMING') && (
+                            serviceVouchers.filter(v => v.currency === paymentForm.currency).length > 0 || 
+                            clientVouchers.filter(v => v.currency === paymentForm.currency).length > 0
+                        ) && (
                             <div>
-                                <Label htmlFor="voucher-select" value="Apply to Voucher (Optional)" className="mb-2 text-gray-900 dark:text-white" />
+                                <Label htmlFor="voucher-select" value={`Apply to Voucher (Optional) - ${paymentForm.currency} only`} className="mb-2 text-gray-900 dark:text-white" />
                                 <SearchableSelect
                                     id="voucher-select"
                                     value={paymentForm.voucherId}
                                     onChange={(e) => setPaymentForm({ ...paymentForm, voucherId: e.target.value })}
                                     options={[
                                         { value: '', label: 'Select a voucher (optional)' },
-                                        // Service vouchers (vouchers with services from this office)
-                                        ...serviceVouchers.map(voucher => ({
-                                            value: voucher._id,
-                                            label: `#${voucher.voucherNumber} - ${voucher.clientName} (Service: ${getCurrencySymbol(voucher.currency)}${voucher.totalAmount})`
-                                        })),
-                                        // Client vouchers (vouchers that belong to this office)
-                                        ...clientVouchers.map(voucher => ({
-                                            value: voucher._id,
-                                            label: `#${voucher.voucherNumber} - ${voucher.clientName} (Client: ${getCurrencySymbol(voucher.currency)}${voucher.totalAmount})`
-                                        }))
+                                        // Service vouchers (vouchers with services from this office) - filtered by currency
+                                        ...serviceVouchers
+                                            .filter(voucher => voucher.currency === paymentForm.currency)
+                                            .map(voucher => ({
+                                                value: voucher._id,
+                                                label: `#${voucher.voucherNumber} - ${voucher.clientName} (Service: ${getCurrencySymbol(voucher.currency)}${voucher.totalAmount})`
+                                            })),
+                                        // Client vouchers (vouchers that belong to this office) - filtered by currency
+                                        ...clientVouchers
+                                            .filter(voucher => voucher.currency === paymentForm.currency)
+                                            .map(voucher => ({
+                                                value: voucher._id,
+                                                label: `#${voucher.voucherNumber} - ${voucher.clientName} (Client: ${getCurrencySymbol(voucher.currency)}${voucher.totalAmount})`
+                                            }))
                                     ]}
-                                    placeholder="Search vouchers..."
+                                    placeholder={`Search ${paymentForm.currency} vouchers...`}
                                 />
+                            </div>
+                        )}
+
+                        {/* Message when no vouchers available in selected currency */}
+                        {(paymentForm.type === 'OUTGOING' || paymentForm.type === 'INCOMING') && 
+                         (serviceVouchers.length > 0 || clientVouchers.length > 0) &&
+                         (serviceVouchers.filter(v => v.currency === paymentForm.currency).length === 0 && 
+                          clientVouchers.filter(v => v.currency === paymentForm.currency).length === 0) && (
+                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                                    No vouchers available in {paymentForm.currency} for this office. Payment will be created without voucher association.
+                                </p>
                             </div>
                         )}
 
@@ -791,13 +969,13 @@ const PaymentManager = ({ officeName, currency, onPaymentsChange, serviceVoucher
                         <div>
                             <CustomTextInput
                                 id="payment-amount"
-                                label={`Amount (${getCurrencySymbol(currency)})`}
+                                label={`Amount (${getCurrencySymbol(paymentForm.currency)})`}
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 value={paymentForm.amount}
                                 onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                                placeholder={`Enter amount in ${currency}`}
+                                placeholder={`Enter amount in ${paymentForm.currency}`}
                                 required
                             />
                         </div>

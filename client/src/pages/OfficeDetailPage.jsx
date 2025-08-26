@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Label, Alert, Table, TextInput } from 'flowbite-react';
 import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch } from 'react-icons/hi';
+import { FaTicketAlt } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { getAllVouchers } from '../utils/voucherApi';
 import RahalatekLoader from '../components/RahalatekLoader';
@@ -30,7 +31,8 @@ const OfficeDetailPage = () => {
     const [filters, setFilters] = useState({
         month: [(new Date().getMonth() + 1).toString()], // Current month as array
         year: new Date().getFullYear().toString(),
-        currency: 'USD'
+        currency: 'ALL', // Default to show all currencies
+        arrivalMonth: [] // Arrival month filter
     });
     const [serviceTableSearch, setServiceTableSearch] = useState('');
     const [clientTableSearch, setClientTableSearch] = useState('');
@@ -51,10 +53,10 @@ const OfficeDetailPage = () => {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString('en-GB', {
             year: 'numeric',
-            month: 'short',
-            day: 'numeric'
+            month: '2-digit',
+            day: '2-digit'
         });
     };
     
@@ -180,8 +182,8 @@ const OfficeDetailPage = () => {
                 }
             }
             
-            // Currency filter
-            if (filters.currency && voucher.currency !== filters.currency) return false;
+            // Currency filter - skip if 'ALL' is selected
+            if (filters.currency && filters.currency !== 'ALL' && voucher.currency !== filters.currency) return false;
             
             // Year filter
             if (filters.year && voucherYear.toString() !== filters.year) return false;
@@ -189,6 +191,21 @@ const OfficeDetailPage = () => {
             // Month filter - only apply if specific months are selected
             if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
                 if (!filters.month.includes(voucherMonth.toString())) return false;
+            }
+            
+            // Arrival month filter - only apply if specific months are selected
+            if (filters.arrivalMonth && Array.isArray(filters.arrivalMonth) && filters.arrivalMonth.length > 0 && !filters.arrivalMonth.includes('')) {
+                if (voucher.arrivalDate) {
+                    const arrivalDate = new Date(voucher.arrivalDate);
+                    const arrivalMonth = arrivalDate.getMonth() + 1; // 1-based month
+                    const arrivalYear = arrivalDate.getFullYear();
+                    
+                    // Check if arrival date is in the selected year and month
+                    if (arrivalYear.toString() !== filters.year) return false;
+                    if (!filters.arrivalMonth.includes(arrivalMonth.toString())) return false;
+                } else {
+                    return false; // No arrival date, exclude from arrival month filter
+                }
             }
             
             return true;
@@ -211,6 +228,22 @@ const OfficeDetailPage = () => {
         }, 0);
         setPaymentsReceived(totalReceived);
         setVoucherPayments(payments);
+    };
+
+    // Group vouchers by currency for display when 'ALL' is selected
+    const groupVouchersByCurrency = (vouchers) => {
+        if (filters.currency !== 'ALL') {
+            return { [filters.currency]: vouchers };
+        }
+        
+        return vouchers.reduce((groups, voucher) => {
+            const currency = voucher.currency || 'USD';
+            if (!groups[currency]) {
+                groups[currency] = [];
+            }
+            groups[currency].push(voucher);
+            return groups;
+        }, {});
     };
 
     // Get client vouchers that belong to this office/client with search functionality
@@ -241,8 +274,8 @@ const OfficeDetailPage = () => {
             const voucherMonth = voucherDate.getMonth() + 1;
             const voucherYear = voucherDate.getFullYear();
             
-            // Currency filter
-            if (filters.currency && voucher.currency !== filters.currency) return false;
+            // Currency filter - skip if 'ALL' is selected
+            if (filters.currency && filters.currency !== 'ALL' && voucher.currency !== filters.currency) return false;
             
             // Year filter
             if (filters.year && voucherYear.toString() !== filters.year) return false;
@@ -250,6 +283,21 @@ const OfficeDetailPage = () => {
             // Month filter - only apply if specific months are selected
             if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
                 if (!filters.month.includes(voucherMonth.toString())) return false;
+            }
+            
+            // Arrival month filter - only apply if specific months are selected
+            if (filters.arrivalMonth && Array.isArray(filters.arrivalMonth) && filters.arrivalMonth.length > 0 && !filters.arrivalMonth.includes('')) {
+                if (voucher.arrivalDate) {
+                    const arrivalDate = new Date(voucher.arrivalDate);
+                    const arrivalMonth = arrivalDate.getMonth() + 1; // 1-based month
+                    const arrivalYear = arrivalDate.getFullYear();
+                    
+                    // Check if arrival date is in the selected year and month
+                    if (arrivalYear.toString() !== filters.year) return false;
+                    if (!filters.arrivalMonth.includes(arrivalMonth.toString())) return false;
+                } else {
+                    return false; // No arrival date, exclude from arrival month filter
+                }
             }
             
             return true;
@@ -366,7 +414,8 @@ const OfficeDetailPage = () => {
         setFilters({
             month: [(new Date().getMonth() + 1).toString()], // Current month as array
             year: new Date().getFullYear().toString(),
-            currency: 'USD'
+            currency: 'ALL', // Reset to show all currencies
+            arrivalMonth: [] // Clear arrival month filter
         });
         setServiceTableSearch('');
         setClientTableSearch('');
@@ -378,7 +427,8 @@ const OfficeDetailPage = () => {
         return !filters.month.includes(currentMonth) || 
                filters.month.length !== 1 ||
                filters.year !== currentYear ||
-               filters.currency !== 'USD' ||
+               filters.currency !== 'ALL' ||
+               filters.arrivalMonth.length > 0 ||
                serviceTableSearch.trim() !== '' ||
                clientTableSearch.trim() !== '';
     };
@@ -444,7 +494,39 @@ const OfficeDetailPage = () => {
             }));
     }, [vouchers]);
     
+    // Generate dynamic arrival month options based on available arrival dates for selected year
+    const arrivalMonthOptions = useMemo(() => {
+        const selectedYear = parseInt(filters.year);
+        const arrivalDataMonths = [...new Set(
+            vouchers
+                .filter(voucher => {
+                    if (!voucher.arrivalDate) return false;
+                    const arrivalDate = new Date(voucher.arrivalDate);
+                    return arrivalDate.getFullYear() === selectedYear;
+                })
+                .map(voucher => {
+                    const arrivalDate = new Date(voucher.arrivalDate);
+                    return arrivalDate.getMonth() + 1; // 1-based month
+                })
+        )];
+        
+        // Create options with "All Months" first, then sorted months
+        const arrivalMonthOptionsList = [{ value: '', label: 'All Months' }];
+        
+        arrivalDataMonths
+            .sort((a, b) => a - b)
+            .forEach(month => {
+                arrivalMonthOptionsList.push({
+                    value: month.toString(),
+                    label: new Date(2024, month - 1).toLocaleString('default', { month: 'long' })
+                });
+            });
+        
+        return arrivalMonthOptionsList;
+    }, [vouchers, filters.year]);
+    
     const currencyOptions = [
+        { value: 'ALL', label: 'All Currencies' },
         { value: 'USD', label: 'USD ($)' },
         { value: 'EUR', label: 'EUR (€)' },
         { value: 'TRY', label: 'TRY (₺)' }
@@ -454,33 +536,31 @@ const OfficeDetailPage = () => {
         <div className="min-h-screen bg-white dark:bg-slate-950 p-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-4">
-                        <CustomButton
-                            variant="gray"
-                            onClick={() => navigate('/dashboard?tab=financials')}
-                            icon={HiArrowLeft}
-                            title="Back to Dashboard Financials"
-                        >
-                            Back
-                        </CustomButton>
-                        <div className="flex items-center space-x-2">
-                            <HiOfficeBuilding className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-6 mb-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                            <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl">
+                                <HiOfficeBuilding className="h-8 w-8 text-teal-600 dark:text-teal-400" />
+                            </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white leading-tight">
                                     {displayName}
                                 </h1>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 flex items-center">
+                                    <span className="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>
                                     {isDirectClient ? 'Direct Client Details' : 'Office Details'}
                                 </p>
                             </div>
                         </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Vouchers</p>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {filteredVouchers.length}
-                        </p>
+                        <div className="text-right bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-600 shadow-sm">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Vouchers</p>
+                            <div className="flex items-center justify-center mt-1">
+                               
+                                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
+                                    {filteredVouchers.length}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -489,7 +569,7 @@ const OfficeDetailPage = () => {
                     {/* Filters */}
                     <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-6 rounded-lg mb-6">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             <div>
                                 <Label htmlFor="year-filter" value="Year" className="mb-2" />
                                 <SearchableSelect
@@ -513,6 +593,16 @@ const OfficeDetailPage = () => {
                                 onChange={(value) => handleFilterChange('month', value)}
                                 placeholder="Select months..."
                                 allOptionsLabel="All Months"
+                                allowMultiple={true}
+                            />
+                            <CheckBoxDropDown
+                                label="Arrival Month"
+                                id="arrival-month-filter"
+                                options={arrivalMonthOptions}
+                                value={filters.arrivalMonth}
+                                onChange={(value) => handleFilterChange('arrivalMonth', value)}
+                                placeholder="Select arrival months..."
+                                allOptionsLabel="All Arrival Months"
                                 allowMultiple={true}
                             />
                             <div>
@@ -563,68 +653,101 @@ const OfficeDetailPage = () => {
                                 </div>
                             </div>
                             <div className="px-6 pb-6">
-                                <CustomScrollbar maxHeight="450px">
-                                    <CustomTable
-                            headers={[
-                                { label: "Voucher #", className: "" },
-                                { label: "Client", className: "" },
-                                { label: "Date", className: "" },
-                                { label: "Hotels", className: "text-blue-600 dark:text-blue-400" },
-                                { label: "Transfers", className: "text-green-600 dark:text-green-400" },
-                                { label: "Trips", className: "text-purple-600 dark:text-purple-400" },
-                                { label: "Flights", className: "text-orange-600 dark:text-orange-400" },
-                                { label: "Services Total", className: "text-gray-900 dark:text-white" },
-                                { label: "Remaining", className: "text-red-600 dark:text-red-400" }
-                            ]}
-                            data={filteredVouchers}
-                            renderRow={(voucher) => {
-                                const services = calculateServicePayments(voucher);
-                                const remaining = calculateVoucherRemaining(voucher._id, services.total);
-                                return (
-                                    <>
-                                        <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                            <button
-                                                onClick={() => navigate(`/vouchers/${voucher._id}`)}
-                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
-                                                title="View voucher details"
-                                            >
-                                                #{voucher.voucherNumber}
-                                            </button>
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                            <div className="truncate max-w-[200px]" title={voucher.clientName}>
-                                                {voucher.clientName}
-                                            </div>
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                            {formatDate(voucher.createdAt)}
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
-                                            {getCurrencySymbol(voucher.currency)}{services.hotels.toFixed(2)}
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                            {getCurrencySymbol(voucher.currency)}{services.transfers.toFixed(2)}
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
-                                            {getCurrencySymbol(voucher.currency)}{services.trips.toFixed(2)}
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
-                                            {getCurrencySymbol(voucher.currency)}{services.flights.toFixed(2)}
-                                        </Table.Cell>
-                                        <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
-                                            {getCurrencySymbol(voucher.currency)}{services.total.toFixed(2)}
-                                        </Table.Cell>
-                                        <Table.Cell className={`text-sm font-bold px-4 py-3 ${remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                            {getCurrencySymbol(voucher.currency)}{remaining.toFixed(2)}
-                                        </Table.Cell>
-                                    </>
-                                );
-                            }}
-                                    emptyMessage="No vouchers have payments assigned to this office with the current filters."
-                                    emptyIcon={HiOfficeBuilding}
-                                />
-                            </CustomScrollbar>
-                        </div>
+                                {(() => {
+                                    const groupedVouchers = groupVouchersByCurrency(filteredVouchers);
+                                    const currencyOrder = ['USD', 'EUR', 'TRY'];
+                                    const currencies = Object.keys(groupedVouchers).sort((a, b) => {
+                                        const indexA = currencyOrder.indexOf(a);
+                                        const indexB = currencyOrder.indexOf(b);
+                                        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+                                        if (indexA === -1) return 1;
+                                        if (indexB === -1) return -1;
+                                        return indexA - indexB;
+                                    });
+                                    
+                                    return currencies.map((currency, index) => (
+                                        <div key={currency} className={index > 0 ? "mt-8" : ""}>
+                                            {filters.currency === 'ALL' && (
+                                                <div className="mb-4">
+                                                    <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                                        <span className="bg-blue-100 dark:bg-blue-900/50 px-3 py-1 rounded-full text-sm">
+                                                            {currency} ({getCurrencySymbol(currency)})
+                                                        </span>
+                                                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                            {groupedVouchers[currency].length} voucher{groupedVouchers[currency].length !== 1 ? 's' : ''}
+                                                        </span>
+                                                    </h4>
+                                                </div>
+                                            )}
+                                            <CustomScrollbar maxHeight="450px">
+                                                <CustomTable
+                                                    headers={[
+                                                        { label: "Voucher #", className: "" },
+                                                        { label: "Client", className: "" },
+                                                        { label: "Date", className: "" },
+                                                        { label: "Arrival", className: "" },
+                                                        { label: "Hotels", className: "text-blue-600 dark:text-blue-400" },
+                                                        { label: "Transfers", className: "text-green-600 dark:text-green-400" },
+                                                        { label: "Trips", className: "text-purple-600 dark:text-purple-400" },
+                                                        { label: "Flights", className: "text-orange-600 dark:text-orange-400" },
+                                                        { label: "Services Total", className: "text-gray-900 dark:text-white" },
+                                                        { label: "Remaining", className: "text-red-600 dark:text-red-400" }
+                                                    ]}
+                                                    data={groupedVouchers[currency]}
+                                                    renderRow={(voucher) => {
+                                                        const services = calculateServicePayments(voucher);
+                                                        const remaining = calculateVoucherRemaining(voucher._id, services.total);
+                                                        return (
+                                                            <>
+                                                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    <button
+                                                                        onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
+                                                                        title="View voucher details"
+                                                                    >
+                                                                        #{voucher.voucherNumber}
+                                                                    </button>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    <div className="truncate max-w-[200px]" title={voucher.clientName}>
+                                                                        {voucher.clientName}
+                                                                    </div>
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    {formatDate(voucher.createdAt)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                    {formatDate(voucher.arrivalDate)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.hotels.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.transfers.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.trips.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.flights.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.total.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className={`text-sm font-bold px-4 py-3 ${remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                    {getCurrencySymbol(voucher.currency)}{remaining.toFixed(2)}
+                                                                </Table.Cell>
+                                                            </>
+                                                        );
+                                                    }}
+                                                    emptyMessage="No vouchers have payments assigned to this office with the current filters."
+                                                    emptyIcon={HiOfficeBuilding}
+                                                />
+                                            </CustomScrollbar>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
                         </>
                     )}
                     
@@ -642,54 +765,87 @@ const OfficeDetailPage = () => {
                                     className="max-w-md"
                                 />
                             </div>
-                            <CustomScrollbar maxHeight="450px">
-                                <CustomTable
-                                    headers={[
-                                        { label: "Voucher #", className: "" },
-                                        { label: "Client", className: "" },
-                                        { label: "Date", className: "" },
-                                        { label: "Total Amount", className: "text-blue-600 dark:text-blue-400" },
-                                        { label: "Paid", className: "text-green-600 dark:text-green-400" },
-                                        { label: "Remaining", className: "text-red-600 dark:text-red-400" }
-                                    ]}
-                                    data={getClientVouchers}
-                                renderRow={(voucher) => {
-                                    const details = calculateClientVoucherDetails(voucher);
-                                    return (
-                                        <>
-                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                <button
-                                                    onClick={() => navigate(`/vouchers/${voucher._id}`)}
-                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
-                                                    title="View voucher details"
-                                                >
-                                                    #{voucher.voucherNumber}
-                                                </button>
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                <div className="truncate max-w-[200px]" title={voucher.clientName}>
-                                                    {voucher.clientName}
-                                                </div>
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                {formatDate(voucher.createdAt)}
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
-                                                {getCurrencySymbol(voucher.currency)}{voucher.totalAmount.toFixed(2)}
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                                {getCurrencySymbol(voucher.currency)}{details.totalPaid.toFixed(2)}
-                                            </Table.Cell>
-                                            <Table.Cell className={`text-sm font-bold px-4 py-3 ${details.remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                                {getCurrencySymbol(voucher.currency)}{details.remaining.toFixed(2)}
-                                            </Table.Cell>
-                                        </>
-                                    );
-                                }}
-                                    emptyMessage="No client vouchers with payments found for this office."
-                                    emptyIcon={HiOfficeBuilding}
-                                />
-                            </CustomScrollbar>
+                            {(() => {
+                                const groupedClientVouchers = groupVouchersByCurrency(getClientVouchers);
+                                const currencyOrder = ['USD', 'EUR', 'TRY'];
+                                const currencies = Object.keys(groupedClientVouchers).sort((a, b) => {
+                                    const indexA = currencyOrder.indexOf(a);
+                                    const indexB = currencyOrder.indexOf(b);
+                                    if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+                                    if (indexA === -1) return 1;
+                                    if (indexB === -1) return -1;
+                                    return indexA - indexB;
+                                });
+                                
+                                return currencies.map((currency, index) => (
+                                    <div key={currency} className={index > 0 ? "mt-8" : ""}>
+                                        {filters.currency === 'ALL' && (
+                                            <div className="mb-4">
+                                                <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                                    <span className="bg-green-100 dark:bg-green-900/50 px-3 py-1 rounded-full text-sm">
+                                                        {currency} ({getCurrencySymbol(currency)})
+                                                    </span>
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {groupedClientVouchers[currency].length} voucher{groupedClientVouchers[currency].length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </h4>
+                                            </div>
+                                        )}
+                                        <CustomScrollbar maxHeight="450px">
+                                            <CustomTable
+                                                headers={[
+                                                    { label: "Voucher #", className: "" },
+                                                    { label: "Client", className: "" },
+                                                    { label: "Date", className: "" },
+                                                    { label: "Arrival", className: "" },
+                                                    { label: "Total Amount", className: "text-blue-600 dark:text-blue-400" },
+                                                    { label: "Paid", className: "text-green-600 dark:text-green-400" },
+                                                    { label: "Remaining", className: "text-red-600 dark:text-red-400" }
+                                                ]}
+                                                data={groupedClientVouchers[currency]}
+                                                renderRow={(voucher) => {
+                                                    const details = calculateClientVoucherDetails(voucher);
+                                                    return (
+                                                        <>
+                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <button
+                                                                    onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-sm"
+                                                                    title="View voucher details"
+                                                                >
+                                                                    #{voucher.voucherNumber}
+                                                                </button>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <div className="truncate max-w-[200px]" title={voucher.clientName}>
+                                                                    {voucher.clientName}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {formatDate(voucher.createdAt)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {formatDate(voucher.arrivalDate)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(voucher.currency)}{voucher.totalAmount.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                                                {getCurrencySymbol(voucher.currency)}{details.totalPaid.toFixed(2)}
+                                                            </Table.Cell>
+                                                            <Table.Cell className={`text-sm font-bold px-4 py-3 ${details.remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                {getCurrencySymbol(voucher.currency)}{details.remaining.toFixed(2)}
+                                                            </Table.Cell>
+                                                        </>
+                                                    );
+                                                }}
+                                                emptyMessage="No client vouchers with payments found for this office."
+                                                emptyIcon={HiOfficeBuilding}
+                                            />
+                                        </CustomScrollbar>
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     )}
                     
@@ -717,6 +873,7 @@ const OfficeDetailPage = () => {
                                 officeName={displayName}
                                 originalTotal={isDirectClient ? totals.clientTotalAmount : totals.servicesProvided}
                                 currency={filters.currency}
+                                filters={filters}
                                 onPaymentsChange={handlePaymentsChange}
                                 serviceVouchers={filteredVouchers}
                                 clientVouchers={getClientVouchers}

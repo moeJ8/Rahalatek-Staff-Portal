@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Button } from 'flowbite-react';
 import CustomButton from './CustomButton';
 import { FaDownload, FaSpinner, FaTrash, FaPen, FaFileImage, FaFilePdf, FaEye, FaEyeSlash, FaChevronUp, FaChevronDown, FaBuilding } from 'react-icons/fa';
 import html2canvas from 'html2canvas';
@@ -18,22 +17,6 @@ const getCurrencySymbol = (currency) => {
   }
 };
 
-// Helper function to format passenger display
-const formatPassengers = (pax, adults = null, children = null) => {
-  if (adults !== null && children !== null && (adults > 0 || children > 0)) {
-    // If adults and children are specified, show breakdown in compact format
-    return `${pax} (${adults}A ${children}C)`;
-  } else if (adults !== null && adults > 0) {
-    // If only adults are specified
-    return `${pax} (${adults}A)`;
-  } else if (children !== null && children > 0) {
-    // If only children are specified
-    return `${pax} (${children}C)`;
-  } else {
-    // Default behavior - just show PAX number
-    return pax;
-  }
-};
 
 const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) => {
   const voucherRef = useRef(null);
@@ -1443,10 +1426,12 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                 <span className="font-semibold">Booking №:</span> {voucherData.voucherNumber || 10000}
               </div>
               {voucherData.capital && (
-                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-md">
-                  <span className="font-semibold">Capital:</span> {getCurrencySymbol(voucherData.currency)}{voucherData.capital}
-                  <div className="text-xs text-gray-500 italic mt-1">
-                    (This field is only visible in preview)
+                <div className="mt-2 flex gap-4">
+                  <div>
+                    <span className="font-semibold text-amber-800 ">Capital:</span> <span className="text-amber-900 font-bold">{getCurrencySymbol(voucherData.currency)}{voucherData.capital}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-green-800 ">Profit:</span> <span className="text-green-900 font-bold">{getCurrencySymbol(voucherData.currency)}{((Number(voucherData.totalAmount) || 0) - (Number(voucherData.capital) || 0)).toFixed(2)}</span>
                   </div>
                 </div>
               )}

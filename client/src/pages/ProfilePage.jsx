@@ -53,6 +53,7 @@ export default function ProfilePage() {
     const [allBonuses, setAllBonuses] = useState([]);
     const [salaryYears, setSalaryYears] = useState([]);
     const [selectedSalaryYear, setSelectedSalaryYear] = useState('');
+    const [salaryViewTab, setSalaryViewTab] = useState('chart');
     
     // Form data
     const [formData, setFormData] = useState({
@@ -1198,65 +1199,96 @@ export default function ProfilePage() {
                     title="Monthly Salaries"
                     size="lg"
                 >
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Year</span>
-                                <div className="min-w-[120px]">
-                                    <CustomSelect
-                                        id="salaryYear"
-                                        value={selectedSalaryYear}
-                                        onChange={(val) => setSelectedSalaryYear(val)}
-                                        options={salaryYears.map(y => ({ value: String(y), label: String(y) }))}
-                                    />
-                                </div>
-                            </div>
+                                                 <div className="space-y-4">
+                             <div className="flex items-center gap-3">
+                                 <span className="text-sm text-gray-600 dark:text-gray-300">Year</span>
+                                 <div className="min-w-[120px]">
+                                     <CustomSelect
+                                         id="salaryYear"
+                                         value={selectedSalaryYear}
+                                         onChange={(val) => setSelectedSalaryYear(val)}
+                                         options={salaryYears.map(y => ({ value: String(y), label: String(y) }))}
+                                     />
+                                 </div>
+                             </div>
 
-                            {/* Chart-like list similar to profile analytics chart */}
-                            <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Total per Month</h4>
-                                {computeMonthlySalaryData(selectedSalaryYear).map((row, idx, arr) => {
-                                    const max = Math.max(...arr.map(r => r.total));
-                                    const pct = max > 0 ? (row.total / max) * 100 : 0;
-                                    return (
-                                        <div key={idx} className="flex items-center gap-3 mb-2">
-                                            <div className="w-10 text-xs text-gray-600 dark:text-gray-400">{row.month}</div>
-                                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                <div className="h-2 rounded-full bg-green-500 transition-[width] duration-700 ease-out will-change-[width]" style={{ width: animateBars ? `${pct}%` : '0%' }} />
-                                            </div>
-                                            <div className="w-28 text-right text-sm font-medium text-gray-900 dark:text-white">
-                                                {row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency || ''}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                             {/* Inner Tabs for Chart/Table View */}
+                             <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
+                                 <nav className="flex justify-center space-x-8" aria-label="Tabs">
+                                     <button
+                                         onClick={() => setSalaryViewTab('chart')}
+                                         className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                                             salaryViewTab === 'chart'
+                                                 ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-300 hover:border-teal-300 dark:hover:border-teal-500'
+                                         }`}
+                                     >
+                                         Chart View
+                                     </button>
+                                     <button
+                                         onClick={() => setSalaryViewTab('table')}
+                                         className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                                             salaryViewTab === 'table'
+                                                 ? 'border-blue-500 dark:border-teal-500 text-blue-600 dark:text-teal-400'
+                                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-300 hover:border-teal-300 dark:hover:border-teal-500'
+                                         }`}
+                                     >
+                                         Table View
+                                     </button>
+                                 </nav>
+                             </div>
 
-                            {/* Breakdown table */}
-                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <CustomScrollbar maxHeight="256px">
-                                    <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                                            <tr className="text-left text-gray-600 dark:text-gray-300">
-                                                <th className="py-3 px-4 font-medium">Month</th>
-                                                <th className="py-3 px-4 font-medium">Base</th>
-                                                <th className="py-3 px-4 font-medium">Bonus</th>
-                                                <th className="py-3 px-4 font-medium">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="text-gray-800 dark:text-gray-100">
-                                            {computeMonthlySalaryData(selectedSalaryYear).map((row, idx) => (
-                                                <tr key={idx} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                    <td className="py-3 px-4">{row.month}</td>
-                                                    <td className="py-3 px-4 whitespace-nowrap">{row.base} {row.baseCurrency || row.currency || salaryData.salaryCurrency}</td>
-                                                    <td className="py-3 px-4 whitespace-nowrap">{row.bonus} {row.bonusCurrency || row.currency || salaryData.salaryCurrency}</td>
-                                                    <td className="py-3 px-4 font-semibold whitespace-nowrap">{row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </CustomScrollbar>
-                            </div>
-                        </div>
+                             {/* Tab Content */}
+                             {salaryViewTab === 'chart' && (
+                                 /* Chart View */
+                                 <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                     <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Total per Month</h4>
+                                     {computeMonthlySalaryData(selectedSalaryYear).map((row, idx, arr) => {
+                                         const max = Math.max(...arr.map(r => r.total));
+                                         const pct = max > 0 ? (row.total / max) * 100 : 0;
+                                         return (
+                                             <div key={idx} className="flex items-center gap-3 mb-2">
+                                                 <div className="w-10 text-xs text-gray-600 dark:text-gray-400">{row.month}</div>
+                                                 <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                     <div className="h-2 rounded-full bg-green-500 transition-[width] duration-700 ease-out will-change-[width]" style={{ width: animateBars ? `${pct}%` : '0%' }} />
+                                                 </div>
+                                                 <div className="w-28 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                                     {row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency || ''}
+                                                 </div>
+                                             </div>
+                                         );
+                                     })}
+                                 </div>
+                             )}
+
+                             {salaryViewTab === 'table' && (
+                                 /* Table View */
+                                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                     <CustomScrollbar maxHeight="350px">
+                                         <table className="w-full text-sm">
+                                             <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                                                 <tr className="text-left text-gray-600 dark:text-gray-300">
+                                                     <th className="py-3 px-4 font-medium">Month</th>
+                                                     <th className="py-3 px-4 font-medium">Base</th>
+                                                     <th className="py-3 px-4 font-medium">Bonus</th>
+                                                     <th className="py-3 px-4 font-medium">Total</th>
+                                                 </tr>
+                                             </thead>
+                                             <tbody className="text-gray-800 dark:text-gray-100">
+                                                 {computeMonthlySalaryData(selectedSalaryYear).map((row, idx) => (
+                                                     <tr key={idx} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                         <td className="py-3 px-4">{row.month}</td>
+                                                         <td className="py-3 px-4 whitespace-nowrap">{row.base} {row.baseCurrency || row.currency || salaryData.salaryCurrency}</td>
+                                                         <td className="py-3 px-4 whitespace-nowrap">{row.bonus} {row.bonusCurrency || row.currency || salaryData.salaryCurrency}</td>
+                                                         <td className="py-3 px-4 font-semibold whitespace-nowrap">{row.total.toFixed(2)} {row.currency || salaryData.salaryCurrency}</td>
+                                                     </tr>
+                                                 ))}
+                                             </tbody>
+                                         </table>
+                                     </CustomScrollbar>
+                                 </div>
+                             )}
+                         </div>
                 </CustomModal>
 
                 {/* Analytics Section */}
