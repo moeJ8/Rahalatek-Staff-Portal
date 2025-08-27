@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Card, Button, Alert } from 'flowbite-react';
 import RahalatekLoader from '../components/RahalatekLoader';
-import { FaSearch, FaFilter, FaTrash, FaPen, FaInfoCircle } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaTrash, FaPen, FaInfoCircle, FaPlus } from 'react-icons/fa';
 import HotelInfo from '../components/HotelInfo';
 import HotelDetailModal from '../components/HotelDetailModal';
 import CustomButton from '../components/CustomButton';
@@ -159,7 +159,7 @@ export default function HotelsPage() {
   return (
             <div className="bg-gray-50 dark:bg-slate-950 min-h-screen pb-8 sm:pb-12 md:pb-20">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-gray-900 dark:text-white">Available Hotels</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">Available Hotels</h1>
         
         {error && (
           <Alert color="failure" className="mb-4">
@@ -235,6 +235,20 @@ export default function HotelsPage() {
           </div>
         </div>
         
+        {/* Create button above hotel cards */}
+        {(isAdmin || isAccountant) && (
+          <div className="flex justify-end mb-4 px-2 sm:px-4">
+            <CustomButton
+              as={Link}
+              to="/dashboard?tab=hotels"
+              variant="green"
+              icon={FaPlus}
+            >
+              Create Hotel
+            </CustomButton>
+          </div>
+        )}
+
         {loading ? (
           <div className="py-8">
             <RahalatekLoader size="lg" />

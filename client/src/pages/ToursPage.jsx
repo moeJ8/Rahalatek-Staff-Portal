@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Card, Button, Badge, Alert } from 'flowbite-react';
-import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaSearch, FaFilter, FaTrash, FaPen, FaClock, FaCrown, FaUsers, FaCar, FaPlus } from 'react-icons/fa';
 import TourInfo from '../components/TourInfo';
 import CustomButton from '../components/CustomButton';
 import RahalatekLoader from '../components/RahalatekLoader';
@@ -167,7 +167,7 @@ export default function ToursPage() {
   return (
             <div className="bg-gray-50 dark:bg-slate-950 min-h-screen pb-8 sm:pb-12 md:pb-20">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 md:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-gray-900 dark:text-white">Available Tours</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">Available Tours</h1>
         
         {error && (
           <Alert color="failure" className="mb-4">
@@ -241,6 +241,20 @@ export default function ToursPage() {
           </div>
         </div>
         
+        {/* Create button above tour cards */}
+        {(isAdmin || isAccountant) && (
+          <div className="flex justify-end mb-4 px-2 sm:px-4">
+            <CustomButton
+              as={Link}
+              to="/dashboard?tab=tours"
+              variant="green"
+              icon={FaPlus}
+            >
+              Create Tour
+            </CustomButton>
+          </div>
+        )}
+
         {loading ? (
           <div className="py-8">
             <RahalatekLoader size="lg" />

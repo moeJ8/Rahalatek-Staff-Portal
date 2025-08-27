@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Table } from 'flowbite-react';
-import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaBusinessTime, FaGift, FaUserClock, FaUserCheck, FaGlobe, FaUser } from 'react-icons/fa';
+import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaPen, FaBusinessTime, FaGift, FaUserClock, FaUserCheck, FaGlobe, FaUser } from 'react-icons/fa';
 import { HiRefresh, HiPlus } from 'react-icons/hi';
 import CustomButton from './CustomButton';
 import RahalatekLoader from './RahalatekLoader';
@@ -12,6 +12,7 @@ import Select from './Select';
 import CustomDatePicker from './CustomDatePicker';
 import TextInput from './TextInput';
 import CustomModal from './CustomModal';
+import CustomTooltip from './CustomTooltip';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import CustomCheckbox from './CustomCheckbox';
 import { toast } from 'react-hot-toast';
@@ -149,6 +150,22 @@ export default function AttendancePanel() {
   const [createModal, setCreateModal] = useState({ visible: false, data: null });
   const [deleteModal, setDeleteModal] = useState({ visible: false, recordId: null, recordData: null });
   const [adminActionLoading, setAdminActionLoading] = useState(false);
+  
+  // Edit leave modal states
+  const [editLeaveModal, setEditLeaveModal] = useState({ visible: false, leave: null });
+  const [editLeaveForm, setEditLeaveForm] = useState({
+    leaveType: '',
+    customLeaveType: '',
+    leaveCategory: '',
+    date: '',
+    startDate: '',
+    endDate: '',
+    startTime: '',
+    endTime: '',
+    reason: '',
+    status: ''
+  });
+  const [editLeaveLoading, setEditLeaveLoading] = useState(false);
 
 
   const authUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -1120,8 +1137,15 @@ export default function AttendancePanel() {
       filtered = filtered.filter(leave => leave.userId?._id === selectedLeaveUser);
     }
     
+    // Sort by creation time (newest first)
+    filtered = filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB - dateA; // Descending order (newest first)
+    });
+    
     return filtered;
-  }, [vacationsData.allLeaves, selectedVacationMonth, selectedLeaveType, selectedLeaveCategory, selectedLeaveUser]);
+  }, [vacationsData.allLeaves, selectedVacationYear, selectedVacationMonth, selectedLeaveType, selectedLeaveCategory, selectedLeaveUser]);
 
   const saveUserLeave = useCallback(async () => {
     try {
@@ -1269,6 +1293,121 @@ export default function AttendancePanel() {
     }
   }, [loadUserLeaves, vacationsView, loadVacationsData]);
 
+  // Handle edit leave functionality
+  const handleEditLeave = useCallback((leave) => {
+    // Format dates and times for form inputs
+    const formatDateForInput = (date) => {
+      if (!date) return '';
+      const d = new Date(date);
+      return d.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    };
+
+    setEditLeaveForm({
+      leaveType: leave.leaveType || '',
+      customLeaveType: leave.customLeaveType || '',
+      leaveCategory: leave.leaveCategory || '',
+      date: formatDateForInput(leave.date),
+      startDate: formatDateForInput(leave.startDate),
+      endDate: formatDateForInput(leave.endDate),
+      startTime: leave.startTime || '',
+      endTime: leave.endTime || '',
+      reason: leave.reason || '',
+      status: leave.status || ''
+    });
+
+    setEditLeaveModal({ visible: true, leave });
+  }, []);
+
+  // Handle update leave submission
+  const handleUpdateLeave = useCallback(async () => {
+    if (!editLeaveModal.leave) return;
+
+    try {
+      setEditLeaveLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Prepare update data
+      const updateData = { ...editLeaveForm };
+      
+      // Remove empty fields
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '') {
+          delete updateData[key];
+        }
+      });
+
+      const response = await fetch(`/api/user-leave/${editLeaveModal.leave._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        toast.success('Leave updated successfully!', {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#4CAF50',
+          },
+        });
+
+        // Close modal and refresh data
+        setEditLeaveModal({ visible: false, leave: null });
+        
+        // Refresh the leaves data
+        if (vacationsView) {
+          await loadVacationsData();
+        } else {
+          await loadUserLeaves();
+        }
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to update leave', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            padding: '16px',
+          },
+          iconTheme: {
+            primary: '#fff',
+            secondary: '#f44336',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error updating leave:', error);
+      toast.error('Error updating leave record', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setEditLeaveLoading(false);
+    }
+  }, [editLeaveForm, editLeaveModal.leave, vacationsView, loadVacationsData, loadUserLeaves]);
+
   const fetchAttendanceReports = useCallback(async () => {
     try {
       setReportLoading(true);
@@ -1407,13 +1546,52 @@ export default function AttendancePanel() {
 
 
 
+  // Load leave data for attendance reports calculations
+  const loadLeaveDataForReports = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Get the current year from report filters or default to current year
+      let targetYear = new Date().getFullYear();
+      
+      // If we have a custom date filter, extract the year from it
+      if (reportFilters.period === 'custom' && reportFilters.specificDate) {
+        if (reportFilters.specificDate.includes('-')) {
+          const [year] = reportFilters.specificDate.split('-');
+          targetYear = parseInt(year, 10) || targetYear;
+        } else if (reportFilters.specificDate.includes('/')) {
+          const parts = reportFilters.specificDate.split('/');
+          if (parts.length === 3) {
+            targetYear = parseInt(parts[2], 10) || targetYear;
+          }
+        }
+      }
+      
+      // Load leaves for the target year
+      const leavesResponse = await fetch(`/api/user-leave?year=${targetYear}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (leavesResponse.ok) {
+        const leavesData = await leavesResponse.json();
+        setVacationsData(prev => ({
+          ...prev,
+          allLeaves: leavesData.data || []
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading leave data for reports:', error);
+    }
+  }, [reportFilters.period, reportFilters.specificDate]);
+
   useEffect(() => {
     fetchUsers();
     fetchAttendanceReports();
+    loadLeaveDataForReports(); // Load leave data for hours calculation
     if (isAdmin) {
       fetchQRCode();
     }
-  }, [fetchAttendanceReports, isAdmin]);
+  }, [fetchAttendanceReports, loadLeaveDataForReports, isAdmin]);
 
 
 
@@ -1455,8 +1633,17 @@ export default function AttendancePanel() {
     if (activeReportsTab === 'working-hours') {
       fetchAvailableYears(true); // Load available years for the dropdown
       fetchWorkingHoursTracking();
+      // Load leave data for hourly leave calculations
+      loadLeaveDataForReports();
     }
-  }, [activeReportsTab, fetchWorkingHoursTracking, fetchAvailableYears]);
+  }, [activeReportsTab, fetchWorkingHoursTracking, fetchAvailableYears, loadLeaveDataForReports]);
+
+  // Effect to reload leave data when working hours filters change
+  useEffect(() => {
+    if (activeReportsTab === 'working-hours') {
+      loadLeaveDataForReports();
+    }
+  }, [workingHoursFilters, activeReportsTab, loadLeaveDataForReports]);
 
   const fetchYearlyData = useCallback(async () => {
     try {
@@ -1767,6 +1954,236 @@ export default function AttendancePanel() {
         return <FaTimes className="w-3 h-3 text-gray-600" />;
     }
   };
+
+  // Helper function to check if user has hourly leave on a specific date
+  const hasHourlyLeaveOnDate = useCallback((userId, date) => {
+    if (!vacationsData.allLeaves) return false;
+
+    const attendanceDate = new Date(date);
+    
+    return vacationsData.allLeaves.some(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate.toDateString() === attendanceDate.toDateString();
+    });
+  }, [vacationsData.allLeaves]);
+
+  // Helper function to get hourly leave details for tooltip
+  const getHourlyLeaveTooltip = useCallback((userId, date) => {
+    if (!vacationsData.allLeaves || !userId) return null;
+
+    const attendanceDate = new Date(date);
+    
+    const hourlyLeaves = vacationsData.allLeaves.filter(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate.toDateString() === attendanceDate.toDateString();
+    });
+
+    if (hourlyLeaves.length === 0) return null;
+
+    const totalHours = hourlyLeaves.reduce((total, leave) => {
+      const hours = parseFloat(leave.hoursCount) || 0;
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      return total + validatedHours;
+    }, 0);
+    
+    // Format leave details
+    const leaveDetails = hourlyLeaves.map(leave => {
+      const startTime = leave.startTime || '';
+      const endTime = leave.endTime || '';
+      const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : '';
+      
+      // Safely handle hours display
+      const hours = parseFloat(leave.hoursCount) || 0;
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      const hoursDisplay = validatedHours > 0 ? `${validatedHours}h` : '';
+      
+      return `${leave.leaveType || 'Leave'}${leave.customLeaveType ? ` (${leave.customLeaveType})` : ''}: ${timeRange} ${hoursDisplay}`.trim();
+    }).join(', ');
+
+    return {
+      title: `Hourly Leave - ${attendanceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+      content: `Total: ${totalHours}h`,
+      detail: leaveDetails
+    };
+  }, [vacationsData.allLeaves]);
+
+  // Helper function to calculate actual work hours after subtracting hourly leave
+  const calculateActualWorkHours = useCallback((attendanceRecord) => {
+    if (!attendanceRecord.hoursWorked || !vacationsData.allLeaves) {
+      return attendanceRecord.hoursWorked;
+    }
+
+    const attendanceDate = new Date(attendanceRecord.date);
+    const userId = attendanceRecord.userId?._id;
+
+    // Find hourly leaves for this user on this date
+    const hourlyLeaves = vacationsData.allLeaves.filter(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate.toDateString() === attendanceDate.toDateString();
+    });
+
+    // Calculate total leave hours for this date
+    const totalLeaveHours = hourlyLeaves.reduce((total, leave) => {
+      // Ensure hoursCount is a valid number
+      const hours = parseFloat(leave.hoursCount) || 0;
+      // Add validation to prevent extremely large values
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      return total + validatedHours;
+    }, 0);
+
+    // Ensure worked hours is a valid number
+    const workedHours = parseFloat(attendanceRecord.hoursWorked) || 0;
+    
+    // Subtract leave hours from worked hours
+    const actualHours = Math.max(0, workedHours - totalLeaveHours);
+    
+    // Round to 2 decimal places to avoid floating point precision issues
+    return Math.round(actualHours * 100) / 100;
+  }, [vacationsData.allLeaves]);
+
+  // Helper function to calculate actual worked hours for working hours tracking (subtract hourly leave)
+  const calculateActualWorkedHoursForEmployee = useCallback((employeeData) => {
+    if (!employeeData.totalHoursWorked || !vacationsData.allLeaves) {
+      return {
+        actualHours: employeeData.totalHoursWorked || 0,
+        deductedHours: 0,
+        hasDeduction: false
+      };
+    }
+
+    const { year, month, userId } = {
+      year: workingHoursFilters.year,
+      month: workingHoursFilters.month,
+      userId: employeeData.userId || employeeData._id
+    };
+
+    // Find all hourly leaves for this employee in the selected month/year
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0);
+
+    const employeeHourlyLeaves = vacationsData.allLeaves.filter(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate >= monthStart && leaveDate <= monthEnd;
+    });
+
+    // Calculate total hourly leave hours for the month
+    const totalLeaveHours = employeeHourlyLeaves.reduce((total, leave) => {
+      const hours = parseFloat(leave.hoursCount) || 0;
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      return total + validatedHours;
+    }, 0);
+
+    const originalHours = parseFloat(employeeData.totalHoursWorked) || 0;
+    const actualHours = Math.max(0, originalHours - totalLeaveHours);
+
+    return {
+      actualHours: Math.round(actualHours * 100) / 100,
+      deductedHours: Math.round(totalLeaveHours * 100) / 100,
+      hasDeduction: totalLeaveHours > 0,
+      originalHours: originalHours
+    };
+  }, [vacationsData.allLeaves, workingHoursFilters]);
+
+  // Helper function to get monthly hourly leave details for tooltip in working hours tab
+  const getMonthlyHourlyLeaveTooltip = useCallback((employeeData) => {
+    if (!vacationsData.allLeaves) return null;
+
+    const { year, month, userId } = {
+      year: workingHoursFilters.year,
+      month: workingHoursFilters.month,
+      userId: employeeData.userId || employeeData._id
+    };
+
+    // Find all hourly leaves for this employee in the selected month/year
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0);
+
+    const employeeHourlyLeaves = vacationsData.allLeaves.filter(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate >= monthStart && leaveDate <= monthEnd;
+    });
+
+    if (employeeHourlyLeaves.length === 0) return null;
+
+    const totalHours = employeeHourlyLeaves.reduce((total, leave) => {
+      const hours = parseFloat(leave.hoursCount) || 0;
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      return total + validatedHours;
+    }, 0);
+
+    // Format leave details with dates
+    const leaveDetails = employeeHourlyLeaves.map(leave => {
+      const leaveDate = new Date(leave.date);
+      const formattedDate = leaveDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      const startTime = leave.startTime || '';
+      const endTime = leave.endTime || '';
+      const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : '';
+      
+      const hours = parseFloat(leave.hoursCount) || 0;
+      const validatedHours = isNaN(hours) || hours < 0 || hours > 24 ? 0 : hours;
+      const hoursDisplay = validatedHours > 0 ? `${validatedHours}h` : '';
+      
+      const leaveTypeDisplay = leave.leaveType || 'Leave';
+      const customTypeDisplay = leave.customLeaveType ? ` (${leave.customLeaveType})` : '';
+      
+      return `${formattedDate}: ${leaveTypeDisplay}${customTypeDisplay} ${timeRange} ${hoursDisplay}`.trim();
+    }).join('\n');
+
+    const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    return {
+      title: `Hourly Leave - ${monthName}`,
+      content: `Total: ${totalHours}h (${employeeHourlyLeaves.length} leave${employeeHourlyLeaves.length !== 1 ? 's' : ''})`,
+      detail: leaveDetails
+    };
+  }, [vacationsData.allLeaves, workingHoursFilters]);
+
+  // Helper function to check if employee has hourly leave in the selected month
+  const hasHourlyLeaveInMonth = useCallback((employeeData) => {
+    if (!vacationsData.allLeaves) return false;
+
+    const { year, month, userId } = {
+      year: workingHoursFilters.year,
+      month: workingHoursFilters.month,
+      userId: employeeData.userId || employeeData._id
+    };
+
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0);
+
+    return vacationsData.allLeaves.some(leave => {
+      if (leave.leaveCategory !== 'hourly' || leave.userId?._id !== userId) {
+        return false;
+      }
+
+      const leaveDate = new Date(leave.date);
+      return leaveDate >= monthStart && leaveDate <= monthEnd;
+    });
+  }, [vacationsData.allLeaves, workingHoursFilters]);
 
   const handleDayClick = (dayData, day, month) => {
     setDayModal({
@@ -2612,21 +3029,32 @@ export default function AttendancePanel() {
                         </Table.Cell>
                         <Table.Cell>
                           {isAdmin ? (
-                            <CustomButton
-                              variant="red"
-                              size="sm"
-                              onClick={() => {
-                                setDeleteConfirmation({
-                                  show: true,
-                                  leaveId: leave._id,
-                                  leaveName: `${leave.userId?.username || 'Unknown'}'s ${leave.leaveType} leave`
-                                });
-                              }}
-                              icon={FaTrash}
-                              title="Delete Leave"
-                              disabled={vacationsLoading}
-                              className="!p-2"
-                            />
+                            <div className="flex items-center gap-2">
+                              <CustomButton
+                                variant="teal"
+                                size="sm"
+                                onClick={() => handleEditLeave(leave)}
+                                icon={FaPen}
+                                title="Edit Leave"
+                                disabled={vacationsLoading}
+                                className="!p-2"
+                              />
+                              <CustomButton
+                                variant="red"
+                                size="sm"
+                                onClick={() => {
+                                  setDeleteConfirmation({
+                                    show: true,
+                                    leaveId: leave._id,
+                                    leaveName: `${leave.userId?.username || 'Unknown'}'s ${leave.leaveType} leave`
+                                  });
+                                }}
+                                icon={FaTrash}
+                                title="Delete Leave"
+                                disabled={vacationsLoading}
+                                className="!p-2"
+                              />
+                            </div>
                           ) : (
                             <span className="text-gray-400 dark:text-gray-500 text-sm">View Only</span>
                           )}
@@ -3004,7 +3432,7 @@ export default function AttendancePanel() {
                                   }}
                                   options={users.map(user => ({
                                     value: user._id,
-                                    label: `${user.username} (${user.email})`
+                                    label: user.email ? `${user.username} (${user.email})` : user.username
                                   }))}
                                 />
                               </div>
@@ -4745,9 +5173,19 @@ export default function AttendancePanel() {
                         </Table.Cell>
                         <Table.Cell className="whitespace-nowrap">
                           <div className="flex items-center space-x-2">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white max-w-[120px] truncate">
-                              {record.userId?.username || 'Unknown'}
-                            </div>
+                            {hasHourlyLeaveOnDate(record.userId?._id, record.date) ? (
+                              <CustomTooltip
+                                {...getHourlyLeaveTooltip(record.userId?._id, record.date)}
+                              >
+                                <div className="text-xs sm:text-sm font-medium max-w-[120px] truncate text-yellow-600 dark:text-yellow-400 cursor-help">
+                                  {record.userId?.username || 'Unknown'}
+                                </div>
+                              </CustomTooltip>
+                            ) : (
+                              <div className="text-xs sm:text-sm font-medium max-w-[120px] truncate text-gray-900 dark:text-white">
+                                {record.userId?.username || 'Unknown'}
+                              </div>
+                            )}
                           </div>
                         </Table.Cell>
                         <Table.Cell className="whitespace-nowrap">
@@ -4762,7 +5200,24 @@ export default function AttendancePanel() {
                         </Table.Cell>
                         <Table.Cell className="whitespace-nowrap">
                           <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
-                            {record.hoursWorked ? `${record.hoursWorked}h` : '--'}
+                            {(() => {
+                              if (!record.hoursWorked) return '--';
+                              
+                              const actualHours = calculateActualWorkHours(record);
+                              const originalHours = record.hoursWorked;
+                              
+                              // If hours were deducted, show both original and actual on same line
+                              if (actualHours !== originalHours) {
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-red-500 line-through text-xs">{originalHours}h</span>
+                                    <span className="text-green-600 font-semibold">{actualHours}h</span>
+                                  </div>
+                                );
+                              }
+                              
+                              return `${actualHours}h`;
+                            })()}
                           </div>
                         </Table.Cell>
                         <Table.Cell className="whitespace-nowrap">
@@ -4831,7 +5286,7 @@ export default function AttendancePanel() {
                         { value: '', label: 'All Employees' },
                         ...users.map(user => ({ 
                           value: user._id, 
-                          label: `${user.username} (${user.email})` 
+                          label: user.email ? `${user.username} (${user.email})` : user.username
                         }))
                       ]}
                     />
@@ -4937,7 +5392,17 @@ export default function AttendancePanel() {
                           <>
                             <Table.Cell className="font-medium text-gray-900 dark:text-white text-left w-1/4">
                               <div className="flex flex-col">
-                                <span className="font-semibold text-sm">{data.username}</span>
+                                {hasHourlyLeaveInMonth(data) ? (
+                                  <CustomTooltip
+                                    {...getMonthlyHourlyLeaveTooltip(data)}
+                                  >
+                                    <span className="font-semibold text-sm text-yellow-600 dark:text-yellow-400 cursor-help">
+                                      {data.username}
+                                    </span>
+                                  </CustomTooltip>
+                                ) : (
+                                  <span className="font-semibold text-sm">{data.username}</span>
+                                )}
                                 <span className="text-xs text-gray-500 dark:text-gray-400">{data.email}</span>
                               </div>
                             </Table.Cell>
@@ -4952,34 +5417,69 @@ export default function AttendancePanel() {
                               </div>
                             </Table.Cell>
                             <Table.Cell className="text-center w-1/5">
-                              <span className={`font-bold text-sm ${
-                                data.totalHoursWorked >= data.totalRequiredHours 
-                                  ? 'text-green-600 dark:text-green-500' 
-                                  : 'text-red-600 dark:text-red-500'
-                              }`}>
-                                {data.totalHoursWorked}h
-                              </span>
+                              {(() => {
+                                const hoursCalc = calculateActualWorkedHoursForEmployee(data);
+                                
+                                if (hoursCalc.hasDeduction) {
+                                  return (
+                                    <div className="flex flex-col items-center">
+                                      <div className="flex items-center gap-1">
+                                        <span className="font-bold text-xs text-red-500 line-through">
+                                          {hoursCalc.originalHours}h
+                                        </span>
+                                        <span className={`font-bold text-sm ${
+                                          hoursCalc.actualHours >= data.totalRequiredHours 
+                                            ? 'text-green-600 dark:text-green-500' 
+                                            : 'text-red-600 dark:text-red-500'
+                                        }`}>
+                                          {hoursCalc.actualHours}h
+                                        </span>
+                                      </div>
+                                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        (-{hoursCalc.deductedHours}h leave)
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                
+                                return (
+                                  <span className={`font-bold text-sm ${
+                                    data.totalHoursWorked >= data.totalRequiredHours 
+                                      ? 'text-green-600 dark:text-green-500' 
+                                      : 'text-red-600 dark:text-red-500'
+                                  }`}>
+                                    {data.totalHoursWorked}h
+                                  </span>
+                                );
+                              })()}
                             </Table.Cell>
                             <Table.Cell className="text-center w-1/4">
-                              <div className="flex items-center justify-center">
-                                <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
-                                  <div 
-                                    className={`h-2 rounded-full ${
-                                      data.percentage >= 100 ? 'bg-green-600' :
-                                      data.percentage >= 80 ? 'bg-yellow-600' :
-                                      'bg-red-700'
-                                    }`}
-                                    style={{ width: `${Math.min(data.percentage, 100)}%` }}
-                                  ></div>
-                                </div>
-                                <span className={`text-xs font-medium ${
-                                  data.percentage >= 100 ? 'text-green-600 dark:text-green-400' :
-                                  data.percentage >= 80 ? 'text-yellow-600 dark:text-yellow-400' :
-                                  'text-red-600 dark:text-red-400'
-                                }`}>
-                                  {data.percentage}%
-                                </span>
-                              </div>
+                              {(() => {
+                                const hoursCalc = calculateActualWorkedHoursForEmployee(data);
+                                const actualPercentage = Math.round((hoursCalc.actualHours / data.totalRequiredHours) * 100);
+                                
+                                return (
+                                  <div className="flex items-center justify-center">
+                                    <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                      <div 
+                                        className={`h-2 rounded-full ${
+                                          actualPercentage >= 100 ? 'bg-green-600' :
+                                          actualPercentage >= 80 ? 'bg-yellow-600' :
+                                          'bg-red-700'
+                                        }`}
+                                        style={{ width: `${Math.min(actualPercentage, 100)}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className={`text-xs font-medium ${
+                                      actualPercentage >= 100 ? 'text-green-600 dark:text-green-400' :
+                                      actualPercentage >= 80 ? 'text-yellow-600 dark:text-yellow-400' :
+                                      'text-red-600 dark:text-red-400'
+                                    }`}>
+                                      {actualPercentage}%
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </Table.Cell>
                             <Table.Cell className="text-center w-1/12">
                               <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -5160,6 +5660,172 @@ export default function AttendancePanel() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Leave Modal */}
+      {editLeaveModal.visible && (
+        <CustomModal
+          isOpen={editLeaveModal.visible}
+          onClose={() => setEditLeaveModal({ visible: false, leave: null })}
+          title="Edit Leave"
+          subtitle={editLeaveModal.leave ? `Editing ${editLeaveModal.leave.userId?.username || 'Unknown'}'s ${editLeaveModal.leave.leaveType} leave` : ''}
+        >
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateLeave(); }} className="space-y-4">
+            {/* Leave Type */}
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Leave Type"
+                value={editLeaveForm.leaveType}
+                onChange={(value) => setEditLeaveForm(prev => ({ ...prev, leaveType: value }))}
+                options={[
+                  { value: 'sick', label: 'Sick Leave' },
+                  { value: 'annual', label: 'Annual Leave' },
+                  { value: 'emergency', label: 'Emergency Leave' },
+                  { value: 'maternity', label: 'Maternity Leave' },
+                  { value: 'paternity', label: 'Paternity Leave' },
+                  { value: 'unpaid', label: 'Unpaid Leave' },
+                  { value: 'personal', label: 'Personal Leave' },
+                  { value: 'bereavement', label: 'Bereavement Leave' },
+                  { value: 'custom', label: 'Custom' }
+                ]}
+                required
+              />
+              
+              <Select
+                label="Category"
+                value={editLeaveForm.leaveCategory}
+                onChange={(value) => setEditLeaveForm(prev => ({ ...prev, leaveCategory: value }))}
+                options={[
+                  { value: 'hourly', label: 'Hourly' },
+                  { value: 'single-day', label: 'Single Day' },
+                  { value: 'multiple-day', label: 'Multiple Days' }
+                ]}
+                required
+              />
+            </div>
+
+            {/* Custom Leave Type - Only show if custom is selected */}
+            {editLeaveForm.leaveType === 'custom' && (
+              <TextInput
+                label="Custom Leave Type"
+                value={editLeaveForm.customLeaveType}
+                onChange={(e) => setEditLeaveForm(prev => ({ ...prev, customLeaveType: e.target.value }))}
+                placeholder="Enter custom leave type"
+                maxLength={50}
+              />
+            )}
+
+            {/* Date fields based on category */}
+            {editLeaveForm.leaveCategory === 'single-day' && (
+              <CustomDatePicker
+                label="Date *"
+                value={editLeaveForm.date}
+                onChange={(date) => setEditLeaveForm(prev => ({ ...prev, date }))}
+                placeholder="Select date"
+                required
+                popupSize="small"
+              />
+            )}
+
+            {editLeaveForm.leaveCategory === 'hourly' && (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <CustomDatePicker
+                    label="Date *"
+                    value={editLeaveForm.date}
+                    onChange={(date) => setEditLeaveForm(prev => ({ ...prev, date }))}
+                    placeholder="Select date"
+                    required
+                    popupSize="small"
+                  />
+                </div>
+                <TextInput
+                  label="Start Time"
+                  type="time"
+                  value={editLeaveForm.startTime?.includes('AM') || editLeaveForm.startTime?.includes('PM') 
+                    ? convertTo24Hour(editLeaveForm.startTime) 
+                    : editLeaveForm.startTime || '09:00'}
+                  onChange={(e) => setEditLeaveForm(prev => ({ ...prev, startTime: convertTo12Hour(e.target.value) }))}
+                  placeholder="09:00 AM"
+                  step="60"
+                />
+                <TextInput
+                  label="End Time"
+                  type="time"
+                  value={editLeaveForm.endTime?.includes('AM') || editLeaveForm.endTime?.includes('PM') 
+                    ? convertTo24Hour(editLeaveForm.endTime) 
+                    : editLeaveForm.endTime || '17:00'}
+                  onChange={(e) => setEditLeaveForm(prev => ({ ...prev, endTime: convertTo12Hour(e.target.value) }))}
+                  placeholder="05:00 PM"
+                  step="60"
+                />
+              </div>
+            )}
+
+            {editLeaveForm.leaveCategory === 'multiple-day' && (
+              <div className="grid grid-cols-2 gap-4">
+                <CustomDatePicker
+                  label="Start Date *"
+                  value={editLeaveForm.startDate}
+                  onChange={(date) => setEditLeaveForm(prev => ({ ...prev, startDate: date }))}
+                  placeholder="Select start date"
+                  required
+                  popupSize="small"
+                />
+                <CustomDatePicker
+                  label="End Date *"
+                  value={editLeaveForm.endDate}
+                  onChange={(date) => setEditLeaveForm(prev => ({ ...prev, endDate: date }))}
+                  placeholder="Select end date"
+                  required
+                  popupSize="small"
+                />
+              </div>
+            )}
+
+            {/* Status */}
+            <Select
+              label="Status"
+              value={editLeaveForm.status}
+              onChange={(value) => setEditLeaveForm(prev => ({ ...prev, status: value }))}
+              options={[
+                { value: 'pending', label: 'Pending' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'rejected', label: 'Rejected' },
+                { value: 'cancelled', label: 'Cancelled' }
+              ]}
+              required
+            />
+
+            {/* Reason */}
+            <TextInput
+              as="textarea"
+              rows={3}
+              label="Reason"
+              value={editLeaveForm.reason}
+              onChange={(e) => setEditLeaveForm(prev => ({ ...prev, reason: e.target.value }))}
+              placeholder="Reason for leave..."
+              maxLength={500}
+            />
+
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <CustomButton 
+                variant="gray" 
+                onClick={() => setEditLeaveModal({ visible: false, leave: null })} 
+                disabled={editLeaveLoading}
+              >
+                Cancel
+              </CustomButton>
+              <CustomButton 
+                type="submit" 
+                disabled={editLeaveLoading}
+                variant="teal"
+              >
+                {editLeaveLoading ? 'Updating...' : 'Update Leave'}
+              </CustomButton>
+            </div>
+          </form>
+        </CustomModal>
       )}
     </Card>
   );

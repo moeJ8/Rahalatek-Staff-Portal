@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate, HiRefresh } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -296,6 +296,9 @@ export default function AdminPanel() {
     
     // Inner tabs for salaries section
     const [salaryInnerTab, setSalaryInnerTab] = useState('salaries'); // 'salaries' for cards view, 'salary'/'bonus' for settings functionality
+    
+    // Inner tabs for debt management section
+    const [debtInnerTab, setDebtInnerTab] = useState('active'); // 'active' for open debts, 'archived' for closed debts
     
     // Month editor state
     const [selectedMonthToEdit, setSelectedMonthToEdit] = useState('');
@@ -2958,6 +2961,34 @@ export default function AdminPanel() {
         }
     };
 
+    const handleReopenDebt = async (debtId) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.patch(`/api/debts/${debtId}/reopen`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            toast.success('Debt reopened successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#2196F3',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#2196F3',
+                },
+            });
+            fetchDebts();
+        } catch (err) {
+            console.error('Failed to reopen debt:', err);
+            toast.error(err.response?.data?.message || 'Failed to reopen debt');
+        }
+    };
+
     const handleDeleteDebt = async () => {
         if (!debtToDelete) return;
         
@@ -3066,6 +3097,15 @@ export default function AdminPanel() {
         return debtFilters.office !== '' || 
                debtFilters.status !== '' || 
                debtFilters.type !== '';
+    };
+
+    // Get unique offices from debt data
+    const getOfficesWithDebts = () => {
+        const uniqueOffices = [...new Set(debts.map(debt => debt.officeName))];
+        return uniqueOffices.sort().map(office => ({
+            value: office,
+            label: office
+        }));
     };
 
     const fetchPendingRequests = async () => {
@@ -5509,50 +5549,76 @@ export default function AdminPanel() {
 
                             {activeTab === 'debts' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="debts-panel" role="tabpanel" aria-labelledby="tab-debts">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <div className="flex-1"></div>
-                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-center">
-                                            <FaFileInvoiceDollar className="h-6 w-6 mr-2 text-red-600 dark:text-red-400" />
-                                            Debt Management
-                                        </h2>
-                                        <div className="flex-1 flex justify-end">
-                                            <CustomButton
-                                                variant="green"
-                                                onClick={() => openDebtModal()}
-                                                icon={HiPlus}
-                                                title="Add new debt record"
+                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Debt Management</h2>
+                                    
+                                    {/* Inner Tab Navigation */}
+                                    <div className="mb-6">
+                                        <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm">
+                                            <button 
+                                                onClick={() => setDebtInnerTab('active')}
+                                                className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                                                    debtInnerTab === 'active'
+                                                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                                                }`}
                                             >
-                                                Add Debt
-                                            </CustomButton>
+                                                <FaFileInvoiceDollar className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">Active Debts</span>
+                                                <span className="sm:hidden">Active</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => setDebtInnerTab('archived')}
+                                                className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
+                                                    debtInnerTab === 'archived'
+                                                        ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                                                }`}
+                                            >
+                                                <FaArchive className="w-3 h-3 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">Archived Debts</span>
+                                                <span className="sm:hidden">Archived</span>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    {/* Debt Filters */}
-                                    <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-4 rounded-lg mb-6">
+                                    {/* Active Debts Tab Content */}
+                                    {debtInnerTab === 'active' && (
+                                        <div>
+                                            {/* Add Debt Button - Only show for active debts */}
+                                            <div className="flex justify-end mb-6">
+                                                <CustomButton
+                                                    variant="green"
+                                                    onClick={() => openDebtModal()}
+                                                    icon={HiPlus}
+                                                    title="Add new debt record"
+                                                >
+                                                    Add Debt
+                                                </CustomButton>
+                                            </div>
+
+                                            {/* Debt Filters */}
+                                            <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-4 rounded-lg mb-6">
                                         <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Debt Filters</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                             <div>
-                                                <CustomSelect
+                                                <SearchableSelect
                                                     id="debt-office-filter"
                                                     label="Office"
                                                     value={debtFilters.office}
-                                                    onChange={(value) => handleDebtFilterChange('office', value)}
+                                                    onChange={(e) => handleDebtFilterChange('office', e.target.value)}
                                                     options={[
                                                         { value: '', label: 'All Offices' },
-                                                        ...offices.map(office => ({
-                                                            value: office.name,
-                                                            label: `${office.name} - ${office.location}`
-                                                        }))
+                                                        ...getOfficesWithDebts()
                                                     ]}
                                                     placeholder="Search offices..."
                                                 />
                                             </div>
                                             <div>
-                                                <CustomSelect
+                                                <SearchableSelect
                                                     id="debt-status-filter"
                                                     label="Status"
                                                     value={debtFilters.status}
-                                                    onChange={(value) => handleDebtFilterChange('status', value)}
+                                                    onChange={(e) => handleDebtFilterChange('status', e.target.value)}
                                                     options={[
                                                         { value: "", label: "All Status" },
                                                         { value: "OPEN", label: "Open" },
@@ -5562,11 +5628,11 @@ export default function AdminPanel() {
                                                 />
                                             </div>
                                             <div>
-                                                <CustomSelect
+                                                <SearchableSelect
                                                     id="debt-type-filter"
                                                     label="Type"
                                                     value={debtFilters.type}
-                                                    onChange={(value) => handleDebtFilterChange('type', value)}
+                                                    onChange={(e) => handleDebtFilterChange('type', e.target.value)}
                                                     options={[
                                                         { value: "", label: "All Types" },
                                                         { value: "OWED_TO_OFFICE", label: "We Owe Them" },
@@ -5619,7 +5685,7 @@ export default function AdminPanel() {
                                 { label: 'Created By', className: '' },
                                 { label: 'Actions', className: '' }
                             ]}
-                            data={debts}
+                            data={debts.filter(debt => debt.status === 'OPEN')}
                             renderRow={(debt) => (
                                 <>
                                     <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
@@ -5724,11 +5790,174 @@ export default function AdminPanel() {
                                 <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                            )}
+                                                                        )}
                         />
                     )}
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
+                                        </div>
+                                    )}
+
+                                    {/* Archived Debts Tab Content */}
+                                    {debtInnerTab === 'archived' && (
+                                        <div>
+                                            {/* Archived Debt Filters */}
+                                            <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-4 rounded-lg mb-6">
+                                                <h4 className="text-md font-semibold mb-3 text-gray-900 dark:text-white">Archived Debt Filters</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                                    <div>
+                                                        <SearchableSelect
+                                                            id="archived-debt-office-filter"
+                                                            label="Office"
+                                                            value={debtFilters.office}
+                                                            onChange={(e) => handleDebtFilterChange('office', e.target.value)}
+                                                            options={[
+                                                                { value: '', label: 'All Offices' },
+                                                                ...getOfficesWithDebts()
+                                                            ]}
+                                                            placeholder="Search offices..."
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <SearchableSelect
+                                                            id="archived-debt-type-filter"
+                                                            label="Type"
+                                                            value={debtFilters.type}
+                                                            onChange={(e) => handleDebtFilterChange('type', e.target.value)}
+                                                            options={[
+                                                                { value: "", label: "All Types" },
+                                                                { value: "OWED_TO_OFFICE", label: "We Owe Them" },
+                                                                { value: "OWED_FROM_OFFICE", label: "They Owe Us" }
+                                                            ]}
+                                                            placeholder="Select type..."
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-end">
+                                                        <CustomButton
+                                                            variant="red"
+                                                            onClick={clearDebtFilters}
+                                                            disabled={!hasDebtFiltersApplied()}
+                                                            className="w-full h-[44px]"
+                                                            title={hasDebtFiltersApplied() ? "Clear all debt filters" : "No filters to clear"}
+                                                            icon={HiX}
+                                                        >
+                                                            Clear Filters
+                                                        </CustomButton>
+                                                    </div>
+                                                    <div className="flex items-end">
+                                                        <CustomButton
+                                                            variant="blue"
+                                                            onClick={fetchDebts}
+                                                            disabled={debtLoading}
+                                                            className="w-full h-[44px]"
+                                                            title="Refresh debt data"
+                                                            icon={HiRefresh}
+                                                        >
+                                                            {debtLoading ? 'Loading...' : 'Refresh Debts'}
+                                                        </CustomButton>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Archived Debt Table */}
+                                            {debtLoading ? (
+                                                <div className="py-8">
+                                                    <RahalatekLoader size="lg" />
+                                                </div>
+                                            ) : (
+                                                <CustomTable
+                                                    headers={[
+                                                        { label: 'Office', className: '' },
+                                                        { label: 'Amount', className: '' },
+                                                        { label: 'Type', className: '' },
+                                                        { label: 'Status', className: '' },
+                                                        { label: 'Description', className: '' },
+                                                        { label: 'Due Date', className: '' },
+                                                        { label: 'Closed Date', className: '' },
+                                                        { label: 'Created By', className: '' },
+                                                        { label: 'Actions', className: '' }
+                                                    ]}
+                                                    data={debts.filter(debt => debt.status === 'CLOSED')}
+                                                    renderRow={(debt) => (
+                                                        <>
+                                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.officeName}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-semibold">{debt.currency} {debt.amount.toLocaleString()}</span>
+                                                                    {debt.amountInUSD && debt.currency !== 'USD' && (
+                                                                        <span className="text-xs text-gray-500 dark:text-gray-400">≈ ${debt.amountInUSD.toLocaleString()}</span>
+                                                                    )}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                    debt.type === 'OWED_TO_OFFICE' 
+                                                                        ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                                                                        : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                                                }`}>
+                                                                    {debt.type === 'OWED_TO_OFFICE' ? 'We Owe Them' : 'They Owe Us'}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                                                                    CLOSED
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 max-w-xs">
+                                                                <div className="truncate" title={debt.description}>
+                                                                    {debt.description || 'No description'}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'No due date'}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                <div className="text-green-600 dark:text-green-400 font-medium">
+                                                                    {debt.closedDate ? new Date(debt.closedDate).toLocaleDateString() : 'N/A'}
+                                                                </div>
+                                                            </Table.Cell>
+                                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                                {debt.createdBy?.username || 'Unknown'}
+                                                            </Table.Cell>
+                                                            <Table.Cell className="px-4 py-3">
+                                                                <div className="flex space-x-2">
+                                                                    {isAdmin && (
+                                                                        <>
+                                                                            <CustomButton
+                                                                                variant="blue"
+                                                                                size="xs"
+                                                                                onClick={() => handleReopenDebt(debt._id)}
+                                                                                title="Reopen debt"
+                                                                            >
+                                                                                Reopen
+                                                                            </CustomButton>
+                                                                            <CustomButton
+                                                                                variant="red"
+                                                                                size="xs"
+                                                                                onClick={() => openDeleteDebtModal(debt)}
+                                                                                title="Delete debt"
+                                                                            >
+                                                                                Delete
+                                                                            </CustomButton>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            </Table.Cell>
+                                                        </>
+                                                    )}
+                                                    emptyMessage="No archived debts found"
+                                                    emptyDescription="Closed debt records will appear here."
+                                                    emptyIcon={() => (
+                                                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h8a2 2 0 002-2V8m-9 4h4" />
+                                                        </svg>
+                                                    )}
+                                                />
+                                            )}
+                                        </div>
+                                    )}
                                 </Card>
                             )}
 

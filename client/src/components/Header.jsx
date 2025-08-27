@@ -419,7 +419,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                     }`}
                   >
-                    Attendance
+                    My Attendance
                     <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                       isActive('/attendance') ? 'w-8' : 'w-0 group-hover:w-8'
                     }`}></span>

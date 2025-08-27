@@ -153,7 +153,7 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
             >
               <FaQrcode className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
-              Attendance
+              My Attendance
             </button>
 
             <button
