@@ -246,6 +246,69 @@ const NotificationDropdown = () => {
     }
   };
 
+  // Parse message and make voucher numbers clickable for summary notifications
+  const parseMessageWithClickableVouchers = (message, metadata, notificationType) => {
+    // Only apply to arrival and departure summaries
+    if (notificationType !== 'daily_arrivals_summary' && notificationType !== 'daily_departures_summary') {
+      return <span>{message}</span>;
+    }
+
+    // Check if we have voucher data in metadata
+    if (!metadata?.vouchers || !Array.isArray(metadata.vouchers)) {
+      return <span>{message}</span>;
+    }
+
+    // Split the message to find the voucher numbers part
+    const parts = message.split(': ');
+    if (parts.length !== 2) {
+      return <span>{message}</span>;
+    }
+
+    const prefix = parts[0]; // e.g., "Today's Departures (2)"
+    const voucherNumbersText = parts[1]; // e.g., "#10183, #10207"
+
+    // Create a map of voucher numbers to their IDs for quick lookup
+    const voucherMap = {};
+    metadata.vouchers.forEach(voucher => {
+      voucherMap[voucher.voucherNumber] = voucher.id;
+    });
+
+    // Split voucher numbers and create clickable links
+    const voucherParts = voucherNumbersText.split(', ').map((voucherText, index) => {
+      const voucherNumber = voucherText.replace('#', ''); // Remove # to match our map
+      const voucherId = voucherMap[voucherNumber];
+      
+      if (voucherId) {
+        return (
+          <React.Fragment key={voucherNumber}>
+            {index > 0 && ', '}
+            <Link
+              to={`/vouchers/${voucherId}`}
+              className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium hover:underline"
+              onClick={() => setShowDropdown(false)}
+              title={`View voucher #${voucherNumber}`}
+            >
+              #{voucherNumber}
+            </Link>
+          </React.Fragment>
+        );
+      } else {
+        return (
+          <React.Fragment key={voucherNumber}>
+            {index > 0 && ', '}
+            <span>#{voucherNumber}</span>
+          </React.Fragment>
+        );
+      }
+    });
+
+    return (
+      <span>
+        {prefix}: {voucherParts}
+      </span>
+    );
+  };
+
   // Check if notification is read by current user
   const isRead = (notification) => {
     const userStr = localStorage.getItem('user');
@@ -275,9 +338,10 @@ const NotificationDropdown = () => {
     });
   };
 
-  // Get priority badge styling
-  const getPriorityBadge = (priority) => {
-    if (!priority) return null; // Don't show badge if no priority is set
+  // Get priority badge styling - only show for custom reminders
+  const getPriorityBadge = (priority, notificationType) => {
+    // Only show priority badges for custom reminders
+    if (!priority || notificationType !== 'custom_reminder') return null;
     
     const styles = {
       low: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
@@ -470,10 +534,10 @@ const NotificationDropdown = () => {
                                 <p className={`text-xs sm:text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {notification.title}
                                 </p>
-                                {getPriorityBadge(notification.priority)}
+                                {getPriorityBadge(notification.priority, notification.type)}
                               </div>
                               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
-                                {notification.message}
+                                {parseMessageWithClickableVouchers(notification.message, notification.metadata, notification.type)}
                               </p>
                               
                               {/* Metadata */}

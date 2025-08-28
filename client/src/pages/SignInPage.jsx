@@ -367,21 +367,24 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-slate-950 py-8 px-4 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-950 md:py-8 px-4 flex flex-col">
       {/* Mobile header - visible only on small screens */}
       <div className="md:hidden text-center mb-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
           Rahalatek Staff Portal
         </h1>
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-          Internal tour management system
+          Rahalatek Management Platform
         </p>
       </div>
       
       {/* Main content container */}
-      <div className="flex flex-col md:flex-row-reverse items-center justify-center flex-1 max-w-5xl mx-auto">
+      <div className="flex flex-col md:flex-row-reverse items-center justify-center md:flex-1 max-w-5xl mx-auto">
         {/* Auth Form */}
-        <Card className="w-full max-w-md md:mb-0 md:ml-8 dark:bg-gray-800">
+        <div className="w-full max-w-md md:mb-0 md:ml-8">
+          {/* Small invisible spacer to align with title */}
+          <div className="hidden md:block h-8 mb-4"></div>
+          <Card className="w-full bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">
             {isForgotPassword ? 
               (resetStep === 1 ? 'Reset Password' : 
@@ -498,7 +501,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-blue-500 dark:text-blue-400 hover:underline"
+                  className="text-blue-500 dark:text-blue-400 hover:underline text-sm sm:text-base"
                 >
                   {isLogin ? 'New employee? Register' : 'Already registered? Sign In'}
                 </button>
@@ -507,7 +510,7 @@ export default function SignInPage() {
                   <button
                     type="button"
                     onClick={toggleForgotPassword}
-                    className="text-blue-500 dark:text-blue-400 hover:underline"
+                    className="text-blue-500 dark:text-blue-400 hover:underline text-sm sm:text-base"
                   >
                     Forgot Password?
                   </button>
@@ -516,6 +519,7 @@ export default function SignInPage() {
             </form>
           )}
         </Card>
+        </div>
         
         {/* Company Info - Hidden on mobile, visible on md+ screens */}
         <div className="hidden md:block w-full max-w-md">
@@ -524,30 +528,19 @@ export default function SignInPage() {
               Rahalatek Staff Portal
             </h1>
             
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg p-8 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 w-full max-w-md">
               <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
-                Internal Management System
+                Employee Portal
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Sign in to access the tour management dashboard. Contact your administrator if you're having trouble accessing your account.
+                Access your work dashboard to manage daily operations, track attendance, and collaborate with your team. Please sign in with your employee credentials.
               </p>
               
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                <h3 className="font-medium text-gray-800 dark:text-white mb-2">Quick Reference</h3>
-                <ul className="space-y-2 text-left text-sm">
-                  <li className="text-gray-600 dark:text-gray-300">
-                    • Manage tour bookings and hotel reservations
-                  </li>
-                  <li className="text-gray-600 dark:text-gray-300">
-                    • Access client information and booking details
-                  </li>
-                  <li className="text-gray-600 dark:text-gray-300">
-                    • Update tour availability and pricing
-                  </li>
-                  <li className="text-gray-600 dark:text-gray-300">
-                    • Generate printable booking confirmations
-                  </li>
-                </ul>
+                <h3 className="font-medium text-gray-800 dark:text-white mb-2">For Employees</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                  This internal system is designed for Rahalatek staff members to efficiently manage their work responsibilities. If you're having trouble accessing your account, please contact your supervisor or IT administrator.
+                </p>
               </div>
             </div>
           </div>
@@ -555,22 +548,11 @@ export default function SignInPage() {
         
         {/* Simplified info panel for mobile only */}
         <div className="md:hidden w-full max-w-md mt-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-            <h3 className="font-medium text-gray-800 dark:text-white mb-2 text-center">Features</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600 dark:text-gray-300 border dark:border-gray-700 rounded p-2 text-center">
-                Tour Bookings
-              </div>
-              <div className="text-gray-600 dark:text-gray-300 border dark:border-gray-700 rounded p-2 text-center">
-                Hotel Reservations
-              </div>
-              <div className="text-gray-600 dark:text-gray-300 border dark:border-gray-700 rounded p-2 text-center">
-                Client Information
-              </div>
-              <div className="text-gray-600 dark:text-gray-300 border dark:border-gray-700 rounded p-2 text-center">
-                Price Management
-              </div>
-            </div>
+          <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg p-4 rounded-lg shadow-md">
+            <h3 className="font-medium text-gray-800 dark:text-white mb-2 text-center">Employee Access</h3>
+            <p className="text-gray-600 dark:text-gray-300 text-sm text-center leading-relaxed">
+              Sign in to access your work dashboard, manage daily tasks, and collaborate with your team members.
+            </p>
           </div>
         </div>
       </div>

@@ -279,7 +279,12 @@ class NotificationService {
                 metadata: {
                     date: today.toISOString(),
                     totalArrivals: vouchersArrivingToday.length,
-                    voucherNumbers: vouchersArrivingToday.map(v => v.voucherNumber)
+                    voucherNumbers: vouchersArrivingToday.map(v => v.voucherNumber),
+                    vouchers: vouchersArrivingToday.map(v => ({
+                        id: v._id,
+                        voucherNumber: v.voucherNumber,
+                        clientName: v.clientName
+                    }))
                 }
             });
 
@@ -352,7 +357,12 @@ class NotificationService {
                 metadata: {
                     date: today.toISOString(),
                     totalDepartures: vouchersDepartingToday.length,
-                    voucherNumbers: vouchersDepartingToday.map(v => v.voucherNumber)
+                    voucherNumbers: vouchersDepartingToday.map(v => v.voucherNumber),
+                    vouchers: vouchersDepartingToday.map(v => ({
+                        id: v._id,
+                        voucherNumber: v.voucherNumber,
+                        clientName: v.clientName
+                    }))
                 }
             });
 

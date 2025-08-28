@@ -2805,10 +2805,16 @@ export default function AttendancePanel() {
                              >
                                <div className="flex items-center justify-between mb-4">
                                  <h5 className="font-semibold text-gray-900 dark:text-white">
-                                   {userStats.username}
+                                   <span className="hidden sm:inline">{userStats.username}</span>
+                                   <span className="sm:hidden">
+                                     {userStats.username.length > 12 
+                                       ? userStats.username.substring(0, 12) + '...'
+                                       : userStats.username
+                                     }
+                                   </span>
                                  </h5>
                                  
-                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                 <span className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-semibold ${
                                    userStats.remainingDays > 7 
                                      ? 'bg-green-500 text-white'
                                      : userStats.remainingDays > 3
@@ -2968,10 +2974,13 @@ export default function AttendancePanel() {
                     </div>
                   </div>
                   
-                  <CustomTable
-                    headers={['Employee', 'Leave Type', 'Category', 'Duration', 'Date(s)', 'Status', 'Reason', 'Actions']}
-                    data={filteredLeaves}
-                    renderRow={(leave) => (
+                  <>
+                    {/* Desktop Table View (hidden on mobile) */}
+                    <div className="hidden sm:block">
+                      <CustomTable
+                        headers={['Employee', 'Leave Type', 'Category', 'Duration', 'Date(s)', 'Status', 'Reason', 'Actions']}
+                        data={filteredLeaves}
+                        renderRow={(leave) => (
                       <>
                         <Table.Cell className="font-medium text-gray-900 dark:text-white">
                           {leave.userId?.username || 'Unknown User'}
@@ -3060,9 +3069,148 @@ export default function AttendancePanel() {
                           )}
                         </Table.Cell>
                       </>
-                    )}
-                    emptyMessage="No leaves found for this year."
-                  />
+                        )}
+                        emptyMessage="No leaves found for this year."
+                      />
+                    </div>
+
+                    {/* Mobile Card View (visible only on mobile) */}
+                    <div className="sm:hidden space-y-5">
+                      {filteredLeaves.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          No leaves found for this year.
+                        </div>
+                      ) : (
+                        filteredLeaves.map((leave, index) => (
+                          <div 
+                            key={leave._id || index} 
+                            className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                            style={{
+                              animationDelay: `${index * 100}ms`
+                            }}
+                          >
+                            <div className="space-y-4">
+                              {/* Header with Employee and Status */}
+                              <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                <div>
+                                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                                    {(leave.userId?.username || 'Unknown User').length > 12 
+                                      ? (leave.userId?.username || 'Unknown User').substring(0, 12) + '...'
+                                      : (leave.userId?.username || 'Unknown User')
+                                    }
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                                      leave.leaveType === 'annual' 
+                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                        : leave.leaveType === 'sick'
+                                        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                        : leave.leaveType === 'emergency'
+                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+                                    }`}>
+                                      {leave.leaveType.charAt(0).toUpperCase() + leave.leaveType.slice(1)}
+                                    </span>
+                                    <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                                      leave.leaveCategory === 'hourly'
+                                        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                                        : leave.leaveCategory === 'single-day'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                                    }`}>
+                                      {leave.leaveCategory === 'hourly' ? 'Hourly' : 
+                                       leave.leaveCategory === 'single-day' ? 'Single' : 'Multiple'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                                    leave.status === 'approved' 
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                      : leave.status === 'pending'
+                                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                                  }`}>
+                                    {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Duration and Date Information */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Duration</div>
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {leave.leaveCategory === 'hourly' 
+                                      ? `${leave.hoursCount || 0}h`
+                                      : `${leave.daysCount || 1} day${(leave.daysCount || 1) > 1 ? 's' : ''}`
+                                    }
+                                  </div>
+                                  {leave.leaveCategory === 'hourly' && (
+                                    <div className="text-xs text-gray-600 dark:text-slate-300">
+                                      {leave.startTime} - {leave.endTime}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Date(s)</div>
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {leave.leaveCategory === 'multiple-day' 
+                                      ? `${new Date(leave.startDate).toLocaleDateString('en-GB')} to ${new Date(leave.endDate).toLocaleDateString('en-GB')}`
+                                      : new Date(leave.date || leave.startDate).toLocaleDateString('en-GB')
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Reason */}
+                              {leave.reason && (
+                                <div>
+                                  <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Reason</div>
+                                  <div className="text-sm text-gray-900 dark:text-white">
+                                    {leave.reason.length > 60 
+                                      ? leave.reason.substring(0, 60) + '...'
+                                      : leave.reason
+                                    }
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Admin Actions */}
+                              {isAdmin && (
+                                <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                  <CustomButton
+                                    variant="teal"
+                                    size="xs"
+                                    onClick={() => handleEditLeave(leave)}
+                                    icon={FaPen}
+                                    disabled={vacationsLoading}
+                                  >
+                                    Edit
+                                  </CustomButton>
+                                  <CustomButton
+                                    variant="red"
+                                    size="xs"
+                                    onClick={() => {
+                                      setDeleteConfirmation({
+                                        show: true,
+                                        leaveId: leave._id,
+                                        leaveName: `${leave.userId?.username || 'Unknown'}'s ${leave.leaveType} leave`
+                                      });
+                                    }}
+                                    icon={FaTrash}
+                                    disabled={vacationsLoading}
+                                  >
+                                    Delete
+                                  </CustomButton>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
                 </div>
               )}
 
@@ -5150,10 +5298,12 @@ export default function AttendancePanel() {
               No attendance records found for the selected criteria.
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <CustomScrollbar>
-                <div className="min-w-full">
-                  <CustomTable
+            <>
+              {/* Desktop Table View (hidden on mobile) */}
+              <div className="hidden sm:block overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                <CustomScrollbar>
+                  <div className="min-w-full">
+                    <CustomTable
                     headers={[
                       { label: 'Date' },
                       { label: 'Employee' },
@@ -5236,20 +5386,20 @@ export default function AttendancePanel() {
                         {isAdmin && (
                           <Table.Cell className="whitespace-nowrap">
                             <div className="flex items-center space-x-2">
-                              <button
+                              <CustomButton
+                                variant="teal"
+                                size="xs"
                                 onClick={() => handleEditAttendance(record)}
-                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                                icon={FaPen}
                                 disabled={adminActionLoading}
-                              >
-                                Edit
-                              </button>
-                              <button
+                              />
+                              <CustomButton
+                                variant="red"
+                                size="xs"
                                 onClick={() => handleDeleteAttendance(record)}
-                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                                icon={FaTrash}
                                 disabled={adminActionLoading}
-                              >
-                                Delete
-                              </button>
+                              />
                             </div>
                           </Table.Cell>
                         )}
@@ -5257,9 +5407,122 @@ export default function AttendancePanel() {
                     )}
                     emptyMessage="No attendance records found."
                   />
-                </div>
-              </CustomScrollbar>
-            </div>
+                  </div>
+                </CustomScrollbar>
+              </div>
+
+              {/* Mobile Card View (visible only on mobile) */}
+              <div className="sm:hidden space-y-5">
+                {attendanceReports.map((record, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    style={{
+                      animationDelay: `${index * 100}ms`
+                    }}
+                  >
+                    <div className="space-y-3">
+                      {/* Header with Date and Employee */}
+                      <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                            {formatDate(record.date)}
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            {hasHourlyLeaveOnDate(record.userId?._id, record.date) ? (
+                              <div className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                                {(record.userId?.username || 'Unknown').length > 14 
+                                  ? (record.userId?.username || 'Unknown').substring(0, 14) + '...'
+                                  : (record.userId?.username || 'Unknown')
+                                }
+                              </div>
+                            ) : (
+                              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {(record.userId?.username || 'Unknown').length > 14 
+                                  ? (record.userId?.username || 'Unknown').substring(0, 14) + '...'
+                                  : (record.userId?.username || 'Unknown')
+                                }
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(record.status)}`}>
+                            {record.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Time Information */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Check In</div>
+                          <div className="text-sm font-mono text-gray-900 dark:text-white">
+                            {formatTime(record.checkIn) || '--'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Check Out</div>
+                          <div className="text-sm font-mono text-gray-900 dark:text-white">
+                            {formatTime(record.checkOut) || '--'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hours Information */}
+                      <div>
+                        <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Hours Worked</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {(() => {
+                            if (!record.hoursWorked) return '--';
+                            
+                            const actualHours = calculateActualWorkHours(record);
+                            const originalHours = record.hoursWorked;
+                            
+                            if (actualHours !== originalHours) {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-red-500 line-through text-xs">{originalHours}h</span>
+                                  <span className="text-green-600 dark:text-green-500">{actualHours}h</span>
+                                  <span className="text-xs text-gray-500">
+                                    (-{(originalHours - actualHours).toFixed(1)}h leave)
+                                  </span>
+                                </div>
+                              );
+                            }
+                            
+                            return `${record.hoursWorked}h`;
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* Admin Actions */}
+                      {isAdmin && (
+                        <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                          <CustomButton
+                            variant="teal"
+                            size="xs"
+                            onClick={() => setEditModal({ visible: true, data: record })}
+                            icon={FaPen}
+                          >
+                            Edit
+                          </CustomButton>
+                          <CustomButton
+                            variant="red"
+                            size="xs"
+                            onClick={() => handleDeleteAttendance(record._id)}
+                            icon={FaTrash}
+                            disabled={adminActionLoading}
+                          >
+                            Delete
+                          </CustomButton>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
             </>
           )}
@@ -5376,10 +5639,12 @@ export default function AttendancePanel() {
                   No working hours data found for the selected criteria.
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-                  <CustomScrollbar>
-                    <div className="min-w-full">
-                      <CustomTable
+                <>
+                  {/* Desktop Table View (hidden on mobile) */}
+                  <div className="hidden sm:block overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                    <CustomScrollbar>
+                      <div className="min-w-full">
+                        <CustomTable
                         headers={[
                           { label: 'Employee', className: 'text-left w-1/4' },
                           { label: 'Required Hours', className: 'text-center w-1/5' },
@@ -5492,7 +5757,122 @@ export default function AttendancePanel() {
                       />
                     </div>
                   </CustomScrollbar>
-                </div>
+                  </div>
+
+                  {/* Mobile Card View (visible only on mobile) */}
+                  <div className="sm:hidden space-y-5">
+                    {workingHoursData.map((data, index) => {
+                      const hoursCalc = calculateActualWorkedHoursForEmployee(data);
+                      const actualHours = hoursCalc.hasDeduction ? hoursCalc.actualHours : data.totalHoursWorked;
+                      const actualPercentage = Math.round((actualHours / data.totalRequiredHours) * 100);
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                          style={{
+                            animationDelay: `${index * 100}ms`
+                          }}
+                        >
+                          <div className="space-y-4">
+                            {/* Header with Employee Info */}
+                            <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
+                              <div className="flex flex-col">
+                                {hasHourlyLeaveInMonth(data) ? (
+                                  <span className="font-semibold text-sm text-yellow-600 dark:text-yellow-400">
+                                    {data.username}
+                                  </span>
+                                ) : (
+                                  <span className="font-semibold text-sm text-gray-900 dark:text-white">{data.username}</span>
+                                )}
+                                <span className="text-xs text-gray-600 dark:text-slate-300">{data.email}</span>
+                              </div>
+                            </div>
+
+                            {/* Hours Information */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Required Hours</div>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-blue-600 dark:text-blue-500 text-sm">
+                                    {data.totalRequiredHours}h
+                                  </span>
+                                  <span className="text-xs text-gray-600 dark:text-slate-300">
+                                    ({data.totalWorkingDays} days × {data.dailyHours || 8}h)
+                                  </span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Hours Worked</div>
+                                {hoursCalc.hasDeduction ? (
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-1">
+                                      <span className="font-bold text-xs text-red-500 line-through">
+                                        {hoursCalc.originalHours}h
+                                      </span>
+                                      <span className={`font-bold text-sm ${
+                                        hoursCalc.actualHours >= data.totalRequiredHours 
+                                          ? 'text-green-600 dark:text-green-500' 
+                                          : 'text-red-600 dark:text-red-500'
+                                      }`}>
+                                        {hoursCalc.actualHours}h
+                                      </span>
+                                    </div>
+                                    <span className="text-xs text-gray-600 dark:text-slate-300">
+                                      (-{hoursCalc.deductedHours}h leave)
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className={`font-bold text-sm ${
+                                    data.totalHoursWorked >= data.totalRequiredHours 
+                                      ? 'text-green-600 dark:text-green-500' 
+                                      : 'text-red-600 dark:text-red-500'
+                                  }`}>
+                                    {data.totalHoursWorked}h
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Progress Section */}
+                            <div>
+                              <div className="text-xs text-gray-600 dark:text-slate-300 mb-2">Progress</div>
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-1">
+                                  <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                                    <div 
+                                      className={`h-2 rounded-full transition-all duration-300 ${
+                                        actualPercentage >= 100 ? 'bg-green-500 dark:bg-green-600' :
+                                        actualPercentage >= 80 ? 'bg-yellow-500 dark:bg-yellow-600' :
+                                        'bg-red-500 dark:bg-red-600'
+                                      }`}
+                                      style={{ width: `${Math.min(actualPercentage, 100)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <span className={`text-xs font-medium ${
+                                  actualPercentage >= 100 ? 'text-green-600 dark:text-green-400' :
+                                  actualPercentage >= 80 ? 'text-yellow-600 dark:text-yellow-400' :
+                                  'text-red-600 dark:text-red-400'
+                                }`}>
+                                  {actualPercentage}%
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Records Count */}
+                            <div className="flex justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700">
+                              <span className="text-xs text-gray-600 dark:text-slate-300">Attendance Records</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {data.attendanceRecords}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </>
           )}

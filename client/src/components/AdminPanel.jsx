@@ -49,7 +49,7 @@ export default function AdminPanel() {
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
             ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'notifications']; // Accountants and users can access notifications but not users/requests
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -3284,26 +3284,6 @@ export default function AdminPanel() {
                                     <FaFileInvoiceDollar className="h-5 w-5 mr-3" />
                                     Debt Management
                                 </button>
-                                {/* Show Users tab to both admins and accountants */}
-                                <button
-                                    id="tab-users"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'users' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('users')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'users'}
-                                    aria-controls="users-panel"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                    Users
-                                </button>
                                 {(isAdmin || isAccountant) && (
                                     <button
                                         id="tab-salaries"
@@ -3343,6 +3323,27 @@ export default function AdminPanel() {
                                         Attendance
                                     </button>
                                 )}
+                                
+                                {/* Show Users tab to both admins and accountants */}
+                                <button
+                                    id="tab-users"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'users' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                    onClick={() => handleTabChange('users')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'users'}
+                                    aria-controls="users-panel"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                    Users
+                                </button>
                                 
                                 {/* Only show User Requests tab to full admins */}
                                 {isAdmin && (
@@ -3486,18 +3487,6 @@ export default function AdminPanel() {
                                     >
                                         Debts
                                     </button>
-                                    <button
-                                        id="tab-users-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
-                                        onClick={() => handleTabChange('users')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'users')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'users'}
-                                        aria-controls="users-panel"
-                                    >
-                                        Users
-                                    </button>
                                     {(isAdmin || isAccountant) && (
                                         <button
                                             id="tab-salaries-mobile"
@@ -3526,6 +3515,18 @@ export default function AdminPanel() {
                                             Attendance
                                         </button>
                                     )}
+                                    <button
+                                        id="tab-users-mobile"
+                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        onClick={() => handleTabChange('users')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'users')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'users'}
+                                        aria-controls="users-panel"
+                                    >
+                                        Users
+                                    </button>
                                     {isAdmin && (
                                         <button
                                             id="tab-requests-mobile"

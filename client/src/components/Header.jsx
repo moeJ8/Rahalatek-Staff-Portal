@@ -212,7 +212,7 @@ export default function Header() {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex gap-6 items-center">
+          <nav className="hidden xl:flex gap-4 items-center">
             
             {user ? (
               <>
@@ -293,7 +293,7 @@ export default function Header() {
           </nav>
           
           {/* Mobile Burger Menu Button */}
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="xl:hidden flex items-center gap-2">
             <CustomDarkModeToggle />
             {user && <NotificationDropdown />}
             {user && renderAttendanceIndicators()}
@@ -329,7 +329,7 @@ export default function Header() {
         
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <div className="lg:hidden mt-4 py-2 border-t dark:border-gray-700">
+          <div className="xl:hidden mt-4 py-2 border-t dark:border-gray-700">
             <div className="flex flex-col space-y-3">
               {user ? (
                 <>

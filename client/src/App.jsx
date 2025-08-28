@@ -17,6 +17,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import OfficeDetailPage from './pages/OfficeDetailPage'
 import ProfilePage from './pages/ProfilePage'
 import AttendancePage from './pages/AttendancePage'
+import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -118,7 +119,7 @@ function App() {
               <Route path="/profile/:userId" element={<ProfilePage />} />
             </Route>
             
-            <Route path="*" element={user ? <Navigate to="/" /> : <Navigate to="/signin" />} />
+            <Route path="*" element={user ? <NotFoundPage /> : <Navigate to="/signin" />} />
           </Routes>
         </main>
         
