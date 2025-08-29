@@ -29,17 +29,28 @@ exports.checkAndFixSchema = async () => {
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { username, password, isAdmin, isAccountant, securityQuestion, securityAnswer } = req.body;
+        const { username, email, phoneNumber, countryCode, password, isAdmin, isAccountant, securityQuestion, securityAnswer } = req.body;
         
         // Check if user already exists
         const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ message: 'Username already exists' });
         }
+
+        // Check if email already exists (if provided)
+        if (email && email.trim() !== '') {
+            const existingEmailUser = await User.findOne({ email: email.trim() });
+            if (existingEmailUser) {
+                return res.status(400).json({ message: 'Email already exists' });
+            }
+        }
         
         // Create new user
         const user = new User({
             username,
+            email: email && email.trim() !== '' ? email.trim() : null,
+            phoneNumber: phoneNumber && phoneNumber.trim() !== '' ? phoneNumber.trim() : null,
+            countryCode: countryCode && countryCode.trim() !== '' ? countryCode.trim() : null,
             password,
             isAdmin: isAdmin || false,
             isAccountant: isAccountant || false,
@@ -78,8 +89,13 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // Find user
-        const user = await User.findOne({ username });
+        // Find user by username or email
+        const user = await User.findOne({
+            $or: [
+                { username: username },
+                { email: username } // The 'username' field can contain either username or email
+            ]
+        });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -267,8 +283,13 @@ exports.getSecurityQuestion = async (req, res) => {
     try {
         const { username } = req.body;
         
-        // Find user
-        const user = await User.findOne({ username });
+        // Find user by username or email
+        const user = await User.findOne({
+            $or: [
+                { username: username },
+                { email: username }
+            ]
+        });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -296,8 +317,13 @@ exports.verifySecurityAnswer = async (req, res) => {
     try {
         const { username, securityAnswer } = req.body;
         
-        // Find user
-        const user = await User.findOne({ username });
+        // Find user by username or email
+        const user = await User.findOne({
+            $or: [
+                { username: username },
+                { email: username }
+            ]
+        });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -330,9 +356,12 @@ exports.resetPassword = async (req, res) => {
     try {
         const { username, resetToken, newPassword } = req.body;
         
-        // Find user with matching username and valid token
+        // Find user with matching username/email and valid token
         const user = await User.findOne({
-            username,
+            $or: [
+                { username: username },
+                { email: username }
+            ],
             resetPasswordToken: resetToken,
             resetPasswordExpires: { $gt: Date.now() }
         });

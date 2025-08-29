@@ -9,11 +9,13 @@ import TextInput from '../components/TextInput';
 import CustomButton from '../components/CustomButton';
 import UserBadge from '../components/UserBadge';
 import CustomSelect from '../components/Select';
+import SearchableSelect from '../components/SearchableSelect';
 import UserAnalytics from '../components/UserAnalytics';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomModal from '../components/CustomModal';
 import CustomScrollbar from '../components/CustomScrollbar';
 import { getMyBonuses, getUserBonuses } from '../utils/profileApi';
+import { countryCodes } from '../utils/countryCodes';
 
 const securityQuestions = [
     { value: "What was your childhood nickname?", label: "What was your childhood nickname?" },
@@ -58,12 +60,18 @@ export default function ProfilePage() {
     // Form data
     const [formData, setFormData] = useState({
         username: '',
+        email: '',
+        phoneNumber: '',
+        countryCode: '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
         securityQuestion: '',
         securityAnswer: ''
     });
+    
+    // Track validation state to prevent duplicate toasts
+    const [emailValidationShown, setEmailValidationShown] = useState(false);
 
     useEffect(() => {
         // Get current user info
@@ -90,6 +98,9 @@ export default function ProfilePage() {
             setUser(response.data);
             setFormData({
                 username: response.data.username || '',
+                email: response.data.email || '',
+                phoneNumber: response.data.phoneNumber || '',
+                countryCode: response.data.countryCode || '',
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: '',
@@ -450,6 +461,9 @@ export default function ProfilePage() {
             setUser(response.data);
             setFormData({
                 username: response.data.username || '',
+                email: response.data.email || '',
+                phoneNumber: response.data.phoneNumber || '',
+                countryCode: response.data.countryCode || '',
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: '',
@@ -494,6 +508,19 @@ export default function ProfilePage() {
         // Validation
         if (!formData.username.trim()) {
             toast.error('Username is required', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            return;
+        }
+
+        // Validate email format if provided
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            toast.error('Please enter a valid email address (example@domain.com)', {
                 duration: 3000,
                 style: {
                     background: '#f44336',
@@ -559,7 +586,10 @@ export default function ProfilePage() {
             setSaving(true);
             
             const updateData = {
-                username: formData.username
+                username: formData.username,
+                email: formData.email,
+                phoneNumber: formData.phoneNumber,
+                countryCode: formData.countryCode
             };
 
             // Only include password and security data for own profile
@@ -895,14 +925,17 @@ export default function ProfilePage() {
                                             onClick={() => {
                                                 setIsEditing(false);
                                                 // Reset form data
-                                                setFormData({
-                                                    username: user?.username || '',
-                                                    currentPassword: '',
-                                                    newPassword: '',
-                                                    confirmPassword: '',
-                                                    securityQuestion: user?.securityQuestion || '',
-                                                    securityAnswer: ''
-                                                });
+                                                                                setFormData({
+                                    username: user?.username || '',
+                                    email: user?.email || '',
+                                    phoneNumber: user?.phoneNumber || '',
+                                    countryCode: user?.countryCode || '',
+                                    currentPassword: '',
+                                    newPassword: '',
+                                    confirmPassword: '',
+                                    securityQuestion: user?.securityQuestion || '',
+                                    securityAnswer: ''
+                                });
                                             }}
                                             className="!px-3 !py-1.5 !text-sm"
                                         >
@@ -936,6 +969,74 @@ export default function ProfilePage() {
                                                 disabled={!isEditing}
                                                 required
                                             />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="email" value="Email (Optional)" />
+                                            <TextInput
+                                                id="email"
+                                                name="email"
+                                                type="text"
+                                                value={formData.email}
+                                                onChange={(e) => {
+                                                    handleInputChange(e);
+                                                    // Reset validation flag when user starts typing
+                                                    setEmailValidationShown(false);
+                                                }}
+                                                onBlur={(e) => {
+                                                    // Validate email format on blur
+                                                    if (e.target.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value) && !emailValidationShown) {
+                                                        setEmailValidationShown(true);
+                                                        toast.error('Please enter a valid email address (example@domain.com)', {
+                                                            duration: 3000,
+                                                            style: {
+                                                                background: '#f44336',
+                                                                color: '#fff',
+                                                                fontWeight: '500'
+                                                            }
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={!isEditing}
+                                                placeholder="Enter your email address"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Phone Number Section */}
+                                    <div className="mt-4">
+                                        <Label value="Phone Number (Optional)" />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div className="md:col-span-1">
+                                                <SearchableSelect
+                                                    id="countryCode"
+                                                    options={countryCodes}
+                                                    value={formData.countryCode}
+                                                    onChange={(e) => handleInputChange({ target: { name: 'countryCode', value: e.target.value } })}
+                                                    placeholder="Select country code"
+                                                    disabled={!isEditing}
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <TextInput
+                                                    id="phoneNumber"
+                                                    name="phoneNumber"
+                                                    value={formData.phoneNumber}
+                                                    onChange={(e) => {
+                                                        // Only allow numbers and basic formatting characters
+                                                        const value = e.target.value.replace(/[^0-9\s\-()]/g, '');
+                                                        handleInputChange({ target: { name: 'phoneNumber', value } });
+                                                    }}
+                                                    onKeyPress={(e) => {
+                                                        // Prevent typing non-numeric characters
+                                                        if (!/[0-9\s\-()]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                    disabled={!isEditing}
+                                                    placeholder="Enter phone number"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 

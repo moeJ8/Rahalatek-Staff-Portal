@@ -10,7 +10,8 @@ const SearchableSelect = ({
   onChange, 
   placeholder = "Search...",
   label,
-  required = false
+  required = false,
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,12 +65,16 @@ const SearchableSelect = ({
   };
 
   const handleInputFocus = () => {
-    setIsOpen(true);
+    if (!disabled) {
+      setIsOpen(true);
+    }
   };
 
   const handleInputClick = (e) => {
     e.stopPropagation();
-    setIsOpen(true);
+    if (!disabled) {
+      setIsOpen(true);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -94,7 +99,7 @@ const SearchableSelect = ({
           required && !value 
             ? 'border-red-300 dark:border-red-600' 
             : 'border-gray-200/50 dark:border-gray-600/50'
-        } rounded-lg focus-within:ring-2 focus-within:ring-blue-500/50 dark:focus-within:ring-blue-400/50 focus-within:border-blue-400 dark:focus-within:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-all duration-200`}>
+        } rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'focus-within:ring-2 focus-within:ring-blue-500/50 dark:focus-within:ring-blue-400/50 focus-within:border-blue-400 dark:focus-within:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md'} transition-all duration-200`}>
           <div className="flex items-center">
             <FaSearch className="absolute left-3 text-gray-500 dark:text-gray-400 w-4 h-4 z-10 pointer-events-none" />
             <input
@@ -108,13 +113,16 @@ const SearchableSelect = ({
               onClick={handleInputClick}
               onKeyDown={handleKeyDown}
               autoComplete="off"
-              className="w-full bg-transparent border-0 pl-10 pr-10 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 cursor-pointer"
+              disabled={disabled}
+              className={`w-full bg-transparent border-0 pl-10 pr-10 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             />
             <div 
-              className="absolute right-3 cursor-pointer hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200"
+              className={`absolute right-3 transition-colors duration-200 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:text-blue-500 dark:hover:text-blue-400'}`}
               onClick={(e) => {
                 e.stopPropagation();
-                setIsOpen(!isOpen);
+                if (!disabled) {
+                  setIsOpen(!isOpen);
+                }
               }}
             >
               <FaChevronDown className={`text-gray-500 dark:text-gray-400 w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -123,7 +131,7 @@ const SearchableSelect = ({
         </div>
       </div>
       
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
           <CustomScrollbar maxHeight="400px">
             <div className="p-1">

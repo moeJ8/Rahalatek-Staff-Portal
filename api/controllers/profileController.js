@@ -19,7 +19,7 @@ exports.getCurrentUserProfile = async (req, res) => {
 // Update current user's profile
 exports.updateCurrentUserProfile = async (req, res) => {
     try {
-        const { username, currentPassword, newPassword, securityQuestion, securityAnswer } = req.body;
+        const { username, email, phoneNumber, countryCode, currentPassword, newPassword, securityQuestion, securityAnswer } = req.body;
         
         const user = await User.findById(req.user.userId);
         if (!user) {
@@ -33,6 +33,28 @@ exports.updateCurrentUserProfile = async (req, res) => {
                 return res.status(400).json({ message: 'Username already exists' });
             }
             user.username = username;
+        }
+
+        // Check if email is being updated and if it's already taken
+        if (email !== undefined) {
+            if (email && email.trim() !== '') {
+                const existingUser = await User.findOne({ email, _id: { $ne: req.user.userId } });
+                if (existingUser) {
+                    return res.status(400).json({ message: 'Email already exists' });
+                }
+                user.email = email.trim();
+            } else {
+                user.email = null;
+            }
+        }
+
+        // Update phone number and country code
+        if (phoneNumber !== undefined) {
+            user.phoneNumber = phoneNumber && phoneNumber.trim() !== '' ? phoneNumber.trim() : null;
+        }
+        
+        if (countryCode !== undefined) {
+            user.countryCode = countryCode && countryCode.trim() !== '' ? countryCode.trim() : null;
         }
         
         // Handle password change
@@ -106,7 +128,7 @@ exports.updateUserProfile = async (req, res) => {
         }
         
         const { userId } = req.params;
-        const { username } = req.body;
+        const { username, email, phoneNumber, countryCode } = req.body;
         
         // Prevent admin from updating their own profile through this endpoint
         if (userId === req.user.userId) {
@@ -125,6 +147,28 @@ exports.updateUserProfile = async (req, res) => {
                 return res.status(400).json({ message: 'Username already exists' });
             }
             user.username = username;
+        }
+
+        // Check if email is being updated and if it's already taken
+        if (email !== undefined) {
+            if (email && email.trim() !== '') {
+                const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+                if (existingUser) {
+                    return res.status(400).json({ message: 'Email already exists' });
+                }
+                user.email = email.trim();
+            } else {
+                user.email = null;
+            }
+        }
+
+        // Update phone number and country code
+        if (phoneNumber !== undefined) {
+            user.phoneNumber = phoneNumber && phoneNumber.trim() !== '' ? phoneNumber.trim() : null;
+        }
+        
+        if (countryCode !== undefined) {
+            user.countryCode = countryCode && countryCode.trim() !== '' ? countryCode.trim() : null;
         }
         
         await user.save();

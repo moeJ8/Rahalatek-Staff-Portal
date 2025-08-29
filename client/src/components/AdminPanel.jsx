@@ -31,6 +31,15 @@ import { Link, useNavigate } from 'react-router-dom'
 export default function AdminPanel() {
     const navigate = useNavigate();
     
+    // Helper function to format date as dd/mm/yyyy
+    const formatDateDDMMYYYY = (dateString) => {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+    
     // Check user role
     const authUser = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = authUser.isAdmin || false;
@@ -6947,6 +6956,8 @@ export default function AdminPanel() {
                                                         <CustomTable
                         headers={[
                             { label: 'Username', className: '' },
+                            { label: 'Email', className: '' },
+                            { label: 'Phone Number', className: '' },
                             { label: 'Registration Date', className: '' },
                             { label: 'Actions', className: '' }
                         ]}
@@ -6963,7 +6974,16 @@ export default function AdminPanel() {
                                     </button>
                                 </Table.Cell>
                                 <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                    {new Date(user.createdAt).toLocaleDateString()}
+                                    {user.email || '-'}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                    {user.phoneNumber && user.countryCode 
+                                        ? `${user.countryCode} ${user.phoneNumber}`
+                                        : user.phoneNumber || '-'
+                                    }
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                    {formatDateDDMMYYYY(user.createdAt)}
                                 </Table.Cell>
                                 <Table.Cell className="px-4 py-3">
                                     <div className="flex items-center space-x-2">
@@ -7311,59 +7331,14 @@ export default function AdminPanel() {
                             </Modal>
 
                             {/* Delete User Confirmation Modal */}
-                            <Modal
+                            <DeleteConfirmationModal
                                 show={deleteUserModalOpen}
                                 onClose={closeDeleteUserModal}
-                                popup
-                                size="md"
-                                theme={{
-                                    root: {
-                                        base: "fixed top-0 right-0 left-0 z-50 h-modal h-screen overflow-y-auto overflow-x-hidden md:inset-0 md:h-full",
-                                        show: {
-                                            on: "flex bg-gray-900 bg-opacity-50 backdrop-blur-sm dark:bg-opacity-80 items-center justify-center",
-                                            off: "hidden"
-                                        }
-                                    },
-                                    content: {
-                                        base: "relative h-full w-full p-4 h-auto",
-                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
-                                    }
-                                }}
-                            >
-                                <Modal.Header />
-                                <Modal.Body>
-                                    <div className="text-center">
-                                        <HiTrash className="mx-auto mb-4 h-12 w-12 text-red-500" />
-                                        <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                                            Are you sure you want to {activeTab === 'requests' ? 'reject' : 'delete'} the user
-                                            <div className="font-bold text-gray-900 dark:text-white mt-1">
-                                                "{userToDelete?.username}"?
-                                            </div>
-                                        </h3>
-                                        <div className="flex justify-center gap-4">
-                                            <CustomButton
-                                                variant="red"
-                                                onClick={handleDeleteUser}
-                                                disabled={deleteUserLoading}
-                                                icon={({ className }) => (
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                )}
-                                            >
-                                                Yes, {activeTab === 'requests' ? 'reject' : 'delete'} user
-                                            </CustomButton>
-                                            <CustomButton
-                                                variant="gray"
-                                                onClick={closeDeleteUserModal}
-                                                disabled={deleteUserLoading}
-                                            >
-                                                No, cancel
-                                            </CustomButton>
-                                        </div>
-                                    </div>
-                                </Modal.Body>
-                            </Modal>
+                                onConfirm={handleDeleteUser}
+                                isLoading={deleteUserLoading}
+                                itemType={activeTab === 'requests' ? 'user request' : 'user'}
+                                itemName={userToDelete?.username}
+                            />
 
                             {/* Debt Modal */}
                             <CustomModal

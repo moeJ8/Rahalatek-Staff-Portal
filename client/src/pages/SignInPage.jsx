@@ -1,41 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Label, Card, Alert } from 'flowbite-react';
+import { Label, Card } from 'flowbite-react';
 import TextInput from '../components/TextInput';
 import CustomSelect from '../components/Select';
+import SearchableSelect from '../components/SearchableSelect';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import CustomButton from '../components/CustomButton';
+import { countryCodes } from '../utils/countryCodes';
+import toast from 'react-hot-toast';
 
 export default function SignInPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [resetStep, setResetStep] = useState(1); // 1: Enter username, 2: Security question, 3: New password
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [resetToken, setResetToken] = useState('');
+  const [emailValidationShown, setEmailValidationShown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     setUsername('');
+    setEmail('');
+    setPhoneNumber('');
+    setCountryCode('');
     setPassword('');
-    setError('');
     setNewPassword('');
     setConfirmPassword('');
-    setSuccessMessage('');
     setIsForgotPassword(false);
     setResetStep(1);
     setSecurityQuestion('');
     setSecurityAnswer('');
     setResetToken('');
+    setEmailValidationShown(false);
     
     const userInfo = localStorage.getItem('user');
     if (userInfo) {
@@ -46,8 +53,71 @@ export default function SignInPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
+    
+    // Validate required fields
+    if (!username.trim()) {
+      toast.error('Please enter your email or username', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast.error('Please enter your password', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
+      return;
+    }
+    
+    // Additional validation for registration
+    if (!isLogin) {
+      if (!securityQuestion) {
+        toast.error('Please select a security question', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
+        return;
+      }
+      
+      if (!securityAnswer.trim()) {
+        toast.error('Please provide an answer to your security question', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
+        return;
+      }
+    }
+    
+    // Validate email format if provided
+    if (!isLogin && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address (example@domain.com)', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
+      return;
+    }
     
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
@@ -55,21 +125,34 @@ export default function SignInPage() {
       // Add security question and answer for registration
       const requestData = isLogin 
         ? { username, password }
-        : { username, password, securityQuestion, securityAnswer };
+        : { username, email, phoneNumber, countryCode, password, securityQuestion, securityAnswer };
       
       const response = await axios.post(endpoint, requestData);
       
       if (!isLogin) {
-        setSuccessMessage('Your account has been created. Please wait for admin approval to log in.');
+        toast.success('Your account has been created. Please wait for admin approval to log in.', {
+          duration: 4000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
         setTimeout(() => {
           setIsLogin(true);
-          setSuccessMessage('');
         }, 3000);
         return;
       }
       
       if (response.data.isPendingApproval) {
-        setError('Your account is pending approval by an administrator.');
+        toast.error('Your account is pending approval by an administrator.', {
+          duration: 4000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
         return;
       }
       
@@ -82,9 +165,23 @@ export default function SignInPage() {
       navigate('/', { replace: true });
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.isPendingApproval) {
-        setError('Your account is pending approval by an administrator.');
+        toast.error('Your account is pending approval by an administrator.', {
+          duration: 4000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       } else {
-        setError(err.response?.data?.message || 'An error occurred');
+        toast.error(err.response?.data?.message || 'An error occurred', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       }
       console.error(err);
     }
@@ -92,11 +189,16 @@ export default function SignInPage() {
 
   const handleResetStepOne = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
     
     if (!username) {
-      setError('Please enter your username');
+      toast.error('Please enter your email or username', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       return;
     }
     
@@ -107,20 +209,39 @@ export default function SignInPage() {
     } catch (err) {
       console.error('Error fetching security question:', err);
       if (err.response?.status === 404) {
-        setError('User not found. Please check your username.');
+        toast.error('User not found. Please check your email or username.', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       } else {
-        setError(err.response?.data?.message || 'Unable to retrieve security question');
+        toast.error(err.response?.data?.message || 'Unable to retrieve security question', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       }
     }
   };
 
   const handleResetStepTwo = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
     
     if (!securityAnswer) {
-      setError('Please answer the security question');
+      toast.error('Please answer the security question', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       return;
     }
     
@@ -134,23 +255,42 @@ export default function SignInPage() {
       setResetStep(3);
     } catch (err) {
       console.error('Error verifying security answer:', err);
-      setError(err.response?.data?.message || 'Incorrect security answer');
+      toast.error(err.response?.data?.message || 'Incorrect security answer', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       setSecurityAnswer('');
     }
   };
 
   const handleResetStepThree = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
     
     if (!newPassword || newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+      toast.error('Password must be at least 6 characters long', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       return;
     }
     
@@ -161,33 +301,58 @@ export default function SignInPage() {
         newPassword 
       });
       
-      setSuccessMessage('Password has been reset successfully');
+      toast.success('Password has been reset successfully', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       setNewPassword('');
       setConfirmPassword('');
       
       // Return to login form after 3 seconds
       setTimeout(() => {
         setIsForgotPassword(false);
-        setSuccessMessage('');
         setResetStep(1);
       }, 3000);
     } catch (err) {
       console.error('Password reset error:', err);
       
       if (err.response) {
-        setError(err.response.data.message || 'Failed to reset password');
+        toast.error(err.response.data.message || 'Failed to reset password', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       } else if (err.request) {
-        setError('No response from server. Please try again later.');
+        toast.error('No response from server. Please try again later.', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       } else {
-        setError('An error occurred. Please try again.');
+        toast.error('An error occurred. Please try again.', {
+          duration: 3000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
       }
     }
   };
 
   const toggleForgotPassword = () => {
     setIsForgotPassword(!isForgotPassword);
-    setError('');
-    setSuccessMessage('');
     setNewPassword('');
     setConfirmPassword('');
     setResetStep(1);
@@ -204,15 +369,14 @@ export default function SignInPage() {
           <form onSubmit={handleResetStepOne} className="space-y-4">
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="username" value="Username" className="dark:text-white" />
+                <Label htmlFor="username" value="Email or Username" className="dark:text-white" />
               </div>
               <TextInput
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Enter your employee username"
+                placeholder="Enter your email or username"
               />
             </div>
             
@@ -255,7 +419,6 @@ export default function SignInPage() {
                 type="text"
                 value={securityAnswer}
                 onChange={(e) => setSecurityAnswer(e.target.value)}
-                required
                 placeholder="Enter your answer"
               />
             </div>
@@ -301,7 +464,6 @@ export default function SignInPage() {
                   type={showPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  required
                   placeholder="Enter new password"
                   className="w-full"
                 />
@@ -328,7 +490,6 @@ export default function SignInPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                required
                 placeholder="Confirm new password"
               />
             </div>
@@ -393,33 +554,20 @@ export default function SignInPage() {
               : (isLogin ? 'Sign In' : 'Register')}
           </h2>
           
-          {error && (
-            <Alert color="failure" className="mb-4">
-              {error}
-            </Alert>
-          )}
-          
-          {successMessage && (
-            <Alert color="success" className="mb-4">
-              {successMessage}
-            </Alert>
-          )}
-          
           {isForgotPassword ? (
             renderResetForm()
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="username" value="Username" className="dark:text-white" />
+                  <Label htmlFor="username" value="Email or Username" className="dark:text-white" />
                 </div>
                 <TextInput
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="Enter your employee username"
+                  placeholder="Enter your email or username"
                 />
               </div>
               
@@ -433,7 +581,6 @@ export default function SignInPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required
                     placeholder="Enter your password"
                     className="w-full"
                   />
@@ -453,6 +600,74 @@ export default function SignInPage() {
               
               {!isLogin && (
                 <>
+                  {/* Email Field */}
+                  <div>
+                    <div className="mb-2 block">
+                      <Label htmlFor="email" value="Email (Optional)" className="dark:text-white" />
+                    </div>
+                    <TextInput
+                      id="email"
+                      type="text"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        // Reset validation flag when user starts typing
+                        setEmailValidationShown(false);
+                      }}
+                      onBlur={(e) => {
+                        // Validate email format on blur
+                        if (e.target.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value) && !emailValidationShown) {
+                          setEmailValidationShown(true);
+                          toast.error('Please enter a valid email address (example@domain.com)', {
+                            duration: 3000,
+                            style: {
+                              background: '#f44336',
+                              color: '#fff',
+                              fontWeight: '500'
+                            }
+                          });
+                        }
+                      }}
+                      placeholder="Enter your email address"
+                    />
+                  </div>
+
+                  {/* Phone Number Section */}
+                  <div>
+                    <div className="mb-2 block">
+                      <Label value="Phone Number (Optional)" className="dark:text-white" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <div className="md:col-span-1">
+                        <SearchableSelect
+                          id="countryCode"
+                          options={countryCodes}
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          placeholder="Select country code"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <TextInput
+                          id="phoneNumber"
+                          value={phoneNumber}
+                          onChange={(e) => {
+                            // Only allow numbers and basic formatting characters
+                            const value = e.target.value.replace(/[^0-9\s\-()]/g, '');
+                            setPhoneNumber(value);
+                          }}
+                          onKeyPress={(e) => {
+                            // Prevent typing non-numeric characters
+                            if (!/[0-9\s\-()]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                              e.preventDefault();
+                            }
+                          }}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <CustomSelect
                       id="securityQuestion"
@@ -467,7 +682,6 @@ export default function SignInPage() {
                         { value: "In what city were you born?", label: "In what city were you born?" }
                       ]}
                       placeholder="Select a security question"
-                      required
                     />
                   </div>
                   <div>
@@ -479,7 +693,6 @@ export default function SignInPage() {
                       type="text"
                       value={securityAnswer}
                       onChange={(e) => setSecurityAnswer(e.target.value)}
-                      required
                       placeholder="Enter your answer"
                     />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

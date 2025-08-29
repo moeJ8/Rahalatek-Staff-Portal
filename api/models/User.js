@@ -10,7 +10,16 @@ const userSchema = new mongoose.Schema({
     email: { 
         type: String,
         sparse: true,  // This allows null values without uniqueness conflicts
-        unique: true 
+        unique: true,
+        default: null
+    },
+    phoneNumber: {
+        type: String,
+        default: null
+    },
+    countryCode: {
+        type: String,
+        default: null
     },
     password: { 
         type: String, 
