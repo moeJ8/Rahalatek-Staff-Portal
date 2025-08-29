@@ -1971,6 +1971,50 @@ export default function AttendancePanel() {
     });
   }, [vacationsData.allLeaves]);
 
+  // Helper function to format decimal hours to proper time format (e.g., 7.77 -> "7h 46m")
+  const formatDecimalHours = useCallback((decimalHours) => {
+    if (!decimalHours || decimalHours === 0) return '0h';
+    
+    // Convert decimal to proper hours and minutes
+    const totalMinutes = Math.round(decimalHours * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (minutes === 0) {
+      return `${hours}h`;
+    }
+    
+    return `${hours}h ${minutes}m`;
+  }, []);
+
+  // Helper function to calculate duration between two times
+  const calculateLeaveDuration = useCallback((startTime, endTime) => {
+    if (!startTime || !endTime) return null;
+    
+    try {
+      // Convert 12-hour format to 24-hour for calculation
+      const start24 = startTime.includes('AM') || startTime.includes('PM') ? convertTo24Hour(startTime) : startTime;
+      const end24 = endTime.includes('AM') || endTime.includes('PM') ? convertTo24Hour(endTime) : endTime;
+      
+      if (!start24 || !end24) return null;
+      
+      const [startHours, startMinutes] = start24.split(':').map(Number);
+      const [endHours, endMinutes] = end24.split(':').map(Number);
+      
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      const endTotalMinutes = endHours * 60 + endMinutes;
+      
+      if (endTotalMinutes <= startTotalMinutes) return null; // Invalid time range
+      
+      const durationMinutes = endTotalMinutes - startTotalMinutes;
+      const durationHours = durationMinutes / 60;
+      
+      return durationHours;
+    } catch {
+      return null;
+    }
+  }, []);
+
   // Helper function to get hourly leave details for tooltip
   const getHourlyLeaveTooltip = useCallback((userId, date) => {
     if (!vacationsData.allLeaves || !userId) return null;
@@ -3012,7 +3056,7 @@ export default function AttendancePanel() {
                         </Table.Cell>
                         <Table.Cell className="text-gray-900 dark:text-gray-200 font-medium">
                           {leave.leaveCategory === 'hourly' 
-                            ? `${leave.hoursCount || 0}h (${leave.startTime} - ${leave.endTime})`
+                            ? `${formatDecimalHours(leave.hoursCount || 0)} (${leave.startTime} - ${leave.endTime})`
                             : `${leave.daysCount || 1} day${(leave.daysCount || 1) > 1 ? 's' : ''}`
                           }
                         </Table.Cell>
@@ -3142,7 +3186,7 @@ export default function AttendancePanel() {
                                   <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Duration</div>
                                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                                     {leave.leaveCategory === 'hourly' 
-                                      ? `${leave.hoursCount || 0}h`
+                                      ? formatDecimalHours(leave.hoursCount || 0)
                                       : `${leave.daysCount || 1} day${(leave.daysCount || 1) > 1 ? 's' : ''}`
                                     }
                                   </div>
@@ -4132,6 +4176,23 @@ export default function AttendancePanel() {
                             />
                           </div>
                         </div>
+                        {/* Duration Display */}
+                        {leaveForm.startTime && leaveForm.endTime && (
+                          <div className="mb-4 text-center">
+                            {(() => {
+                              const duration = calculateLeaveDuration(leaveForm.startTime, leaveForm.endTime);
+                              return duration ? (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  <span className="font-medium">Leave Duration:</span> {formatDecimalHours(duration)}
+                                </p>
+                              ) : (
+                                <p className="text-sm text-red-500">
+                                  Please check the time range - end time should be after start time
+                                </p>
+                              );
+                            })()}
+                          </div>
+                        )}
                       </>
                     )}
                     
@@ -4883,7 +4944,7 @@ export default function AttendancePanel() {
                                     </div>
                                     {user.hoursWorked > 0 && (
                                       <span className="font-medium text-blue-600 dark:text-blue-400">
-                                        {user.hoursWorked.toFixed(1)}h worked
+                                        {formatDecimalHours(user.hoursWorked)} worked
                                       </span>
                                     )}
                                   </div>
@@ -4981,7 +5042,7 @@ export default function AttendancePanel() {
                                               <FaClock className="w-3 h-3" />
                                               <span>
                                                 {leave.leaveCategory === 'hourly' && (
-                                                  `${leave.hoursCount || 0}h (${leave.startTime} - ${leave.endTime})`
+                                                  `${formatDecimalHours(leave.hoursCount || 0)} (${leave.startTime} - ${leave.endTime})`
                                                 )}
                                                 {leave.leaveCategory === 'single-day' && '1 day'}
                                                 {leave.leaveCategory === 'multiple-day' && `${leave.daysCount || 0} day${(leave.daysCount || 0) > 1 ? 's' : ''}`}
@@ -5282,7 +5343,7 @@ export default function AttendancePanel() {
                   <h3 className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Hours</h3>
                 </div>
                 <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {reportSummary.totalHours.toFixed(1)}h
+                  {formatDecimalHours(reportSummary.totalHours)}
                 </div>
               </div>
             </div>
@@ -5360,13 +5421,13 @@ export default function AttendancePanel() {
                               if (actualHours !== originalHours) {
                                 return (
                                   <div className="flex items-center gap-2">
-                                    <span className="text-red-500 line-through text-xs">{originalHours}h</span>
-                                    <span className="text-green-600 font-semibold">{actualHours}h</span>
+                                    <span className="text-red-500 line-through text-xs">{formatDecimalHours(originalHours)}</span>
+                                    <span className="text-green-600 font-semibold">{formatDecimalHours(actualHours)}</span>
                                   </div>
                                 );
                               }
                               
-                              return `${actualHours}h`;
+                              return formatDecimalHours(actualHours);
                             })()}
                           </div>
                         </Table.Cell>
@@ -5690,18 +5751,18 @@ export default function AttendancePanel() {
                                     <div className="flex flex-col items-center">
                                       <div className="flex items-center gap-1">
                                         <span className="font-bold text-xs text-red-500 line-through">
-                                          {hoursCalc.originalHours}h
+                                          {formatDecimalHours(hoursCalc.originalHours)}
                                         </span>
                                         <span className={`font-bold text-sm ${
                                           hoursCalc.actualHours >= data.totalRequiredHours 
                                             ? 'text-green-600 dark:text-green-500' 
                                             : 'text-red-600 dark:text-red-500'
                                         }`}>
-                                          {hoursCalc.actualHours}h
+                                          {formatDecimalHours(hoursCalc.actualHours)}
                                         </span>
                                       </div>
                                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                                        (-{hoursCalc.deductedHours}h leave)
+                                        (-{formatDecimalHours(hoursCalc.deductedHours)} leave)
                                       </span>
                                     </div>
                                   );
@@ -5713,7 +5774,7 @@ export default function AttendancePanel() {
                                       ? 'text-green-600 dark:text-green-500' 
                                       : 'text-red-600 dark:text-red-500'
                                   }`}>
-                                    {data.totalHoursWorked}h
+                                    {formatDecimalHours(data.totalHoursWorked)}
                                   </span>
                                 );
                               })()}
@@ -6108,38 +6169,57 @@ export default function AttendancePanel() {
             )}
 
             {editLeaveForm.leaveCategory === 'hourly' && (
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <CustomDatePicker
-                    label="Date *"
-                    value={editLeaveForm.date}
-                    onChange={(date) => setEditLeaveForm(prev => ({ ...prev, date }))}
-                    placeholder="Select date"
-                    required
-                    popupSize="small"
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <CustomDatePicker
+                      label="Date *"
+                      value={editLeaveForm.date}
+                      onChange={(date) => setEditLeaveForm(prev => ({ ...prev, date }))}
+                      placeholder="Select date"
+                      required
+                      popupSize="small"
+                    />
+                  </div>
+                  <TextInput
+                    label="Start Time"
+                    type="time"
+                    value={editLeaveForm.startTime?.includes('AM') || editLeaveForm.startTime?.includes('PM') 
+                      ? convertTo24Hour(editLeaveForm.startTime) 
+                      : editLeaveForm.startTime || '09:00'}
+                    onChange={(e) => setEditLeaveForm(prev => ({ ...prev, startTime: convertTo12Hour(e.target.value) }))}
+                    placeholder="09:00 AM"
+                    step="60"
+                  />
+                  <TextInput
+                    label="End Time"
+                    type="time"
+                    value={editLeaveForm.endTime?.includes('AM') || editLeaveForm.endTime?.includes('PM') 
+                      ? convertTo24Hour(editLeaveForm.endTime) 
+                      : editLeaveForm.endTime || '17:00'}
+                    onChange={(e) => setEditLeaveForm(prev => ({ ...prev, endTime: convertTo12Hour(e.target.value) }))}
+                    placeholder="05:00 PM"
+                    step="60"
                   />
                 </div>
-                <TextInput
-                  label="Start Time"
-                  type="time"
-                  value={editLeaveForm.startTime?.includes('AM') || editLeaveForm.startTime?.includes('PM') 
-                    ? convertTo24Hour(editLeaveForm.startTime) 
-                    : editLeaveForm.startTime || '09:00'}
-                  onChange={(e) => setEditLeaveForm(prev => ({ ...prev, startTime: convertTo12Hour(e.target.value) }))}
-                  placeholder="09:00 AM"
-                  step="60"
-                />
-                <TextInput
-                  label="End Time"
-                  type="time"
-                  value={editLeaveForm.endTime?.includes('AM') || editLeaveForm.endTime?.includes('PM') 
-                    ? convertTo24Hour(editLeaveForm.endTime) 
-                    : editLeaveForm.endTime || '17:00'}
-                  onChange={(e) => setEditLeaveForm(prev => ({ ...prev, endTime: convertTo12Hour(e.target.value) }))}
-                  placeholder="05:00 PM"
-                  step="60"
-                />
-              </div>
+                {/* Duration Display */}
+                {editLeaveForm.startTime && editLeaveForm.endTime && (
+                  <div className="mt-2 text-center">
+                    {(() => {
+                      const duration = calculateLeaveDuration(editLeaveForm.startTime, editLeaveForm.endTime);
+                      return duration ? (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Leave Duration:</span> {formatDecimalHours(duration)}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-red-500">
+                          Please check the time range - end time should be after start time
+                        </p>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
             )}
 
             {editLeaveForm.leaveCategory === 'multiple-day' && (

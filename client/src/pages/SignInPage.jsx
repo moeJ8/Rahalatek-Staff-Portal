@@ -380,9 +380,9 @@ export default function SignInPage() {
       
       {/* Main content container */}
       <div className="flex flex-col md:flex-row-reverse items-center justify-center md:flex-1 max-w-5xl mx-auto">
-        {/* Auth Form */}
+
         <div className="w-full max-w-md md:mb-0 md:ml-8">
-          {/* Small invisible spacer to align with title */}
+
           <div className="hidden md:block h-8 mb-4"></div>
           <Card className="w-full bg-white/50 dark:bg-slate-900/50 backdrop-blur-lg">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">

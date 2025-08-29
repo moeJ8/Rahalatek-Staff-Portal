@@ -8,6 +8,22 @@ import CustomScrollbar from './CustomScrollbar';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
+// Helper function to format decimal hours to proper time format (e.g., 7.77 -> "7h 46m")
+const formatDecimalHours = (decimalHours) => {
+  if (!decimalHours || decimalHours === 0) return '0h';
+  
+  // Convert decimal to proper hours and minutes
+  const totalMinutes = Math.round(decimalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (minutes === 0) {
+    return `${hours}h`;
+  }
+  
+  return `${hours}h ${minutes}m`;
+};
+
 export default function UserCalendar({ isOpen, onClose }) {
   const [selectedYear, setSelectedYear] = useState(() => {
     const currentYear = new Date().getFullYear();
@@ -189,7 +205,7 @@ export default function UserCalendar({ isOpen, onClose }) {
       
       if (leave.leaveCategory === 'hourly') {
         content = `Hourly Leave: ${leave.leaveType}`;
-        detail = `${leave.startTime} - ${leave.endTime} (${leave.hoursCount || 0}h)${leave.reason ? ` | ${leave.reason}` : ''}`;
+        detail = `${leave.startTime} - ${leave.endTime} (${formatDecimalHours(leave.hoursCount || 0)})${leave.reason ? ` | ${leave.reason}` : ''}`;
       } else if (leave.leaveCategory === 'single-day') {
         content = `Day Leave: ${leave.leaveType}`;
       } else if (leave.leaveCategory === 'multiple-day') {
@@ -208,7 +224,7 @@ export default function UserCalendar({ isOpen, onClose }) {
       return {
         title: `${dayName}, ${formattedDate}`,
         content: status === 'checked-out' ? 'Present (Full Day)' : 'Present (Partial)',
-        detail: `In: ${formatTime(attendance.checkIn)} | Out: ${formatTime(attendance.checkOut)} | Hours: ${hours}h`
+        detail: `In: ${formatTime(attendance.checkIn)} | Out: ${formatTime(attendance.checkOut)} | Hours: ${formatDecimalHours(hours)}`
       };
     }
     
