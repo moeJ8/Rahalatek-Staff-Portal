@@ -348,7 +348,7 @@ exports.addMonthlyBaseSalary = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
         }
         const { userId } = req.params;
-        const { year, month, amount, note = '' } = req.body;
+        const { year, month, amount, note = '', currency } = req.body;
         if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
             return res.status(400).json({ message: 'Invalid year or month' });
         }
@@ -360,9 +360,9 @@ exports.addMonthlyBaseSalary = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const currency = user.salaryCurrency || 'USD';
+        const entryCurrency = currency || user.salaryCurrency || 'USD';
         const idx = (user.salaryBaseEntries || []).findIndex(e => e.year === year && e.month === month);
-        const entry = { year, month, amount, currency, note, setBy: req.user.userId, updatedAt: new Date() };
+        const entry = { year, month, amount, currency: entryCurrency, note, setBy: req.user.userId, updatedAt: new Date() };
         if (idx >= 0) {
             user.salaryBaseEntries[idx] = { ...user.salaryBaseEntries[idx]._doc, ...entry };
         } else {
@@ -404,11 +404,11 @@ exports.getUserSalaryBaseEntries = async (req, res) => {
     }
 };
 
-// Edit specific month salary entry (admins only)
+// Edit specific month salary entry (admins and accountants only)
 exports.editPreviousMonthSalary = async (req, res) => {
     try {
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
         }
         
         const { userId } = req.params;
@@ -456,11 +456,11 @@ exports.editPreviousMonthSalary = async (req, res) => {
     }
 };
 
-// Edit specific month bonus entry (admins only)
+// Edit specific month bonus entry (admins and accountants only)
 exports.editPreviousMonthBonus = async (req, res) => {
     try {
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
         }
         
         const { userId } = req.params;
@@ -479,7 +479,11 @@ exports.editPreviousMonthBonus = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const currency = user.salaryCurrency || 'USD';
+        // Find the salary entry for this specific month to get the correct currency
+        const salaryEntry = (user.salaryBaseEntries || []).find(entry => 
+            entry.year === year && entry.month === month
+        );
+        const currency = salaryEntry ? salaryEntry.currency : (user.salaryCurrency || 'USD');
         const entryIndex = (user.salaryBonuses || []).findIndex(b => b.year === year && b.month === month);
         
         if (entryIndex === -1) {
@@ -530,7 +534,11 @@ exports.addMonthlyBonus = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const currency = user.salaryCurrency || 'USD';
+        // Find the salary entry for this specific month to get the correct currency
+        const salaryEntry = (user.salaryBaseEntries || []).find(entry => 
+            entry.year === year && entry.month === month
+        );
+        const currency = salaryEntry ? salaryEntry.currency : (user.salaryCurrency || 'USD');
 
         // Check if bonus for the same (year, month) exists → replace it
         const existingIndex = (user.salaryBonuses || []).findIndex(b => b.year === year && b.month === month);
@@ -575,11 +583,11 @@ exports.getUserBonuses = async (req, res) => {
     }
 };
 
-// Delete specific salary base entry (admins only)
+// Delete specific salary base entry (admins and accountants only)
 exports.deleteScheduledSalaryEntry = async (req, res) => {
     try {
-        if (!req.user.isAdmin) {
-            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
         }
         
         const { userId } = req.params;
@@ -608,6 +616,46 @@ exports.deleteScheduledSalaryEntry = async (req, res) => {
 
         res.json({ 
             message: 'Scheduled salary entry deleted successfully'
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Delete specific bonus entry (admins and accountants only)
+exports.deleteBonusEntry = async (req, res) => {
+    try {
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
+        }
+        
+        const { userId } = req.params;
+        const { year, month } = req.body;
+        
+        // Validation
+        if (typeof year !== 'number' || typeof month !== 'number' || month < 0 || month > 11) {
+            return res.status(400).json({ message: 'Invalid year or month' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Find and remove the bonus entry
+        const entryIndex = (user.salaryBonuses || []).findIndex(b => b.year === year && b.month === month);
+        
+        if (entryIndex === -1) {
+            return res.status(404).json({ message: 'Bonus entry not found' });
+        }
+
+        const deletedEntry = user.salaryBonuses[entryIndex];
+        user.salaryBonuses.splice(entryIndex, 1);
+        await user.save();
+
+        res.json({ 
+            message: 'Bonus entry deleted successfully',
+            entry: deletedEntry
         });
     } catch (err) {
         res.status(500).json({ message: err.message });

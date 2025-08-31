@@ -9,12 +9,14 @@ import QuickActionsPanel from './QuickActionsPanel';
 import RecentNotificationsWidget from './RecentNotificationsWidget';
 import UpcomingEventsWidget from './UpcomingEventsWidget';
 import WeatherCarouselWidget from './WeatherCarouselWidget';
+import ActiveVouchersModal from './ActiveVouchersModal';
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showActiveVouchersModal, setShowActiveVouchersModal] = useState(false);
 
   useEffect(() => {
     // Get user info from localStorage
@@ -106,13 +108,17 @@ export default function Home() {
               <span className="font-bold text-orange-600 dark:text-orange-400">{stats?.todayDepartures || 0}</span>
             </div>
             
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 bg-green-100 dark:bg-green-900/50 rounded-lg">
+            <button
+              onClick={() => setShowActiveVouchersModal(true)}
+              className="flex items-center gap-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg px-2 py-1 transition-colors duration-200 cursor-pointer group"
+              title="Click to view active vouchers"
+            >
+              <div className="p-1.5 bg-green-100 dark:bg-green-900/50 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-800/50 transition-colors duration-200">
                 <FaTicketAlt className="w-3 h-3 text-green-600 dark:text-green-400" />
               </div>
-              <span className="text-gray-600 dark:text-gray-400">Active Vouchers:</span>
-              <span className="font-bold text-green-600 dark:text-green-400">{stats?.activeVouchers || 0}</span>
-            </div>
+              <span className="text-gray-600 dark:text-gray-400 group-hover:text-green-700 dark:group-hover:text-green-300">Active Vouchers:</span>
+              <span className="font-bold text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300">{stats?.activeVouchers || 0}</span>
+            </button>
 
             
 
@@ -201,6 +207,12 @@ export default function Home() {
           </div>
         </div>
       </div>
+      
+      {/* Active Vouchers Modal */}
+      <ActiveVouchersModal 
+        show={showActiveVouchersModal}
+        onClose={() => setShowActiveVouchersModal(false)}
+      />
     </div>
   );
 }

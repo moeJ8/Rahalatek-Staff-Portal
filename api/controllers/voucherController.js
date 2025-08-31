@@ -280,6 +280,40 @@ exports.createVoucher = async (req, res) => {
     }
 };
 
+// Get active vouchers (status: await)
+exports.getActiveVouchers = async (req, res) => {
+    try {
+        const { userId, isAdmin, isAccountant } = req.user;
+        
+        // First, update statuses for all vouchers based on arrival dates
+        await Voucher.updateAllStatuses();
+        
+        let query = {
+            $or: [
+                { isDeleted: false },
+                { isDeleted: { $exists: false } }
+            ],
+            status: 'await'
+        };
+        
+        // For regular users, only show their own vouchers
+        if (!isAdmin && !isAccountant) {
+            query.createdBy = userId;
+        }
+        
+        const vouchers = await Voucher.find(query)
+            .sort({ arrivalDate: 1 }) // Sort by arrival date ascending for active vouchers
+            .populate('createdBy', 'username')
+            .select('voucherNumber clientName nationality arrivalDate departureDate totalAmount currency capital officeName createdBy createdAt');
+        
+        res.json({ data: vouchers });
+        
+    } catch (err) {
+        console.error('Error fetching active vouchers:', err);
+        res.status(500).json({ message: 'Error fetching active vouchers' });
+    }
+};
+
 exports.getAllVouchers = async (req, res) => {
     try {
         // First, update statuses for all vouchers based on arrival dates

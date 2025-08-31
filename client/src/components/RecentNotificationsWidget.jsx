@@ -146,6 +146,68 @@ export default function RecentNotificationsWidget() {
     return !notification.readBy?.some(read => read.user === user.id);
   };
 
+  // Parse message and make voucher numbers clickable for summary notifications
+  const parseMessageWithClickableVouchers = (message, metadata, notificationType) => {
+    // Only apply to arrival and departure summaries
+    if (notificationType !== 'daily_arrivals_summary' && notificationType !== 'daily_departures_summary') {
+      return <span>{message}</span>;
+    }
+
+    // Check if we have voucher data in metadata
+    if (!metadata?.vouchers || !Array.isArray(metadata.vouchers)) {
+      return <span>{message}</span>;
+    }
+
+    // Split the message to find the voucher numbers part
+    const parts = message.split(': ');
+    if (parts.length !== 2) {
+      return <span>{message}</span>;
+    }
+
+    const prefix = parts[0]; // e.g., "Today's Departures (2)"
+    const voucherNumbersText = parts[1]; // e.g., "#10183, #10207"
+
+    // Create a map of voucher numbers to their IDs for quick lookup
+    const voucherMap = {};
+    metadata.vouchers.forEach(voucher => {
+      voucherMap[voucher.voucherNumber] = voucher.id;
+    });
+
+    // Split voucher numbers and create clickable links
+    const voucherParts = voucherNumbersText.split(', ').map((voucherText, index) => {
+      const voucherNumber = voucherText.replace('#', ''); // Remove # to match our map
+      const voucherId = voucherMap[voucherNumber];
+      
+      if (voucherId) {
+        return (
+          <React.Fragment key={voucherNumber}>
+            {index > 0 && ', '}
+            <Link
+              to={`/vouchers/${voucherId}`}
+              className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium hover:underline"
+              title={`View voucher #${voucherNumber}`}
+            >
+              #{voucherNumber}
+            </Link>
+          </React.Fragment>
+        );
+      } else {
+        return (
+          <React.Fragment key={voucherNumber}>
+            {index > 0 && ', '}
+            <span>#{voucherNumber}</span>
+          </React.Fragment>
+        );
+      }
+    });
+
+    return (
+      <span>
+        {prefix}: {voucherParts}
+      </span>
+    );
+  };
+
   return (
     <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[400px] sm:min-h-[850px] flex flex-col">
       {/* Header */}
@@ -209,7 +271,7 @@ export default function RecentNotificationsWidget() {
                             {notification.title}
                           </h4>
                           <p className={`text-xs leading-relaxed ${unread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'} line-clamp-2`}>
-                            {notification.message}
+                            {parseMessageWithClickableVouchers(notification.message, notification.metadata, notification.type)}
                           </p>
                         </div>
                         {unread && (

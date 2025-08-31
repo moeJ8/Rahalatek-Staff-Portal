@@ -557,7 +557,7 @@ const OfficeDetailPage = () => {
                             <div className="flex items-center justify-center mt-1">
                                
                                 <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
-                                    {filteredVouchers.length}
+                                    {filteredVouchers.length + getClientVouchers.length}
                                 </p>
                             </div>
                         </div>

@@ -21,7 +21,7 @@ import CustomReminderManager from './CustomReminderManager'
 import FinancialFloatingTotalsPanel from './FinancialFloatingTotalsPanel'
 import { generateArrivalReminders, generateDepartureReminders, cleanupExpiredNotifications } from '../utils/notificationApi'
 import { getAllVouchers, updateVoucherStatus } from '../utils/voucherApi'
-import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary, getUserSalaryBaseEntries, editMonthSalary, editMonthBonus } from '../utils/profileApi'
+import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary, getUserSalaryBaseEntries, editMonthBonus, saveMonthlyBaseSalary, editMonthSalary, deleteSalaryEntry, deleteBonusEntry } from '../utils/profileApi'
 import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
@@ -303,6 +303,20 @@ export default function AdminPanel() {
     const [editBonusAmount, setEditBonusAmount] = useState(''); // Store the edited bonus amount value
     const [saveBonusAmountLoading, setSaveBonusAmountLoading] = useState(false);
     
+    // Delete salary entry state
+    const [salaryDeleteConfirmation, setSalaryDeleteConfirmation] = useState({ 
+        show: false, 
+        entry: null, 
+        entryDescription: '' 
+    });
+    
+    // Delete bonus entry state
+    const [bonusDeleteConfirmation, setBonusDeleteConfirmation] = useState({ 
+        show: false, 
+        entry: null, 
+        entryDescription: '' 
+    });
+    
     // Inner tabs for salaries section
     const [salaryInnerTab, setSalaryInnerTab] = useState('salaries'); // 'salaries' for cards view, 'salary'/'bonus' for settings functionality
     
@@ -321,24 +335,42 @@ export default function AdminPanel() {
     const [availableSalaryYears, setAvailableSalaryYears] = useState([]);
     const [availableSalaryMonths, setAvailableSalaryMonths] = useState([]);
 
-    // Generate month options from salary base entries
+    // Generate month options - always show months up to current month, plus any existing salary entries
     const getMonthOptions = () => {
-        if (!salaryBaseEntries || salaryBaseEntries.length === 0) return [];
-        
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
         
-        return salaryBaseEntries
-            .filter(entry => {
+        // Create a set to store unique months
+        const monthsSet = new Set();
+        
+        // Always add all months from current year up to current month
+        for (let month = 0; month <= currentMonth; month++) {
+            monthsSet.add(`${currentYear}-${month}`);
+        }
+        
+        // Add any existing salary entry months (from current or previous years)
+        if (salaryBaseEntries && salaryBaseEntries.length > 0) {
+            salaryBaseEntries.forEach(entry => {
                 // Only show entries for current month or earlier
-                return entry.year < currentYear || (entry.year === currentYear && entry.month <= currentMonth);
+                if (entry.year < currentYear || (entry.year === currentYear && entry.month <= currentMonth)) {
+                    monthsSet.add(`${entry.year}-${entry.month}`);
+                }
+            });
+        }
+        
+        // Convert set to array and sort (newest first)
+        return Array.from(monthsSet)
+            .map(monthKey => {
+                const [year, month] = monthKey.split('-').map(Number);
+                return {
+                    value: monthKey,
+                    label: new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' }),
+                    year,
+                    month
+                };
             })
-            .sort((a, b) => (b.year - a.year) || (b.month - a.month)) // Newest first
-            .map(entry => ({
-                value: `${entry.year}-${entry.month}`,
-                label: new Date(entry.year, entry.month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
-            }));
+            .sort((a, b) => (b.year - a.year) || (b.month - a.month));
     };
 
     // Check if selected month is the current month
@@ -385,6 +417,13 @@ export default function AdminPanel() {
         if (monthKey) {
             const [year, month] = monthKey.split('-').map(Number);
             const bonus = bonuses.find(b => b.year === year && b.month === month);
+            
+            // Find the salary entry for this month to get the correct currency
+            const salaryEntry = (salaryBaseEntries || []).find(entry => 
+                entry.year === year && entry.month === month
+            );
+            const correctCurrency = salaryEntry ? salaryEntry.currency : (selectedUserData?.salaryCurrency || 'USD');
+            
             if (bonus) {
                 // Populate bonus form with existing bonus data
                 setBonusForm({
@@ -393,14 +432,33 @@ export default function AdminPanel() {
                     note: bonus.note || ''
                 });
             } else {
-                // No bonus exists for this salary month - start with empty form
-                setBonusForm({ amount: '', currency: 'USD', note: '' });
+                // No bonus exists for this salary month - use the salary entry's currency
+                setBonusForm({ amount: '', currency: correctCurrency, note: '' });
             }
         } else {
             // Reset to empty bonus form when no month selected
-            setBonusForm({ amount: '', currency: 'USD', note: '' });
+            setBonusForm({ amount: '', currency: selectedUserData?.salaryCurrency || 'USD', note: '' });
         }
     };
+
+    // Update bonus form currency when salary data changes and a month is selected
+    useEffect(() => {
+        if (selectedBonusMonthToEdit && salaryBaseEntries) {
+            const [year, month] = selectedBonusMonthToEdit.split('-').map(Number);
+            const bonus = bonuses.find(b => b.year === year && b.month === month);
+            
+            // Find the salary entry for this month to get the correct currency
+            const salaryEntry = salaryBaseEntries.find(entry => 
+                entry.year === year && entry.month === month
+            );
+            const correctCurrency = salaryEntry ? salaryEntry.currency : (selectedUserData?.salaryCurrency || 'USD');
+            
+            // Only update if we don't already have a bonus (existing bonuses keep their currency)
+            if (!bonus) {
+                setBonusForm(prev => ({ ...prev, currency: correctCurrency }));
+            }
+        }
+    }, [salaryBaseEntries, selectedBonusMonthToEdit, bonuses, selectedUserData?.salaryCurrency]);
 
     const handleLoadUserBonuses = async (userId) => {
         try {
@@ -548,13 +606,29 @@ export default function AdminPanel() {
         try {
             setSaveAmountLoading(true);
             
-            // Use the existing editMonthSalary function
-            await editMonthSalary(selectedUserForSalary, {
-                year: entry.year,
-                month: entry.month,
-                amount: newAmount,
-                note: entry.note
-            });
+            try {
+                // First try to edit existing entry (preserves currency)
+                await editMonthSalary(selectedUserForSalary, {
+                    year: entry.year,
+                    month: entry.month,
+                    amount: newAmount,
+                    currency: entry.currency,
+                    note: entry.note
+                });
+            } catch (editError) {
+                // If edit fails, fall back to create (though this shouldn't happen for inline editing)
+                if (editError.response?.status === 404) {
+                    await saveMonthlyBaseSalary(selectedUserForSalary, {
+                        year: entry.year,
+                        month: entry.month,
+                        amount: newAmount,
+                        note: entry.note,
+                        currency: entry.currency
+                    });
+                } else {
+                    throw editError;
+                }
+            }
 
             // Refresh the salary entries
             await handleLoadUserSalaryBaseEntries(selectedUserForSalary, false);
@@ -599,6 +673,110 @@ export default function AdminPanel() {
     const handleCancelBonusEdit = () => {
         setEditingBonusAmount(null);
         setEditBonusAmount('');
+    };
+
+    // Handle salary entry deletion
+    const handleDeleteSalaryEntry = async () => {
+        if (!salaryDeleteConfirmation.entry || !selectedUserForSalary) return;
+        
+        try {
+            setSalaryTabLoading(true);
+            
+            await deleteSalaryEntry(selectedUserForSalary, {
+                year: salaryDeleteConfirmation.entry.year,
+                month: salaryDeleteConfirmation.entry.month
+            });
+            
+            // Refresh salary entries
+            await handleLoadUserSalaryBaseEntries(selectedUserForSalary, false);
+            
+            toast.success('Salary entry deleted successfully', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            
+            // Close confirmation modal
+            setSalaryDeleteConfirmation({ show: false, entry: null, entryDescription: '' });
+            
+        } catch (error) {
+            console.error('Error deleting salary entry:', error);
+            toast.error('Failed to delete salary entry', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
+    // Open delete confirmation modal
+    const openSalaryDeleteConfirmation = (entry) => {
+        const monthName = new Date(entry.year, entry.month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
+        setSalaryDeleteConfirmation({
+            show: true,
+            entry: entry,
+            entryDescription: `${monthName} salary entry (${entry.amount} ${entry.currency})`
+        });
+    };
+
+    // Handle bonus entry deletion
+    const handleDeleteBonusEntry = async () => {
+        if (!bonusDeleteConfirmation.entry || !selectedUserForSalary) return;
+        
+        try {
+            setSalaryTabLoading(true);
+            
+            await deleteBonusEntry(selectedUserForSalary, {
+                year: bonusDeleteConfirmation.entry.year,
+                month: bonusDeleteConfirmation.entry.month
+            });
+            
+            // Refresh bonus entries
+            await handleLoadUserBonuses(selectedUserForSalary);
+            
+            toast.success('Bonus entry deleted successfully', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+            
+            // Close confirmation modal
+            setBonusDeleteConfirmation({ show: false, entry: null, entryDescription: '' });
+            
+        } catch (error) {
+            console.error('Error deleting bonus entry:', error);
+            toast.error('Failed to delete bonus entry', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: '500'
+                }
+            });
+        } finally {
+            setSalaryTabLoading(false);
+        }
+    };
+
+    // Open bonus delete confirmation modal
+    const openBonusDeleteConfirmation = (entry) => {
+        const monthName = new Date(entry.year, entry.month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
+        setBonusDeleteConfirmation({
+            show: true,
+            entry: entry,
+            entryDescription: `${monthName} bonus entry (${entry.amount} ${entry.currency})`
+        });
     };
 
     // Load available years and months from all users' salary data
@@ -6437,7 +6615,7 @@ export default function AdminPanel() {
                                     {selectedUserForSalary && salaryInnerTab === 'salary' && (
                                         <div>
                                             {/* Month Filter Section */}
-                                            {(isAdmin) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
+                                            {(isAdmin || isAccountant) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
                                                 <div className="mb-6">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div>
@@ -6663,17 +6841,32 @@ export default function AdminPanel() {
                                                             };
                                                             await updateUserSalary(selectedUserForSalary, payload);
                                                         } else if (selectedMonthToEdit) {
-                                                            // If editing a specific month, always use month edit API
+                                                            // If editing a specific month, try to edit first (with currency), then create if needed
                                                             const [year, month] = selectedMonthToEdit.split('-').map(Number);
                                                             
-                                                            // Use editMonthSalary for specific month updates (handles currency changes too)
-                                                            await editMonthSalary(selectedUserForSalary, {
-                                                                year,
-                                                                month,
-                                                                amount: parseFloat(salaryForm.salaryAmount) || 0,
-                                                                currency: salaryForm.salaryCurrency,
-                                                                note: salaryForm.salaryNotes || ''
-                                                            });
+                                                            try {
+                                                                // First try to edit existing entry (supports currency changes)
+                                                                await editMonthSalary(selectedUserForSalary, {
+                                                                    year,
+                                                                    month,
+                                                                    amount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                    currency: salaryForm.salaryCurrency,
+                                                                    note: salaryForm.salaryNotes || ''
+                                                                });
+                                                            } catch (editError) {
+                                                                // If edit fails (entry doesn't exist), create new entry
+                                                                if (editError.response?.status === 404) {
+                                                                    await saveMonthlyBaseSalary(selectedUserForSalary, {
+                                                                        year,
+                                                                        month,
+                                                                        amount: parseFloat(salaryForm.salaryAmount) || 0,
+                                                                        note: salaryForm.salaryNotes || '',
+                                                                        currency: salaryForm.salaryCurrency
+                                                                    });
+                                                                } else {
+                                                                    throw editError; // Re-throw if it's not a 404 error
+                                                                }
+                                                            }
                                                         } else {
                                                             // Normal salary update for current month
                                                             const payload = {
@@ -6739,7 +6932,8 @@ export default function AdminPanel() {
                                                 { label: 'Month', className: '' },
                                                 { label: 'Amount', className: '' },
                                                 { label: 'Currency', className: '' },
-                                                { label: 'Note', className: '' }
+                                                { label: 'Note', className: '' },
+                                                ...((isAdmin || isAccountant) ? [{ label: 'DELETE', className: 'text-center' }] : [])
                                             ]}
                                             data={(salaryBaseEntries || [])
                                                 .filter(entry => {
@@ -6803,6 +6997,20 @@ export default function AdminPanel() {
                                                     <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3">
                                                         {entry.note || '-'}
                                                     </Table.Cell>
+                                                    {(isAdmin || isAccountant) && (
+                                                        <Table.Cell className="px-4 py-3 text-center align-middle">
+                                                            <div className="flex justify-center items-center h-full">
+                                                                <CustomButton
+                                                                    variant="red"
+                                                                    size="sm"
+                                                                    onClick={() => openSalaryDeleteConfirmation(entry)}
+                                                                    title="Delete salary entry"
+                                                                    disabled={salaryTabLoading}
+                                                                    icon={HiTrash}
+                                                                />
+                                                            </div>
+                                                        </Table.Cell>
+                                                    )}
                                                 </>
                                             )}
                                             emptyMessage="No salary history recorded"
@@ -6815,7 +7023,7 @@ export default function AdminPanel() {
                                     {selectedUserForSalary && salaryInnerTab === 'bonus' && (
                                         <div>
                                             {/* Bonus Month Filter Section */}
-                                            {(isAdmin) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
+                                            {(isAdmin || isAccountant) && salaryBaseEntries && salaryBaseEntries.length > 0 && (
                                                 <div className="mb-6">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div>
@@ -6869,7 +7077,8 @@ export default function AdminPanel() {
                                                 { label: 'Month', className: '' },
                                                 { label: 'Amount', className: '' },
                                                 { label: 'Currency', className: '' },
-                                                { label: 'Note', className: '' }
+                                                { label: 'Note', className: '' },
+                                                ...((isAdmin || isAccountant) ? [{ label: 'DELETE', className: 'text-center' }] : [])
                                             ]}
                                             data={(bonuses || [])
                                                 .filter(bonus => {
@@ -6933,6 +7142,20 @@ export default function AdminPanel() {
                                                     <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3">
                                                         {bonus.note || '-'}
                                                     </Table.Cell>
+                                                    {(isAdmin || isAccountant) && (
+                                                        <Table.Cell className="px-4 py-3 text-center align-middle">
+                                                            <div className="flex justify-center items-center h-full">
+                                                                <CustomButton
+                                                                    variant="red"
+                                                                    size="sm"
+                                                                    onClick={() => openBonusDeleteConfirmation(bonus)}
+                                                                    title="Delete bonus entry"
+                                                                    disabled={salaryTabLoading}
+                                                                    icon={HiTrash}
+                                                                />
+                                                            </div>
+                                                        </Table.Cell>
+                                                    )}
                                                 </>
                                             )}
                                             emptyMessage="No bonuses recorded"
@@ -7470,6 +7693,28 @@ export default function AdminPanel() {
                                 itemType="debt record"
                                 itemName={debtToDelete ? `${getCurrencySymbol(debtToDelete.currency)}${debtToDelete.amount.toFixed(2)} for ${debtToDelete.officeName}` : ''}
                                 itemExtra={debtToDelete ? debtToDelete.description : ''}
+                            />
+
+                            {/* Delete Salary Entry Confirmation Modal */}
+                            <DeleteConfirmationModal
+                                show={salaryDeleteConfirmation.show}
+                                onClose={() => setSalaryDeleteConfirmation({ show: false, entry: null, entryDescription: '' })}
+                                onConfirm={handleDeleteSalaryEntry}
+                                isLoading={salaryTabLoading}
+                                itemType="salary entry"
+                                itemName={salaryDeleteConfirmation.entryDescription}
+                                itemExtra="This action cannot be undone."
+                            />
+
+                            {/* Delete Bonus Entry Confirmation Modal */}
+                            <DeleteConfirmationModal
+                                show={bonusDeleteConfirmation.show}
+                                onClose={() => setBonusDeleteConfirmation({ show: false, entry: null, entryDescription: '' })}
+                                onConfirm={handleDeleteBonusEntry}
+                                isLoading={salaryTabLoading}
+                                itemType="bonus entry"
+                                itemName={bonusDeleteConfirmation.entryDescription}
+                                itemExtra="This action cannot be undone."
                             />
 
 

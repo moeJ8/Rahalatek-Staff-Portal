@@ -32,8 +32,8 @@ export const getMyBonuses = async () => {
   return response.data;
 };
 
-export const saveMonthlyBaseSalary = async (userId, { year, month, amount, note }) => {
-  const response = await axios.post(`/api/profile/${userId}/salary/base`, { year, month, amount, note });
+export const saveMonthlyBaseSalary = async (userId, { year, month, amount, note, currency }) => {
+  const response = await axios.post(`/api/profile/${userId}/salary/base`, { year, month, amount, note, currency });
   return response.data;
 };
 
@@ -52,6 +52,20 @@ export const editMonthSalary = async (userId, { year, month, amount, currency, n
 export const editMonthBonus = async (userId, { year, month, amount, note }) => {
   const response = await axios.put(`/api/profile/${userId}/bonus/edit`, {
     year, month, amount, note
+  });
+  return response.data;
+};
+
+export const deleteSalaryEntry = async (userId, { year, month }) => {
+  const response = await axios.delete(`/api/profile/${userId}/salary/base`, {
+    data: { year, month }
+  });
+  return response.data;
+};
+
+export const deleteBonusEntry = async (userId, { year, month }) => {
+  const response = await axios.delete(`/api/profile/${userId}/bonus`, {
+    data: { year, month }
   });
   return response.data;
 };

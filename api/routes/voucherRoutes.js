@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(verifyToken);
 router.get('/next-number', voucherController.getNextVoucherNumber);
 router.post('/', voucherController.createVoucher);
+router.get('/active', voucherController.getActiveVouchers);
 router.get('/', voucherController.getAllVouchers);
 router.get('/trash', voucherController.getTrashedVouchers);
 router.get('/number/:number', voucherController.getVoucherByNumber);

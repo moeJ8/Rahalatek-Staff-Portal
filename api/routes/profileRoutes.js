@@ -27,6 +27,7 @@ router.delete('/:userId/salary/base', profileController.deleteScheduledSalaryEnt
 router.get('/:userId/bonuses', profileController.getUserBonuses);
 router.post('/:userId/bonuses', profileController.addMonthlyBonus);
 router.put('/:userId/bonus/edit', profileController.editPreviousMonthBonus);
+router.delete('/:userId/bonus', profileController.deleteBonusEntry);
 
 // Get any user's profile (for admins and accountants)
 router.get('/:userId', profileController.getUserProfile);
