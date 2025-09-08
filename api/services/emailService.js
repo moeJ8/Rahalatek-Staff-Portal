@@ -45,11 +45,11 @@ class EmailService {
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
-                subject: 'Verify Your Email Address - Tour Management System',
+                subject: 'Verify Your Email Address - Rahalatek',
                 html: this.getVerificationEmailTemplate(user.username, verificationUrl),
                 text: `
 Hello ${user.username},
@@ -85,11 +85,11 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
-                subject: 'Email Verified Successfully - Tour Management System',
+                subject: 'Email Verified Successfully - Rahalatek',
                 html: this.getVerificationSuccessTemplate(user.username),
                 text: `
 Hello ${user.username},
@@ -227,7 +227,7 @@ Rahalatek Team
             <div class="greeting">Hello ${username}! 👋</div>
             
             <div class="message">
-                Thank you for registering with Tour Management System. To complete your account setup and start receiving email notifications, please verify your email address by clicking the button below.
+                Thank you for registering with Rahalatek. To complete your account setup and start receiving email notifications, please verify your email address by clicking the button below.
             </div>
             
             <div class="button-container">
@@ -355,7 +355,7 @@ Rahalatek Team
             <div class="greeting">Congratulations, ${username}!</div>
             
             <div class="message">
-                Your email address has been successfully verified. You're all set to receive email notifications from Tour Management System.
+                Your email address has been successfully verified. You're all set to receive email notifications from Rahalatek.
             </div>
             
             <div class="features">
@@ -948,7 +948,7 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
@@ -989,7 +989,7 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
@@ -1034,7 +1034,7 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
@@ -1066,7 +1066,7 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
@@ -1094,7 +1094,7 @@ Rahalatek Team
 
             const mailOptions = {
                 from: {
-                    name: process.env.EMAIL_FROM_NAME || 'Tour Management System',
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
                     address: process.env.EMAIL_FROM || process.env.EMAIL_USER
                 },
                 to: user.email,
