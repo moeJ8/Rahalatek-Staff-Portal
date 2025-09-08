@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Label, Modal, Spinner, Checkbox } from 'flowbite-react';
 import { HiUser, HiLockClosed, HiSave, HiArrowLeft, HiEye, HiEyeOff } from 'react-icons/hi';
 import { FaShieldAlt } from 'react-icons/fa';
@@ -14,6 +14,7 @@ import UserAnalytics from '../components/UserAnalytics';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomModal from '../components/CustomModal';
 import CustomScrollbar from '../components/CustomScrollbar';
+import EmailVerificationSection from '../components/EmailVerificationSection';
 import { getMyBonuses, getUserBonuses } from '../utils/profileApi';
 import { countryCodes } from '../utils/countryCodes';
 
@@ -28,6 +29,7 @@ const securityQuestions = [
 export default function ProfilePage() {
     const { userId } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [user, setUser] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -146,6 +148,18 @@ export default function ProfilePage() {
             setSalaryLoading(false);
         }
     }, [user]);
+
+    // Auto-open edit mode if URL contains ?edit=true
+    useEffect(() => {
+        const shouldAutoEdit = searchParams.get('edit') === 'true';
+        if (shouldAutoEdit && !isEditing && currentUser) {
+            // Check if user can edit (inline logic to avoid dependency issue)
+            const userCanEdit = !userId || currentUser.isAdmin;
+            if (userCanEdit) {
+                setIsEditing(true);
+            }
+        }
+    }, [searchParams, isEditing, currentUser, userId]);
 
     useEffect(() => {
         // Fetch salary data after user is known
@@ -973,33 +987,44 @@ export default function ProfilePage() {
 
                                         <div>
                                             <Label htmlFor="email" value="Email (Optional)" />
-                                            <TextInput
-                                                id="email"
-                                                name="email"
-                                                type="text"
-                                                value={formData.email}
-                                                onChange={(e) => {
-                                                    handleInputChange(e);
-                                                    // Reset validation flag when user starts typing
-                                                    setEmailValidationShown(false);
-                                                }}
-                                                onBlur={(e) => {
-                                                    // Validate email format on blur
-                                                    if (e.target.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value) && !emailValidationShown) {
-                                                        setEmailValidationShown(true);
-                                                        toast.error('Please enter a valid email address (example@domain.com)', {
-                                                            duration: 3000,
-                                                            style: {
-                                                                background: '#f44336',
-                                                                color: '#fff',
-                                                                fontWeight: '500'
+                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                <div className="flex-1">
+                                                    <TextInput
+                                                        id="email"
+                                                        name="email"
+                                                        type="text"
+                                                        value={formData.email}
+                                                        onChange={(e) => {
+                                                            handleInputChange(e);
+                                                            // Reset validation flag when user starts typing
+                                                            setEmailValidationShown(false);
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            // Validate email format on blur
+                                                            if (e.target.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value) && !emailValidationShown) {
+                                                                setEmailValidationShown(true);
+                                                                toast.error('Please enter a valid email address (example@domain.com)', {
+                                                                    duration: 3000,
+                                                                    style: {
+                                                                        background: '#f44336',
+                                                                        color: '#fff',
+                                                                        fontWeight: '500'
+                                                                    }
+                                                                });
                                                             }
-                                                        });
-                                                    }
-                                                }}
-                                                disabled={!isEditing}
-                                                placeholder="Enter your email address"
-                                            />
+                                                        }}
+                                                        disabled={!isEditing}
+                                                        placeholder="Enter your email address"
+                                                    />
+                                                </div>
+                                                {/* Email Verification Section - Inline */}
+                                                <div className="flex items-center">
+                                                    <EmailVerificationSection 
+                                                        userEmail={formData.email}
+                                                        isOwnProfile={isOwnProfile}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

@@ -40,6 +40,9 @@ const CustomButton = ({
       // Orange variant - for warning/revoke actions
       orange: "text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:text-orange-700 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800 dark:hover:bg-orange-900/30 dark:hover:text-orange-300",
       
+      // Amber variant - for verification actions
+      amber: "text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100 hover:text-amber-700 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-800 dark:hover:bg-amber-900/30 dark:hover:text-amber-300",
+      
       // Purple variant - for special actions
       purple: "text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 hover:text-purple-700 dark:text-purple-400 dark:bg-purple-900/20 dark:border-purple-800 dark:hover:bg-purple-900/30 dark:hover:text-purple-300",
       

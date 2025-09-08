@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const NotificationService = require('../services/notificationService');
+const EmailService = require('../services/emailService');
 
 // Helper to check and fix database schema
 exports.checkAndFixSchema = async () => {
@@ -411,4 +412,125 @@ exports.adminResetPassword = async (req, res) => {
         console.error('Admin password reset error:', err);
         res.status(500).json({ message: 'Failed to reset password' });
     }
-}; 
+};
+
+// Send email verification
+exports.sendEmailVerification = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        // Check if user has an email
+        if (!user.email || user.email.trim() === '') {
+            return res.status(400).json({ 
+                message: 'Please add an email address to your profile before verification' 
+            });
+        }
+        
+        // Check if email is already verified
+        if (user.isEmailVerified) {
+            return res.status(400).json({ 
+                message: 'Email is already verified' 
+            });
+        }
+        
+        // Generate verification token
+        const verificationToken = EmailService.generateVerificationToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        
+        // Update user with verification token
+        user.emailVerificationToken = verificationToken;
+        user.emailVerificationExpires = verificationExpires;
+        await user.save();
+        
+        // Send verification email
+        await EmailService.sendVerificationEmail(user, verificationToken);
+        
+        res.status(200).json({ 
+            message: 'Verification email sent successfully. Please check your inbox and click the verification link.',
+            email: user.email 
+        });
+    } catch (err) {
+        console.error('Error sending verification email:', err);
+        res.status(500).json({ 
+            message: 'Failed to send verification email. Please try again later.' 
+        });
+    }
+};
+
+// Verify email with token
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token, email } = req.query;
+        
+        if (!token || !email) {
+            return res.status(400).json({ 
+                message: 'Verification token and email are required' 
+            });
+        }
+        
+        // Find user with matching email and valid token
+        const user = await User.findOne({
+            email: email,
+            emailVerificationToken: token,
+            emailVerificationExpires: { $gt: Date.now() }
+        });
+        
+        if (!user) {
+            return res.status(400).json({ 
+                message: 'Invalid or expired verification token' 
+            });
+        }
+        
+        // Mark email as verified
+        user.isEmailVerified = true;
+        user.emailVerificationToken = null;
+        user.emailVerificationExpires = null;
+        await user.save();
+        
+        // Send success confirmation email
+        try {
+            await EmailService.sendVerificationSuccessEmail(user);
+        } catch (emailError) {
+            console.error('Error sending confirmation email:', emailError);
+            // Don't fail the verification if confirmation email fails
+        }
+        
+        res.status(200).json({ 
+            message: 'Email verified successfully! You will now receive email notifications.',
+            isEmailVerified: true 
+        });
+    } catch (err) {
+        console.error('Email verification error:', err);
+        res.status(500).json({ 
+            message: 'Failed to verify email. Please try again.' 
+        });
+    }
+};
+
+// Get user email verification status
+exports.getEmailVerificationStatus = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        
+        const user = await User.findById(userId).select('email isEmailVerified');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        
+        res.status(200).json({
+            email: user.email,
+            isEmailVerified: user.isEmailVerified || false,
+            hasEmail: !!(user.email && user.email.trim() !== '')
+        });
+    } catch (err) {
+        console.error('Error getting email verification status:', err);
+        res.status(500).json({ message: 'Failed to get verification status' });
+    }
+};
+

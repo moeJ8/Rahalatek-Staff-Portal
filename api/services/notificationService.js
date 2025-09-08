@@ -2,6 +2,7 @@ const Notification = require('../models/Notification');
 const Voucher = require('../models/Voucher');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
+const EmailService = require('./emailService');
 
 class NotificationService {
     
@@ -92,6 +93,17 @@ class NotificationService {
                     });
 
                     notifications.push(notification);
+
+                    // Send email notification to the voucher creator if they have verified email
+                    try {
+                        const voucherCreator = await User.findById(voucher.createdBy._id);
+                        if (voucherCreator && voucherCreator.email && voucherCreator.isEmailVerified) {
+                            await EmailService.sendArrivalReminderEmail(voucherCreator, voucher);
+                        }
+                    } catch (emailError) {
+                        console.error('Error sending arrival reminder email:', emailError);
+                        // Don't throw error to avoid breaking the notification flow
+                    }
                 }
             }
 
@@ -157,6 +169,17 @@ class NotificationService {
                     });
 
                     notifications.push(notification);
+
+                    // Send email notification to the voucher creator if they have verified email
+                    try {
+                        const voucherCreator = await User.findById(voucher.createdBy._id);
+                        if (voucherCreator && voucherCreator.email && voucherCreator.isEmailVerified) {
+                            await EmailService.sendDepartureReminderEmail(voucherCreator, voucher);
+                        }
+                    } catch (emailError) {
+                        console.error('Error sending departure reminder email:', emailError);
+                        // Don't throw error to avoid breaking the notification flow
+                    }
                 }
             }
 
@@ -288,6 +311,24 @@ class NotificationService {
                 }
             });
 
+            // Send email notifications to all admin users with verified emails
+            try {
+                const adminUsers = await User.find({ 
+                    isAdmin: true, 
+                    email: { $ne: null, $ne: '' }, 
+                    isEmailVerified: true 
+                });
+
+                const emailPromises = adminUsers.map(admin => 
+                    EmailService.sendArrivalSummaryEmail(admin, vouchersArrivingToday)
+                );
+
+                await Promise.all(emailPromises);
+                console.log(`📧 Arrival summary emails sent to ${adminUsers.length} admin${adminUsers.length > 1 ? 's' : ''}`);
+            } catch (emailError) {
+                console.error('Error sending arrival summary emails:', emailError);
+                // Don't throw error to avoid breaking the summary creation
+            }
 
             return [notification];
         } catch (error) {
@@ -365,6 +406,25 @@ class NotificationService {
                     }))
                 }
             });
+
+            // Send email notifications to all admin users with verified emails
+            try {
+                const adminUsers = await User.find({ 
+                    isAdmin: true, 
+                    email: { $ne: null, $ne: '' }, 
+                    isEmailVerified: true 
+                });
+
+                const emailPromises = adminUsers.map(admin => 
+                    EmailService.sendDepartureSummaryEmail(admin, vouchersDepartingToday)
+                );
+
+                await Promise.all(emailPromises);
+                console.log(`📧 Departure summary emails sent to ${adminUsers.length} admin${adminUsers.length > 1 ? 's' : ''}`);
+            } catch (emailError) {
+                console.error('Error sending departure summary emails:', emailError);
+                // Don't throw error to avoid breaking the summary creation
+            }
 
             return [notification];
         } catch (error) {
@@ -518,7 +578,7 @@ class NotificationService {
                 reminderStatus: 'scheduled',
                 scheduledFor: { $lte: now },
                 isActive: true
-            }).populate('targetUsers', 'username email')
+            }).populate('targetUsers', 'username email isEmailVerified')
               .populate('actionPerformedBy', 'username');
 
             const processedReminders = [];
@@ -530,6 +590,9 @@ class NotificationService {
                     await reminder.save();
 
                     processedReminders.push(reminder);
+
+                    // Send email notifications to target users
+                    await this.sendCustomReminderEmails(reminder);
                 } catch (error) {
                     console.error(`❌ Error processing reminder ${reminder._id}:`, error);
                 }
@@ -539,6 +602,44 @@ class NotificationService {
         } catch (error) {
             console.error('❌ Error processing scheduled reminders:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Send email notifications for custom reminders
+     */
+    static async sendCustomReminderEmails(reminder) {
+        try {
+            let targetUsers = [];
+            
+            if (reminder.isSystemWide) {
+                // For system-wide reminders, get all users with verified emails
+                targetUsers = await User.find({
+                    email: { $exists: true, $ne: null, $ne: '' },
+                    isEmailVerified: true
+                });
+            } else {
+                // For targeted reminders, use the specified target users (already populated)
+                targetUsers = reminder.targetUsers.filter(user => 
+                    user.email && user.isEmailVerified
+                );
+            }
+
+            // Get the creator of the reminder
+            const createdByUser = reminder.actionPerformedBy;
+
+            // Send emails to all target users
+            for (const user of targetUsers) {
+                try {
+                    await EmailService.sendCustomReminderEmail(user, reminder, createdByUser);
+                } catch (emailError) {
+                    console.error(`Error sending custom reminder email to ${user.email}:`, emailError);
+                    // Continue with other users even if one fails
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error sending custom reminder emails:', error);
+            // Don't throw error to avoid breaking the notification flow
         }
     }
 

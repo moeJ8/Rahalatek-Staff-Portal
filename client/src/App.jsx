@@ -17,6 +17,7 @@ import NotificationsPage from './pages/NotificationsPage'
 import OfficeDetailPage from './pages/OfficeDetailPage'
 import ProfilePage from './pages/ProfilePage'
 import AttendancePage from './pages/AttendancePage'
+import EmailVerificationPage from './pages/EmailVerificationPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import Header from './components/Header'
@@ -90,6 +91,7 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
+            <Route path="/verify-email" element={<EmailVerificationPage />} />
             
             {/* Protected Routes - Admin and Accountant access */}
             <Route element={<ProtectedRoute requireAdmin={true} />}>

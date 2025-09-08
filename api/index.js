@@ -1,6 +1,13 @@
+// Load .env FIRST before any other requires
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load .env from root directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
+// Now require everything else
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const hotelRoutes = require('./routes/hotelRoutes');
 const tourRoutes = require('./routes/tourRoutes');
@@ -19,9 +26,6 @@ const holidayRoutes = require('./routes/holidayRoutes');
 const userLeaveRoutes = require('./routes/userLeaveRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
-const path = require('path');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,16 +51,15 @@ mongoose.connect(process.env.MONGO_URI)
         console.error('Notification system error:', err);
       }
       
-      // Schedule custom reminder processing every 30 seconds for precise timing
+      // Schedule custom reminder processing every 10 seconds for precise timing
       setInterval(async () => {
         try {
           await NotificationService.processScheduledReminders();
         } catch (err) {
           console.error('Custom reminder processing error:', err);
         }
-      }, 30 * 1000); // Run every 30 seconds for precise custom reminder delivery
+      }, 10 * 1000); 
 
-      // Schedule other notification tasks every hour (arrival/departure reminders, cleanup)
       setInterval(async () => {
         try {
           await NotificationService.generateArrivalReminders();

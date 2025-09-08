@@ -14,6 +14,11 @@ router.post('/reset-password', authController.resetPassword);
 
 router.post('/admin-reset-password', verifyToken, authController.adminResetPassword);
 
+// Email verification routes
+router.post('/send-email-verification', verifyToken, authController.sendEmailVerification);
+router.get('/verify-email', authController.verifyEmail);
+router.get('/email-verification-status', verifyToken, authController.getEmailVerificationStatus);
+
 router.get('/users', verifyToken, authController.getAllUsers);
 router.patch('/users/role', verifyToken, authController.updateUserRole);
 router.patch('/users/approve', verifyToken, authController.approveUser);

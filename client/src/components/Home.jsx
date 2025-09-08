@@ -10,6 +10,7 @@ import RecentNotificationsWidget from './RecentNotificationsWidget';
 import UpcomingEventsWidget from './UpcomingEventsWidget';
 import WeatherCarouselWidget from './WeatherCarouselWidget';
 import ActiveVouchersModal from './ActiveVouchersModal';
+import EmailVerificationAlert from './EmailVerificationAlert';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -82,6 +83,9 @@ export default function Home() {
           </h1>
          
         </div>
+
+        {/* Email Verification Alert */}
+        <EmailVerificationAlert />
 
         {error && (
           <Card className="mb-6 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
