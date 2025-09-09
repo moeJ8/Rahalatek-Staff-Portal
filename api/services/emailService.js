@@ -1347,6 +1347,392 @@ Best regards,
 Rahalatek Team
         `.trim();
     }
+
+    /**
+     * Send upcoming events summary email
+     */
+    async sendUpcomingEventsEmail(user, eventsData) {
+        try {
+            if (!user.email || !user.isEmailVerified) {
+                return;
+            }
+
+            // Extract events data
+            const { departures, arrivals, holidays } = eventsData;
+            const totalEvents = departures.length + arrivals.length + holidays.length;
+
+            if (totalEvents === 0) {
+                console.log(`No upcoming events to send to ${user.email}`);
+                return;
+            }
+
+            const mailOptions = {
+                from: {
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
+                    address: process.env.EMAIL_FROM || process.env.EMAIL_USER
+                },
+                to: user.email,
+                subject: `Upcoming Events Summary - ${totalEvents} Event${totalEvents > 1 ? 's' : ''} This Week`,
+                html: this.getUpcomingEventsEmailTemplate(user, eventsData),
+                text: this.getUpcomingEventsTextTemplate(user, eventsData)
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log(`📧 Upcoming events email sent to ${user.email}`);
+            return result;
+        } catch (error) {
+            console.error('❌ Error sending upcoming events email:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate upcoming events email HTML template
+     */
+    getUpcomingEventsEmailTemplate(user, eventsData) {
+        const { departures, arrivals, holidays } = eventsData;
+        const totalEvents = departures.length + arrivals.length + holidays.length;
+        
+        // Check if user can see profile links (admin or accountant)
+        const canSeeProfiles = user.isAdmin || user.isAccountant;
+
+        // Helper function to format date
+        const formatDate = (dateString) => {
+            const date = new Date(dateString);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+            
+            if (dateOnly.getTime() === todayOnly.getTime()) {
+                return 'Today';
+            } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+                return 'Tomorrow';
+            } else {
+                // Format as dd/mm/yyyy
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        };
+
+        const formatTime = (dateString) => {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+        };
+
+        // Helper function to format created by with optional profile link
+        const formatCreatedBy = (voucher) => {
+            const username = voucher.createdBy?.username || 'N/A';
+            const userId = voucher.createdBy?._id;
+            
+            if (canSeeProfiles && userId && username !== 'N/A') {
+                return `<a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/profile/${userId}" style="color: #4f46e5; text-decoration: none; font-weight: 500;">${username}</a>`;
+            } else {
+                return username;
+            }
+        };
+
+        // Generate departures section
+        let departuresSection = '';
+        if (departures.length > 0) {
+            const departureRows = departures.map(voucher => `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 15px; font-weight: 500; color: #1f2937; text-align: left; vertical-align: middle;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vouchers/${voucher._id}" style="color: #ea580c; text-decoration: none; font-weight: 600;">#${voucher.voucherNumber}</a>
+                    </td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: left; vertical-align: middle;">${voucher.clientName}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">${formatDate(voucher.departureDate)}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">${formatTime(voucher.departureDate)}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: left; vertical-align: middle;">${formatCreatedBy(voucher)}</td>
+                </tr>
+            `).join('');
+
+            departuresSection = `
+                <div style="background-color: #fefbf2; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                    <h3 style="color: #ea580c; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                        ✈️ Departures (${departures.length})
+                    </h3>
+                    <table style="width: 100%; min-width: 700px; border-collapse: collapse; background-color: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                        <thead>
+                            <tr style="background-color: #ea580c; color: white;">
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 15%; vertical-align: middle;">Voucher</th>
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 35%; vertical-align: middle;">Client Name</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 20%; vertical-align: middle;">Date</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 15%; vertical-align: middle;">Time</th>
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 15%; vertical-align: middle;">Created By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${departureRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Generate arrivals section
+        let arrivalsSection = '';
+        if (arrivals.length > 0) {
+            const arrivalRows = arrivals.map(voucher => `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 15px; font-weight: 500; color: #1f2937; text-align: left; vertical-align: middle;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vouchers/${voucher._id}" style="color: #2563eb; text-decoration: none; font-weight: 600;">#${voucher.voucherNumber}</a>
+                    </td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: left; vertical-align: middle;">${voucher.clientName}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">${formatDate(voucher.arrivalDate)}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">${formatTime(voucher.arrivalDate)}</td>
+                    <td style="padding: 12px 15px; color: #1f2937; text-align: left; vertical-align: middle;">${formatCreatedBy(voucher)}</td>
+                </tr>
+            `).join('');
+
+            arrivalsSection = `
+                <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                    <h3 style="color: #2563eb; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                        🛬 Arrivals (${arrivals.length})
+                    </h3>
+                    <table style="width: 100%; min-width: 700px; border-collapse: collapse; background-color: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                        <thead>
+                            <tr style="background-color: #2563eb; color: white;">
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 15%; vertical-align: middle;">Voucher</th>
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 35%; vertical-align: middle;">Client Name</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 20%; vertical-align: middle;">Date</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 15%; vertical-align: middle;">Time</th>
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 15%; vertical-align: middle;">Created By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${arrivalRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Generate holidays section
+        let holidaysSection = '';
+        if (holidays.length > 0) {
+            const holidayRows = holidays.map(holiday => {
+                const holidayDate = holiday.holidayType === 'single-day' ? holiday.date : holiday.startDate;
+                const endDate = holiday.holidayType === 'multiple-day' ? holiday.endDate : null;
+                
+                return `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px 15px; font-weight: 500; color: #1f2937; text-align: left; vertical-align: middle;">
+                            ${holiday.name}
+                        </td>
+                        <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">${holiday.type || 'Holiday'}</td>
+                        <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">
+                            ${formatDate(holidayDate)}${endDate ? ` - ${formatDate(endDate)}` : ''}
+                        </td>
+                        <td style="padding: 12px 15px; color: #1f2937; text-align: center; vertical-align: middle;">
+                            ${holiday.holidayType === 'multiple-day' ? 'Multi-day' : 'Single-day'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            holidaysSection = `
+                <div style="background-color: #faf5ff; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                    <h3 style="color: #7c3aed; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                        🎉 Holidays (${holidays.length})
+                    </h3>
+                    <table style="width: 100%; min-width: 600px; border-collapse: collapse; background-color: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                        <thead>
+                            <tr style="background-color: #7c3aed; color: white;">
+                                <th style="padding: 15px; text-align: left; font-weight: 600; width: 40%; vertical-align: middle;">Holiday Name</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 20%; vertical-align: middle;">Type</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 25%; vertical-align: middle;">Date</th>
+                                <th style="padding: 15px; text-align: center; font-weight: 600; width: 15%; vertical-align: middle;">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${holidayRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upcoming Events Summary</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 20px; text-align: center;">
+                <table role="presentation" style="max-width: 800px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">
+                                📅 Upcoming Events Summary
+                            </h1>
+                            <p style="color: #e0f2fe; margin: 8px 0 0 0; font-size: 16px;">
+                                Your ${totalEvents} upcoming event${totalEvents > 1 ? 's' : ''} this week
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 30px 30px 10px 30px;">
+                            <p style="margin: 0; font-size: 16px; color: #374151;">
+                                Hello <strong>${user.username}</strong>,
+                            </p>
+                            <p style="margin: 16px 0 0 0; font-size: 16px; color: #374151; line-height: 1.5;">
+                                Here's your upcoming events summary for the next week. Stay organized and never miss an important event!
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Events Content -->
+                    <tr>
+                        <td style="padding: 0 30px;">
+                            ${departuresSection}
+                            ${arrivalsSection}
+                            ${holidaysSection}
+                        </td>
+                    </tr>
+                    
+                    <!-- Action Button -->
+                    <tr>
+                        <td style="padding: 30px; text-align: center;">
+                            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vouchers" 
+                               style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; display: inline-block;">
+                                View Vouchers
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+                            <p style="margin: 0; font-size: 14px; color: #6b7280;">
+                                This is an automated email from <strong>Rahalatek</strong> Tour Management System.
+                            </p>
+                            <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
+                                You're receiving this because you have upcoming events in your account.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+        `;
+    }
+
+    /**
+     * Generate upcoming events email text template
+     */
+    getUpcomingEventsTextTemplate(user, eventsData) {
+        const { departures, arrivals, holidays } = eventsData;
+        const totalEvents = departures.length + arrivals.length + holidays.length;
+
+        const formatDate = (dateString) => {
+            const date = new Date(dateString);
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+            
+            if (dateOnly.getTime() === todayOnly.getTime()) {
+                return 'Today';
+            } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+                return 'Tomorrow';
+            } else {
+                // Format as dd/mm/yyyy
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        };
+
+        const formatTime = (dateString) => {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+        };
+
+        let content = `UPCOMING EVENTS SUMMARY
+
+Hello ${user.username},
+
+Here's your upcoming events summary for the next week (${totalEvents} event${totalEvents > 1 ? 's' : ''}):
+
+`;
+
+        if (departures.length > 0) {
+            content += `DEPARTURES (${departures.length}):
+`;
+            departures.forEach(voucher => {
+                content += `• #${voucher.voucherNumber} - ${voucher.clientName}
+  ${formatDate(voucher.departureDate)} • ${formatTime(voucher.departureDate)}
+
+`;
+            });
+        }
+
+        if (arrivals.length > 0) {
+            content += `ARRIVALS (${arrivals.length}):
+`;
+            arrivals.forEach(voucher => {
+                content += `• #${voucher.voucherNumber} - ${voucher.clientName}
+  ${formatDate(voucher.arrivalDate)} • ${formatTime(voucher.arrivalDate)}
+
+`;
+            });
+        }
+
+        if (holidays.length > 0) {
+            content += `HOLIDAYS (${holidays.length}):
+`;
+            holidays.forEach(holiday => {
+                const holidayDate = holiday.holidayType === 'single-day' ? holiday.date : holiday.startDate;
+                const endDate = holiday.holidayType === 'multiple-day' ? holiday.endDate : null;
+                
+                content += `• ${holiday.name}
+  ${formatDate(holidayDate)}${endDate ? ` - ${formatDate(endDate)}` : ''}${holiday.holidayType === 'multiple-day' ? ' (Multi-day)' : ''}
+
+`;
+            });
+        }
+
+        content += `View your vouchers: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/vouchers
+
+Best regards,
+Rahalatek Team
+
+---
+This is an automated email from Rahalatek Tour Management System.
+You're receiving this because you have upcoming events in your account.`;
+
+        return content;
+    }
+
 }
 
 module.exports = new EmailService();

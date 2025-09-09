@@ -61,6 +61,7 @@ export default function Home() {
     return 'Good evening';
   };
 
+
   if (loading) {
     return (
       <div className="bg-gray-50 dark:bg-slate-950 min-h-screen">
@@ -157,6 +158,7 @@ export default function Home() {
         <div className="lg:ml-12 mb-6">
           <QuickActionsPanel />
         </div>
+
 
         {/* Notifications Section for Normal Users */}
         {!user?.isAdmin && !user?.isAccountant && (

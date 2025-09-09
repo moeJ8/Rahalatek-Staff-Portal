@@ -14,6 +14,7 @@ router.post('/generate-daily-summary', notificationController.generateDailyArriv
 router.delete('/:id', notificationController.deleteNotification);
 router.post('/cleanup-expired', notificationController.cleanupExpired);
 
+
 // Custom reminder management (all authenticated users)
 router.post('/reminders', notificationController.createReminder);
 router.get('/reminders', notificationController.getAllReminders);

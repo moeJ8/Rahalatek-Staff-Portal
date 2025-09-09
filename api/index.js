@@ -174,6 +174,43 @@ mongoose.connect(process.env.MONGO_URI)
 
       scheduleAttendanceReminder();
       scheduleAutoCheckout();
+
+      // Schedule upcoming events emails every 3 days at 8 AM
+      const scheduleUpcomingEventsEmails = () => {
+        const now = new Date();
+        const next8AM = new Date();
+        next8AM.setHours(8, 0, 0, 0);
+        
+        // If it's already past 8 AM today, schedule for tomorrow
+        if (now > next8AM) {
+          next8AM.setDate(next8AM.getDate() + 1);
+        }
+        
+        const timeUntil8AM = next8AM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            // Send initial upcoming events emails
+            await NotificationService.generateUpcomingEventsEmails();
+            
+            // Schedule to run every 3 days (72 hours)
+            setInterval(async () => {
+              try {
+                await NotificationService.generateUpcomingEventsEmails();
+              } catch (err) {
+                console.error('⚠️ Upcoming events email error:', err);
+              }
+            }, 3 * 24 * 60 * 60 * 1000); // Run every 3 days
+            
+          } catch (err) {
+            console.error('⚠️ Initial upcoming events email error:', err);
+          }
+        }, timeUntil8AM);
+        
+        console.log(`📅 Upcoming events emails scheduled for next 8 AM (in ${Math.round(timeUntil8AM / 1000 / 60)} minutes), then every 3 days`);
+      };
+
+      scheduleUpcomingEventsEmails();
       
     } catch (err) {
       console.error('Schema fix error:', err);

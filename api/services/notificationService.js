@@ -810,6 +810,155 @@ class NotificationService {
             throw error;
         }
     }
+
+    /**
+     * Generate and send upcoming events summary emails
+     */
+    static async generateUpcomingEventsEmails() {
+        try {
+            console.log('🔄 Starting upcoming events email generation...');
+            
+            // Get all users with verified emails
+            const User = require('../models/User');
+            const Voucher = require('../models/Voucher');
+            const Holiday = require('../models/Holiday');
+            
+            const users = await User.find({
+                email: { $exists: true, $ne: null, $ne: '' },
+                isEmailVerified: true,
+                isApproved: true
+            });
+
+            if (users.length === 0) {
+                console.log('No users with verified emails found');
+                return [];
+            }
+
+            // Get current date and next 7 days for vouchers, next 30 days for holidays
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const next7Days = new Date(today);
+            next7Days.setDate(next7Days.getDate() + 7);
+            next7Days.setHours(23, 59, 59, 999);
+
+            const next30Days = new Date(today);
+            next30Days.setDate(next30Days.getDate() + 30);
+
+            // Fetch all vouchers and holidays
+            const [allVouchers, holidays] = await Promise.all([
+                Voucher.find({
+                    $or: [
+                        { isDeleted: false },
+                        { isDeleted: { $exists: false } }
+                    ]
+                }).populate('createdBy', '_id username'),
+                Holiday.find({
+                    isActive: true,
+                    $or: [
+                        // Single-day holidays
+                        {
+                            holidayType: 'single-day',
+                            date: { $gte: today, $lte: next30Days }
+                        },
+                        // Multiple-day holidays
+                        {
+                            holidayType: 'multiple-day',
+                            startDate: { $gte: today, $lte: next30Days }
+                        }
+                    ]
+                }).sort({
+                    date: 1,
+                    startDate: 1
+                })
+            ]);
+
+            const emailsSent = [];
+
+            // Process each user
+            for (const user of users) {
+                try {
+                    // Filter vouchers based on user role (same logic as UpcomingEventsWidget)
+                    let filteredVouchers = allVouchers;
+                    if (!user.isAdmin && !user.isAccountant) {
+                        filteredVouchers = allVouchers.filter(voucher => 
+                            voucher.createdBy && voucher.createdBy._id.toString() === user._id.toString()
+                        );
+                    }
+
+                    // Filter departures (today through next 7 days)
+                    const departures = filteredVouchers
+                        .filter(voucher => {
+                            const departureDate = new Date(voucher.departureDate);
+                            const departureDateOnly = new Date(departureDate.getFullYear(), departureDate.getMonth(), departureDate.getDate());
+                            const status = voucher.status || 'await';
+                            return departureDateOnly.getTime() >= today.getTime() && 
+                                   departureDateOnly.getTime() <= next7Days.getTime() && 
+                                   ['await', 'arrived'].includes(status);
+                        })
+                        .sort((a, b) => new Date(a.departureDate) - new Date(b.departureDate));
+
+                    // Filter arrivals (today through next 7 days)
+                    const arrivals = filteredVouchers
+                        .filter(voucher => {
+                            const arrivalDate = new Date(voucher.arrivalDate);
+                            const arrivalDateOnly = new Date(arrivalDate.getFullYear(), arrivalDate.getMonth(), arrivalDate.getDate());
+                            const status = voucher.status || 'await';
+                            return arrivalDateOnly.getTime() >= today.getTime() && 
+                                   arrivalDateOnly.getTime() <= next7Days.getTime() && 
+                                   ['await', 'arrived'].includes(status);
+                        })
+                        .sort((a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate));
+
+                    // Everyone can see holidays
+                    const userHolidays = holidays;
+
+                    const eventsData = {
+                        departures,
+                        arrivals,
+                        holidays: userHolidays
+                    };
+
+                    const totalEvents = departures.length + arrivals.length + userHolidays.length;
+
+                    // Only send email if user has upcoming events
+                    if (totalEvents > 0) {
+                        await EmailService.sendUpcomingEventsEmail(user, eventsData);
+                        emailsSent.push({
+                            userId: user._id,
+                            username: user.username,
+                            email: user.email,
+                            eventsCount: totalEvents,
+                            departures: departures.length,
+                            arrivals: arrivals.length,
+                            holidays: userHolidays.length
+                        });
+                    } else {
+                        console.log(`No upcoming events for ${user.username} (${user.email})`);
+                    }
+                } catch (userError) {
+                    console.error(`Error sending upcoming events email to ${user.email}:`, userError);
+                    // Continue with other users even if one fails
+                }
+            }
+
+            console.log(`📧 Upcoming events emails sent to ${emailsSent.length} user${emailsSent.length > 1 ? 's' : ''}`);
+            
+            // Log summary
+            if (emailsSent.length > 0) {
+                const totalEvents = emailsSent.reduce((sum, user) => sum + user.eventsCount, 0);
+                const totalDepartures = emailsSent.reduce((sum, user) => sum + user.departures, 0);
+                const totalArrivals = emailsSent.reduce((sum, user) => sum + user.arrivals, 0);
+                const totalHolidays = emailsSent.reduce((sum, user) => sum + user.holidays, 0);
+                
+                console.log(`📊 Summary: ${totalEvents} total events (${totalDepartures} departures, ${totalArrivals} arrivals, ${totalHolidays} holidays)`);
+            }
+
+            return emailsSent;
+        } catch (error) {
+            console.error('❌ Error generating upcoming events emails:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = NotificationService; 
