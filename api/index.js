@@ -175,6 +175,77 @@ mongoose.connect(process.env.MONGO_URI)
       scheduleAttendanceReminder();
       scheduleAutoCheckout();
 
+      // Schedule daily check-in reminder every day at 11 AM
+      const scheduleDailyCheckinReminder = () => {
+        const now = new Date();
+        const next11AM = new Date();
+        next11AM.setHours(11, 0, 0, 0); // 11 AM
+        
+        // If it's already past 11 AM today, schedule for tomorrow
+        if (now > next11AM) {
+          next11AM.setDate(next11AM.getDate() + 1);
+        }
+        
+        const timeUntil11AM = next11AM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            await NotificationService.generateDailyCheckinReminder();
+            
+            // Schedule to run every day at 11 AM
+            setInterval(async () => {
+              try {
+                await NotificationService.generateDailyCheckinReminder();
+              } catch (err) {
+                console.error('⚠️ Daily check-in reminder error:', err);
+              }
+            }, 24 * 60 * 60 * 1000); // Run every 24 hours
+            
+          } catch (err) {
+            console.error('⚠️ Initial check-in reminder error:', err);
+          }
+        }, timeUntil11AM);
+        
+        console.log(`⏰ Daily check-in reminders scheduled for next 11 AM (in ${Math.round(timeUntil11AM / 1000 / 60)} minutes), then daily`);
+      };
+
+      // Schedule daily check-out reminder every day at 6:55 PM
+      const scheduleDailyCheckoutReminder = () => {
+        const now = new Date();
+        const next655PM = new Date();
+        next655PM.setHours(18, 55, 0, 0); // 6:55 PM
+        
+        // If it's already past 6:55 PM today, schedule for tomorrow
+        if (now > next655PM) {
+          next655PM.setDate(next655PM.getDate() + 1);
+        }
+        
+        const timeUntil655PM = next655PM.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            await NotificationService.generateDailyCheckoutReminder();
+            
+            // Schedule to run every day at 6:55 PM
+            setInterval(async () => {
+              try {
+                await NotificationService.generateDailyCheckoutReminder();
+              } catch (err) {
+                console.error('⚠️ Daily check-out reminder error:', err);
+              }
+            }, 24 * 60 * 60 * 1000); // Run every 24 hours
+            
+          } catch (err) {
+            console.error('⚠️ Initial check-out reminder error:', err);
+          }
+        }, timeUntil655PM);
+        
+        console.log(`⏰ Daily check-out reminders scheduled for next 6:55 PM (in ${Math.round(timeUntil655PM / 1000 / 60)} minutes), then daily`);
+      };
+
+      scheduleDailyCheckinReminder();
+      scheduleDailyCheckoutReminder();
+
       // Schedule upcoming events emails every 3 days at 8 AM
       const scheduleUpcomingEventsEmails = () => {
         const now = new Date();

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Spinner, Badge, Alert, Modal } from 'flowbite-react';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import CustomCheckbox from '../components/CustomCheckbox';
+import CustomButton from '../components/CustomButton';
 import Search from '../components/Search';
 import Select from '../components/Select';
 import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
@@ -21,6 +23,11 @@ const NotificationsPage = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
+  
+  // Bulk deletion states
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   
   // User role states
   const [isAdmin, setIsAdmin] = useState(false);
@@ -204,6 +211,99 @@ const NotificationsPage = () => {
     }
   };
 
+  // Bulk selection functions
+  const handleSelectNotification = (notificationId, isChecked) => {
+    if (isChecked) {
+      setSelectedNotifications(prev => [...prev, notificationId]);
+    } else {
+      setSelectedNotifications(prev => prev.filter(id => id !== notificationId));
+    }
+  };
+
+  const handleSelectAll = (isChecked) => {
+    if (isChecked) {
+      setSelectedNotifications(filteredNotifications.map(notification => notification._id));
+    } else {
+      setSelectedNotifications([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedNotifications.length === 0) {
+      toast.error('Please select notifications to delete', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+      return;
+    }
+    setBulkDeleteModalOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedNotifications.length === 0) return;
+
+    try {
+      setBulkActionLoading(true);
+      
+      // Delete all selected notifications in parallel
+      await Promise.all(
+        selectedNotifications.map(notificationId =>
+          deleteNotification(notificationId)
+        )
+      );
+      
+      // Remove deleted notifications from state
+      setNotifications(prev => 
+        prev.filter(notification => !selectedNotifications.includes(notification._id))
+      );
+      
+      toast.success(`${selectedNotifications.length} notification${selectedNotifications.length !== 1 ? 's' : ''} deleted successfully`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#4CAF50',
+        },
+      });
+      setBulkDeleteModalOpen(false);
+      setSelectedNotifications([]);
+    } catch (error) {
+      console.error('Error deleting notifications:', error);
+      toast.error('Failed to delete some notifications. Please try again.', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          padding: '16px',
+        },
+        iconTheme: {
+          primary: '#fff',
+          secondary: '#f44336',
+        },
+      });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const isRead = (notification) => {
     return notification.readBy && notification.readBy.length > 0;
   };
@@ -298,6 +398,29 @@ const NotificationsPage = () => {
               </button>
             )}
             
+            {/* Bulk Selection Controls */}
+            {filteredNotifications.length > 0 && (
+              <div className="flex items-center gap-3">
+                <CustomCheckbox
+                  id="select-all-notifications"
+                  label={`Select All (${selectedNotifications.length}/${filteredNotifications.length})`}
+                  checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
+                  onChange={handleSelectAll}
+                />
+                {selectedNotifications.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={bulkActionLoading}
+                    className="hidden sm:flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300 transition-all duration-200 hover:scale-105 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={`Clear ${selectedNotifications.length} selected notification${selectedNotifications.length !== 1 ? 's' : ''}`}
+                  >
+                    <FaTrash className="w-3 h-3" />
+                    Clear Selected ({selectedNotifications.length})
+                  </button>
+                )}
+              </div>
+            )}
+
             {notifications.length > 0 && (
               <button
                 onClick={() => setClearAllModalOpen(true)}
@@ -478,6 +601,15 @@ const NotificationsPage = () => {
               }`}
             >
               <div className="flex items-start space-x-4">
+                {/* Checkbox */}
+                <div className="flex-shrink-0 mt-1">
+                  <CustomCheckbox
+                    id={`notification-${notification._id}`}
+                    checked={selectedNotifications.includes(notification._id)}
+                    onChange={(checked) => handleSelectNotification(notification._id, checked)}
+                  />
+                </div>
+                
                 {/* Icon */}
                 <div className="flex-shrink-0 mt-1">
                   {getNotificationIcon(notification.type)}
@@ -611,6 +743,17 @@ const NotificationsPage = () => {
         itemType="all notifications"
         itemName={`${notifications.length} notifications`}
         itemExtra="This action cannot be undone and will permanently remove all notifications from your account"
+      />
+
+      {/* Bulk Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        show={bulkDeleteModalOpen}
+        onClose={() => setBulkDeleteModalOpen(false)}
+        onConfirm={confirmBulkDelete}
+        isLoading={bulkActionLoading}
+        itemType={`${selectedNotifications.length} notification${selectedNotifications.length !== 1 ? 's' : ''}`}
+        itemName="selected items"
+        itemExtra="This action cannot be undone"
       />
     </div>
   );

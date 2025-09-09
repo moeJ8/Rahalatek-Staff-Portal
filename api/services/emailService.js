@@ -1733,6 +1733,377 @@ You're receiving this because you have upcoming events in your account.`;
         return content;
     }
 
+    /**
+     * Send daily check-in reminder email
+     */
+    async sendCheckinReminderEmail(user) {
+        try {
+            if (!user.email || !user.isEmailVerified) {
+                return; // Skip if no email or not verified
+            }
+
+            const subject = '🌅 Daily Check-In Reminder - Rahalatek';
+            
+            const mailOptions = {
+                from: {
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
+                    address: process.env.EMAIL_FROM || process.env.EMAIL_USER
+                },
+                to: user.email,
+                subject: subject,
+                html: this.getCheckinReminderTemplate(user.username),
+                text: this.getCheckinReminderTextTemplate(user.username)
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            return result;
+        } catch (error) {
+            console.error('❌ Error sending check-in reminder email:', error);
+            // Don't throw error to avoid breaking the notification flow
+        }
+    }
+
+    /**
+     * Send daily check-out reminder email
+     */
+    async sendCheckoutReminderEmail(user, attendanceRecord) {
+        try {
+            if (!user.email || !user.isEmailVerified) {
+                return; // Skip if no email or not verified
+            }
+
+            // Calculate hours worked so far
+            const checkInTime = new Date(attendanceRecord.checkIn);
+            const currentTime = new Date();
+            const hoursWorked = Math.round(((currentTime - checkInTime) / (1000 * 60 * 60)) * 10) / 10;
+
+            const subject = '🌆 Daily Check-Out Reminder - Rahalatek';
+            
+            const mailOptions = {
+                from: {
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
+                    address: process.env.EMAIL_FROM || process.env.EMAIL_USER
+                },
+                to: user.email,
+                subject: subject,
+                html: this.getCheckoutReminderTemplate(user.username, checkInTime, hoursWorked),
+                text: this.getCheckoutReminderTextTemplate(user.username, checkInTime, hoursWorked)
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            return result;
+        } catch (error) {
+            console.error('❌ Error sending check-out reminder email:', error);
+            // Don't throw error to avoid breaking the notification flow
+        }
+    }
+
+    /**
+     * Get check-in reminder email template
+     */
+    getCheckinReminderTemplate(username) {
+        const currentTime = new Date().toLocaleString('en-US', { 
+            timeZone: 'UTC', 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Daily Check-In Reminder</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 0;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                }
+                .header {
+                    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                    color: white;
+                    padding: 30px;
+                    text-align: center;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }
+                .content {
+                    padding: 40px 30px;
+                }
+                .greeting {
+                    font-size: 18px;
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                }
+                .message {
+                    font-size: 16px;
+                    color: #34495e;
+                    line-height: 1.8;
+                    margin-bottom: 30px;
+                }
+                .highlight {
+                    background-color: #e8f5e8;
+                    padding: 20px;
+                    border-radius: 5px;
+                    border-left: 4px solid #4CAF50;
+                    margin: 20px 0;
+                }
+                .footer {
+                    background-color: #ecf0f1;
+                    padding: 20px 30px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #7f8c8d;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🌅 Daily Check-In Reminder</h1>
+                </div>
+                <div class="content">
+                    <div class="greeting">
+                        Good morning, ${username}! 👋
+                    </div>
+                    <div class="message">
+                        Hope you're having a great start to your day! This is a friendly reminder to check in for work.
+                    </div>
+                    <div class="highlight">
+                        <strong>📱 How to Check In:</strong><br>
+                        • Open the Rahalatek app or website<br>
+                        • Go to the Attendance section<br>
+                        • Scan the QR code to check in<br>
+                        • Remember: Check-in is available from 8:00 AM to 8:00 PM
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance" 
+                           style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; display: inline-block;">
+                            Go to Attendance 📲
+                        </a>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>This is an automated reminder from Rahalatek</p>
+                    <p>Current time: ${currentTime}</p>
+                </div>
+            </div>
+        </body>
+        </html>`;
+    }
+
+    /**
+     * Get check-out reminder email template
+     */
+    getCheckoutReminderTemplate(username, checkInTime, hoursWorked) {
+        const currentTime = new Date().toLocaleString('en-US', { 
+            timeZone: 'UTC', 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        const checkInTimeStr = checkInTime.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Daily Check-Out Reminder</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f4;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    padding: 0;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                }
+                .header {
+                    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+                    color: white;
+                    padding: 30px;
+                    text-align: center;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 600;
+                }
+                .content {
+                    padding: 40px 30px;
+                }
+                .greeting {
+                    font-size: 18px;
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                }
+                .message {
+                    font-size: 16px;
+                    color: #34495e;
+                    line-height: 1.8;
+                    margin-bottom: 30px;
+                }
+                .work-summary {
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .highlight {
+                    background-color: #fff3e0;
+                    padding: 20px;
+                    border-radius: 5px;
+                    border-left: 4px solid #FF9800;
+                    margin: 20px 0;
+                }
+                .footer {
+                    background-color: #ecf0f1;
+                    padding: 20px 30px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #7f8c8d;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🌆 Daily Check-Out Reminder</h1>
+                </div>
+                <div class="content">
+                    <div class="greeting">
+                        Great work today, ${username}! 👏
+                    </div>
+                    <div class="message">
+                        Your workday is coming to an end. Don't forget to check out before you leave!
+                    </div>
+                    <div class="work-summary">
+                        <h3>📊 Today's Work Summary</h3>
+                        <p><strong>Check-in Time:</strong> ${checkInTimeStr}</p>
+                        <p><strong>Hours Worked So Far:</strong> ${hoursWorked} hours</p>
+                    </div>
+                    <div class="highlight">
+                        <strong>📱 How to Check Out:</strong><br>
+                        • Open the Rahalatek app or website<br>
+                        • Go to the Attendance section<br>
+                        • Scan the QR code or use manual check-out<br>
+                        • Remember: Check-out is available until 8:00 PM
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance" 
+                           style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; display: inline-block;">
+                            Go to Attendance 📤
+                        </a>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>This is an automated reminder from Rahalatek</p>
+                    <p>Current time: ${currentTime}</p>
+                </div>
+            </div>
+        </body>
+        </html>`;
+    }
+
+    /**
+     * Get check-in reminder text template
+     */
+    getCheckinReminderTextTemplate(username) {
+        return `
+Daily Check-In Reminder
+
+Good morning, ${username}!
+
+This is a friendly reminder to check in for work.
+
+How to Check In:
+• Open the Rahalatek app or website
+• Go to the Attendance section
+• Scan the QR code to check in
+• Remember: Check-in is available from 8:00 AM to 8:00 PM
+
+Go to Attendance: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance
+
+---
+This is an automated reminder from Rahalatek.
+Current time: ${new Date().toLocaleString()}`;
+    }
+
+    /**
+     * Get check-out reminder text template
+     */
+    getCheckoutReminderTextTemplate(username, checkInTime, hoursWorked) {
+        const checkInTimeStr = checkInTime.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            hour12: true 
+        });
+
+        return `
+Daily Check-Out Reminder
+
+Great work today, ${username}!
+
+Your workday is coming to an end. Don't forget to check out before you leave!
+
+Today's Work Summary:
+• Check-in Time: ${checkInTimeStr}
+• Hours Worked So Far: ${hoursWorked} hours
+
+How to Check Out:
+• Open the Rahalatek app or website
+• Go to the Attendance section
+• Scan the QR code or use manual check-out
+• Remember: Check-out is available until 8:00 PM
+
+Go to Attendance: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance
+
+---
+This is an automated reminder from Rahalatek.
+Current time: ${new Date().toLocaleString()}`;
+    }
+
 }
 
 module.exports = new EmailService();

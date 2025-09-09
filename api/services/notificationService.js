@@ -686,6 +686,193 @@ class NotificationService {
     }
 
     /**
+     * Generate daily check-in reminder notifications
+     */
+    static async generateDailyCheckinReminder() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            // Get all users who should be working today (excluding admins)
+            const usersWhoNeedToCheckIn = await User.find({
+                isAdmin: false,
+                isApproved: true
+            }).select('_id username email isEmailVerified');
+
+            if (usersWhoNeedToCheckIn.length === 0) {
+                console.log('No users need check-in reminder today');
+                return [];
+            }
+
+            // Check which users haven't checked in today
+            const usersNotCheckedIn = [];
+            for (const user of usersWhoNeedToCheckIn) {
+                const attendance = await Attendance.getTodayAttendance(user._id);
+                // If no attendance record OR status is 'not-checked-in'
+                if (!attendance || attendance.status === 'not-checked-in') {
+                    usersNotCheckedIn.push(user);
+                }
+            }
+
+            if (usersNotCheckedIn.length === 0) {
+                console.log('All users have already checked in today');
+                return [];
+            }
+
+            console.log(`📋 ${usersNotCheckedIn.length} user${usersNotCheckedIn.length > 1 ? 's' : ''} need check-in reminder`);
+
+            // Create notifications for users who haven't checked in
+            const notifications = [];
+            for (const user of usersNotCheckedIn) {
+                // Check if user already has a check-in reminder today to prevent duplicates
+                const existingNotification = await Notification.findOne({
+                    type: 'attendance_checkin_reminder',
+                    targetUser: user._id,
+                    createdAt: {
+                        $gte: today,
+                        $lte: todayEnd
+                    },
+                    isActive: true
+                });
+
+                if (existingNotification) {
+                    console.log(`Check-in reminder already exists for ${user.username} today`);
+                    continue;
+                }
+
+                const notification = await this.createNotification({
+                    type: 'attendance_checkin_reminder',
+                    title: 'Daily Check-In Reminder',
+                    message: 'Good morning! Don\'t forget to check in to start your workday. Please scan the QR code to check in.',
+                    targetUser: user._id,
+                    priority: 'medium',
+                    expiresAt: todayEnd,
+                    metadata: {
+                        userId: user._id,
+                        reminderType: 'checkin',
+                        date: today.toISOString()
+                    }
+                });
+
+                notifications.push(notification);
+            }
+
+            // Send email notifications to users with verified emails
+            try {
+                const emailPromises = usersNotCheckedIn
+                    .filter(user => user.email && user.isEmailVerified)
+                    .map(user => EmailService.sendCheckinReminderEmail(user));
+
+                await Promise.all(emailPromises);
+                const emailCount = emailPromises.length;
+                console.log(`📧 Check-in reminder emails sent to ${emailCount} user${emailCount > 1 ? 's' : ''}`);
+            } catch (emailError) {
+                console.error('Error sending check-in reminder emails:', emailError);
+                // Don't throw error to avoid breaking the notification creation
+            }
+
+            console.log(`✅ Created ${notifications.length} check-in reminder notification${notifications.length > 1 ? 's' : ''}`);
+            return notifications;
+
+        } catch (error) {
+            console.error('Error generating daily check-in reminder:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate daily check-out reminder notifications
+     */
+    static async generateDailyCheckoutReminder() {
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayEnd = new Date(today);
+            todayEnd.setHours(23, 59, 59, 999);
+
+            // Find employees who checked in today but didn't check out yet
+            const attendanceRecords = await Attendance.find({
+                date: {
+                    $gte: today,
+                    $lte: todayEnd
+                },
+                status: 'checked-in' // Only those who are currently checked in
+            }).populate('userId', 'username email isEmailVerified');
+
+            if (attendanceRecords.length === 0) {
+                console.log('No employees need check-out reminder today');
+                return [];
+            }
+
+            console.log(`📋 ${attendanceRecords.length} employee${attendanceRecords.length > 1 ? 's' : ''} need check-out reminder`);
+
+            // Create notifications for users who need to check out
+            const notifications = [];
+            for (const record of attendanceRecords) {
+                const user = record.userId;
+                
+                // Check if user already has a check-out reminder today to prevent duplicates
+                const existingNotification = await Notification.findOne({
+                    type: 'attendance_checkout_reminder',
+                    targetUser: user._id,
+                    createdAt: {
+                        $gte: today,
+                        $lte: todayEnd
+                    },
+                    isActive: true
+                });
+
+                if (existingNotification) {
+                    console.log(`Check-out reminder already exists for ${user.username} today`);
+                    continue;
+                }
+
+                const notification = await this.createNotification({
+                    type: 'attendance_checkout_reminder',
+                    title: 'Daily Check-Out Reminder',
+                    message: 'Your workday is ending soon! Don\'t forget to check out before leaving. Please scan the QR code or use manual check-out.',
+                    targetUser: user._id,
+                    priority: 'medium',
+                    expiresAt: todayEnd,
+                    metadata: {
+                        userId: user._id,
+                        reminderType: 'checkout',
+                        date: today.toISOString(),
+                        checkInTime: record.checkIn
+                    }
+                });
+
+                notifications.push(notification);
+            }
+
+            // Send email notifications to users with verified emails
+            try {
+                const emailPromises = attendanceRecords
+                    .filter(record => record.userId.email && record.userId.isEmailVerified)
+                    .map(record => EmailService.sendCheckoutReminderEmail(record.userId, record));
+
+                await Promise.all(emailPromises);
+                const emailCount = emailPromises.length;
+                console.log(`📧 Check-out reminder emails sent to ${emailCount} user${emailCount > 1 ? 's' : ''}`);
+            } catch (emailError) {
+                console.error('Error sending check-out reminder emails:', emailError);
+                // Don't throw error to avoid breaking the notification creation
+            }
+
+            console.log(`✅ Created ${notifications.length} check-out reminder notification${notifications.length > 1 ? 's' : ''}`);
+            return notifications;
+
+        } catch (error) {
+            console.error('Error generating daily check-out reminder:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Generate checkout reminder notification for admins (employees who forgot to check out)
      */
     static async generateAttendanceCheckoutReminder() {

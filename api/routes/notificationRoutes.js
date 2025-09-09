@@ -24,4 +24,5 @@ router.delete('/reminders/:id', notificationController.deleteReminder);
 // Get all users for target selection (admin and accountant only)
 router.get('/users', notificationController.getAllUsers);
 
+
 module.exports = router; 

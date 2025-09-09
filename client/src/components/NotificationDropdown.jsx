@@ -86,7 +86,8 @@ const NotificationDropdown = () => {
         );
       case 'attendance':
         return notifs.filter(notif => 
-          notif.type === 'attendance_checkout_reminder'
+          notif.type === 'attendance_checkout_reminder' ||
+          notif.type === 'attendance_checkin_reminder'
         );
       case 'reminders':
         return notifs.filter(notif => 
@@ -221,6 +222,8 @@ const NotificationDropdown = () => {
         return <FaUser className={iconClass} />;
       case 'attendance_checkout_reminder':
         return <FaClock className="w-4 h-4 text-yellow-500" />;
+      case 'attendance_checkin_reminder':
+        return <FaCalendarDay className="w-4 h-4 text-green-500" />;
       case 'custom_reminder':
         return <FaCalendarCheck className={iconClass} />;
       default:
@@ -602,11 +605,21 @@ const NotificationDropdown = () => {
                             {/* Show attendance link for checkout reminders */}
                             {notification.type === 'attendance_checkout_reminder' && (
                               <Link
-                                to="/dashboard?tab=attendance"
+                                to="/attendance"
                                 className="text-xs text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 font-medium"
                                 onClick={() => setShowDropdown(false)}
                               >
-                                Manage Attendance →
+                                Go to Attendance →
+                              </Link>
+                            )}
+                            {/* Show attendance link for check-in reminders */}
+                            {notification.type === 'attendance_checkin_reminder' && (
+                              <Link
+                                to="/attendance"
+                                className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 font-medium"
+                                onClick={() => setShowDropdown(false)}
+                              >
+                                Go to Attendance →
                               </Link>
                             )}
                           </div>
