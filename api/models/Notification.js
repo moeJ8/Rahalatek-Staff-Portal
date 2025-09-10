@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
     type: {
         type: String,
-        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary', 'attendance_checkout_reminder', 'custom_reminder'],
+        enum: ['voucher_arrival_reminder', 'voucher_departure_reminder', 'voucher_status_change', 'system_announcement', 'user_role_change', 'daily_arrivals_summary', 'daily_departures_summary', 'attendance_checkin_reminder', 'attendance_checkout_reminder', 'custom_reminder'],
         required: true
     },
     title: {
@@ -141,7 +141,11 @@ notificationSchema.statics.getUserNotifications = async function(userId, userRol
                 {
                     $or: [
                         { 
-                            type: { $nin: ['user_role_change', 'custom_reminder'] }
+                            type: { $nin: ['user_role_change', 'custom_reminder', 'attendance_checkin_reminder', 'attendance_checkout_reminder'] }
+                        },
+                        { 
+                            type: { $in: ['attendance_checkin_reminder', 'attendance_checkout_reminder'] }, 
+                            targetUser: userId 
                         },
                         { 
                             type: 'user_role_change', 

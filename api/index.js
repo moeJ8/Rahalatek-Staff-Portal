@@ -179,7 +179,7 @@ mongoose.connect(process.env.MONGO_URI)
       const scheduleDailyCheckinReminder = () => {
         const now = new Date();
         const next11AM = new Date();
-        next11AM.setHours(11, 0, 0, 0); // 11 AM
+        next11AM.setHours(11, 0, 0, 0);
         
         // If it's already past 11 AM today, schedule for tomorrow
         if (now > next11AM) {

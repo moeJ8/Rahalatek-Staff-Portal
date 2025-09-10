@@ -5,7 +5,7 @@ import CustomCheckbox from '../components/CustomCheckbox';
 import CustomButton from '../components/CustomButton';
 import Search from '../components/Search';
 import Select from '../components/Select';
-import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
+import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
@@ -311,13 +311,17 @@ const NotificationsPage = () => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'voucher_arrival_reminder':
-        return <FaPlane className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
+        return <FaPlaneArrival className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
       case 'voucher_departure_reminder':
         return <FaPlaneDeparture className="w-5 h-5 text-red-500 dark:text-red-400" />;
       case 'daily_arrivals_summary':
         return <FaCalendarDay className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
       case 'user_role_change':
         return <FaUser className="w-5 h-5 text-purple-500 dark:text-purple-400" />;
+      case 'attendance_checkin_reminder':
+        return <FaCalendarDay className="w-5 h-5 text-green-500 dark:text-green-400" />;
+      case 'attendance_checkout_reminder':
+        return <FaClock className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />;
       default:
         return <FaBell className="w-5 h-5 text-teal-500 dark:text-teal-400" />;
     }
@@ -350,7 +354,9 @@ const NotificationsPage = () => {
       voucher_departure_reminder: 'Departure Reminder',
       daily_arrivals_summary: 'Daily Summary',
       user_role_change: 'Role Change',
-      custom_reminder: 'Reminder'
+      custom_reminder: 'Reminder',
+      attendance_checkin_reminder: 'Check-In Reminder',
+      attendance_checkout_reminder: 'Check-Out Reminder'
     };
     return types[type] || type;
   };

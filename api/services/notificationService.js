@@ -690,15 +690,15 @@ class NotificationService {
      */
     static async generateDailyCheckinReminder() {
         try {
+            console.log('🔔 Generating daily check-in reminders...');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
             const todayEnd = new Date(today);
             todayEnd.setHours(23, 59, 59, 999);
 
-            // Get all users who should be working today (excluding admins)
+            // Get all users who should be working today (including admins)
             const usersWhoNeedToCheckIn = await User.find({
-                isAdmin: false,
                 isApproved: true
             }).select('_id username email isEmailVerified');
 
@@ -788,6 +788,7 @@ class NotificationService {
      */
     static async generateDailyCheckoutReminder() {
         try {
+            console.log('🔔 Generating daily check-out reminders...');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 

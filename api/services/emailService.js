@@ -1772,10 +1772,8 @@ You're receiving this because you have upcoming events in your account.`;
                 return; // Skip if no email or not verified
             }
 
-            // Calculate hours worked so far
+            // Get check-in time for display
             const checkInTime = new Date(attendanceRecord.checkIn);
-            const currentTime = new Date();
-            const hoursWorked = Math.round(((currentTime - checkInTime) / (1000 * 60 * 60)) * 10) / 10;
 
             const subject = '🌆 Daily Check-Out Reminder - Rahalatek';
             
@@ -1786,8 +1784,8 @@ You're receiving this because you have upcoming events in your account.`;
                 },
                 to: user.email,
                 subject: subject,
-                html: this.getCheckoutReminderTemplate(user.username, checkInTime, hoursWorked),
-                text: this.getCheckoutReminderTextTemplate(user.username, checkInTime, hoursWorked)
+                html: this.getCheckoutReminderTemplate(user.username, checkInTime),
+                text: this.getCheckoutReminderTextTemplate(user.username, checkInTime)
             };
 
             const result = await this.transporter.sendMail(mailOptions);
@@ -1803,13 +1801,13 @@ You're receiving this because you have upcoming events in your account.`;
      */
     getCheckinReminderTemplate(username) {
         const currentTime = new Date().toLocaleString('en-US', { 
-            timeZone: 'UTC', 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric', 
             hour: '2-digit', 
-            minute: '2-digit' 
+            minute: '2-digit',
+            hour12: true
         });
 
         return `
@@ -1906,7 +1904,7 @@ You're receiving this because you have upcoming events in your account.`;
                 </div>
                 <div class="footer">
                     <p>This is an automated reminder from Rahalatek</p>
-                    <p>Current time: ${currentTime}</p>
+                    <p>Sent At: ${currentTime}</p>
                 </div>
             </div>
         </body>
@@ -1916,15 +1914,15 @@ You're receiving this because you have upcoming events in your account.`;
     /**
      * Get check-out reminder email template
      */
-    getCheckoutReminderTemplate(username, checkInTime, hoursWorked) {
+    getCheckoutReminderTemplate(username, checkInTime) {
         const currentTime = new Date().toLocaleString('en-US', { 
-            timeZone: 'UTC', 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric', 
             hour: '2-digit', 
-            minute: '2-digit' 
+            minute: '2-digit',
+            hour12: true
         });
 
         const checkInTimeStr = checkInTime.toLocaleTimeString('en-US', { 
@@ -2021,7 +2019,6 @@ You're receiving this because you have upcoming events in your account.`;
                     <div class="work-summary">
                         <h3>📊 Today's Work Summary</h3>
                         <p><strong>Check-in Time:</strong> ${checkInTimeStr}</p>
-                        <p><strong>Hours Worked So Far:</strong> ${hoursWorked} hours</p>
                     </div>
                     <div class="highlight">
                         <strong>📱 How to Check Out:</strong><br>
@@ -2039,7 +2036,7 @@ You're receiving this because you have upcoming events in your account.`;
                 </div>
                 <div class="footer">
                     <p>This is an automated reminder from Rahalatek</p>
-                    <p>Current time: ${currentTime}</p>
+                    <p>Sent At: ${currentTime}</p>
                 </div>
             </div>
         </body>
@@ -2067,17 +2064,35 @@ Go to Attendance: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/attenda
 
 ---
 This is an automated reminder from Rahalatek.
-Current time: ${new Date().toLocaleString()}`;
+Sent At: ${new Date().toLocaleString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true
+})}`;
     }
 
     /**
      * Get check-out reminder text template
      */
-    getCheckoutReminderTextTemplate(username, checkInTime, hoursWorked) {
+    getCheckoutReminderTextTemplate(username, checkInTime) {
         const checkInTimeStr = checkInTime.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit', 
             hour12: true 
+        });
+
+        const currentTime = new Date().toLocaleString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true
         });
 
         return `
@@ -2089,7 +2104,6 @@ Your workday is coming to an end. Don't forget to check out before you leave!
 
 Today's Work Summary:
 • Check-in Time: ${checkInTimeStr}
-• Hours Worked So Far: ${hoursWorked} hours
 
 How to Check Out:
 • Open the Rahalatek app or website
@@ -2101,7 +2115,7 @@ Go to Attendance: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/attenda
 
 ---
 This is an automated reminder from Rahalatek.
-Current time: ${new Date().toLocaleString()}`;
+Sent At: ${currentTime}`;
     }
 
 }
