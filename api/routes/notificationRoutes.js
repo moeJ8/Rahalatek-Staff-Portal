@@ -11,6 +11,8 @@ router.put('/mark-all-read', notificationController.markAllAsRead);
 router.post('/generate-arrival-reminders', notificationController.generateArrivalReminders);
 router.post('/generate-departure-reminders', notificationController.generateDepartureReminders);
 router.post('/generate-daily-summary', notificationController.generateDailyArrivalsSummary);
+router.post('/generate-monthly-financial-summary', notificationController.generateMonthlyFinancialSummary);
+router.get('/download-financial-summary-pdf', notificationController.downloadFinancialSummaryPDF);
 router.delete('/:id', notificationController.deleteNotification);
 router.post('/cleanup-expired', notificationController.cleanupExpired);
 

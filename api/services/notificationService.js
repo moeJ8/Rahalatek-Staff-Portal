@@ -3,6 +3,7 @@ const Voucher = require('../models/Voucher');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const EmailService = require('./emailService');
+const MonthlyFinancialSummaryService = require('./monthlyFinancialSummaryService');
 
 class NotificationService {
     
@@ -1144,6 +1145,48 @@ class NotificationService {
             return emailsSent;
         } catch (error) {
             console.error('❌ Error generating upcoming events emails:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate and send monthly financial summary emails
+     */
+    static async generateMonthlyFinancialSummaryEmails(year = null, month = null) {
+        try {
+            // Use the MonthlyFinancialSummaryService to generate and send emails
+            const emailsSent = await MonthlyFinancialSummaryService.generateMonthlyFinancialEmails(year, month);
+            
+            // Create individual notifications for each recipient
+            if (emailsSent.length > 0) {
+                const now = new Date();
+                const targetYear = year || (now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear());
+                const targetMonth = month || (now.getMonth() === 0 ? 12 : now.getMonth());
+                const monthName = new Date(targetYear, targetMonth - 1).toLocaleString('en-US', { month: 'long' });
+                
+                // Create individual notifications for each user
+                for (const recipient of emailsSent) {
+                    await this.createNotification({
+                        type: 'monthly_financial_summary',
+                        title: `Monthly Financial Report Ready - ${monthName} ${targetYear}`,
+                        message: `Your monthly financial report is ready. Check your email for details, or download the PDF version directly.`,
+                        targetUser: recipient.userId,
+                        priority: 'medium',
+                        metadata: {
+                            year: targetYear,
+                            month: targetMonth,
+                            monthName,
+                            hasDownloadLink: true,
+                            downloadText: 'Download PDF',
+                            role: recipient.role
+                        }
+                    });
+                }
+            }
+            
+            return emailsSent;
+        } catch (error) {
+            console.error('❌ Error generating monthly financial summary emails:', error);
             throw error;
         }
     }

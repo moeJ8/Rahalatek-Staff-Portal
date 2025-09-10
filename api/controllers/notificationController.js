@@ -213,6 +213,106 @@ exports.generateDailyArrivalsSummary = async (req, res) => {
 };
 
 /**
+ * Generate monthly financial summary manually (admin only)
+ */
+exports.generateMonthlyFinancialSummary = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin privileges required.'
+            });
+        }
+
+        const { year, month } = req.query;
+        
+        // Generate and send monthly financial summary emails
+        const emailsSent = await NotificationService.generateMonthlyFinancialSummaryEmails(
+            year ? parseInt(year) : null, 
+            month ? parseInt(month) : null
+        );
+
+        res.status(200).json({
+            success: true,
+            message: emailsSent.length > 0 
+                ? `Monthly financial summary sent to ${emailsSent.length} admin${emailsSent.length > 1 ? 's' : ''} and accountant${emailsSent.length > 1 ? 's' : ''}`
+                : 'No eligible recipients found for monthly financial summary',
+            data: {
+                emailsSent,
+                totalRecipients: emailsSent.length,
+                period: {
+                    year: year || (new Date().getMonth() === 0 ? new Date().getFullYear() - 1 : new Date().getFullYear()),
+                    month: month || (new Date().getMonth() === 0 ? 12 : new Date().getMonth())
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate monthly financial summary',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Download monthly financial summary as PDF (admin only)
+ */
+exports.downloadFinancialSummaryPDF = async (req, res) => {
+    try {
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Admin or accountant privileges required.'
+            });
+        }
+
+        const { year, month } = req.query;
+        
+        // Get full user object from database
+        const User = require('../models/User');
+        const fullUser = await User.findById(req.user.userId).select('username email isAdmin isAccountant');
+        
+        if (!fullUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        // Generate the financial summary data
+        const MonthlyFinancialSummaryService = require('../services/monthlyFinancialSummaryService');
+        const PDFService = require('../services/pdfService');
+        
+        const summaryData = await MonthlyFinancialSummaryService.generateMonthlySummaryData(
+            year ? parseInt(year) : null, 
+            month ? parseInt(month) : null
+        );
+
+        // Generate PDF with full user object
+        const pdfBuffer = await PDFService.generateFinancialSummaryPDF(summaryData, fullUser);
+        
+        // Set response headers for PDF download
+        const filename = `financial-summary-${summaryData.period.year}-${summaryData.period.month.toString().padStart(2, '0')}.pdf`;
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send PDF
+        res.end(pdfBuffer);
+        
+    } catch (error) {
+        console.error('❌ Error generating PDF:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate PDF',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Delete a notification (all users can delete their own notifications)
  */
 exports.deleteNotification = async (req, res) => {

@@ -9,7 +9,8 @@ import {
   FaInfo, 
   FaCheckCircle,
   FaEye,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
+  FaChartLine
 } from 'react-icons/fa';
 import { getUserNotifications } from '../utils/notificationApi';
 import RahalatekLoader from './RahalatekLoader';
@@ -65,6 +66,8 @@ export default function RecentNotificationsWidget() {
         return <FaExclamationTriangle className="w-4 h-4" />;
       case 'user_role_change':
         return <FaCheckCircle className="w-4 h-4" />;
+      case 'monthly_financial_summary':
+        return <FaChartLine className="w-4 h-4" />;
       default:
         return <FaInfo className="w-4 h-4" />;
     }
@@ -114,6 +117,12 @@ export default function RecentNotificationsWidget() {
           bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
           textColor: 'text-emerald-600 dark:text-emerald-400',
           dotColor: 'bg-emerald-500'
+        };
+      case 'monthly_financial_summary':
+        return {
+          bgColor: 'bg-green-50 dark:bg-green-900/30',
+          textColor: 'text-green-600 dark:text-green-400',
+          dotColor: 'bg-green-500'
         };
       default:
         return {

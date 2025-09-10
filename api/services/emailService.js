@@ -1622,7 +1622,7 @@ Rahalatek Team
                     <tr>
                         <td style="padding: 20px 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
                             <p style="margin: 0; font-size: 14px; color: #6b7280;">
-                                This is an automated email from <strong>Rahalatek</strong> Tour Management System.
+                                This is an automated email from <strong>Rahalatek</strong>.
                             </p>
                             <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
                                 You're receiving this because you have upcoming events in your account.
@@ -1636,6 +1636,520 @@ Rahalatek Team
 </body>
 </html>
         `;
+    }
+
+    /**
+     * Send monthly financial summary email
+     */
+    async sendMonthlyFinancialSummaryEmail(user, summaryData) {
+        try {
+            if (!user.email || !user.isEmailVerified) {
+                return; // Skip if no email or not verified
+            }
+
+            const { period, vouchers, servicesCosts, clientRevenue, profit, debts } = summaryData;
+            const subject = `📊 Monthly Financial Summary - ${period.monthName} ${period.year}`;
+
+            const mailOptions = {
+                from: {
+                    name: process.env.EMAIL_FROM_NAME || 'Rahalatek',
+                    address: process.env.EMAIL_FROM || process.env.EMAIL_USER
+                },
+                to: user.email,
+                subject: subject,
+                html: this.getMonthlyFinancialSummaryTemplate(user, summaryData),
+                text: this.getMonthlyFinancialSummaryTextTemplate(user, summaryData)
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            return result;
+        } catch (error) {
+            console.error('❌ Error sending monthly financial summary email:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get monthly financial summary email HTML template
+     */
+    getMonthlyFinancialSummaryTemplate(user, summaryData) {
+        const { period, vouchers, servicesCosts, clientRevenue, profit, profitComparison, debts } = summaryData;
+        
+        // Helper functions
+        const formatCurrency = (amount, currency) => {
+            const symbols = { USD: '$', EUR: '€', TRY: '₺' };
+            return `${symbols[currency] || '$'}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+
+        const formatPercentage = (value) => {
+            const color = value >= 0 ? '#10b981' : '#ef4444';
+            return `<span style="color: ${color}; font-weight: 600;">${value >= 0 ? '+' : ''}${value}%</span>`;
+        };
+
+        // Generate client revenue rows
+        const revenueRows = clientRevenue.map(revenue => `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 12px 15px; font-weight: 500; color: #1f2937;">${revenue.currency}</td>
+                <td style="padding: 12px 15px; color: #059669; font-weight: 600;">${formatCurrency(revenue.totalRevenue, revenue.currency)}</td>
+                <td style="padding: 12px 15px; color: #1f2937; text-align: center;">${revenue.voucherCount}</td>
+            </tr>
+        `).join('');
+
+        // Generate services costs rows (all offices)
+        const costsRows = servicesCosts.map(office => {
+            const getCurrencyName = (currency) => {
+                const names = { 
+                    USD: 'USD', 
+                    EUR: 'EURO', 
+                    TRY: 'TURKISH LIRA' 
+                };
+                return names[currency] || currency;
+            };
+            
+            const currencyOrder = ['USD', 'EUR', 'TRY'];
+            const currencies = currencyOrder
+                .filter(currency => office.byCurrency[currency]) // Only include currencies that exist
+                .map(currency => 
+                    `<div style="margin: 2px 0;"><span style="font-size: 12px; color: #64748b; font-weight: 500;">${getCurrencyName(currency)}:</span> ${formatCurrency(office.byCurrency[currency], currency)}</div>`
+                ).join('');
+            return `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 15px; font-weight: 500; color: #1f2937;">${office.officeName}</td>
+                    <td style="padding: 12px 15px; color: #dc2626; font-weight: 600;">${currencies}</td>
+                </tr>
+            `;
+        }).join('');
+
+        // Generate profit rows with comparison
+        const profitRows = profit.map(profitData => {
+            // Find comparison data for this currency
+            const comparison = profitComparison && profitComparison.comparisons 
+                ? profitComparison.comparisons.find(comp => comp.currency === profitData.currency)
+                : null;
+            
+            let comparisonDisplay = '<span style="color: #64748b;">N/A</span>';
+            if (comparison) {
+                const isPositive = comparison.percentageChange > 0;
+                const isNegative = comparison.percentageChange < 0;
+                const color = isPositive ? '#059669' : isNegative ? '#dc2626' : '#64748b';
+                const arrow = isPositive ? '↗' : isNegative ? '↘' : '→';
+                comparisonDisplay = `<span style="color: ${color}; font-weight: 600;">${arrow} ${isPositive ? '+' : ''}${comparison.percentageChange}%</span>`;
+            }
+            
+            return `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 12px 15px; font-weight: 500; color: #1f2937;">${profitData.currency}</td>
+                <td style="padding: 12px 15px; color: #059669; font-weight: 600;">${formatCurrency(profitData.revenue, profitData.currency)}</td>
+                <td style="padding: 12px 15px; color: #dc2626; font-weight: 600;">${formatCurrency(profitData.costs, profitData.currency)}</td>
+                <td style="padding: 12px 15px; color: ${profitData.profit >= 0 ? '#059669' : '#dc2626'}; font-weight: 600;">
+                    ${formatCurrency(profitData.profit, profitData.currency)}
+                </td>
+                <td style="padding: 12px 15px; text-align: center;">${formatPercentage(profitData.profitMargin)}</td>
+                <td style="padding: 12px 15px; text-align: center;">${comparisonDisplay}</td>
+            </tr>`;
+        }).join('');
+
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Financial Summary</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #3b82f6;
+        }
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+        .section {
+            margin-bottom: 35px;
+        }
+        .section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #f1f5f9;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 25px 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .highlight {
+            background-color: #dbeafe;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #1e40af;
+        }
+        .status-positive { color: #059669; font-weight: 600; }
+        .status-negative { color: #dc2626; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Monthly Financial Summary</h1>
+            <p>${period.monthName} ${period.year} Report</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="greeting">
+                Hello ${user.username},
+            </div>
+            
+            <p style="margin-bottom: 30px; color: #475569; font-size: 16px;">
+                Here's your financial summary for ${period.monthName} ${period.year}. This report includes voucher statistics, service costs, client revenue, profit analysis, and debt management updates.
+            </p>
+            
+            <!-- Key Metrics Summary -->
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Vouchers Created</h3>
+                    <p class="value">${vouchers.totalCreated}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Profit</h3>
+                    <div class="value" style="font-size: 18px; line-height: 1.3;">
+                        ${profit.length > 0 ? profit.map(p => 
+                            `<div style="margin: 2px 0;">${formatCurrency(p.profit, p.currency)}</div>`
+                        ).join('') : '<div>$0.00</div>'}
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <h3>Debts Closed</h3>
+                    <p class="value">${debts.closed.totalClosed}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>Service Offices</h3>
+                    <p class="value">${servicesCosts.length}</p>
+                </div>
+            </div>
+
+            <!-- Client Revenue Section -->
+            <div class="section">
+                <h2>💰 Client Revenue by Currency</h2>
+                ${clientRevenue.length > 0 ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th>Total Revenue</th>
+                                <th style="text-align: center;">Vouchers</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${revenueRows}
+                        </tbody>
+                    </table>
+                </div>
+                ` : '<p style="color: #64748b; font-style: italic;">No revenue data available for this period.</p>'}
+            </div>
+
+            <!-- Services Costs Section -->
+            <div class="section">
+                <h2>🏢 Service Costs by Office</h2>
+                ${servicesCosts.length > 0 ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Office Name</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${costsRows}
+                        </tbody>
+                    </table>
+                </div>
+                ` : '<p style="color: #64748b; font-style: italic;">No service costs recorded for this period.</p>'}
+            </div>
+
+            <!-- Profit Analysis Section -->
+            <div class="section">
+                <h2>📈 Profit Analysis</h2>
+                ${profit.length > 0 ? `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th>Revenue</th>
+                                <th>Service Costs</th>
+                                <th>Net Profit</th>
+                                <th style="text-align: center;">Margin %</th>
+                                <th style="text-align: center;">vs ${profitComparison && profitComparison.previousMonth ? profitComparison.previousMonth.monthName : 'Previous'}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${profitRows}
+                        </tbody>
+                    </table>
+                </div>
+                ` : '<p style="color: #64748b; font-style: italic;">No profit data available for this period.</p>'}
+            </div>
+
+            <!-- Debt Management Section -->
+            <div class="section">
+                <h2>💳 Debt Management</h2>
+                <div class="highlight">
+                    <strong>Debts Closed This Month:</strong> ${debts.closed.totalClosed}<br>
+                    <strong>New Debts Created:</strong> ${debts.newDebtsCreated}<br>
+                    <strong>Total Value of Closed Debts:</strong> ${formatCurrency(debts.closed.closedValue, 'USD')}<br>
+                    <strong>Closed Owed To Offices:</strong> ${debts.closed.byType.OWED_TO_OFFICE}<br>
+                    <strong>Closed Owed From Offices:</strong> ${debts.closed.byType.OWED_FROM_OFFICE}
+                </div>
+            </div>
+
+            <!-- Voucher Statistics -->
+            <div class="section">
+                <h2>🎫 Voucher Statistics</h2>
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px;">
+                    <p><strong>Total Vouchers Created:</strong> ${vouchers.totalCreated}</p>
+                    <p><strong>Status Breakdown:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>Awaiting:</strong> ${vouchers.byStatus.await || 0} vouchers</li>
+                        <li><strong>Arrived:</strong> ${vouchers.byStatus.arrived || 0} vouchers</li>
+                        <li><strong>Canceled:</strong> ${vouchers.byStatus.canceled || 0} vouchers</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer Message -->
+            <div style="background-color: #dbeafe; border: 1px solid #bfdbfe; border-radius: 6px; padding: 20px; margin-top: 30px;">
+                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                    📌 <strong>Note:</strong> This automated financial summary is generated monthly for admin and accountant review. 
+                    For detailed analysis or questions, please access the admin panel's financial section.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated on ${new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            })}</p>
+            <p><strong>Rahalatek</strong></p>
+            <p style="margin-top: 10px; font-size: 12px;">This is an automated email. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>
+        `;
+    }
+
+    /**
+     * Get monthly financial summary text template
+     */
+    getMonthlyFinancialSummaryTextTemplate(user, summaryData) {
+        const { period, vouchers, servicesCosts, clientRevenue, profit, profitComparison, debts } = summaryData;
+        
+        const formatCurrency = (amount, currency) => {
+            const symbols = { USD: '$', EUR: '€', TRY: '₺' };
+            return `${symbols[currency] || '$'}${amount.toFixed(2)}`;
+        };
+
+        let content = `MONTHLY FINANCIAL SUMMARY - ${period.monthName} ${period.year}
+
+Hello ${user.username},
+
+Here's your comprehensive financial summary for ${period.monthName} ${period.year}.
+
+KEY METRICS:
+• Vouchers Created: ${vouchers.totalCreated}
+• Total Profit: ${profit.length > 0 ? profit.map(p => `${formatCurrency(p.profit, p.currency)}`).join(', ') : '$0.00'}
+• Debts Closed: ${debts.closed.totalClosed}
+• Service Offices: ${servicesCosts.length}
+
+CLIENT REVENUE BY CURRENCY:
+`;
+
+        if (clientRevenue.length > 0) {
+            clientRevenue.forEach(revenue => {
+                content += `• ${revenue.currency}: ${formatCurrency(revenue.totalRevenue, revenue.currency)} (${revenue.voucherCount} vouchers)
+`;
+            });
+        } else {
+            content += `• No revenue data available for this period.
+`;
+        }
+
+        content += `
+SERVICE COSTS BY OFFICE:
+`;
+        if (servicesCosts.length > 0) {
+            servicesCosts.forEach((office, index) => {
+                const getCurrencyName = (currency) => {
+                    const names = { 
+                        USD: 'USD', 
+                        EUR: 'EURO', 
+                        TRY: 'TURKISH LIRA' 
+                    };
+                    return names[currency] || currency;
+                };
+                
+                const currencyOrder = ['USD', 'EUR', 'TRY'];
+                const currencies = currencyOrder
+                    .filter(currency => office.byCurrency[currency]) // Only include currencies that exist
+                    .map(currency => 
+                        `${getCurrencyName(currency)}: ${formatCurrency(office.byCurrency[currency], currency)}`
+                    ).join(' | ');
+                content += `${index + 1}. ${office.officeName}: ${currencies}
+`;
+            });
+        } else {
+            content += `• No service costs recorded for this period.
+`;
+        }
+
+        content += `
+PROFIT ANALYSIS:
+`;
+        if (profit.length > 0) {
+            profit.forEach(profitData => {
+                // Find comparison data for this currency
+                const comparison = profitComparison && profitComparison.comparisons 
+                    ? profitComparison.comparisons.find(comp => comp.currency === profitData.currency)
+                    : null;
+                
+                let comparisonText = '';
+                if (comparison) {
+                    const isPositive = comparison.percentageChange > 0;
+                    const isNegative = comparison.percentageChange < 0;
+                    const arrow = isPositive ? '↗' : isNegative ? '↘' : '→';
+                    const prevMonth = profitComparison.previousMonth ? profitComparison.previousMonth.monthName : 'Previous';
+                    comparisonText = ` | vs ${prevMonth}: ${arrow} ${isPositive ? '+' : ''}${comparison.percentageChange}%`;
+                }
+                
+                content += `• ${profitData.currency}: Revenue ${formatCurrency(profitData.revenue, profitData.currency)} - Costs ${formatCurrency(profitData.costs, profitData.currency)} = Profit ${formatCurrency(profitData.profit, profitData.currency)} (${profitData.profitMargin}% margin)${comparisonText}
+`;
+            });
+        } else {
+            content += `• No profit data available for this period.
+`;
+        }
+
+        content += `
+DEBT MANAGEMENT:
+• Debts Closed This Month: ${debts.closed.totalClosed}
+• New Debts Created: ${debts.newDebtsCreated}
+• Total Value of Closed Debts: ${formatCurrency(debts.closed.closedValue, 'USD')}
+• Closed Owed To Offices: ${debts.closed.byType.OWED_TO_OFFICE}
+• Closed Owed From Offices: ${debts.closed.byType.OWED_FROM_OFFICE}
+
+VOUCHER STATISTICS:
+• Total Created: ${vouchers.totalCreated}
+• Awaiting: ${vouchers.byStatus.await || 0}
+• Arrived: ${vouchers.byStatus.arrived || 0}
+• Canceled: ${vouchers.byStatus.canceled || 0}
+
+---
+Generated on ${new Date().toLocaleDateString()}
+Rahalatek
+
+This is an automated financial summary for admin and accountant review.
+For detailed analysis, please access the admin panel's financial section.
+`;
+
+        return content;
     }
 
     /**
@@ -1727,7 +2241,7 @@ Best regards,
 Rahalatek Team
 
 ---
-This is an automated email from Rahalatek Tour Management System.
+This is an automated email from Rahalatek.
 You're receiving this because you have upcoming events in your account.`;
 
         return content;

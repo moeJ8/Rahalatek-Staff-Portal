@@ -282,6 +282,65 @@ mongoose.connect(process.env.MONGO_URI)
       };
 
       scheduleUpcomingEventsEmails();
+
+      // Schedule monthly financial summary emails - last day of each month at 11 PM
+      const scheduleMonthlyFinancialSummary = () => {
+        const now = new Date();
+        
+        // Calculate next end of month at 11 PM
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1); // First day of next month
+        const lastDayOfMonth = new Date(nextMonth.getTime() - 1); // Last day of current month
+        lastDayOfMonth.setHours(23, 0, 0, 0); // Set to 11 PM
+        
+        // If we've already passed this month's scheduled time, schedule for next month
+        const targetDate = lastDayOfMonth < now 
+          ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 0, 0, 0) // Last day of next month at 11 PM
+          : lastDayOfMonth;
+        
+        const timeUntilSend = targetDate.getTime() - now.getTime();
+        
+        setTimeout(async () => {
+          try {
+            // Send monthly financial summary
+            await NotificationService.generateMonthlyFinancialSummaryEmails();
+            
+            // Schedule for next month
+            const scheduleNextMonth = () => {
+              const currentDate = new Date();
+              const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 0, 0, 0);
+              const timeToNext = nextMonthDate.getTime() - currentDate.getTime();
+              
+              setTimeout(async () => {
+                try {
+                  await NotificationService.generateMonthlyFinancialSummaryEmails();
+                  scheduleNextMonth(); // Schedule the next one
+                } catch (err) {
+                  console.error('⚠️ Monthly financial summary error:', err);
+                  scheduleNextMonth(); // Still schedule the next one even if this one fails
+                }
+              }, timeToNext);
+            };
+            
+            scheduleNextMonth();
+            
+          } catch (err) {
+            console.error('⚠️ Initial monthly financial summary error:', err);
+          }
+        }, timeUntilSend);
+        
+        const targetDateStr = targetDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        console.log(`📊 Monthly financial summary scheduled for ${targetDateStr} (in ${Math.round(timeUntilSend / 1000 / 60 / 60)} hours)`);
+      };
+
+      scheduleMonthlyFinancialSummary();
       
     } catch (err) {
       console.error('Schema fix error:', err);

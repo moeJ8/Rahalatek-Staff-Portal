@@ -217,6 +217,9 @@ export default function AdminPanel() {
     const [financialSearchQuery, setFinancialSearchQuery] = useState('');
     const [clientTypeFilter, setClientTypeFilter] = useState('all');
     
+    // Add state for PDF download
+    const [pdfDownloading, setPdfDownloading] = useState(false);
+    
     // Add state for debt management
     const [debts, setDebts] = useState([]);
     const [debtLoading, setDebtLoading] = useState(false);
@@ -3056,6 +3059,67 @@ export default function AdminPanel() {
         setClientTypeFilter('all');
     };
 
+    // Download Financial Summary PDF
+    const downloadFinancialSummaryPDF = async () => {
+        setPdfDownloading(true);
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Use current financial filters
+            const year = financialFilters.year;
+            const month = financialFilters.month;
+            
+            const response = await axios.get('/api/notifications/download-financial-summary-pdf', {
+                headers: { Authorization: `Bearer ${token}` },
+                params: { year, month },
+                responseType: 'blob'
+            });
+            
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Get filename from response headers or create default
+            const contentDisposition = response.headers['content-disposition'];
+            const monthName = new Date(year, month - 1).toLocaleString('en-US', { month: 'long' });
+            let filename = `financial-summary-${monthName}-${year}.pdf`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            
+            // Show success toast with green styling
+            toast.success(`PDF downloaded successfully: ${filename}`, {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: 'white',
+                },
+            });
+        } catch (err) {
+            console.error('Error downloading PDF:', err);
+            // Show error toast with red styling
+            toast.error(err.response?.data?.message || 'Failed to download PDF', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: 'white',
+                },
+            });
+        } finally {
+            setPdfDownloading(false);
+        }
+    };
+
     // Debt management functions
     const fetchDebts = async () => {
         setDebtLoading(true);
@@ -5216,12 +5280,38 @@ export default function AdminPanel() {
 
                             {activeTab === 'financials' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="financials-panel" role="tabpanel" aria-labelledby="tab-financials">
-                                    <h2 className="text-2xl font-bold mb-6 dark:text-white text-center flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                        </svg>
-                                        Financial Reports
-                                    </h2>
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                        <h2 className="text-2xl font-bold dark:text-white flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                            </svg>
+                                            Financial Reports
+                                        </h2>
+                                        
+                                        {/* PDF Download Button */}
+                                        <CustomButton
+                                            onClick={downloadFinancialSummaryPDF}
+                                            disabled={pdfDownloading}
+                                            variant="green"
+                                            size="md"
+                                            className="flex items-center gap-2"
+                                            title={`Download ${financialFilters.month ? new Date(financialFilters.year, financialFilters.month - 1).toLocaleString('en-US', { month: 'long' }) : 'Current'} ${financialFilters.year} Financial Report`}
+                                        >
+                                            {pdfDownloading ? (
+                                                <>
+                                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    📄 Download PDF
+                                                </>
+                                            )}
+                                        </CustomButton>
+                                    </div>
                                     
                                     {/* Overview Cards */}
                                     <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 mb-6`}>

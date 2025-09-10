@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Spinner, Badge } from 'flowbite-react';
-import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaClock, FaCalendarCheck } from 'react-icons/fa';
+import { FaBell, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaClock, FaCalendarCheck, FaFileAlt, FaChartLine } from 'react-icons/fa';
+import CustomButton from './CustomButton';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -14,6 +15,7 @@ const NotificationDropdown = () => {
   const [loading, setLoading] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [downloadingPdf, setDownloadingPdf] = useState(null);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -226,6 +228,8 @@ const NotificationDropdown = () => {
         return <FaCalendarDay className="w-4 h-4 text-green-500" />;
       case 'custom_reminder':
         return <FaCalendarCheck className={iconClass} />;
+      case 'monthly_financial_summary':
+        return <FaChartLine className="w-4 h-4 text-green-500" />;
       default:
         return <FaBell className={iconClass} />;
     }
@@ -371,6 +375,62 @@ const NotificationDropdown = () => {
     setShowDropdown(!showDropdown);
     if (!showDropdown) {
       fetchNotifications(); // Refresh when opening
+    }
+  };
+
+  // Download Financial Summary PDF
+  const downloadFinancialSummaryPDF = async (notification) => {
+    try {
+      setDownloadingPdf(notification._id);
+      const { year, month } = notification.metadata;
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get('/api/notifications/download-financial-summary-pdf', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { year, month },
+        responseType: 'blob'
+      });
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from response headers or create default
+      const contentDisposition = response.headers['content-disposition'];
+      const monthName = notification.metadata.monthName || new Date(year, month - 1).toLocaleString('en-US', { month: 'long' });
+      let filename = `financial-summary-${monthName}-${year}.pdf`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`PDF downloaded: ${filename}`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: 'white',
+        },
+      });
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      toast.error('Failed to download PDF', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: 'white',
+        },
+      });
+    } finally {
+      setDownloadingPdf(null);
     }
   };
 
@@ -595,6 +655,20 @@ const NotificationDropdown = () => {
                               >
                                 View Voucher →
                               </Link>
+                            )}
+                            
+                            {/* Download PDF link for financial summaries */}
+                            {notification.type === 'monthly_financial_summary' && notification.metadata?.hasDownloadLink && (
+                              <CustomButton
+                                onClick={() => downloadFinancialSummaryPDF(notification)}
+                                disabled={downloadingPdf === notification._id}
+                                loading={downloadingPdf === notification._id}
+                                variant="teal"
+                                size="xs"
+                                title="Download PDF Report"
+                              >
+                                {downloadingPdf === notification._id ? 'Generating...' : 'Download PDF'}
+                              </CustomButton>
                             )}
                             {/* Show admin link for role changes */}
                             {notification.type === 'user_role_change' && (

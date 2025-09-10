@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from 'flowbite-react';
+import { Card, Button, Select, Modal } from 'flowbite-react';
 import axios from 'axios';
-import { FaPlane, FaTicketAlt, FaUser, FaBell, FaPlus } from 'react-icons/fa';
+import { FaPlane, FaTicketAlt, FaUser, FaBell, FaPlus, FaChartLine, FaSpinner } from 'react-icons/fa';
 import RahalatekLoader from './RahalatekLoader';
 import HomeCalendar from './HomeCalendar';
 import RecentVoucherActivity from './RecentVoucherActivity';
@@ -18,6 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showActiveVouchersModal, setShowActiveVouchersModal] = useState(false);
+  
 
   useEffect(() => {
     // Get user info from localStorage
@@ -53,7 +54,6 @@ export default function Home() {
   };
 
 
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -87,6 +87,7 @@ export default function Home() {
 
         {/* Email Verification Alert */}
         <EmailVerificationAlert />
+
 
         {error && (
           <Card className="mb-6 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800">
@@ -213,6 +214,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      
       
       {/* Active Vouchers Modal */}
       <ActiveVouchersModal 
