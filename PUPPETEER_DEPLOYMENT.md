@@ -1,4 +1,16 @@
-# Puppeteer Deployment Guide
+# Universal Puppeteer Deployment Guide
+
+## 🌍 Universal PDF Generation Solution
+
+This guide provides a **universal solution** that works on **all modern hosting platforms** including Render, Heroku, Vercel, Railway, DigitalOcean, AWS, and more.
+
+## 🚀 Quick Setup
+
+The system now automatically:
+1. **Detects your platform** (Render, Heroku, etc.)
+2. **Installs Chrome** during deployment
+3. **Finds the best Chrome executable** path
+4. **Uses optimized settings** for your platform
 
 ## Production Requirements for PDF Generation
 

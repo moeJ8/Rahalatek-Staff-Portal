@@ -8,6 +8,7 @@
     "client-install": "cd client && npm install",
     "client-build": "cd client && npm run build",
     "build": "npm install && npm run client-install && npm run client-build",
+    "postinstall": "node scripts/setup-chrome.js",
     "verify-paths": "node verify-paths.js"
   },
   "keywords": [],

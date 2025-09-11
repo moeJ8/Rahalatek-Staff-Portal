@@ -1,7 +1,121 @@
 const puppeteer = require('puppeteer');
 const EmailService = require('./emailService');
+const fs = require('fs');
+const path = require('path');
 
 class PDFService {
+    
+    /**
+     * Get the best Chrome executable path for current platform
+     */
+    static findChromeExecutable() {
+        const platform = process.platform;
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        // Priority list of Chrome executable paths
+        const chromePaths = [
+            // Environment variable override
+            process.env.CHROME_BIN,
+            process.env.PUPPETEER_EXECUTABLE_PATH,
+            
+            // Puppeteer cache locations
+            path.join(process.env.HOME || process.cwd(), '.cache', 'puppeteer', 'chrome'),
+            path.join('/opt/render/.cache/puppeteer', 'chrome'),
+            path.join(process.cwd(), 'node_modules', 'puppeteer', '.local-chromium'),
+            
+            // Linux system paths
+            ...(platform === 'linux' ? [
+                '/usr/bin/google-chrome-stable',
+                '/usr/bin/google-chrome',
+                '/usr/bin/chromium-browser',
+                '/usr/bin/chromium',
+                '/opt/google/chrome/chrome',
+                '/snap/bin/chromium'
+            ] : []),
+            
+            // macOS paths  
+            ...(platform === 'darwin' ? [
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                '/Applications/Chromium.app/Contents/MacOS/Chromium'
+            ] : []),
+            
+            // Windows paths
+            ...(platform === 'win32' ? [
+                'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+            ] : [])
+        ].filter(Boolean); // Remove null/undefined values
+        
+        // Find the first existing executable
+        for (const chromePath of chromePaths) {
+            try {
+                if (fs.existsSync(chromePath)) {
+                    console.log(`✅ Found Chrome at: ${chromePath}`);
+                    return chromePath;
+                }
+            } catch (err) {
+                // Continue checking
+            }
+        }
+        
+        console.log('⚠️  No Chrome executable found, using Puppeteer default');
+        return null;
+    }
+    
+    /**
+     * Get universal launch options for all platforms
+     */
+    static getLaunchOptions() {
+        const isProduction = process.env.NODE_ENV === 'production';
+        const platform = process.platform;
+        
+        // Base options that work everywhere
+        const baseOptions = {
+            headless: 'new', // Use new headless mode
+            timeout: 120000,
+            devtools: false,
+            defaultViewport: { width: 1280, height: 800 }
+        };
+        
+        // Universal args that work on all platforms
+        const universalArgs = [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--disable-gpu',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
+        ];
+        
+        // Production-specific args
+        const productionArgs = isProduction ? [
+            '--single-process',
+            '--no-zygote',
+            '--disable-extensions',
+            '--disable-plugins',
+            '--disable-images',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor,TranslateUI',
+            '--memory-pressure-off',
+            '--max-old-space-size=4096'
+        ] : [];
+        
+        const launchOptions = {
+            ...baseOptions,
+            args: [...universalArgs, ...productionArgs]
+        };
+        
+        // Set executable path if found
+        const chromePath = this.findChromeExecutable();
+        if (chromePath) {
+            launchOptions.executablePath = chromePath;
+        }
+        
+        return launchOptions;
+    }
     
     /**
      * Generate PDF from monthly financial summary data
@@ -12,95 +126,40 @@ class PDFService {
             console.log('🖨️ Starting PDF generation for financial summary...');
             console.log('Environment:', process.env.NODE_ENV || 'development');
             console.log('Platform:', process.platform);
-            console.log('Chrome bin path:', process.env.CHROME_BIN || 'default');
             
-            // Launch puppeteer browser with environment-specific configuration
-            const isProduction = process.env.NODE_ENV === 'production';
+            // Get universal launch options
+            const launchOptions = this.getLaunchOptions();
+            console.log('Launching Puppeteer with options:', {
+                ...launchOptions,
+                executablePath: launchOptions.executablePath ? '✅ Custom path' : '⚙️ Default'
+            });
             
-            // More aggressive production configuration
-            const productionArgs = [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-gpu',
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding',
-                '--disable-features=TranslateUI',
-                '--disable-ipc-flooding-protection',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
-                '--disable-extensions',
-                '--disable-plugins',
-                '--disable-images',
-                '--disable-javascript',
-                '--virtual-time-budget=10000',
-                '--run-all-compositor-stages-before-draw',
-                '--memory-pressure-off',
-                '--max_old_space_size=4096'
-            ];
-
-            const developmentArgs = [
-                '--no-sandbox',
-                '--disable-setuid-sandbox'
-            ];
-
-            const launchOptions = {
-                headless: true,
-                timeout: 120000, // Increased timeout
-                args: isProduction ? productionArgs : developmentArgs
-            };
-
-            // Use custom Chrome executable if provided (for production environments)
-            if (process.env.CHROME_BIN) {
-                launchOptions.executablePath = process.env.CHROME_BIN;
-                console.log('Using custom Chrome executable:', process.env.CHROME_BIN);
-            }
-
-            console.log('Launching Puppeteer with args:', launchOptions.args);
-            
+            // Launch browser with retry logic
             try {
                 browser = await puppeteer.launch(launchOptions);
                 console.log('✅ Puppeteer browser launched successfully');
             } catch (launchError) {
-                console.error('❌ Failed to launch Puppeteer browser:', launchError);
+                console.error('❌ Primary launch failed:', launchError.message);
                 
-                // Fallback: try with even more restrictive settings
-                if (isProduction) {
-                    console.log('🔄 Attempting fallback configuration...');
-                    const fallbackOptions = {
-                        headless: true,
-                        timeout: 180000,
-                        args: [
-                            '--no-sandbox',
-                            '--disable-setuid-sandbox',
-                            '--disable-dev-shm-usage',
-                            '--single-process',
-                            '--disable-gpu',
-                            '--disable-software-rasterizer'
-                        ]
-                    };
-                    
-                    if (process.env.CHROME_BIN) {
-                        fallbackOptions.executablePath = process.env.CHROME_BIN;
-                    }
-                    
-                    browser = await puppeteer.launch(fallbackOptions);
-                    console.log('✅ Fallback Puppeteer configuration successful');
-                } else {
-                    throw launchError;
-                }
+                // Fallback: minimal configuration
+                console.log('🔄 Attempting minimal fallback configuration...');
+                const fallbackOptions = {
+                    headless: 'new',
+                    timeout: 180000,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+                };
+                
+                browser = await puppeteer.launch(fallbackOptions);
+                console.log('✅ Fallback configuration successful');
             }
             
             const page = await browser.newPage();
             
-            // Set page configurations for better performance in production
-            await page.setViewport({ width: 1280, height: 800 });
-            await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            // Modern browser configuration
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            await page.setExtraHTTPHeaders({
+                'Accept-Language': 'en-US,en;q=0.9'
+            });
             
             // Get the HTML content from EmailService
             console.log('📧 Getting HTML template from EmailService...');
@@ -124,44 +183,61 @@ class PDFService {
                 throw new Error(`Failed to enhance HTML for PDF: ${enhanceError.message}`);
             }
             
-            // Set content with timeout
+            // Set content with modern options
             console.log('📄 Setting page content...');
             try {
                 await page.setContent(pdfHtml, { 
-                    waitUntil: 'domcontentloaded', // Less strict than networkidle0
-                    timeout: 60000 
+                    waitUntil: ['domcontentloaded', 'networkidle2'],
+                    timeout: 90000 
                 });
-                console.log('✅ Page content set successfully');
+                
+                // Wait for fonts and images to load
+                await page.evaluate(() => {
+                    return Promise.all([
+                        document.fonts.ready,
+                        ...Array.from(document.images).map(img => {
+                            if (img.complete) return Promise.resolve();
+                            return new Promise(resolve => {
+                                img.onload = img.onerror = resolve;
+                            });
+                        })
+                    ]);
+                });
+                
+                console.log('✅ Page content and resources loaded successfully');
             } catch (contentError) {
                 console.error('❌ Error setting page content:', contentError);
                 throw new Error(`Failed to set page content: ${contentError.message}`);
             }
             
-            // Generate PDF with options
+            // Generate PDF with modern options
             console.log('🖨️ Generating PDF...');
             let pdf;
             try {
                 pdf = await page.pdf({
                     format: 'A4',
                     printBackground: true,
+                    preferCSSPageSize: false,
                     margin: {
                         top: '1cm',
-                        bottom: '1cm',
+                        bottom: '1cm', 
                         left: '1cm',
                         right: '1cm'
                     },
                     displayHeaderFooter: true,
                     headerTemplate: `
-                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
+                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0; padding: 0;">
                             <span style="font-weight: bold;">Rahalatek - Monthly Financial Summary</span>
                         </div>
                     `,
                     footerTemplate: `
-                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
+                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0; padding: 0;">
                             <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span> - Generated on ${new Date().toLocaleDateString()}</span>
                         </div>
                     `,
-                    timeout: 60000
+                    timeout: 90000,
+                    tagged: true, // Generate tagged PDF for accessibility
+                    omitBackground: false
                 });
                 console.log('✅ PDF generated successfully, size:', pdf?.length || 0, 'bytes');
             } catch (pdfError) {
