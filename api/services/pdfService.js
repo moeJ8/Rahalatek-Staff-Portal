@@ -309,6 +309,32 @@ class PDFService {
     static enhanceHtmlForPDF(htmlContent, summaryData) {
         const { period } = summaryData;
         
+        // Replace emojis with professional alternatives in content (keep them for sections)
+        const emojiReplacements = {
+            '📊': '<span class="professional-icon chart-icon">📑</span>',
+            '💰': '<span class="professional-icon finance-icon">$</span>',
+            '🔥': '<span class="professional-icon performance-icon">▲</span>',
+            '📈': '<span class="professional-icon growth-icon">↗</span>',
+            '💼': '<span class="professional-icon business-icon">●</span>',
+            '📋': '<span class="professional-icon report-icon">▪</span>',
+            '💵': '<span class="professional-icon revenue-icon">€</span>',
+            '📄': '<span class="professional-icon document-icon">◦</span>',
+            '🎯': '<span class="professional-icon target-icon">⦿</span>'
+        };
+
+        let processedHtml = htmlContent;
+        
+        // Replace emojis with professional alternatives in content
+        Object.entries(emojiReplacements).forEach(([emoji, replacement]) => {
+            const regex = new RegExp(emoji, 'g');
+            processedHtml = processedHtml.replace(regex, replacement);
+        });
+        
+        // Remove the specific duplicate heading from email template
+        processedHtml = processedHtml.replace(/<div class="header">[\s\S]*?<h1>[\s\S]*?Monthly Financial Summary[\s\S]*?<\/h1>[\s\S]*?<p>[\s\S]*?Report<\/p>[\s\S]*?<\/div>/gi, '');
+        processedHtml = processedHtml.replace(/<h1>[\s\S]*?Monthly Financial Summary[\s\S]*?<\/h1>/gi, '');
+        processedHtml = processedHtml.replace(/Monthly Financial Summary(?=[\s\S]*?Report)/gi, '');
+        
         // Add PDF-specific styles and remove email-specific elements
         const enhancedHtml = `
 <!DOCTYPE html>
@@ -317,38 +343,103 @@ class PDFService {
     <meta charset="UTF-8">
     <title>Financial Summary - ${period.monthName} ${period.year}</title>
     <style>
-        /* PDF-specific styles */
+        /* Professional PDF styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 30px;
+            color: #1f2937;
             line-height: 1.6;
+            background: #ffffff;
+        }
+        
+        /* Professional Icon Styles */
+        .professional-icon {
+            display: inline-block;
+            font-weight: 600;
+            font-size: 16px;
+            margin-right: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        
+        .chart-icon {
+            color: #1e40af;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
+        }
+        
+        .finance-icon, .revenue-icon {
+            color: #047857;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 1px solid #10b981;
+        }
+        
+        .performance-icon, .growth-icon {
+            color: #7c2d12;
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            border: 1px solid #ea580c;
+        }
+        
+        .business-icon {
+            color: #374151;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border: 1px solid #6b7280;
+        }
+        
+        .report-icon, .document-icon {
+            color: #0f766e;
+            background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+            border: 1px solid #14b8a6;
+        }
+        
+        .target-icon {
+            color: #be123c;
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border: 1px solid #e11d48;
         }
         
         .pdf-header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 20px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 32px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .pdf-header h1 {
-            color: #1f2937;
-            margin: 0;
-            font-size: 28px;
-            font-weight: bold;
+            color: #0f172a;
+            margin: 0 0 16px 0;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
         
         .pdf-header .period {
-            color: #6b7280;
-            font-size: 18px;
-            margin: 10px 0;
+            color: #334155;
+            font-size: 20px;
+            font-weight: 500;
+            margin: 12px 0;
         }
         
         .pdf-header .generated {
-            color: #9ca3af;
+            color: #64748b;
             font-size: 14px;
+            font-weight: 400;
+            margin-top: 16px;
+        }
+        
+        .pdf-header .company-info {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 12px;
         }
         
         /* Remove email-specific elements */
@@ -429,26 +520,112 @@ class PDFService {
             margin: 15px 0;
         }
         
+        /* Professional Content Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            font-weight: 600;
+            padding: 16px 12px;
+            text-align: left;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        tr:hover {
+            background: #f1f5f9;
+        }
+        
+        /* Section Headers */
+        h2, h3 {
+            color: #1e40af;
+            font-weight: 600;
+            margin: 32px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        h2 {
+            font-size: 24px;
+        }
+        
+        h3 {
+            font-size: 18px;
+        }
+        
+        /* Stats Cards */
+        .metric-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
         /* Print optimization */
         @page {
-            margin: 1cm;
+            margin: 2cm 1.5cm;
+            @top-center {
+                content: "Rahalatek Financial Report";
+                font-size: 10px;
+                color: #64748b;
+            }
         }
         
         @media print {
             body {
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
+                print-color-adjust: exact;
             }
             
             .section {
                 page-break-inside: avoid;
+            }
+            
+            .pdf-header {
+                page-break-after: avoid;
             }
         }
     </style>
 </head>
 <body>
     <div class="pdf-header">
-        <h1>📊 Monthly Financial Summary</h1>
+        <h1>Monthly Financial Summary</h1>
         <div class="period">${period.monthName} ${period.year}</div>
         <div class="generated">Generated on ${new Date().toLocaleDateString('en-US', {
             weekday: 'long',
@@ -456,9 +633,13 @@ class PDFService {
             month: 'long',
             day: 'numeric'
         })}</div>
+        <div class="company-info">
+            <strong>Rahalatek</strong> • Financial Analytics Department<br>
+            Confidential Business Report
+        </div>
     </div>
     
-    ${htmlContent.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/, '').replace(/<\/body>[\s\S]*?<\/html>/, '')}
+    ${processedHtml.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/, '').replace(/<\/body>[\s\S]*?<\/html>/, '')}
 </body>
 </html>`;
         

@@ -283,19 +283,16 @@ mongoose.connect(process.env.MONGO_URI)
 
       scheduleUpcomingEventsEmails();
 
-      // Schedule monthly financial summary emails - last day of each month at 11 PM
+      // Schedule monthly financial summary emails - 1st of each month at 12:00 AM
       const scheduleMonthlyFinancialSummary = () => {
         const now = new Date();
         
-        // Calculate next end of month at 11 PM
+        // Calculate next 1st of month at 12:00 AM
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1); // First day of next month
-        const lastDayOfMonth = new Date(nextMonth.getTime() - 1); // Last day of current month
-        lastDayOfMonth.setHours(23, 0, 0, 0); // Set to 11 PM
+        nextMonth.setHours(0, 0, 0, 0); // Set to 12:00 AM (midnight)
         
         // If we've already passed this month's scheduled time, schedule for next month
-        const targetDate = lastDayOfMonth < now 
-          ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 0, 0, 0) // Last day of next month at 11 PM
-          : lastDayOfMonth;
+        const targetDate = nextMonth;
         
         const timeUntilSend = targetDate.getTime() - now.getTime();
         
@@ -307,7 +304,7 @@ mongoose.connect(process.env.MONGO_URI)
             // Schedule for next month
             const scheduleNextMonth = () => {
               const currentDate = new Date();
-              const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 0, 0, 0);
+              const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1, 0, 0, 0, 0); // 1st of next month at 12:00 AM
               const timeToNext = nextMonthDate.getTime() - currentDate.getTime();
               
               setTimeout(async () => {
