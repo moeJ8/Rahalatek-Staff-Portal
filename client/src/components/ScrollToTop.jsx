@@ -39,7 +39,7 @@ function ScrollToTop({ position = 'right', className = '' }) {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className={`fixed ${getPositionClasses()} z-50 p-3 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-lg hover:from-blue-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-300 transform hover:scale-110 ${className}`}
+          className={`hidden md:flex fixed ${getPositionClasses()} z-50 p-3 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 text-white shadow-lg hover:from-blue-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-300 transform hover:scale-110 items-center justify-center ${className}`}
           aria-label="Scroll to top"
         >
           <HiArrowUp className="h-5 w-5" />

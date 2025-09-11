@@ -5543,16 +5543,16 @@ export default function AttendancePanel() {
                             if (actualHours !== originalHours) {
                               return (
                                 <div className="flex items-center gap-2">
-                                  <span className="text-red-500 line-through text-xs">{originalHours}h</span>
-                                  <span className="text-green-600 dark:text-green-500">{actualHours}h</span>
+                                  <span className="text-red-500 line-through text-xs">{formatDecimalHours(originalHours)}</span>
+                                  <span className="text-green-600 dark:text-green-500">{formatDecimalHours(actualHours)}</span>
                                   <span className="text-xs text-gray-500">
-                                    (-{(originalHours - actualHours).toFixed(1)}h leave)
+                                    (-{formatDecimalHours(originalHours - actualHours)} leave)
                                   </span>
                                 </div>
                               );
                             }
                             
-                            return `${record.hoursWorked}h`;
+                            return formatDecimalHours(record.hoursWorked);
                           })()}
                         </div>
                       </div>
@@ -5869,18 +5869,18 @@ export default function AttendancePanel() {
                                   <div className="flex flex-col">
                                     <div className="flex items-center gap-1">
                                       <span className="font-bold text-xs text-red-500 line-through">
-                                        {hoursCalc.originalHours}h
+                                        {formatDecimalHours(hoursCalc.originalHours)}
                                       </span>
                                       <span className={`font-bold text-sm ${
                                         hoursCalc.actualHours >= data.totalRequiredHours 
                                           ? 'text-green-600 dark:text-green-500' 
                                           : 'text-red-600 dark:text-red-500'
                                       }`}>
-                                        {hoursCalc.actualHours}h
+                                        {formatDecimalHours(hoursCalc.actualHours)}
                                       </span>
                                     </div>
                                     <span className="text-xs text-gray-600 dark:text-slate-300">
-                                      (-{hoursCalc.deductedHours}h leave)
+                                      (-{formatDecimalHours(hoursCalc.deductedHours)} leave)
                                     </span>
                                   </div>
                                 ) : (
@@ -5889,7 +5889,7 @@ export default function AttendancePanel() {
                                       ? 'text-green-600 dark:text-green-500' 
                                       : 'text-red-600 dark:text-red-500'
                                   }`}>
-                                    {data.totalHoursWorked}h
+                                    {formatDecimalHours(data.totalHoursWorked)}
                                   </span>
                                 )}
                               </div>
@@ -6295,14 +6295,47 @@ export default function AttendancePanel() {
 
 // Edit Attendance Modal Component
 function AttendanceEditModal({ isOpen, onClose, attendanceData, onSubmit, isLoading }) {
+  // Helper function to convert datetime to time string (HH:MM format)
+  const formatTimeForInput = (datetime) => {
+    if (!datetime) return '';
+    const date = new Date(datetime);
+    return date.toTimeString().slice(0, 5); // Extract HH:MM
+  };
+
+  // Helper function to format date for display
+  const formatDateForDisplay = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
   const [formData, setFormData] = useState({
-    checkInTime: attendanceData?.checkInTime || '',
-    checkOutTime: attendanceData?.checkOutTime || '',
+    checkInTime: formatTimeForInput(attendanceData?.checkIn),
+    checkOutTime: formatTimeForInput(attendanceData?.checkOut),
     status: attendanceData?.status || 'checked-out',
     notes: attendanceData?.notes || '',
     adminNotes: attendanceData?.adminNotes || '',
-    date: attendanceData?.date || ''
+    date: attendanceData?.date ? new Date(attendanceData.date).toISOString().split('T')[0] : ''
   });
+
+  // Update form data when attendanceData changes
+  React.useEffect(() => {
+    if (attendanceData) {
+      setFormData({
+        checkInTime: formatTimeForInput(attendanceData.checkIn),
+        checkOutTime: formatTimeForInput(attendanceData.checkOut),
+        status: attendanceData.status || 'checked-out',
+        notes: attendanceData.notes || '',
+        adminNotes: attendanceData.adminNotes || '',
+        date: attendanceData.date ? new Date(attendanceData.date).toISOString().split('T')[0] : ''
+      });
+    }
+  }, [attendanceData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -6317,11 +6350,11 @@ function AttendanceEditModal({ isOpen, onClose, attendanceData, onSubmit, isLoad
     <CustomModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Edit Attendance - ${attendanceData?.userId?.username}`}
-      subtitle={formData.date}
+      title={`Edit Attendance - ${attendanceData?.userId?.username || attendanceData?.username || 'Employee'}`}
+      subtitle={formatDateForDisplay(attendanceData?.date)}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4">
           <TextInput
             type="time"
             label="Check In Time"
@@ -6367,7 +6400,7 @@ function AttendanceEditModal({ isOpen, onClose, attendanceData, onSubmit, isLoad
           placeholder="Reason for edit..."
         />
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end space-x-3 pt-3 md:pt-4 border-t border-gray-200 dark:border-gray-700">
           <CustomButton variant="gray" onClick={onClose} disabled={isLoading}>
             Cancel
           </CustomButton>

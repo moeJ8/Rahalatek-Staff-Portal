@@ -3398,6 +3398,221 @@ export default function AdminPanel() {
 
     return (
         <div className="w-full flex flex-col items-center">
+            {/* Mobile tabs - sticky at bottom for mobile only */}
+            {!loading && !isNotificationsOnlyRoute && (
+                <div className="md:hidden w-full fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+                    <div className="overflow-x-auto scrollbar-hide">
+                        <div className="flex space-x-1 px-4 py-2 min-w-max" role="tablist" aria-label="Admin Sections">
+                                <button
+                                id="tab-hotels-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'hotels' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('hotels')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'hotels'}
+                                    aria-controls="hotels-panel"
+                                >
+                                    Hotels
+                                </button>
+                                <button
+                                id="tab-tours-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'tours' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('tours')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'tours'}
+                                    aria-controls="tours-panel"
+                                >
+                                    Tours
+                                </button>
+                                <button
+                                id="tab-airports-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'airports' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('airports')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'airports'}
+                                    aria-controls="airports-panel"
+                                >
+                                    Airports
+                                </button>
+                                <button
+                                id="tab-offices-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'offices' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('offices')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'offices')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'offices'}
+                                    aria-controls="offices-panel"
+                                >
+                                    Offices
+                                </button>
+                                <button
+                                id="tab-office-vouchers-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'office-vouchers' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('office-vouchers')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'office-vouchers'}
+                                    aria-controls="office-vouchers-panel"
+                                >
+                                    Office Vouchers
+                                </button>
+                                <button
+                                id="tab-financials-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'financials' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('financials')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'financials'}
+                                    aria-controls="financials-panel"
+                                >
+                                    Financials
+                                </button>
+                                <button
+                                id="tab-debts-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'debts' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('debts')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'debts'}
+                                    aria-controls="debts-panel"
+                                >
+                                Debts
+                                </button>
+                                {(isAdmin || isAccountant) && (
+                                    <button
+                                    id="tab-salaries-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'salaries' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('salaries')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'salaries')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'salaries'}
+                                        aria-controls="salaries-panel"
+                                    >
+                                        Salaries & Bonuses
+                                    </button>
+                                )}
+                                {(isAdmin || isAccountant) && (
+                                    <button
+                                    id="tab-attendance-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'attendance' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('attendance')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'attendance')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'attendance'}
+                                        aria-controls="attendance-panel"
+                                    >
+                                        Attendance
+                                    </button>
+                                )}
+                                <button
+                                id="tab-users-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'users' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('users')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'users'}
+                                    aria-controls="users-panel"
+                                >
+                                    Users
+                                </button>
+                                {isAdmin && (
+                                    <button
+                                    id="tab-requests-mobile"
+                                    className={`relative flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'requests' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('requests')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'requests')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'requests'}
+                                        aria-controls="requests-panel"
+                                    >
+                                    <span className="flex items-center gap-2">
+                                            User Requests
+                                            {pendingRequests.length > 0 && (
+                                            <span className="min-w-[18px] h-[18px] text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
+                                                    {pendingRequests.length > 9 ? '9+' : pendingRequests.length}
+                                                </span>
+                                            )}
+                                    </span>
+                                    </button>
+                                )}
+                                <button
+                                id="tab-notifications-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'notifications' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('notifications')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'notifications'}
+                                    aria-controls="notifications-panel"
+                                >
+                                    Notifications
+                                </button>
+                        </div>
+                    </div>
+                            </div>
+                        )}
+                        
             {loading ? (
                 <div className="py-8">
                     <RahalatekLoader size="lg" />
@@ -3407,257 +3622,19 @@ export default function AdminPanel() {
                     {/* Modern layout with sidebar and content */}
                     <div className="flex flex-col md:flex-row w-full">
                         {/* Sidebar for desktop - Hide for notifications-only route */}
-                        {!isNotificationsOnlyRoute && (
+                            {!isNotificationsOnlyRoute && (
                             <div className="hidden md:block w-64 bg-white dark:bg-slate-900 shadow-lg rounded-lg mr-4 h-fit sticky top-4">
                             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
                             <nav className="p-2" role="tablist" aria-label="Admin Sections">
-                                <button
+                                    <button
                                     id="tab-hotels"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
                                         activeTab === 'hotels' 
                                             ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
                                             : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
                                     }`}
-                                    onClick={() => handleTabChange('hotels')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'hotels'}
-                                    aria-controls="hotels-panel"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                    Hotels
-                                </button>
-                                <button
-                                    id="tab-tours"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'tours' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('tours')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'tours'}
-                                    aria-controls="tours-panel"
-                                >
-                                    <FaMapMarkedAlt className="h-5 w-5 mr-3" />
-                                    Tours
-                                </button>
-                                <button
-                                    id="tab-airports"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'airports' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('airports')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'airports'}
-                                    aria-controls="airports-panel"
-                                >
-                                    <FaPlaneDeparture className="h-5 w-5 mr-3" />
-                                    Airports
-                                </button>
-                                <button
-                                    id="tab-offices"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'offices' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('offices')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'offices')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'offices'}
-                                    aria-controls="offices-panel"
-                                >
-                                    <FaBuilding className="h-5 w-5 mr-3" />
-                                    Offices
-                                </button>
-                                <button
-                                    id="tab-office-vouchers"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'office-vouchers' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('office-vouchers')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'office-vouchers'}
-                                    aria-controls="office-vouchers-panel"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Office Vouchers
-                                </button>
-                                <button
-                                    id="tab-financials"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'financials' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('financials')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'financials'}
-                                    aria-controls="financials-panel"
-                                >
-                                    <FaDollarSign className="h-5 w-5 mr-3" />
-                                    Financials
-                                </button>
-                                <button
-                                    id="tab-debts"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'debts' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('debts')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'debts'}
-                                    aria-controls="debts-panel"
-                                >
-                                    <FaFileInvoiceDollar className="h-5 w-5 mr-3" />
-                                    Debt Management
-                                </button>
-                                {(isAdmin || isAccountant) && (
-                                    <button
-                                        id="tab-salaries"
-                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                            activeTab === 'salaries' 
-                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                        }`}
-                                        onClick={() => handleTabChange('salaries')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'salaries')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'salaries'}
-                                        aria-controls="salaries-panel"
-                                    >
-                                        <FaCoins className="h-5 w-5 mr-3" />
-                                        Salaries & Bonuses
-                                    </button>
-                                )}
-                                
-                                {(isAdmin || isAccountant) && (
-                                    <button
-                                        id="tab-attendance"
-                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                            activeTab === 'attendance' 
-                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                        }`}
-                                        onClick={() => handleTabChange('attendance')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'attendance')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'attendance'}
-                                        aria-controls="attendance-panel"
-                                    >
-                                        <FaCalendarDay className="h-5 w-5 mr-3" />
-                                        Attendance
-                                    </button>
-                                )}
-                                
-                                {/* Show Users tab to both admins and accountants */}
-                                <button
-                                    id="tab-users"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'users' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('users')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'users'}
-                                    aria-controls="users-panel"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                    Users
-                                </button>
-                                
-                                {/* Only show User Requests tab to full admins */}
-                                {isAdmin && (
-                                    <button
-                                        id="tab-requests"
-                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                            activeTab === 'requests' 
-                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                        }`}
-                                        onClick={() => handleTabChange('requests')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'requests')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'requests'}
-                                        aria-controls="requests-panel"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
-                                        </svg>
-                                        <div className="flex items-center gap-2">
-                                            User Requests
-                                            {pendingRequests.length > 0 && (
-                                                <span className="min-w-[18px] h-[18px] text-xs font-bold text-red-600 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 rounded-full flex items-center justify-center">
-                                                    {pendingRequests.length > 9 ? '9+' : pendingRequests.length}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </button>
-                                )}
-                                
-                                {/* Show Notifications tab to all users */}
-                                <button
-                                    id="tab-notifications"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'notifications' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                    onClick={() => handleTabChange('notifications')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'notifications'}
-                                    aria-controls="notifications-panel"
-                                >
-                                    <FaBell className="h-5 w-5 mr-3" />
-                                    Notifications
-                                </button>
-                            </nav>
-                            </div>
-                        )}
-                        
-                        {/* Main content area */}
-                        <div className="flex-1">
-                            {/* Mobile tabs - only visible on small screens and not for notifications-only */}
-                            {!isNotificationsOnlyRoute && (
-                                <div className="md:hidden border-b border-gray-200 dark:border-gray-700 mb-4">
-                                <div className="flex flex-wrap justify-center gap-1" role="tablist" aria-label="Admin Sections">
-                                    <button
-                                        id="tab-hotels-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'hotels' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
                                         onClick={() => handleTabChange('hotels')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'hotels')}
                                         tabIndex={0}
@@ -3665,11 +3642,18 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'hotels'}
                                         aria-controls="hotels-panel"
                                     >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
                                         Hotels
                                     </button>
                                     <button
-                                        id="tab-tours-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'tours' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-tours"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'tours' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('tours')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'tours')}
                                         tabIndex={0}
@@ -3677,11 +3661,16 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'tours'}
                                         aria-controls="tours-panel"
                                     >
+                                    <FaMapMarkedAlt className="h-5 w-5 mr-3" />
                                         Tours
                                     </button>
                                     <button
-                                        id="tab-airports-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'airports' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-airports"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'airports' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('airports')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'airports')}
                                         tabIndex={0}
@@ -3689,11 +3678,16 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'airports'}
                                         aria-controls="airports-panel"
                                     >
+                                    <FaPlaneDeparture className="h-5 w-5 mr-3" />
                                         Airports
                                     </button>
                                     <button
-                                        id="tab-offices-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'offices' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-offices"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'offices' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('offices')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'offices')}
                                         tabIndex={0}
@@ -3701,11 +3695,16 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'offices'}
                                         aria-controls="offices-panel"
                                     >
+                                    <FaBuilding className="h-5 w-5 mr-3" />
                                         Offices
                                     </button>
                                     <button
-                                        id="tab-office-vouchers-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'office-vouchers' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-office-vouchers"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'office-vouchers' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('office-vouchers')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
                                         tabIndex={0}
@@ -3713,11 +3712,18 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'office-vouchers'}
                                         aria-controls="office-vouchers-panel"
                                     >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
                                         Office Vouchers
                                     </button>
                                     <button
-                                        id="tab-financials-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'financials' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-financials"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'financials' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('financials')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
                                         tabIndex={0}
@@ -3725,11 +3731,16 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'financials'}
                                         aria-controls="financials-panel"
                                     >
+                                    <FaDollarSign className="h-5 w-5 mr-3" />
                                         Financials
                                     </button>
                                     <button
-                                        id="tab-debts-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'debts' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-debts"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'debts' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('debts')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
                                         tabIndex={0}
@@ -3737,12 +3748,17 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'debts'}
                                         aria-controls="debts-panel"
                                     >
-                                        Debts
+                                    <FaFileInvoiceDollar className="h-5 w-5 mr-3" />
+                                    Debt Management
                                     </button>
                                     {(isAdmin || isAccountant) && (
                                         <button
-                                            id="tab-salaries-mobile"
-                                            className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'salaries' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        id="tab-salaries"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'salaries' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
                                             onClick={() => handleTabChange('salaries')}
                                             onKeyDown={(e) => handleTabKeyDown(e, 'salaries')}
                                             tabIndex={0}
@@ -3750,13 +3766,19 @@ export default function AdminPanel() {
                                             aria-selected={activeTab === 'salaries'}
                                             aria-controls="salaries-panel"
                                         >
+                                        <FaCoins className="h-5 w-5 mr-3" />
                                             Salaries & Bonuses
                                         </button>
                                     )}
+                                
                                     {(isAdmin || isAccountant) && (
                                         <button
-                                            id="tab-attendance-mobile"
-                                            className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'attendance' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        id="tab-attendance"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'attendance' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
                                             onClick={() => handleTabChange('attendance')}
                                             onKeyDown={(e) => handleTabKeyDown(e, 'attendance')}
                                             tabIndex={0}
@@ -3764,12 +3786,19 @@ export default function AdminPanel() {
                                             aria-selected={activeTab === 'attendance'}
                                             aria-controls="attendance-panel"
                                         >
+                                        <FaCalendarDay className="h-5 w-5 mr-3" />
                                             Attendance
                                         </button>
                                     )}
+                                
+                                {/* Show Users tab to both admins and accountants */}
                                     <button
-                                        id="tab-users-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'users' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-users"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'users' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('users')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'users')}
                                         tabIndex={0}
@@ -3777,12 +3806,21 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'users'}
                                         aria-controls="users-panel"
                                     >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
                                         Users
                                     </button>
+                                
+                                {/* Only show User Requests tab to full admins */}
                                     {isAdmin && (
                                         <button
-                                            id="tab-requests-mobile"
-                                            className={`relative py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'requests' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                        id="tab-requests"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'requests' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
                                             onClick={() => handleTabChange('requests')}
                                             onKeyDown={(e) => handleTabKeyDown(e, 'requests')}
                                             tabIndex={0}
@@ -3790,19 +3828,28 @@ export default function AdminPanel() {
                                             aria-selected={activeTab === 'requests'}
                                             aria-controls="requests-panel"
                                         >
-                                            <span className="flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
+                                        </svg>
+                                        <div className="flex items-center gap-2">
                                                 User Requests
                                                 {pendingRequests.length > 0 && (
                                                     <span className="min-w-[18px] h-[18px] text-xs font-bold text-red-600 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 rounded-full flex items-center justify-center">
                                                         {pendingRequests.length > 9 ? '9+' : pendingRequests.length}
                                                     </span>
                                                 )}
-                                            </span>
+                                        </div>
                                         </button>
                                     )}
+                                
+                                {/* Show Notifications tab to all users */}
                                     <button
-                                        id="tab-notifications-mobile"
-                                        className={`py-2 px-3 text-sm sm:text-base sm:px-4 ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 font-medium text-blue-600 dark:text-teal-400 dark:border-teal-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'}`}
+                                    id="tab-notifications"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'notifications' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
                                         onClick={() => handleTabChange('notifications')}
                                         onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
                                         tabIndex={0}
@@ -3810,11 +3857,15 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'notifications'}
                                         aria-controls="notifications-panel"
                                     >
+                                    <FaBell className="h-5 w-5 mr-3" />
                                         Notifications
                                     </button>
-                                </div>
+                            </nav>
                                 </div>
                             )}
+                        
+                        {/* Main content area */}
+                        <div className="flex-1">
                             
                             {/* Tab panels */}
                             {activeTab === 'hotels' && (
@@ -4789,7 +4840,7 @@ export default function AdminPanel() {
 
                             {activeTab === 'offices' && (
                                 <Card className="w-full dark:bg-slate-950" id="offices-panel" role="tabpanel" aria-labelledby="tab-offices">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Office</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-4 dark:text-white text-center">Add New Office</h2>
                                     
                                     <form onSubmit={handleOfficeSubmit} className="space-y-4">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4884,16 +4935,17 @@ export default function AdminPanel() {
                                         </div>
                                         
                                         {filteredOffices.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                                                 {filteredOffices.map(office => (
                                                     <Card key={office._id} className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow duration-200">
-                                                        <div className="p-4">
-                                                            <div className="flex">
+                                                        <div className="p-3 md:p-4">
+                                                            {/* Desktop Layout: flex with actions on right */}
+                                                            <div className="hidden md:flex">
                                                                 {/* Left side - Office info and contact details */}
                                                                 <div className="flex-1 pr-3">
                                                                     {/* Office name and location */}
                                                                     <div className="mb-3">
-                                                                        <h4 className="font-semibold text-lg text-slate-900 dark:text-white truncate" title={office.name}>
+                                                                        <h4 className="font-semibold text-base md:text-lg text-slate-900 dark:text-white truncate" title={office.name}>
                                                                             {office.name}
                                                                         </h4>
                                                                         <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
@@ -4906,7 +4958,7 @@ export default function AdminPanel() {
                                                                     </div>
                                                                     
                                                                     {/* Contact details */}
-                                                                    <div className="space-y-3 text-sm">
+                                                                    <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
                                                                         <div className="flex items-center">
                                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -4936,13 +4988,14 @@ export default function AdminPanel() {
                                                                     </div>
                                                                 </div>
                                                                 
-                                                                {/* Right side - Action buttons */}
-                                                                <div className="flex flex-col space-y-2">
+                                                                {/* Right side - Action buttons (Desktop) */}
+                                                                <div className="flex flex-col space-y-1 md:space-y-2">
                                                                     <CustomButton
                                                                         variant="green"
                                                                         size="xs"
                                                                         onClick={() => navigate(`/office/${encodeURIComponent(office.name)}`)}
                                                                         title="View office details"
+                                                                        className="text-xs"
                                                                         icon={({ className }) => (
                                                                             <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -4957,6 +5010,7 @@ export default function AdminPanel() {
                                                                         size="xs"
                                                                         onClick={() => navigate(`/edit-office/${office._id}`)}
                                                                         title="Edit office"
+                                                                        className="text-xs"
                                                                         icon={({ className }) => (
                                                                             <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -4970,6 +5024,104 @@ export default function AdminPanel() {
                                                                         size="xs"
                                                                         onClick={() => handleDeleteOffice(office._id)}
                                                                         title="Delete office"
+                                                                        className="text-xs"
+                                                                        icon={({ className }) => (
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                            </svg>
+                                                                        )}
+                                                                    >
+                                                                        Delete
+                                                                    </CustomButton>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Mobile Layout: stacked with actions at bottom */}
+                                                            <div className="md:hidden">
+                                                                {/* Office info and contact details */}
+                                                                <div className="mb-3">
+                                                                    {/* Office name and location */}
+                                                                    <div className="mb-3">
+                                                                        <h4 className="font-semibold text-base md:text-lg text-slate-900 dark:text-white truncate" title={office.name}>
+                                                                            {office.name}
+                                                                        </h4>
+                                                                        <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                            </svg>
+                                                                            {office.location}
+                                                                        </p>
+                                                                    </div>
+                                                                    
+                                                                    {/* Contact details */}
+                                                                    <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
+                                                                        <div className="flex items-center">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                            </svg>
+                                                                            <span className="text-slate-700 dark:text-slate-300 truncate" title={office.email}>
+                                                                                {office.email}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex items-center">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                            </svg>
+                                                                            <span className="text-slate-700 dark:text-slate-300">
+                                                                                {office.phoneNumber}
+                                                                            </span>
+                                                                        </div>
+                                                                        {office.description && (
+                                                                            <div className="flex items-start">
+                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                                </svg>
+                                                                                <span className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                                                                                    {office.description}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Action buttons at bottom (Mobile) */}
+                                                                <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                                    <CustomButton
+                                                                        variant="green"
+                                                                        size="xs"
+                                                                        onClick={() => navigate(`/office/${encodeURIComponent(office.name)}`)}
+                                                                        title="View office details"
+                                                                        className="text-xs flex-1"
+                                                                        icon={({ className }) => (
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                            </svg>
+                                                                        )}
+                                                                    >
+                                                                        View
+                                                                    </CustomButton>
+                                                                    <CustomButton
+                                                                        variant="blue"
+                                                                        size="xs"
+                                                                        onClick={() => navigate(`/edit-office/${office._id}`)}
+                                                                        title="Edit office"
+                                                                        className="text-xs flex-1"
+                                                                        icon={({ className }) => (
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                            </svg>
+                                                                        )}
+                                                                    >
+                                                                        Edit
+                                                                    </CustomButton>
+                                                                    <CustomButton
+                                                                        variant="red"
+                                                                        size="xs"
+                                                                        onClick={() => handleDeleteOffice(office._id)}
+                                                                        title="Delete office"
+                                                                        className="text-xs flex-1"
                                                                         icon={({ className }) => (
                                                                             <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -5014,7 +5166,7 @@ export default function AdminPanel() {
 
                             {activeTab === 'office-vouchers' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="office-vouchers-panel" role="tabpanel" aria-labelledby="tab-office-vouchers">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Vouchers by Office</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-4 dark:text-white text-center">Vouchers by Office</h2>
                                     
                                     <div className="mb-6">
                                         <div className="mb-2 block">
@@ -5044,8 +5196,10 @@ export default function AdminPanel() {
                                                 </div>
                                             ) : officeVouchers.length > 0 ? (
                                                 <>
-                                                    <CustomScrollbar maxHeight="70vh">
-                                                        <CustomTable
+                                                    {/* Desktop Table View */}
+                                                    <div className="hidden md:block">
+                                                        <CustomScrollbar maxHeight="70vh">
+                                                            <CustomTable
                                                             headers={[
                                                                 { label: "Voucher #", className: "" },
                                                                 { label: "Client Name", className: "" },
@@ -5251,6 +5405,177 @@ export default function AdminPanel() {
                                                             </div>
                                                         </div>
                                                     )}
+                                                    </div>
+
+                                                    {/* Mobile Cards View - same style as AttendancePanel */}
+                                                    <div className="md:hidden space-y-5">
+                                                        {officeVouchers.map((voucher, index) => (
+                                                            <div 
+                                                                key={voucher._id} 
+                                                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                                style={{
+                                                                    animationDelay: `${index * 100}ms`
+                                                                }}
+                                                            >
+                                                                <div className="space-y-3">
+                                                                    {/* Header with Voucher Number and Status */}
+                                                                    <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                                        <div>
+                                                                            <button
+                                                                                onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                                                className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                                title="View voucher details"
+                                                                            >
+                                                                                #{voucher.voucherNumber}
+                                                                            </button>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">
+                                                                                {voucher.clientName}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <StatusControls
+                                                                                currentStatus={voucher.status || 'await'}
+                                                                                onStatusUpdate={(newStatus) => handleVoucherStatusUpdate(voucher._id, newStatus)}
+                                                                                canEdit={isAdmin || isAccountant}
+                                                                                arrivalDate={voucher.arrivalDate}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Voucher Details */}
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Hotel</div>
+                                                                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                                                {voucher.hotels && voucher.hotels.length > 0 
+                                                                                    ? voucher.hotels.map(hotel => hotel.hotelName).filter(Boolean).join(', ') || 'N/A'
+                                                                                    : 'N/A'}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Total Amount</div>
+                                                                            <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                                                                {getCurrencySymbol(voucher.currency)}{voucher.totalAmount}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Pax</div>
+                                                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                {voucher.hotels && voucher.hotels.length > 0 
+                                                                                    ? voucher.hotels.reduce((total, hotel) => total + (hotel.pax || 0), 0) || 'N/A'
+                                                                                    : 'N/A'}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Advanced Payment</div>
+                                                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                {voucher.advancedPayment && voucher.advancedAmount 
+                                                                                    ? `${getCurrencySymbol(voucher.currency)}${voucher.advancedAmount}` 
+                                                                                    : 'N/A'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Dates */}
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Arrival</div>
+                                                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                {formatDate(voucher.arrivalDate)}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Departure</div>
+                                                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                                {formatDate(voucher.departureDate)}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Payment Status and Controls */}
+                                                                    <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                                        <div className="flex justify-between items-center">
+                                                                            <div>
+                                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Payment Status</div>
+                                                                                {(() => {
+                                                                                    const hasApprovedPayments = voucher.officePayments && voucher.officePayments.some(payment => payment.status === 'approved');
+                                                                                    const hasPendingPayments = voucher.officePayments && voucher.officePayments.some(payment => payment.status === 'pending');
+                                                                                    const hasPayments = voucher.payments && Object.values(voucher.payments).some(payment => payment.officeName === selectedOfficeForVouchers && payment.price > 0);
+                                                                                    
+                                                                                    if (hasApprovedPayments) {
+                                                                                        return (
+                                                                                            <span className="inline-flex items-center justify-center rounded-lg bg-green-500 text-white border border-green-600 shadow-md text-[10px] px-1.5 py-0.5 font-semibold">
+                                                                                                Approved
+                                                                                            </span>
+                                                                                        );
+                                                                                    } else if (hasPendingPayments) {
+                                                                                        return (
+                                                                                            <span className="inline-flex items-center justify-center rounded-lg bg-yellow-500 text-white border border-yellow-600 shadow-md text-[10px] px-1.5 py-0.5 font-semibold">
+                                                                                                Pending
+                                                                                            </span>
+                                                                                        );
+                                                                                    } else if (hasPayments) {
+                                                                                        return (
+                                                                                            <span className="inline-flex items-center justify-center rounded-lg bg-gray-500 text-white border border-gray-600 shadow-md text-[10px] px-1.5 py-0.5 font-semibold">
+                                                                                                No Payment
+                                                                                            </span>
+                                                                                        );
+                                                                                    } else {
+                                                                                        return (
+                                                                                            <span className="inline-flex items-center justify-center rounded-lg bg-gray-400 text-white border border-gray-500 shadow-md text-[10px] px-1.5 py-0.5 font-semibold">
+                                                                                                N/A
+                                                                                            </span>
+                                                                                        );
+                                                                                    }
+                                                                                })()}
+                                                                            </div>
+                                                                            <div className="flex gap-2">
+                                                                                <CustomButton
+                                                                                    variant="blue"
+                                                                                    size="xs"
+                                                                                    onClick={() => navigate(`/vouchers/${voucher._id}`)}
+                                                                                    title="View voucher details"
+                                                                                    className="text-xs"
+                                                                                >
+                                                                                    View
+                                                                                </CustomButton>
+                                                                                {canManageVoucher(voucher) && (
+                                                                                    <CustomButton
+                                                                                        variant="purple"
+                                                                                        size="xs"
+                                                                                        onClick={() => navigate(`/edit-voucher/${voucher._id}`)}
+                                                                                        title="Edit voucher"
+                                                                                        className="text-xs"
+                                                                                    >
+                                                                                        Edit
+                                                                                    </CustomButton>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        
+                                                                        {/* Payment Date Controls */}
+                                                                        <div className="mt-2">
+                                                                            <PaymentDateControls
+                                                                                currentPaymentDate={voucher.paymentDate}
+                                                                                onPaymentDateUpdate={(paymentDate) => handlePaymentDateUpdate(voucher._id, paymentDate)}
+                                                                                canEdit={isAdmin || isAccountant}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Note if available */}
+                                                                    {voucher.note && (
+                                                                        <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Note</div>
+                                                                            <div className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                                                                                {voucher.note}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </>
                                             ) : (
                                                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -5280,8 +5605,8 @@ export default function AdminPanel() {
 
                             {activeTab === 'financials' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="financials-panel" role="tabpanel" aria-labelledby="tab-financials">
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                        <h2 className="text-2xl font-bold dark:text-white flex items-center">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 md:mb-6 gap-4">
+                                        <h2 className="text-xl md:text-2xl font-bold dark:text-white flex items-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                                             </svg>
@@ -5314,50 +5639,50 @@ export default function AdminPanel() {
                                     </div>
                                     
                                     {/* Overview Cards */}
-                                    <div className={`grid grid-cols-1 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 mb-6`}>
+                                    <div className={`grid grid-cols-2 sm:grid-cols-2 ${financialFilters.viewType === 'clients' ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-2 md:gap-4 mb-2 md:mb-6`}>
                                         {financialFilters.viewType === 'providers' ? (
                                             <>
                                                 {/* Suppliers Cost */}
-                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+                                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-blue-200 dark:border-blue-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Suppliers Cost</p>
-                                                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium text-blue-600 dark:text-blue-400 leading-tight">Suppliers Cost</p>
+                                                            <p className="text-sm md:text-2xl font-bold text-blue-900 dark:text-blue-100 leading-tight mt-1">
                                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center">
-                                                            <FaDollarSign className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-blue-500 dark:bg-blue-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                            <FaDollarSign className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Active Suppliers */}
-                                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-xl border border-green-200 dark:border-green-700">
+                                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-green-200 dark:border-green-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-green-600 dark:text-green-400">Active Suppliers</p>
-                                                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium text-green-600 dark:text-green-400 leading-tight">Active Suppliers</p>
+                                                            <p className="text-sm md:text-2xl font-bold text-green-900 dark:text-green-100 leading-tight mt-1">
                                                                 {[...new Set(filteredFinancialData.map(item => item.officeName))].length}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-green-500 dark:bg-green-600 rounded-lg flex items-center justify-center">
-                                                            <FaBuilding className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500 dark:bg-green-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                            <FaBuilding className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Total Vouchers */}
-                                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-xl border border-purple-200 dark:border-purple-700">
+                                                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-purple-200 dark:border-purple-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Total Vouchers</p>
-                                                            <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium text-purple-600 dark:text-purple-400 leading-tight">Total Vouchers</p>
+                                                            <p className="text-sm md:text-2xl font-bold text-purple-900 dark:text-purple-100 leading-tight mt-1">
                                                                 {financialTotals.voucherCount.toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center">
-                                                            <FaFileInvoiceDollar className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-purple-500 dark:bg-purple-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                            <FaFileInvoiceDollar className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5365,19 +5690,19 @@ export default function AdminPanel() {
 
 
                                                 {/* Profit */}
-                                                <div className={`bg-gradient-to-br p-6 rounded-xl border ${
+                                                <div className={`bg-gradient-to-br p-3 md:p-6 rounded-lg md:rounded-xl border ${
                                                     (totalClientRevenue - totalSupplierRevenue) >= 0
                                                         ? 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
                                                         : 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
                                                 }`}>
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className={`text-sm font-medium ${
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className={`text-xs md:text-sm font-medium leading-tight ${
                                                                 (totalClientRevenue - totalSupplierRevenue) >= 0
                                                                     ? 'text-green-600 dark:text-green-400'
                                                                     : 'text-red-600 dark:text-red-400'
                                                             }`}>Profit</p>
-                                                            <p className={`text-2xl font-bold ${
+                                                            <p className={`text-sm md:text-2xl font-bold leading-tight mt-1 ${
                                                                 (totalClientRevenue - totalSupplierRevenue) >= 0 
                                                                     ? 'text-green-900 dark:text-green-100' 
                                                                     : 'text-red-900 dark:text-red-100'
@@ -5385,12 +5710,12 @@ export default function AdminPanel() {
                                                                 {getCurrencySymbol(financialFilters.currency)}{(totalClientRevenue - totalSupplierRevenue).toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                                        <div className={`w-8 h-8 md:w-12 md:h-12 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0 ${
                                                             (totalClientRevenue - totalSupplierRevenue) >= 0
                                                                 ? 'bg-green-500 dark:bg-green-600'
                                                                 : 'bg-red-500 dark:bg-red-600'
                                                         }`}>
-                                                            <FaChartLine className="w-6 h-6 text-white" />
+                                                            <FaChartLine className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5398,61 +5723,61 @@ export default function AdminPanel() {
                                         ) : (
                                             <>
                                                 {/* Total Client Revenue */}
-                                                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 p-6 rounded-xl border border-cyan-200 dark:border-cyan-700">
+                                                <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-900/20 dark:to-cyan-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-cyan-200 dark:border-cyan-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-cyan-600 dark:text-cyan-400">Total Revenue</p>
-                                                            <p className="text-2xl font-bold text-cyan-900 dark:text-cyan-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium leading-tight text-cyan-600 dark:text-cyan-400">Total Revenue</p>
+                                                            <p className="text-sm md:text-2xl font-bold leading-tight mt-1 text-cyan-900 dark:text-cyan-100">
                                                                 {getCurrencySymbol(financialFilters.currency)}{clientOfficeData.reduce((sum, office) => sum + office.totalAmount, 0).toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-cyan-500 dark:bg-cyan-600 rounded-lg flex items-center justify-center">
-                                                            <FaDollarSign className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-cyan-500 dark:bg-cyan-600 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <FaDollarSign className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Unique Clients */}
-                                                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 p-6 rounded-xl border border-indigo-200 dark:border-indigo-700">
+                                                <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-indigo-200 dark:border-indigo-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Clients</p>
-                                                            <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium leading-tight text-indigo-600 dark:text-indigo-400">Clients</p>
+                                                            <p className="text-sm md:text-2xl font-bold leading-tight mt-1 text-indigo-900 dark:text-indigo-100">
                                                                 {[...new Set(clientOfficeData.map(office => office.officeName))].length}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-indigo-500 dark:bg-indigo-600 rounded-lg flex items-center justify-center">
-                                                            <FaBuilding className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-indigo-500 dark:bg-indigo-600 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <FaBuilding className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Direct Clients Count */}
-                                                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 p-6 rounded-xl border border-rose-200 dark:border-rose-700">
+                                                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-rose-200 dark:border-rose-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-rose-600 dark:text-rose-400">Direct Clients</p>
-                                                            <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium leading-tight text-rose-600 dark:text-rose-400">Direct Clients</p>
+                                                            <p className="text-sm md:text-2xl font-bold leading-tight mt-1 text-rose-900 dark:text-rose-100">
                                                                 {[...new Set(clientOfficeData.filter(office => office.isDirectClient).map(office => office.officeName))].length}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-rose-500 dark:bg-rose-600 rounded-lg flex items-center justify-center">
-                                                            <FaUser className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-rose-500 dark:bg-rose-600 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <FaUser className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Total Client Vouchers */}
-                                                <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 p-6 rounded-xl border border-teal-200 dark:border-teal-700">
+                                                <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 p-3 md:p-6 rounded-lg md:rounded-xl border border-teal-200 dark:border-teal-700">
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-teal-600 dark:text-teal-400">Total Vouchers</p>
-                                                            <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className="text-xs md:text-sm font-medium leading-tight text-teal-600 dark:text-teal-400">Total Vouchers</p>
+                                                            <p className="text-sm md:text-2xl font-bold leading-tight mt-1 text-teal-900 dark:text-teal-100">
                                                                 {clientOfficeData.reduce((sum, office) => sum + office.voucherCount, 0).toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-12 h-12 bg-teal-500 dark:bg-teal-600 rounded-lg flex items-center justify-center">
-                                                            <FaFileInvoiceDollar className="w-6 h-6 text-white" />
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-teal-500 dark:bg-teal-600 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
+                                                            <FaFileInvoiceDollar className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5460,19 +5785,19 @@ export default function AdminPanel() {
 
 
                                                 {/* Profit */}
-                                                <div className={`bg-gradient-to-br p-6 rounded-xl border ${
+                                                <div className={`bg-gradient-to-br p-3 md:p-6 rounded-lg md:rounded-xl border ${
                                                     (totalClientRevenue - totalSupplierRevenue) >= 0
                                                         ? 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
                                                         : 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
                                                 }`}>
                                                     <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <p className={`text-sm font-medium ${
+                                                        <div className="min-w-0 flex-1 mr-2">
+                                                            <p className={`text-xs md:text-sm font-medium leading-tight ${
                                                                 (totalClientRevenue - totalSupplierRevenue) >= 0
                                                                     ? 'text-green-600 dark:text-green-400'
                                                                     : 'text-red-600 dark:text-red-400'
                                                             }`}>Profit</p>
-                                                            <p className={`text-2xl font-bold ${
+                                                            <p className={`text-sm md:text-2xl font-bold leading-tight mt-1 ${
                                                                 (totalClientRevenue - totalSupplierRevenue) >= 0 
                                                                     ? 'text-green-900 dark:text-green-100' 
                                                                     : 'text-red-900 dark:text-red-100'
@@ -5480,12 +5805,12 @@ export default function AdminPanel() {
                                                                 {getCurrencySymbol(financialFilters.currency)}{(totalClientRevenue - totalSupplierRevenue).toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                                        <div className={`w-8 h-8 md:w-12 md:h-12 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 ${
                                                             (totalClientRevenue - totalSupplierRevenue) >= 0
                                                                 ? 'bg-green-500 dark:bg-green-600'
                                                                 : 'bg-red-500 dark:bg-red-600'
                                                         }`}>
-                                                            <FaChartLine className="w-6 h-6 text-white" />
+                                                            <FaChartLine className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -5494,13 +5819,28 @@ export default function AdminPanel() {
                                     </div>
                                     
                                     {/* Filters */}
-                                    <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-6 rounded-lg mb-6">
+                                    <div className="bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-gray-700 p-6 rounded-lg mb-2 md:mb-6">
                                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                                             <div>
                                                 <Label htmlFor="view-type-filter" value="View Type" className="mb-2" />
-                                                <SearchableSelect
+                                                {/* Mobile: CustomSelect */}
+                                                <div className="md:hidden">
+                                                    <CustomSelect
                                                     id="view-type-filter"
+                                                        options={[
+                                                            { value: 'providers', label: 'Suppliers' },
+                                                            { value: 'clients', label: 'Clients' }
+                                                        ]}
+                                                        value={financialFilters.viewType}
+                                                        onChange={(value) => handleFinancialFilterChange('viewType', value)}
+                                                        placeholder="Select view type..."
+                                                    />
+                                                </div>
+                                                {/* Desktop: SearchableSelect */}
+                                                <div className="hidden md:block">
+                                                    <SearchableSelect
+                                                        id="view-type-filter-desktop"
                                                     options={[
                                                         { value: 'providers', label: 'Suppliers' },
                                                         { value: 'clients', label: 'Clients' }
@@ -5514,11 +5854,28 @@ export default function AdminPanel() {
                                                     }}
                                                     placeholder="Select view type..."
                                                 />
+                                                </div>
                                             </div>
                                             <div>
                                                 <Label htmlFor="currency-filter" value="Currency" className="mb-2" />
-                                                <SearchableSelect
+                                                {/* Mobile: CustomSelect */}
+                                                <div className="md:hidden">
+                                                    <CustomSelect
                                                     id="currency-filter"
+                                                        options={[
+                                                            { value: 'USD', label: 'USD ($)' },
+                                                            { value: 'EUR', label: 'EUR (€)' },
+                                                            { value: 'TRY', label: 'TRY (₺)' }
+                                                        ]}
+                                                        value={financialFilters.currency}
+                                                        onChange={(value) => handleFinancialFilterChange('currency', value)}
+                                                        placeholder="Select currency..."
+                                                    />
+                                                </div>
+                                                {/* Desktop: SearchableSelect */}
+                                                <div className="hidden md:block">
+                                                    <SearchableSelect
+                                                        id="currency-filter-desktop"
                                                     options={[
                                                         { value: 'USD', label: 'USD ($)' },
                                                         { value: 'EUR', label: 'EUR (€)' },
@@ -5533,11 +5890,59 @@ export default function AdminPanel() {
                                                     }}
                                                     placeholder="Search or select currency..."
                                                 />
+                                                </div>
                                             </div>
                                             <div>
                                                 <Label htmlFor="month-filter" value="Month" className="mb-2" />
-                                                <SearchableSelect
+                                                {/* Mobile: CustomSelect */}
+                                                <div className="md:hidden">
+                                                    <CustomSelect
                                                     id="month-filter"
+                                                        options={(() => {
+                                                            // Get months that have data for the selected year
+                                                            const selectedYear = parseInt(financialFilters.year);
+                                                            const dataMonths = [...new Set(
+                                                                financialData
+                                                                    .filter(item => item.year === selectedYear)
+                                                                    .map(item => {
+                                                                        // Extract month from "YYYY-MM" format
+                                                                        const monthPart = item.month.split('-')[1];
+                                                                        return parseInt(monthPart);
+                                                                    })
+                                                            )];
+                                                            
+                                                            // If viewing current year, always include current month
+                                                            const currentYear = new Date().getFullYear();
+                                                            const currentMonth = new Date().getMonth() + 1;
+                                                            let allMonths = dataMonths;
+                                                            
+                                                            if (selectedYear === currentYear) {
+                                                                allMonths = [...new Set([currentMonth, ...dataMonths])];
+                                                            }
+                                                            
+                                                            // Create options with "All Months" first, then sorted months
+                                                            const monthOptions = [{ value: '', label: 'All Months' }];
+                                                            
+                                                            allMonths
+                                                                .sort((a, b) => a - b)
+                                                                .forEach(month => {
+                                                                    monthOptions.push({
+                                                                        value: month.toString(),
+                                                                        label: new Date(2024, month - 1).toLocaleString('default', { month: 'long' })
+                                                                    });
+                                                                });
+                                                            
+                                                            return monthOptions;
+                                                        })()}
+                                                        value={financialFilters.month}
+                                                        onChange={(value) => handleFinancialFilterChange('month', value)}
+                                                        placeholder="Select month..."
+                                                    />
+                                                </div>
+                                                {/* Desktop: SearchableSelect */}
+                                                <div className="hidden md:block">
+                                                    <SearchableSelect
+                                                        id="month-filter-desktop"
                                                     options={(() => {
                                                         // Get months that have data for the selected year
                                                         const selectedYear = parseInt(financialFilters.year);
@@ -5583,11 +5988,39 @@ export default function AdminPanel() {
                                                     }}
                                                     placeholder="Select month..."
                                                 />
+                                                </div>
                                             </div>
                                             <div>
                                                 <Label htmlFor="year-filter" value="Year" className="mb-2" />
-                                                <SearchableSelect
+                                                {/* Mobile: CustomSelect */}
+                                                <div className="md:hidden">
+                                                    <CustomSelect
                                                     id="year-filter"
+                                                        options={(() => {
+                                                            // Get unique years from financial data
+                                                            const dataYears = [...new Set(financialData.map(item => item.year))];
+                                                            
+                                                            // Always include current year even if no data exists
+                                                            const currentYear = new Date().getFullYear();
+                                                            const allYears = [...new Set([currentYear, ...dataYears])];
+                                                            
+                                                            // Sort in descending order (newest first) and create options
+                                                            return allYears
+                                                                .sort((a, b) => b - a)
+                                                                .map(year => ({
+                                                                    value: year.toString(),
+                                                                    label: year.toString()
+                                                                }));
+                                                        })()}
+                                                        value={financialFilters.year}
+                                                        onChange={(value) => handleFinancialFilterChange('year', value)}
+                                                        placeholder="Select year..."
+                                                    />
+                                                </div>
+                                                {/* Desktop: SearchableSelect */}
+                                                <div className="hidden md:block">
+                                                    <SearchableSelect
+                                                        id="year-filter-desktop"
                                                     options={(() => {
                                                         // Get unique years from financial data
                                                         const dataYears = [...new Set(financialData.map(item => item.year))];
@@ -5614,7 +6047,8 @@ export default function AdminPanel() {
                                                     placeholder="Select year..."
                                                 />
                                             </div>
-                                            <div className="flex items-end">
+                                            </div>
+                                            <div className="flex items-end col-span-2 md:col-span-1">
                                                 <CustomButton
                                                     variant="red"
                                                     onClick={clearFinancialFilters}
@@ -5626,7 +6060,7 @@ export default function AdminPanel() {
                                                     Clear Filters
                                                 </CustomButton>
                                             </div>
-                                            <div className="flex items-end">
+                                            <div className="flex items-end col-span-2 md:col-span-1">
                                                 <CustomButton
                                                     variant="blue"
                                                     onClick={fetchFinancialData}
@@ -5641,7 +6075,7 @@ export default function AdminPanel() {
                                     </div>
 
                                     {/* Search Bar and Filters */}
-                                    <div className="mb-6 -ml-2">
+                                    <div className="mb-2 md:mb-6 -ml-2">
                                         <div className="flex gap-4 items-center">
                                             <div className="w-80">
                                                 <Search
@@ -5698,6 +6132,9 @@ export default function AdminPanel() {
                             <RahalatekLoader size="lg" />
                         </div>
                                         ) : (
+                        <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block">
                         <CustomScrollbar maxHeight="400px">
                             {financialFilters.viewType === 'providers' ? (
                                 <CustomTable
@@ -5807,6 +6244,142 @@ export default function AdminPanel() {
                                 />
                             )}
                         </CustomScrollbar>
+                        </div>
+
+                        {/* Mobile Cards View - same style as AttendancePanel */}
+                        <div className="md:hidden">
+                            {financialFilters.viewType === 'providers' ? (
+                                <div className="sm:hidden space-y-5">
+                                    {filteredFinancialData.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                            <p className="text-gray-500 dark:text-gray-400 font-medium">No financial data found</p>
+                                            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">No financial data found for the selected period</p>
+                                        </div>
+                                    ) : (
+                                        filteredFinancialData.map((item, index) => (
+                                            <div 
+                                                key={index} 
+                                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                style={{
+                                                    animationDelay: `${index * 100}ms`
+                                                }}
+                                            >
+                                                <div className="space-y-3">
+                                                    {/* Header with Office and Total */}
+                                                    <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                        <div>
+                                                            <Link 
+                                                                to={`/office/${encodeURIComponent(item.officeName)}`}
+                                                                className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                            >
+                                                                {item.officeName}
+                                                            </Link>
+                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">
+                                                                {item.monthName} {item.year}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.total.toFixed(2)}
+                                                            </div>
+                                                            <div className="text-xs text-gray-600 dark:text-slate-300">
+                                                                {item.voucherCount} vouchers
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Service Breakdown */}
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">Hotels</div>
+                                                            <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.hotels.toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-green-600 dark:text-green-400 mb-1">Transfers</div>
+                                                            <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.transfers.toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-purple-600 dark:text-purple-400 mb-1">Trips</div>
+                                                            <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.trips.toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-orange-600 dark:text-orange-400 mb-1">Flights</div>
+                                                            <div className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                                                                {getCurrencySymbol(financialFilters.currency)}{item.flights.toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="sm:hidden space-y-5">
+                                    {clientOfficeData.length === 0 ? (
+                                        <div className="text-center py-12">
+                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <p className="text-gray-500 dark:text-gray-400 font-medium">No clients found</p>
+                                        </div>
+                                    ) : (
+                                        clientOfficeData.map((office, index) => (
+                                            <div 
+                                                key={index} 
+                                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                style={{
+                                                    animationDelay: `${index * 100}ms`
+                                                }}
+                                            >
+                                                <div className="space-y-3">
+                                                    {/* Header with Client and Total */}
+                                                    <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <Link 
+                                                                    to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
+                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                >
+                                                                    {office.officeName}
+                                                                </Link>
+                                                                {office.isDirectClient && (
+                                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
+                                                                        <FaUser className="w-2 h-2 mr-1" />
+                                                                        Direct
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">
+                                                                {office.monthName} {office.year}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                                                {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
+                                                            </div>
+                                                            <div className="text-xs text-gray-600 dark:text-slate-300">
+                                                                {office.voucherCount} vouchers
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        </>
                     )}
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
@@ -5828,10 +6401,10 @@ export default function AdminPanel() {
 
                             {activeTab === 'debts' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="debts-panel" role="tabpanel" aria-labelledby="tab-debts">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Debt Management</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">Debt Management</h2>
                                     
                                     {/* Inner Tab Navigation */}
-                                    <div className="mb-6">
+                                    <div className="mb-1">
                                         <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm">
                                             <button 
                                                 onClick={() => setDebtInnerTab('active')}
@@ -5864,7 +6437,7 @@ export default function AdminPanel() {
                                     {debtInnerTab === 'active' && (
                                         <div>
                                             {/* Add Debt Button - Only show for active debts */}
-                                            <div className="flex justify-end mb-6">
+                                            <div className="flex justify-end mb-3">
                                                 <CustomButton
                                                     variant="green"
                                                     onClick={() => openDebtModal()}
@@ -5946,7 +6519,8 @@ export default function AdminPanel() {
                                         </div>
                                     </div>
 
-                                    {/* Debt Table */}
+                                    {/* Desktop Table View */}
+                                    <div className="hidden md:block">
                                                         {debtLoading ? (
                         <div className="py-8">
                             <RahalatekLoader size="lg" />
@@ -6072,6 +6646,133 @@ export default function AdminPanel() {
                                                                         )}
                         />
                     )}
+                                    </div>
+
+                                    {/* Mobile Cards View - Active Debts */}
+                                    <div className="md:hidden">
+                                        {debtLoading ? (
+                                            <div className="py-8">
+                                                <RahalatekLoader size="lg" />
+                                            </div>
+                                        ) : (
+                                            <div className="sm:hidden space-y-5">
+                                                {debts.filter(debt => debt.status === 'OPEN').length === 0 ? (
+                                                    <div className="text-center py-12">
+                                                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                        <p className="text-gray-500 dark:text-gray-400 font-medium">No debts found</p>
+                                                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Create debt records to track financial obligations with offices.</p>
+                                                    </div>
+                                                ) : (
+                                                    debts.filter(debt => debt.status === 'OPEN').map((debt, index) => (
+                                                        <div 
+                                                            key={debt._id} 
+                                                            className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                            style={{
+                                                                animationDelay: `${index * 100}ms`
+                                                            }}
+                                                        >
+                                                            <div className="space-y-3">
+                                                                {/* Header with Office and Amount */}
+                                                                <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                                    <div>
+                                                                        <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                                            {debt.officeName}
+                                                                        </div>
+                                                                        <div className="flex items-center space-x-2 mt-1">
+                                                                            <span 
+                                                                                className={`
+                                                                                    inline-flex items-center justify-center rounded-lg 
+                                                                                    ${debt.type === 'OWED_TO_OFFICE' 
+                                                                                        ? 'bg-red-500 text-white border border-red-600 shadow-md' 
+                                                                                        : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                                    }
+                                                                                    text-[10px] px-1.5 py-0.5 font-semibold
+                                                                                `}
+                                                                            >
+                                                                                {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <div className={`text-lg font-bold ${
+                                                                            debt.type === 'OWED_TO_OFFICE' 
+                                                                                ? 'text-red-600 dark:text-red-400' 
+                                                                                : 'text-green-600 dark:text-green-400'
+                                                                        }`}>
+                                                                            {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Description and Dates */}
+                                                                <div className="grid grid-cols-1 gap-3">
+                                                                    <div>
+                                                                        <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Description</div>
+                                                                        <div className="text-sm text-gray-900 dark:text-white">
+                                                                            {debt.description || 'N/A'}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Due Date</div>
+                                                                            <div className="text-sm text-gray-900 dark:text-white">
+                                                                                {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Created By</div>
+                                                                            <div className="text-sm text-gray-900 dark:text-white">
+                                                                                {debt.createdBy?.username || 'Unknown'}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Action Buttons */}
+                                                                <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                                                    {debt.status === 'OPEN' && (
+                                                                        <>
+                                                                            <CustomButton
+                                                                                variant="purple"
+                                                                                size="xs"
+                                                                                onClick={() => openDebtModal(debt)}
+                                                                                title="Edit debt"
+                                                                                className="text-xs"
+                                                                            >
+                                                                                Edit
+                                                                            </CustomButton>
+                                                                            <CustomButton
+                                                                                variant="green"
+                                                                                size="xs"
+                                                                                onClick={() => handleCloseDebt(debt._id)}
+                                                                                title="Mark as paid/closed"
+                                                                                className="text-xs"
+                                                                            >
+                                                                                Close
+                                                                            </CustomButton>
+                                                                        </>
+                                                                    )}
+                                                                    {isAdmin && (
+                                                                        <CustomButton
+                                                                            variant="red"
+                                                                            size="xs"
+                                                                            onClick={() => openDeleteDebtModal(debt)}
+                                                                            title="Delete debt"
+                                                                            className="text-xs"
+                                                                        >
+                                                                            Delete
+                                                                        </CustomButton>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                         </div>
@@ -6138,7 +6839,8 @@ export default function AdminPanel() {
                                                 </div>
                                             </div>
 
-                                            {/* Archived Debt Table */}
+                                            {/* Desktop Table View - Archived */}
+                                            <div className="hidden md:block">
                                             {debtLoading ? (
                                                 <div className="py-8">
                                                     <RahalatekLoader size="lg" />
@@ -6235,6 +6937,120 @@ export default function AdminPanel() {
                                                     )}
                                                 />
                                             )}
+                                            </div>
+
+                                            {/* Mobile Cards View - Archived Debts */}
+                                            <div className="md:hidden">
+                                                {debtLoading ? (
+                                                    <div className="py-8">
+                                                        <RahalatekLoader size="lg" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="sm:hidden space-y-5">
+                                                        {debts.filter(debt => debt.status === 'CLOSED').length === 0 ? (
+                                                            <div className="text-center py-12">
+                                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h8a2 2 0 002-2V8m-9 4h4" />
+                                                                </svg>
+                                                                <p className="text-gray-500 dark:text-gray-400 font-medium">No archived debts found</p>
+                                                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Closed debt records will appear here.</p>
+                                                            </div>
+                                                        ) : (
+                                                            debts.filter(debt => debt.status === 'CLOSED').map((debt, index) => (
+                                                                <div 
+                                                                    key={debt._id} 
+                                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                                    style={{
+                                                                        animationDelay: `${index * 100}ms`
+                                                                    }}
+                                                                >
+                                                                    <div className="space-y-3">
+                                                                        {/* Header with Office and Amount */}
+                                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                                            <div>
+                                                                                <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                                                                                    {debt.officeName}
+                                                                                </div>
+                                                                                <div className="flex items-center space-x-2 mt-1">
+                                                                                    <span 
+                                                                                        className={`
+                                                                                            inline-flex items-center justify-center rounded-lg 
+                                                                                            ${debt.type === 'OWED_TO_OFFICE' 
+                                                                                                ? 'bg-red-500 text-white border border-red-600 shadow-md' 
+                                                                                                : 'bg-green-500 text-white border border-green-600 shadow-md'
+                                                                                            }
+                                                                                            text-[10px] px-1.5 py-0.5 font-semibold
+                                                                                        `}
+                                                                                    >
+                                                                                        {debt.type === 'OWED_TO_OFFICE' ? 'We Owe' : 'They Owe'}
+                                                                                    </span>
+                                                                                    <span className="inline-flex items-center justify-center rounded-lg bg-gray-500 text-white border border-gray-600 shadow-md text-[10px] px-1.5 py-0.5 font-semibold">
+                                                                                        CLOSED
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="text-right">
+                                                                                <div className={`text-lg font-bold ${
+                                                                                    debt.type === 'OWED_TO_OFFICE' 
+                                                                                        ? 'text-red-600 dark:text-red-400' 
+                                                                                        : 'text-green-600 dark:text-green-400'
+                                                                                }`}>
+                                                                                    {getCurrencySymbol(debt.currency)}{debt.amount.toFixed(2)}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Description and Dates */}
+                                                                        <div className="grid grid-cols-1 gap-3">
+                                                                            <div>
+                                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Description</div>
+                                                                                <div className="text-sm text-gray-900 dark:text-white">
+                                                                                    {debt.description || 'N/A'}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="grid grid-cols-2 gap-3">
+                                                                                <div>
+                                                                                    <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Due Date</div>
+                                                                                    <div className="text-sm text-gray-900 dark:text-white">
+                                                                                        {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString() : 'N/A'}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Closed Date</div>
+                                                                                    <div className="text-sm text-gray-900 dark:text-white">
+                                                                                        {debt.closedAt ? new Date(debt.closedAt).toLocaleDateString() : 'N/A'}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Created By</div>
+                                                                                <div className="text-sm text-gray-900 dark:text-white">
+                                                                                    {debt.createdBy?.username || 'Unknown'}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Action Buttons */}
+                                                                        {isAdmin && (
+                                                                            <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                                                                <CustomButton
+                                                                                    variant="red"
+                                                                                    size="xs"
+                                                                                    onClick={() => openDeleteDebtModal(debt)}
+                                                                                    title="Delete debt"
+                                                                                    className="text-xs"
+                                                                                >
+                                                                                    Delete
+                                                                                </CustomButton>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </Card>
@@ -6242,10 +7058,12 @@ export default function AdminPanel() {
 
                             {activeTab === 'users' && (isAdmin || isAccountant) && (
                                 <Card className="w-full dark:bg-slate-950" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">User Management</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">User Management</h2>
                                     
                                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
+                                    {/* Desktop Table View */}
+                                    <div className="hidden md:block">
                                     <CustomTable
                                         headers={[
                                             { label: 'Username', className: '' },
@@ -6370,6 +7188,144 @@ export default function AdminPanel() {
                                             </svg>
                                         )}
                                     />
+                                    </div>
+
+                                    {/* Mobile Cards View - same style as AttendancePanel */}
+                                    <div className="sm:hidden space-y-5">
+                                        {users.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                </svg>
+                                                <p className="text-gray-500 dark:text-gray-400">No users found. Admin users can manage other users here.</p>
+                                            </div>
+                                        ) : (
+                                            users.sort((a, b) => {
+                                                // Sort by role priority: Admin (3) > Accountant (2) > User (1)
+                                                const getRolePriority = (user) => {
+                                                    if (user.isAdmin) return 3;
+                                                    if (user.isAccountant) return 2;
+                                                    return 1;
+                                                };
+                                                return getRolePriority(b) - getRolePriority(a);
+                                            }).map((user, index) => (
+                                                <div 
+                                                    key={user._id} 
+                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                    style={{
+                                                        animationDelay: `${index * 100}ms`
+                                                    }}
+                                                >
+                                                    <div className="space-y-3">
+                                                        {/* Header with Username and Role */}
+                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                            <div>
+                                                                <button
+                                                                    onClick={() => navigate(`/profile/${user._id}`)}
+                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                    title="View user profile"
+                                                                >
+                                                                    {user.username}
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <UserBadge user={user} />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Salary Information */}
+                                                        {(isAdmin || isAccountant) && (
+                                                            <div>
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Salary</div>
+                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {isAccountant && user.isAdmin ? (
+                                                                        <span className="text-gray-500 dark:text-gray-400">Restricted</span>
+                                                                    ) : (
+                                                                        typeof user.salaryAmount === 'number' ? (
+                                                                            <span className="font-semibold text-green-600 dark:text-green-400">
+                                                                                {getCurrencySymbol(user.salaryCurrency || 'USD')}{Number(user.salaryAmount).toFixed(2)}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-gray-500 dark:text-gray-400">N/A</span>
+                                                                        )
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Admin Actions */}
+                                                        {isAdmin && (
+                                                            <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                                                {/* Admin Status Toggle */}
+                                                                {user.isAdmin ? (
+                                                                    <CustomButton
+                                                                        variant="orange"
+                                                                        size="xs"
+                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
+                                                                        title="Revoke admin privileges"
+                                                                        className="text-xs"
+                                                                    >
+                                                                        Revoke
+                                                                    </CustomButton>
+                                                                ) : (
+                                                                    <CustomButton
+                                                                        variant="blue"
+                                                                        size="xs"
+                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
+                                                                        disabled={user.isAccountant}
+                                                                        title="Assign admin privileges"
+                                                                        className="text-xs"
+                                                                    >
+                                                                        Admin
+                                                                    </CustomButton>
+                                                                )}
+
+                                                                {/* Accountant Status Toggle */}
+                                                                {user.isAccountant ? (
+                                                                    <CustomButton
+                                                                        variant="orange"
+                                                                        size="xs"
+                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
+                                                                        title="Revoke accountant privileges"
+                                                                        className="text-xs"
+                                                                    >
+                                                                        Revoke
+                                                                    </CustomButton>
+                                                                ) : (
+                                                                    <CustomButton
+                                                                        variant="teal"
+                                                                        size="xs"
+                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
+                                                                        disabled={user.isAdmin}
+                                                                        title="Assign accountant privileges"
+                                                                        className="text-xs"
+                                                                    >
+                                                                        Accountant
+                                                                    </CustomButton>
+                                                                )}
+
+                                                                {/* Delete Button */}
+                                                                <CustomButton
+                                                                    variant="red"
+                                                                    size="xs"
+                                                                    onClick={() => openDeleteUserModal(user)}
+                                                                    title="Delete user"
+                                                                    className="text-xs"
+                                                                    icon={({ className }) => (
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                        </svg>
+                                                                    )}
+                                                                >
+                                                                    Delete
+                                                                </CustomButton>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </Card>
                             )}
 
@@ -7263,10 +8219,12 @@ export default function AdminPanel() {
                             
                             {activeTab === 'requests' && isAdmin && (
                                 <Card className="w-full dark:bg-slate-950" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Pending User Approval Requests</h2>
+                                    <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">Pending User Approval Requests</h2>
                                     
                                     {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
+                                    {/* Desktop Table View */}
+                                    <div className="hidden md:block">
                                                         <CustomTable
                         headers={[
                             { label: 'Username', className: '' },
@@ -7339,6 +8297,104 @@ export default function AdminPanel() {
                             </div>
                         )}
                     />
+                                    </div>
+
+                                    {/* Mobile Cards View - same style as AttendancePanel */}
+                                    <div className="sm:hidden space-y-5">
+                                        {pendingRequests.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full">
+                                                    <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                                    </svg>
+                                                </div>
+                                                <p className="text-gray-500 dark:text-gray-400 font-medium">No pending requests</p>
+                                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">There are no new user accounts awaiting approval at this time. New registration requests will appear here when users sign up.</p>
+                                            </div>
+                                        ) : (
+                                            pendingRequests.map((user, index) => (
+                                                <div 
+                                                    key={user._id} 
+                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                    style={{
+                                                        animationDelay: `${index * 100}ms`
+                                                    }}
+                                                >
+                                                    <div className="space-y-3">
+                                                        {/* Header with Username and Registration Date */}
+                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                            <div>
+                                                                <button
+                                                                    onClick={() => navigate(`/profile/${user._id}`)}
+                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                    title="View user profile"
+                                                                >
+                                                                    {user.username}
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300">Registered</div>
+                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {formatDateDDMMYYYY(user.createdAt)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Contact Information */}
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            <div>
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Email</div>
+                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {user.email || '-'}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Phone Number</div>
+                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                    {user.phoneNumber && user.countryCode 
+                                                                        ? `${user.countryCode} ${user.phoneNumber}`
+                                                                        : user.phoneNumber || '-'
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                                            <CustomButton
+                                                                variant="green"
+                                                                size="xs"
+                                                                onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
+                                                                title="Approve user account"
+                                                                className="text-xs"
+                                                                icon={({ className }) => (
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                                    </svg>
+                                                                )}
+                                                            >
+                                                                Approve
+                                                            </CustomButton>
+                                                            <CustomButton
+                                                                variant="red"
+                                                                size="xs"
+                                                                onClick={() => openDeleteUserModal(user)}
+                                                                title="Reject user account"
+                                                                className="text-xs"
+                                                                icon={({ className }) => (
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                    </svg>
+                                                                )}
+                                                            >
+                                                                Reject
+                                                            </CustomButton>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
                                 </Card>
                             )}
                             
@@ -7662,8 +8718,8 @@ export default function AdminPanel() {
                                 title={editingDebt ? 'Edit Debt' : 'Add New Debt'}
                                 maxWidth="md:max-w-2xl"
                             >
-                                <form onSubmit={handleDebtSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <form onSubmit={handleDebtSubmit} className="space-y-1 md:space-y-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-2 gap-1 md:gap-4">
                                             <div>
                                                 <CustomSelect
                                                     id="debt-office"
@@ -7695,9 +8751,11 @@ export default function AdminPanel() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-2 gap-1 md:gap-4">
                                             <div>
-                                                <Label htmlFor="debt-amount" value="Amount" className="mb-2" />
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="debt-amount" value="Amount" className="text-gray-700 dark:text-gray-200 font-medium" />
+                                                </div>
                                                 <TextInput
                                                     id="debt-amount"
                                                     type="number"
@@ -7725,7 +8783,7 @@ export default function AdminPanel() {
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="debt-description" value="Description" className="mb-2" />
+                                            <Label htmlFor="debt-description" value="Description" className="mb-1 md:mb-2" />
                                             <TextInput
                                                 id="debt-description"
                                                 value={debtForm.description}
@@ -7745,18 +8803,18 @@ export default function AdminPanel() {
                                         </div>
 
                                         <div>
-                                            <Label htmlFor="debt-notes" value="Notes (Optional)" className="mb-2" />
+                                            <Label htmlFor="debt-notes" value="Notes (Optional)" className="mb-1 md:mb-2" />
                                             <TextInput
                                                 id="debt-notes"
                                                 as="textarea"
-                                                rows={3}
+                                                rows={2}
                                                 value={debtForm.notes}
                                                 onChange={(e) => setDebtForm({ ...debtForm, notes: e.target.value })}
                                                 placeholder="Additional notes about this debt"
                                             />
                                         </div>
 
-                                        <div className="flex justify-end gap-3 pt-4">
+                                        <div className="flex flex-row justify-end gap-2 pt-1 md:pt-4">
                                             <CustomButton
                                                 variant="gray"
                                                 onClick={() => setShowDebtModal(false)}
