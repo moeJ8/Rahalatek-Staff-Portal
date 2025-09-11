@@ -28,9 +28,22 @@ console.log(`Railway: ${isRailway}`);
 
 async function setupChrome() {
     try {
-        // Always install Puppeteer's bundled Chrome
+        // Create cache directory for Render
+        if (isRender) {
+            const cacheDir = '/opt/render/.cache/puppeteer';
+            if (!fs.existsSync(cacheDir)) {
+                fs.mkdirSync(cacheDir, { recursive: true });
+                console.log(`📁 Created cache directory: ${cacheDir}`);
+            }
+        }
+        
+        // Install Puppeteer's bundled Chrome with specific path for Render
         console.log('📦 Installing Puppeteer bundled Chrome...');
-        execSync('npx puppeteer browsers install chrome', { 
+        const installCommand = isRender 
+            ? 'npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer'
+            : 'npx puppeteer browsers install chrome';
+            
+        execSync(installCommand, { 
             stdio: 'inherit',
             timeout: 300000 // 5 minutes timeout
         });

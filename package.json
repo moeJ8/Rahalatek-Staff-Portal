@@ -7,8 +7,9 @@
     "start": "node api/index.js",
     "client-install": "cd client && npm install",
     "client-build": "cd client && npm run build",
-    "build": "npm install && npm run client-install && npm run client-build",
-    "postinstall": "node scripts/setup-chrome.js",
+    "build": "npm install && npm run client-install && npm run client-build && npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer",
+    "postinstall": "npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer || npx puppeteer browsers install chrome || node scripts/setup-chrome.js",
+    "render-build": "npm install && npm run client-install && npm run client-build && npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer",
     "verify-paths": "node verify-paths.js"
   },
   "keywords": [],

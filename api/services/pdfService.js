@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const EmailService = require('./emailService');
 const fs = require('fs');
 const path = require('path');
+const { ensureChrome } = require('../utils/ensureChrome');
 
 class PDFService {
     
@@ -17,6 +18,11 @@ class PDFService {
             // Environment variable override
             process.env.CHROME_BIN,
             process.env.PUPPETEER_EXECUTABLE_PATH,
+            
+            // Render-specific paths (highest priority)
+            '/opt/render/.cache/puppeteer/chrome/linux-*/chrome-linux*/chrome',
+            '/opt/render/.cache/puppeteer/chrome/linux-130.0.6723.58/chrome-linux64/chrome',
+            '/opt/render/.cache/puppeteer/chrome/linux-140.0.7339.82/chrome-linux64/chrome',
             
             // Puppeteer cache locations
             path.join(process.env.HOME || process.cwd(), '.cache', 'puppeteer', 'chrome'),
@@ -49,7 +55,30 @@ class PDFService {
         // Find the first existing executable
         for (const chromePath of chromePaths) {
             try {
-                if (fs.existsSync(chromePath)) {
+                // Handle wildcard paths for Render
+                if (chromePath.includes('linux-*')) {
+                    const basePath = '/opt/render/.cache/puppeteer/chrome';
+                    if (fs.existsSync(basePath)) {
+                        const versions = fs.readdirSync(basePath);
+                        for (const version of versions) {
+                            if (version.startsWith('linux-')) {
+                                const chromeLinuxPath = path.join(basePath, version);
+                                if (fs.existsSync(chromeLinuxPath)) {
+                                    const chromeSubdirs = fs.readdirSync(chromeLinuxPath);
+                                    for (const subdir of chromeSubdirs) {
+                                        if (subdir.startsWith('chrome-linux')) {
+                                            const chromeBinary = path.join(chromeLinuxPath, subdir, 'chrome');
+                                            if (fs.existsSync(chromeBinary)) {
+                                                console.log(`✅ Found Chrome at: ${chromeBinary}`);
+                                                return chromeBinary;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (fs.existsSync(chromePath)) {
                     console.log(`✅ Found Chrome at: ${chromePath}`);
                     return chromePath;
                 }
@@ -126,6 +155,9 @@ class PDFService {
             console.log('🖨️ Starting PDF generation for financial summary...');
             console.log('Environment:', process.env.NODE_ENV || 'development');
             console.log('Platform:', process.platform);
+            
+            // Ensure Chrome is installed (fallback safety check)
+            await ensureChrome();
             
             // Get universal launch options
             const launchOptions = this.getLaunchOptions();
