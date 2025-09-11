@@ -5,7 +5,8 @@ import CustomCheckbox from '../components/CustomCheckbox';
 import CustomButton from '../components/CustomButton';
 import Search from '../components/Search';
 import Select from '../components/Select';
-import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock } from 'react-icons/fa';
+import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock, FaChartLine } from 'react-icons/fa';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { 
@@ -38,6 +39,9 @@ const NotificationsPage = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  
+  // PDF download state
+  const [downloadingPdf, setDownloadingPdf] = useState(null);
 
   useEffect(() => {
     fetchNotifications();
@@ -322,6 +326,8 @@ const NotificationsPage = () => {
         return <FaCalendarDay className="w-5 h-5 text-green-500 dark:text-green-400" />;
       case 'attendance_checkout_reminder':
         return <FaClock className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />;
+      case 'monthly_financial_summary':
+        return <FaChartLine className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />;
       default:
         return <FaBell className="w-5 h-5 text-teal-500 dark:text-teal-400" />;
     }
@@ -356,7 +362,8 @@ const NotificationsPage = () => {
       user_role_change: 'Role Change',
       custom_reminder: 'Reminder',
       attendance_checkin_reminder: 'Check-In Reminder',
-      attendance_checkout_reminder: 'Check-Out Reminder'
+      attendance_checkout_reminder: 'Check-Out Reminder',
+      monthly_financial_summary: 'Financial Report'
     };
     return types[type] || type;
   };
@@ -366,6 +373,62 @@ const NotificationsPage = () => {
     setTypeFilter('');
     setStatusFilter('');
     setSortBy('newest');
+  };
+
+  // Download Financial Summary PDF
+  const downloadFinancialSummaryPDF = async (notification) => {
+    try {
+      setDownloadingPdf(notification._id);
+      const { year, month } = notification.metadata;
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get('/api/notifications/download-financial-summary-pdf', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { year, month },
+        responseType: 'blob'
+      });
+      
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from response headers or create default
+      const contentDisposition = response.headers['content-disposition'];
+      const monthName = notification.metadata.monthName || new Date(year, month - 1).toLocaleString('en-US', { month: 'long' });
+      let filename = `financial-summary-${monthName}-${year}.pdf`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`PDF downloaded: ${filename}`, {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: 'white',
+        },
+      });
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      toast.error('Failed to download PDF', {
+        duration: 3000,
+        style: {
+          background: '#f44336',
+          color: 'white',
+        },
+      });
+    } finally {
+      setDownloadingPdf(null);
+    }
   };
 
   const unreadCount = notifications.filter(notif => !isRead(notif)).length;
@@ -465,6 +528,7 @@ const NotificationsPage = () => {
                   { value: 'voucher_arrival_reminder', label: 'Arrival Reminders' },
                   { value: 'voucher_departure_reminder', label: 'Departure Reminders' },
                   ...(isAdmin || isAccountant ? [{ value: 'daily_arrivals_summary', label: 'Daily Summaries' }] : []),
+                  ...(isAdmin || isAccountant ? [{ value: 'monthly_financial_summary', label: 'Financial Reports' }] : []),
                   { value: 'user_role_change', label: 'Role Changes' },
                   { value: 'custom_reminder', label: 'Reminders' }
                 ]}
@@ -678,15 +742,31 @@ const NotificationsPage = () => {
                           {formatDate(notification.createdAt)}
                         </div>
                         
-                        {/* Link to voucher if available */}
-                        {notification.relatedVoucher && (
-                          <Link
-                            to={`/vouchers/${notification.relatedVoucher._id}`}
-                            className="text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors"
-                          >
-                            View Voucher →
-                          </Link>
-                        )}
+                        <div className="flex items-center gap-3">
+                          {/* Download PDF link for financial summaries */}
+                          {notification.type === 'monthly_financial_summary' && notification.metadata?.hasDownloadLink && (
+                            <CustomButton
+                              onClick={() => downloadFinancialSummaryPDF(notification)}
+                              disabled={downloadingPdf === notification._id}
+                              loading={downloadingPdf === notification._id}
+                              variant="teal"
+                              size="xs"
+                              title="Download PDF Report"
+                            >
+                              {downloadingPdf === notification._id ? 'Generating...' : 'Download PDF'}
+                            </CustomButton>
+                          )}
+                          
+                          {/* Link to voucher if available */}
+                          {notification.relatedVoucher && (
+                            <Link
+                              to={`/vouchers/${notification.relatedVoucher._id}`}
+                              className="text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors"
+                            >
+                              View Voucher →
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                     

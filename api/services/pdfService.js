@@ -11,13 +11,47 @@ class PDFService {
         try {
             console.log('🖨️ Starting PDF generation for financial summary...');
             
-            // Launch puppeteer browser
-            browser = await puppeteer.launch({
+            // Launch puppeteer browser with environment-specific configuration
+            const isProduction = process.env.NODE_ENV === 'production';
+            const launchOptions = {
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
-            });
+                timeout: 60000,
+                args: isProduction ? [
+                    // Production configuration - comprehensive flags for server environments
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-renderer-backgrounding',
+                    '--disable-features=TranslateUI',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor'
+                ] : [
+                    // Development configuration - minimal flags for local development
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox'
+                ]
+            };
+
+            // Use custom Chrome executable if provided (for production environments)
+            if (process.env.CHROME_BIN) {
+                launchOptions.executablePath = process.env.CHROME_BIN;
+            }
+
+            browser = await puppeteer.launch(launchOptions);
             
             const page = await browser.newPage();
+            
+            // Set page configurations for better performance in production
+            await page.setViewport({ width: 1280, height: 800 });
+            await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             
             // Get the HTML content from EmailService
             const htmlContent = EmailService.getMonthlyFinancialSummaryTemplate(user, summaryData);
@@ -56,10 +90,23 @@ class PDFService {
             
         } catch (error) {
             console.error('❌ Error generating PDF:', error);
-            throw new Error(`Failed to generate PDF: ${error.message}`);
+            console.error('Error stack:', error.stack);
+            
+            // More specific error handling
+            if (error.message.includes('Failed to launch')) {
+                throw new Error('PDF generation failed: Chrome browser could not be launched. Please check server configuration.');
+            } else if (error.message.includes('timeout')) {
+                throw new Error('PDF generation failed: Operation timed out. Please try again.');
+            } else {
+                throw new Error(`PDF generation failed: ${error.message}`);
+            }
         } finally {
             if (browser) {
-                await browser.close();
+                try {
+                    await browser.close();
+                } catch (closeError) {
+                    console.error('Error closing browser:', closeError);
+                }
             }
         }
     }

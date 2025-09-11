@@ -304,10 +304,17 @@ exports.downloadFinancialSummaryPDF = async (req, res) => {
         
     } catch (error) {
         console.error('❌ Error generating PDF:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            user: req.user,
+            query: req.query
+        });
+        
         res.status(500).json({
             success: false,
-            message: 'Failed to generate PDF',
-            error: error.message
+            message: 'Failed to generate PDF. Please try again or contact support if the issue persists.',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 };
