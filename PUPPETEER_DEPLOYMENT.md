@@ -108,9 +108,65 @@ After deployment, test PDF generation by:
 3. Clicking "Download PDF"
 4. Check server logs for any error messages
 
-### 7. Alternative Solutions
+### 7. Platform-Specific Configuration
+
+#### Heroku
+```bash
+# Add buildpack for Chrome dependencies
+heroku buildpacks:add jontewks/puppeteer
+# OR
+heroku buildpacks:add https://github.com/heroku/heroku-buildpack-chrome-for-testing
+```
+
+#### Render
+```bash
+# Set environment variables in Render dashboard:
+NODE_ENV=production
+CHROME_BIN=/usr/bin/chromium-browser
+```
+
+#### Railway/DigitalOcean/AWS
+```bash
+# Install Chrome in your Dockerfile or deployment script
+apt-get install -y chromium-browser
+export CHROME_BIN=/usr/bin/chromium-browser
+```
+
+#### Vercel
+```bash
+# Add to vercel.json:
+{
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30
+    }
+  }
+}
+```
+
+### 8. Debugging Steps
+
+1. **Check server logs** for specific error messages
+2. **Verify Chrome installation**: `which google-chrome` or `which chromium-browser`
+3. **Test minimal Puppeteer script**:
+   ```javascript
+   const puppeteer = require('puppeteer');
+   (async () => {
+     const browser = await puppeteer.launch({
+       headless: true,
+       args: ['--no-sandbox', '--disable-setuid-sandbox']
+     });
+     const page = await browser.newPage();
+     await page.goto('https://example.com');
+     await browser.close();
+     console.log('Success!');
+   })();
+   ```
+
+### 9. Alternative Solutions
 
 If Puppeteer continues to fail, consider:
 1. Using a PDF generation service (like Puppeteer as a Service)
 2. Moving PDF generation to a separate microservice
 3. Using a different PDF library (like jsPDF with html2canvas)
+4. Using headless Chrome as a service (Chrome Remote Interface)

@@ -10,42 +10,91 @@ class PDFService {
         let browser;
         try {
             console.log('🖨️ Starting PDF generation for financial summary...');
+            console.log('Environment:', process.env.NODE_ENV || 'development');
+            console.log('Platform:', process.platform);
+            console.log('Chrome bin path:', process.env.CHROME_BIN || 'default');
             
             // Launch puppeteer browser with environment-specific configuration
             const isProduction = process.env.NODE_ENV === 'production';
+            
+            // More aggressive production configuration
+            const productionArgs = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                '--disable-extensions',
+                '--disable-plugins',
+                '--disable-images',
+                '--disable-javascript',
+                '--virtual-time-budget=10000',
+                '--run-all-compositor-stages-before-draw',
+                '--memory-pressure-off',
+                '--max_old_space_size=4096'
+            ];
+
+            const developmentArgs = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox'
+            ];
+
             const launchOptions = {
                 headless: true,
-                timeout: 60000,
-                args: isProduction ? [
-                    // Production configuration - comprehensive flags for server environments
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-gpu',
-                    '--disable-background-timer-throttling',
-                    '--disable-backgrounding-occluded-windows',
-                    '--disable-renderer-backgrounding',
-                    '--disable-features=TranslateUI',
-                    '--disable-ipc-flooding-protection',
-                    '--disable-web-security',
-                    '--disable-features=VizDisplayCompositor'
-                ] : [
-                    // Development configuration - minimal flags for local development
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox'
-                ]
+                timeout: 120000, // Increased timeout
+                args: isProduction ? productionArgs : developmentArgs
             };
 
             // Use custom Chrome executable if provided (for production environments)
             if (process.env.CHROME_BIN) {
                 launchOptions.executablePath = process.env.CHROME_BIN;
+                console.log('Using custom Chrome executable:', process.env.CHROME_BIN);
             }
 
-            browser = await puppeteer.launch(launchOptions);
+            console.log('Launching Puppeteer with args:', launchOptions.args);
+            
+            try {
+                browser = await puppeteer.launch(launchOptions);
+                console.log('✅ Puppeteer browser launched successfully');
+            } catch (launchError) {
+                console.error('❌ Failed to launch Puppeteer browser:', launchError);
+                
+                // Fallback: try with even more restrictive settings
+                if (isProduction) {
+                    console.log('🔄 Attempting fallback configuration...');
+                    const fallbackOptions = {
+                        headless: true,
+                        timeout: 180000,
+                        args: [
+                            '--no-sandbox',
+                            '--disable-setuid-sandbox',
+                            '--disable-dev-shm-usage',
+                            '--single-process',
+                            '--disable-gpu',
+                            '--disable-software-rasterizer'
+                        ]
+                    };
+                    
+                    if (process.env.CHROME_BIN) {
+                        fallbackOptions.executablePath = process.env.CHROME_BIN;
+                    }
+                    
+                    browser = await puppeteer.launch(fallbackOptions);
+                    console.log('✅ Fallback Puppeteer configuration successful');
+                } else {
+                    throw launchError;
+                }
+            }
             
             const page = await browser.newPage();
             
@@ -54,36 +103,71 @@ class PDFService {
             await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             
             // Get the HTML content from EmailService
-            const htmlContent = EmailService.getMonthlyFinancialSummaryTemplate(user, summaryData);
+            console.log('📧 Getting HTML template from EmailService...');
+            let htmlContent;
+            try {
+                htmlContent = EmailService.getMonthlyFinancialSummaryTemplate(user, summaryData);
+                console.log('✅ HTML template retrieved, length:', htmlContent?.length || 0);
+            } catch (templateError) {
+                console.error('❌ Error getting HTML template:', templateError);
+                throw new Error(`Failed to generate HTML template: ${templateError.message}`);
+            }
             
             // Enhance HTML for PDF (add print styles and better formatting)
-            const pdfHtml = this.enhanceHtmlForPDF(htmlContent, summaryData);
+            console.log('🎨 Enhancing HTML for PDF...');
+            let pdfHtml;
+            try {
+                pdfHtml = this.enhanceHtmlForPDF(htmlContent, summaryData);
+                console.log('✅ HTML enhanced for PDF');
+            } catch (enhanceError) {
+                console.error('❌ Error enhancing HTML:', enhanceError);
+                throw new Error(`Failed to enhance HTML for PDF: ${enhanceError.message}`);
+            }
             
-            // Set content
-            await page.setContent(pdfHtml, { waitUntil: 'networkidle0' });
+            // Set content with timeout
+            console.log('📄 Setting page content...');
+            try {
+                await page.setContent(pdfHtml, { 
+                    waitUntil: 'domcontentloaded', // Less strict than networkidle0
+                    timeout: 60000 
+                });
+                console.log('✅ Page content set successfully');
+            } catch (contentError) {
+                console.error('❌ Error setting page content:', contentError);
+                throw new Error(`Failed to set page content: ${contentError.message}`);
+            }
             
             // Generate PDF with options
-            const pdf = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: {
-                    top: '1cm',
-                    bottom: '1cm',
-                    left: '1cm',
-                    right: '1cm'
-                },
-                displayHeaderFooter: true,
-                headerTemplate: `
-                    <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
-                        <span style="font-weight: bold;">Rahalatek - Monthly Financial Summary</span>
-                    </div>
-                `,
-                footerTemplate: `
-                    <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
-                        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span> - Generated on ${new Date().toLocaleDateString()}</span>
-                    </div>
-                `
-            });
+            console.log('🖨️ Generating PDF...');
+            let pdf;
+            try {
+                pdf = await page.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: {
+                        top: '1cm',
+                        bottom: '1cm',
+                        left: '1cm',
+                        right: '1cm'
+                    },
+                    displayHeaderFooter: true,
+                    headerTemplate: `
+                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
+                            <span style="font-weight: bold;">Rahalatek - Monthly Financial Summary</span>
+                        </div>
+                    `,
+                    footerTemplate: `
+                        <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0;">
+                            <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span> - Generated on ${new Date().toLocaleDateString()}</span>
+                        </div>
+                    `,
+                    timeout: 60000
+                });
+                console.log('✅ PDF generated successfully, size:', pdf?.length || 0, 'bytes');
+            } catch (pdfError) {
+                console.error('❌ Error generating PDF:', pdfError);
+                throw new Error(`Failed to generate PDF: ${pdfError.message}`);
+            }
             
             console.log('✅ PDF generated successfully');
             return pdf;
