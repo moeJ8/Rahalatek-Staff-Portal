@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate, HiRefresh } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from './UserBadge'
 import CustomButton from './CustomButton'
@@ -26,6 +26,7 @@ import StatusControls from './StatusControls'
 import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 import AttendancePanel from './AttendancePanel'
+import EmailSchedulerPanel from './AdminPanel/EmailSchedulerPanel'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -57,8 +58,8 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests
+            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests, scheduler is admin-only
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
@@ -3608,6 +3609,26 @@ export default function AdminPanel() {
                                 >
                                     Notifications
                                 </button>
+
+                                {/* Show Scheduler tab to admin only */}
+                                {isAdmin && (
+                                    <button
+                                    id="tab-scheduler-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'scheduler' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('scheduler')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'scheduler')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'scheduler'}
+                                        aria-controls="scheduler-panel"
+                                    >
+                                        Email Scheduler
+                                    </button>
+                                )}
                         </div>
                     </div>
                             </div>
@@ -3860,6 +3881,27 @@ export default function AdminPanel() {
                                     <FaBell className="h-5 w-5 mr-3" />
                                         Notifications
                                     </button>
+
+                                {/* Show Scheduler tab to admin only */}
+                                {isAdmin && (
+                                    <button
+                                    id="tab-scheduler"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'scheduler' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('scheduler')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'scheduler')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'scheduler'}
+                                        aria-controls="scheduler-panel"
+                                    >
+                                    <FaEnvelope className="h-5 w-5 mr-3" />
+                                        Email Scheduler
+                                    </button>
+                                )}
                             </nav>
                                 </div>
                             )}
@@ -8555,6 +8597,15 @@ export default function AdminPanel() {
 
                                     </div>
                                 </Card>
+                            )}
+                            
+                            {/* Scheduler Management Panel - Admin Only */}
+                            {activeTab === 'scheduler' && (
+                                <EmailSchedulerPanel 
+                                    isAdmin={isAdmin}
+                                    notificationLoading={notificationLoading}
+                                    setNotificationLoading={setNotificationLoading}
+                                />
                             )}
                             
                             {/* Duplicate Hotel Modal */}

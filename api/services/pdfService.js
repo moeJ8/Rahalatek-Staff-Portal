@@ -309,31 +309,27 @@ class PDFService {
     static enhanceHtmlForPDF(htmlContent, summaryData) {
         const { period } = summaryData;
         
-        // Replace emojis with professional alternatives in content (keep them for sections)
-        const emojiReplacements = {
-            '📊': '<span class="professional-icon chart-icon">📑</span>',
-            '💰': '<span class="professional-icon finance-icon">$</span>',
-            '🔥': '<span class="professional-icon performance-icon">▲</span>',
-            '📈': '<span class="professional-icon growth-icon">↗</span>',
-            '💼': '<span class="professional-icon business-icon">●</span>',
-            '📋': '<span class="professional-icon report-icon">▪</span>',
-            '💵': '<span class="professional-icon revenue-icon">€</span>',
-            '📄': '<span class="professional-icon document-icon">◦</span>',
-            '🎯': '<span class="professional-icon target-icon">⦿</span>'
-        };
-
+        // Remove all emojis from the content for PDF
         let processedHtml = htmlContent;
         
-        // Replace emojis with professional alternatives in content
-        Object.entries(emojiReplacements).forEach(([emoji, replacement]) => {
+        // Remove all emojis (Unicode emoji range)
+        processedHtml = processedHtml.replace(/[\u{1F000}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+        
+        // Remove specific common emojis that might not be caught by Unicode ranges
+        const specificEmojis = ['📊', '💰', '🔥', '📈', '💼', '📋', '💵', '📄', '🎯', '🏢', '💳', '🎫', '📌'];
+        specificEmojis.forEach(emoji => {
             const regex = new RegExp(emoji, 'g');
-            processedHtml = processedHtml.replace(regex, replacement);
+            processedHtml = processedHtml.replace(regex, '');
         });
         
-        // Remove the specific duplicate heading from email template
+        // Remove the specific duplicate heading from email template and clean any remaining emojis
         processedHtml = processedHtml.replace(/<div class="header">[\s\S]*?<h1>[\s\S]*?Monthly Financial Summary[\s\S]*?<\/h1>[\s\S]*?<p>[\s\S]*?Report<\/p>[\s\S]*?<\/div>/gi, '');
         processedHtml = processedHtml.replace(/<h1>[\s\S]*?Monthly Financial Summary[\s\S]*?<\/h1>/gi, '');
         processedHtml = processedHtml.replace(/Monthly Financial Summary(?=[\s\S]*?Report)/gi, '');
+        
+        // Clean up any remaining emoji patterns and extra spaces
+        processedHtml = processedHtml.replace(/\s+/g, ' '); // Normalize whitespace
+        processedHtml = processedHtml.replace(/^\s+|\s+$/gm, ''); // Trim lines
         
         // Add PDF-specific styles and remove email-specific elements
         const enhancedHtml = `
@@ -355,52 +351,7 @@ class PDFService {
             background: #ffffff;
         }
         
-        /* Professional Icon Styles */
-        .professional-icon {
-            display: inline-block;
-            font-weight: 600;
-            font-size: 16px;
-            margin-right: 8px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            vertical-align: middle;
-        }
-        
-        .chart-icon {
-            color: #1e40af;
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-            border: 1px solid #3b82f6;
-        }
-        
-        .finance-icon, .revenue-icon {
-            color: #047857;
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border: 1px solid #10b981;
-        }
-        
-        .performance-icon, .growth-icon {
-            color: #7c2d12;
-            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-            border: 1px solid #ea580c;
-        }
-        
-        .business-icon {
-            color: #374151;
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            border: 1px solid #6b7280;
-        }
-        
-        .report-icon, .document-icon {
-            color: #0f766e;
-            background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
-            border: 1px solid #14b8a6;
-        }
-        
-        .target-icon {
-            color: #be123c;
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            border: 1px solid #e11d48;
-        }
+      
         
         .pdf-header {
             text-align: center;

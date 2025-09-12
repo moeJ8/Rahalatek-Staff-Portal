@@ -46,6 +46,12 @@ const CustomButton = ({
       // Purple variant - for special actions
       purple: "text-purple-600 bg-purple-50 border border-purple-200 hover:bg-purple-100 hover:text-purple-700 dark:text-purple-400 dark:bg-purple-900/20 dark:border-purple-800 dark:hover:bg-purple-900/30 dark:hover:text-purple-300",
       
+      // Indigo variant - for financial/premium actions
+      indigo: "text-indigo-600 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 hover:text-indigo-700 dark:text-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300",
+      
+      // Yellow variant - for warning/attention actions
+      yellow: "text-yellow-600 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100 hover:text-yellow-700 dark:text-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-800 dark:hover:bg-yellow-900/30 dark:hover:text-yellow-300",
+      
       // Gradient variants
       greenToBlue: "text-white bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 border-0 shadow-md hover:shadow-lg",
       blueToTeal: "text-white bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 border-0 shadow-md hover:shadow-lg",

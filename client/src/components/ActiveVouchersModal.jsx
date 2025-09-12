@@ -216,7 +216,7 @@ export default function ActiveVouchersModal({ show, onClose }) {
                       </div>
 
                       {/* Details Grid */}
-                      <div className={`grid gap-1.5 text-xs ${
+                      <div className={`grid  text-xs ${
                         canSeeCreatedBy 
                           ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-7' 
                           : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
@@ -303,13 +303,19 @@ export default function ActiveVouchersModal({ show, onClose }) {
                                   to={`/office/${encodeURIComponent(voucher.officeName)}`}
                                   onClick={onClose}
                                   className="font-medium text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:underline transition-colors duration-200 truncate text-xs cursor-pointer"
-                                  title="View office details"
+                                  title={`View office details - ${voucher.officeName}`}
                                 >
-                                  {voucher.officeName}
+                                  <span className="lg:hidden">{voucher.officeName}</span>
+                                  <span className="hidden lg:inline">
+                                    {voucher.officeName.length > 14 ? `${voucher.officeName.substring(0, 14)}...` : voucher.officeName}
+                                  </span>
                                 </Link>
                               ) : (
-                                <div className="font-medium text-gray-900 dark:text-white truncate text-xs">
-                                  {voucher.officeName}
+                                <div className="font-medium text-gray-900 dark:text-white truncate text-xs" title={voucher.officeName}>
+                                  <span className="lg:hidden">{voucher.officeName}</span>
+                                  <span className="hidden lg:inline">
+                                    {voucher.officeName.length > 14 ? `${voucher.officeName.substring(0, 14)}...` : voucher.officeName}
+                                  </span>
                                 </div>
                               )
                             ) : (
