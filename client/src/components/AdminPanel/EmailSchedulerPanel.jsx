@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Label, Select as FlowbiteSelect } from 'flowbite-react';
+import { Card, Label} from 'flowbite-react';
 import { FaCog, FaUser, FaCalendarDay, FaBell, FaFileInvoiceDollar, FaChartLine, FaEnvelope, FaEdit, FaGlobe, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { HiRefresh } from 'react-icons/hi';
 import CustomButton from '../CustomButton';
@@ -779,25 +779,18 @@ export default function EmailSchedulerPanel({ isAdmin, notificationLoading, setN
                     </div>
                     
                     <div>
-                        <Label htmlFor="timezone" value="Select Timezone" className="text-gray-700 dark:text-gray-200 font-medium mb-2 block" />
                         <Select
                             id="timezone"
+                            label="Select Timezone"
                             value={selectedTimezone}
-                            onChange={(e) => setSelectedTimezone(e.target.value)}
-                            className="w-full"
-                        >
-                            {timezones.map((tz) => (
-                                <option key={tz.value} value={tz.value}>
-                                    {tz.label} ({tz.offset})
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-700">
-                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                            <strong>⚠️ Warning:</strong> This will restart the entire scheduler and may cause a brief interruption in email services.
-                        </p>
+                            onChange={(value) => setSelectedTimezone(value)}
+                            options={timezones.map((tz) => ({
+                                value: tz.value,
+                                label: `${tz.label} (${tz.offset})`
+                            }))}
+                            placeholder="Choose a timezone"
+                            required
+                        />
                     </div>
 
                     {/* Form Actions */}
