@@ -1,5 +1,6 @@
 const Voucher = require('../models/Voucher');
 const OfficePayment = require('../models/OfficePayment');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 // Helper function to manage automatic office payments for vouchers
 const manageVoucherOfficePayment = async (voucher, oldVoucher = null, userId) => {
@@ -218,6 +219,9 @@ exports.createVoucher = async (req, res) => {
         // Automatically create office payment for this voucher
         await manageVoucherOfficePayment(voucher, null, req.user.userId);
         
+        // Smart cache invalidation - voucher data changed
+        await invalidateDashboardCache('New voucher created');
+        
         res.status(201).json({
             success: true,
             data: voucher
@@ -262,6 +266,9 @@ exports.createVoucher = async (req, res) => {
                 
                 // Automatically create office payment for this voucher
                 await manageVoucherOfficePayment(voucher, null, req.user.userId);
+                
+                // Smart cache invalidation - voucher data changed
+                await invalidateDashboardCache('New voucher created');
                 
                 return res.status(201).json({
                     success: true,
@@ -477,6 +484,9 @@ exports.deleteVoucher = async (req, res) => {
             deletedAt: new Date(),
             deletedBy: req.user.userId
         });
+
+        // Smart cache invalidation - voucher deleted
+        await invalidateDashboardCache('Voucher deleted');
         
         res.status(200).json({
             success: true,
@@ -557,6 +567,9 @@ exports.restoreVoucher = async (req, res) => {
         
         // Recreate office payment if needed
         await manageVoucherOfficePayment(restoredVoucher, null, req.user.userId);
+        
+        // Smart cache invalidation - voucher restored
+        await invalidateDashboardCache('Voucher restored');
         
         res.status(200).json({
             success: true,
@@ -722,6 +735,9 @@ exports.updateVoucher = async (req, res) => {
         // Automatically manage office payment for this voucher update
         await manageVoucherOfficePayment(updatedVoucher, oldVoucherData, req.user.userId);
 
+        // Smart cache invalidation - voucher data changed
+        await invalidateDashboardCache('Voucher updated');
+
         res.status(200).json({
             success: true,
             data: updatedVoucher
@@ -794,7 +810,10 @@ exports.updateVoucherStatus = async (req, res) => {
         )
         .populate('createdBy', 'username')
         .populate('statusUpdatedBy', 'username');
-        
+
+        // Smart cache invalidation - voucher status changed
+        await invalidateDashboardCache('Voucher status updated');
+
         res.status(200).json({
             success: true,
             message: `Voucher status updated to "${status}"`,

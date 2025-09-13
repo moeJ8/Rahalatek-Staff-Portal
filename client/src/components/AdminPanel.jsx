@@ -27,6 +27,7 @@ import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 import AttendancePanel from './AttendancePanel'
 import EmailSchedulerPanel from './AdminPanel/EmailSchedulerPanel'
+import Dashboard from './Dashboard'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -58,16 +59,59 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
-            ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
-            : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests, scheduler is admin-only
+            ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+            : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests, scheduler is admin-only
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
         }
-        return 'hotels';
+        return 'dashboard';
     };
 
     const [activeTab, setActiveTab] = useState(getInitialTab);
+
+    // Listen for URL changes and update active tab accordingly
+    useEffect(() => {
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            const availableTabs = isAdmin 
+                ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
+            
+            if (availableTabs.includes(tabParam)) {
+                setActiveTab(tabParam);
+            } else {
+                setActiveTab('dashboard');
+            }
+        };
+
+        // Listen for popstate events (back/forward browser navigation)
+        window.addEventListener('popstate', handlePopState);
+        
+        // Also listen for programmatic navigation by checking URL changes
+        const checkUrlChange = () => {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab') || 'dashboard';
+            if (tabParam !== activeTab) {
+                const availableTabs = isAdmin 
+                    ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                    : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
+                
+                if (availableTabs.includes(tabParam)) {
+                    setActiveTab(tabParam);
+                }
+            }
+        };
+
+        // Check URL changes periodically (fallback for programmatic navigation)
+        const interval = setInterval(checkUrlChange, 100);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            clearInterval(interval);
+        };
+    }, [activeTab, isAdmin]);
 
     const handleTabChange = (tabName) => {
         // Prevent accountants from accessing admin-only tabs
@@ -3405,6 +3449,22 @@ export default function AdminPanel() {
                     <div className="overflow-x-auto scrollbar-hide">
                         <div className="flex space-x-1 px-4 py-2 min-w-max" role="tablist" aria-label="Admin Sections">
                                 <button
+                                id="tab-dashboard-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'dashboard' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('dashboard')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'dashboard'}
+                                    aria-controls="dashboard-panel"
+                                >
+                                    Dashboard
+                                </button>
+                                <button
                                 id="tab-hotels-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                                         activeTab === 'hotels' 
@@ -3649,6 +3709,23 @@ export default function AdminPanel() {
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
                             <nav className="p-2" role="tablist" aria-label="Admin Sections">
+                                    <button
+                                    id="tab-dashboard"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'dashboard' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('dashboard')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'dashboard'}
+                                        aria-controls="dashboard-panel"
+                                    >
+                                    <FaChartLine className="h-5 w-5 mr-3" />
+                                        Dashboard
+                                    </button>
                                     <button
                                     id="tab-hotels"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -3910,6 +3987,12 @@ export default function AdminPanel() {
                         <div className="flex-1">
                             
                             {/* Tab panels */}
+                            {activeTab === 'dashboard' && (
+                                <div id="dashboard-panel" role="tabpanel" aria-labelledby="tab-dashboard">
+                                    <Dashboard />
+                                </div>
+                            )}
+                            
                             {activeTab === 'hotels' && (
                                 <Card className="w-full dark:bg-slate-950" id="hotels-panel" role="tabpanel" aria-labelledby="tab-hotels">
                                     <h2 className="text-2xl font-bold mb-4 dark:text-white text-center">Add New Hotel</h2>
@@ -5693,7 +5776,7 @@ export default function AdminPanel() {
                                                                 {getCurrencySymbol(financialFilters.currency)}{financialTotals.total.toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-blue-500 dark:bg-blue-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-blue-500 dark:bg-blue-600 rounded-md md:rounded-md flex items-center justify-center flex-shrink-0">
                                                             <FaDollarSign className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
@@ -5708,7 +5791,7 @@ export default function AdminPanel() {
                                                                 {[...new Set(filteredFinancialData.map(item => item.officeName))].length}
                                                             </p>
                                                         </div>
-                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500 dark:bg-green-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500 dark:bg-green-600 rounded-md md:rounded-md flex items-center justify-center flex-shrink-0">
                                                             <FaBuilding className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
@@ -5752,7 +5835,7 @@ export default function AdminPanel() {
                                                                 {getCurrencySymbol(financialFilters.currency)}{(totalClientRevenue - totalSupplierRevenue).toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className={`w-8 h-8 md:w-12 md:h-12 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0 ${
+                                                        <div className={`w-8 h-8 md:w-12 md:h-12 rounded-md md:rounded-md flex items-center justify-center flex-shrink-0 ${
                                                             (totalClientRevenue - totalSupplierRevenue) >= 0
                                                                 ? 'bg-green-500 dark:bg-green-600'
                                                                 : 'bg-red-500 dark:bg-red-600'

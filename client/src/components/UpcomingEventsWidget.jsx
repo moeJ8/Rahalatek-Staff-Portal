@@ -300,19 +300,13 @@ export default function UpcomingEventsWidget() {
   return (
     <div className="bg-white dark:bg-slate-950/50 rounded-2xl shadow-xl border-0 overflow-hidden backdrop-blur-sm min-h-[400px] flex flex-col">
       {/* Header */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-950/30 dark:to-slate-900/30">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-teal-900/50 rounded-xl">
             <FaCalendarAlt className="text-blue-600 dark:text-teal-400 text-base sm:text-lg" />
           </div>
           <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-white">Upcoming Events</h3>
         </div>
-        <Link 
-          to="/dashboard"
-          className="p-1.5 sm:p-2 text-blue-600 dark:text-teal-400 hover:text-blue-700 dark:hover:text-teal-300 transition-all duration-200 rounded-xl hover:bg-blue-50 dark:hover:bg-teal-900/20"
-        >
-          <FaExternalLinkAlt className="w-4 h-4 sm:w-5 sm:h-5" />
-        </Link>
       </div>
 
       {/* Tabs */}

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const NotificationService = require('../services/notificationService');
 const EmailService = require('../services/emailService');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 // Helper to check and fix database schema
 exports.checkAndFixSchema = async () => {
@@ -61,6 +62,9 @@ exports.register = async (req, res) => {
         });
         
         await user.save();
+
+        // Smart cache invalidation - new user registered
+        await invalidateDashboardCache('New user registered');
         
         // Generate JWT token
         const token = jwt.sign(
@@ -244,6 +248,9 @@ exports.approveUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
+
+        // Smart cache invalidation - user approval status changed
+        await invalidateDashboardCache(`User ${isApproved ? 'approved' : 'unapproved'}`);
         
         res.status(200).json(user);
     } catch (err) {

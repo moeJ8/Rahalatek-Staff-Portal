@@ -1,4 +1,5 @@
 const OfficePayment = require('../models/OfficePayment');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 // Get all payments for an office by currency
 exports.getOfficePayments = async (req, res) => {
@@ -76,6 +77,9 @@ exports.createOfficePayment = async (req, res) => {
             .populate('createdBy', 'name')
             .populate('relatedVoucher', 'voucherNumber clientName');
 
+        // Smart cache invalidation - financial data changed
+        await invalidateDashboardCache('Office payment created');
+
         res.status(201).json(populatedPayment);
     } catch (error) {
         console.error('Error creating office payment:', error);
@@ -98,6 +102,10 @@ exports.deleteOfficePayment = async (req, res) => {
         }
 
         await OfficePayment.findByIdAndDelete(paymentId);
+
+        // Smart cache invalidation - financial data changed
+        await invalidateDashboardCache('Office payment deleted');
+
         res.json({ message: 'Payment deleted successfully' });
     } catch (error) {
         console.error('Error deleting office payment:', error);
@@ -160,6 +168,9 @@ exports.approveOfficePayment = async (req, res) => {
                 { paymentDate: updateData.paymentDate }
             );
         }
+
+        // Smart cache invalidation - financial data changed
+        await invalidateDashboardCache('Office payment updated');
 
         res.json(updatedPayment);
     } catch (error) {
