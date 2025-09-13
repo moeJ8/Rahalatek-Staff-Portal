@@ -5,26 +5,29 @@ const WorkingDays = require('../models/WorkingDays');
 const UserWorkingDays = require('../models/UserWorkingDays');
 const QRCode = require('qrcode');
 
-// Helper function to validate check-in/check-out time (8 AM - 8 PM)
+// Helper function to validate check-in/check-out time (8 AM - 8 PM in Istanbul timezone)
 const isWithinAllowedTime = () => {
+    // Get current time in Istanbul timezone (UTC+3)
     const now = new Date();
-    const hours = now.getHours();
-    return hours >= 8 && hours < 20; // 8 AM (8) to 7:59 PM (19)
+    const istanbulTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Istanbul"}));
+    const hours = istanbulTime.getHours();
+    return hours >= 8 && hours < 20; // 8 AM (8) to 7:59 PM (19) Istanbul time
 };
 
 // Helper function to get time restriction message
 const getTimeRestrictionMessage = (action) => {
     const now = new Date();
     const currentTime = now.toLocaleTimeString('en-US', { 
+        timeZone: 'Europe/Istanbul',
         hour12: true, 
         hour: 'numeric', 
         minute: '2-digit' 
     });
     
     if (action === 'check-in') {
-        return `Check-in is only allowed between 8:00 AM and 8:00 PM. Current time: ${currentTime}`;
+        return `Check-in is only allowed between 8:00 AM and 8:00 PM (Istanbul time). Current time: ${currentTime}`;
     } else {
-        return `Check-out is only allowed between 8:00 AM and 8:00 PM. Current time: ${currentTime}`;
+        return `Check-out is only allowed between 8:00 AM and 8:00 PM (Istanbul time). Current time: ${currentTime}`;
     }
 };
 
