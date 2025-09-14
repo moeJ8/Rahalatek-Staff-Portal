@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Checkbox, Card, Label, Alert, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
+import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate, HiRefresh } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope } from 'react-icons/fa'
 import toast from 'react-hot-toast'
@@ -28,6 +28,8 @@ import AttendancePanel from './AttendancePanel'
 import EmailSchedulerPanel from './EmailSchedulerPanel'
 import Dashboard from './Dashboard'
 import Hotels from './Hotels'
+import Airports from './Airports'
+import Tours from './Tours'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -138,10 +140,7 @@ export default function AdminPanel() {
         }
         
         
-        // Fetch tours data when switching to tours tab and data not loaded yet
-        if (tabName === 'tours' && tours.length === 0 && dataLoaded) {
-            fetchTours();
-        }
+        // Tours data is now handled by the Tours component
         
         // Fetch offices data when switching to offices tab and data not loaded yet
         if (tabName === 'offices' && offices.length === 0 && dataLoaded) {
@@ -169,25 +168,6 @@ export default function AdminPanel() {
         }
     };
 
-    const [tourData, setTourData] = useState({
-        name: '',
-        city: '',
-        description: '',
-        detailedDescription: '',
-        tourType: 'Group',
-        price: '',
-        vipCarType: 'Vito',
-        carCapacity: {
-            min: 2,
-            max: 8
-        },
-        duration: 1,
-        highlights: []
-    });
-    const [airportData, setAirportData] = useState({
-        name: '',
-        arabicName: ''
-    });
     const [officeData, setOfficeData] = useState({
         name: '',
         location: '',
@@ -195,21 +175,14 @@ export default function AdminPanel() {
         phoneNumber: '',
         description: ''
     });
-    const [airports, setAirports] = useState([]);
     const [offices, setOffices] = useState([]);
     const [users, setUsers] = useState([]);
-    const [tours, setTours] = useState([]);
-    const [highlightInput, setHighlightInput] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [dataLoaded, setDataLoaded] = useState(false);
     
     // Add state for available hotels and duplicate modal
     const [hotels, setHotels] = useState([]);
     
-    // Add state for tour duplication
-    const [tourDuplicateModalOpen, setTourDuplicateModalOpen] = useState(false);
-    const [selectedTourToDuplicate, setSelectedTourToDuplicate] = useState('');
     
     // Add state for notification management
     const [notificationLoading, setNotificationLoading] = useState(false);
@@ -1150,16 +1123,12 @@ export default function AdminPanel() {
             const fetchInitialData = async () => {
                 setLoading(true);
                 try {
-                    const [airportsResponse, hotelsResponse, toursResponse, officesResponse] = await Promise.all([
-                        axios.get('/api/airports'),
+                    const [hotelsResponse, officesResponse] = await Promise.all([
                         axios.get('/api/hotels'),
-                        axios.get('/api/tours'),
                         axios.get('/api/offices')
                     ]);
                     
-                    setAirports(airportsResponse.data);
                     setHotels(hotelsResponse.data);
-                    setTours(toursResponse.data);
                     setOffices(officesResponse.data.data);
                     
                     // Only fetch users if starting on users/salaries tab or requests tab
@@ -1169,11 +1138,9 @@ export default function AdminPanel() {
                         await fetchPendingRequests();
                     }
                     
-                    setError('');
                     setDataLoaded(true);
                 } catch (err) {
                     console.error('Failed to fetch data:', err);
-                    setError('Failed to fetch data. Please try again.');
                 } finally {
                     setLoading(false);
                 }
@@ -1194,11 +1161,8 @@ export default function AdminPanel() {
         }
         
         
-        // Fetch tours when switching to tours tab
-        if (activeTab === 'tours' && dataLoaded && tours.length === 0) {
-            fetchTours();
-        }
-    }, [activeTab, dataLoaded, hotels.length, tours.length]);
+        // Tours are now handled by Tours component
+    }, [activeTab, dataLoaded, hotels.length]);
 
     // Auto-fetch debts when filters change
     useEffect(() => {
@@ -1223,29 +1187,14 @@ export default function AdminPanel() {
         }
     }, [activeTab, salaryInnerTab, dataLoaded, users.length, salaryCardsYear, salaryCardsMonth]);
 
-    const fetchTours = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get('/api/tours');
-            setTours(response.data);
-            setError('');
-        } catch (err) {
-            console.error('Failed to fetch tours:', err);
-            setError(err.response?.data?.message || 'Failed to fetch tours');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const fetchOffices = async () => {
         setLoading(true);
         try {
             const response = await axios.get('/api/offices');
             setOffices(response.data.data);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch offices:', err);
-            setError(err.response?.data?.message || 'Failed to fetch offices');
         } finally {
             setLoading(false);
         }
@@ -1258,7 +1207,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to view users');
+                // setError('You must be logged in to view users');
                 setLoading(false);
                 return;
             }
@@ -1300,34 +1249,15 @@ export default function AdminPanel() {
                 }
             }
             setUsers(approvedUsers);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch users:', err);
-            setError(err.response?.data?.message || 'Failed to fetch users');
+            // setError(err.response?.data?.message || 'Failed to fetch users');
         } finally {
             setLoading(false);
         }
     };
 
 
- 
-    const handleTourChange = (e) => {
-        const { name, value } = e.target;
-        setTourData({
-            ...tourData,
-            [name]: value,
-        });
-    };
-
-
-
-    const handleAirportChange = (e) => {
-        const { name, value } = e.target;
-        setAirportData({
-            ...airportData,
-            [name]: value,
-        });
-    };
 
     const handleOfficeChange = (e) => {
         const { name, value } = e.target;
@@ -1337,109 +1267,12 @@ export default function AdminPanel() {
         });
     };
 
-    const handleAddHighlight = () => {
-        if (highlightInput.trim()) {
-            setTourData({
-                ...tourData,
-                highlights: [...tourData.highlights, highlightInput.trim()]
-            });
-            setHighlightInput('');
-        }
-    };
 
-    const handleRemoveHighlight = (index) => {
-        const updatedHighlights = [...tourData.highlights];
-        updatedHighlights.splice(index, 1);
-        setTourData({
-            ...tourData,
-            highlights: updatedHighlights
-        });
-    };
+ 
 
-    const handleTourSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        try {
-            const tourDataWithPolicies = {
-                ...tourData,
-                childrenPolicies: {
-                    under3: 'Free',
-                    above3: 'Adult price'
-                }
-            };
-            
-            await axios.post('/api/tours', tourDataWithPolicies);
-            setTourData({
-                name: '',
-                city: '',
-                description: '',
-                detailedDescription: '',
-                tourType: 'Group',
-                price: '',
-                vipCarType: 'Vito',
-                carCapacity: {
-                    min: 2,
-                    max: 8
-                },
-                duration: 1,
-                highlights: []
-            });
-            toast.success('Tour added successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            setError('Failed to add tour');
-            toast.error('Failed to add tour', {
-                duration: 3000,
-            });
-            console.log(err);
-        }
-    };
-
-    const handleAirportSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        try {
-            const response = await axios.post('/api/airports', airportData);
-            setAirports([...airports, response.data]);
-            setAirportData({
-                name: '',
-                arabicName: ''
-            });
-            toast.success('Airport added successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            setError('Failed to add airport');
-            console.log(err);
-        }
-    };
 
     const handleOfficeSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         try {
             const response = await axios.post('/api/offices', officeData);
             setOffices([...offices, response.data.data]);
@@ -1465,34 +1298,11 @@ export default function AdminPanel() {
                 },
             });
         } catch (err) {
-            setError('Failed to add office');
+            // setError('Failed to add office');
             console.log(err);
         }
     };
 
-    const handleDeleteAirport = async (id) => {
-        try {
-            await axios.delete(`/api/airports/${id}`);
-            setAirports(airports.filter(airport => airport._id !== id));
-            toast.success('Airport deleted successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            setError('Failed to delete airport');
-            console.log(err);
-        }
-    };
 
     const handleDeleteOffice = async (id) => {
         try {
@@ -1513,7 +1323,7 @@ export default function AdminPanel() {
                 },
             });
         } catch (err) {
-            setError('Failed to delete office');
+            // setError('Failed to delete office');
             console.log(err);
         }
     };
@@ -1522,7 +1332,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to update user roles');
+                // setError('You must be logged in to update user roles');
                 return;
             }
             
@@ -1557,7 +1367,7 @@ export default function AdminPanel() {
                 },
             });
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update user role');
+            // setError(err.response?.data?.message || 'Failed to update user role');
             console.log(err);
         }
     };
@@ -1566,7 +1376,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to update user roles');
+                // setError('You must be logged in to update user roles');
                 return;
             }
             
@@ -1601,7 +1411,7 @@ export default function AdminPanel() {
                 },
             });
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update user role');
+            // setError(err.response?.data?.message || 'Failed to update user role');
             console.log(err);
         }
     };
@@ -1610,7 +1420,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to update user approval status');
+                // setError('You must be logged in to update user approval status');
                 return;
             }
             
@@ -1662,7 +1472,7 @@ export default function AdminPanel() {
                 });
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update user approval status');
+            // setError(err.response?.data?.message || 'Failed to update user approval status');
             console.log(err);
         }
     };
@@ -1680,7 +1490,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to delete users');
+                // setError('You must be logged in to delete users');
                 setDeleteUserLoading(false);
                 return;
             }
@@ -1728,7 +1538,7 @@ export default function AdminPanel() {
             
             closeDeleteUserModal();
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to delete user');
+            // setError(err.response?.data?.message || 'Failed to delete user');
             console.log(err);
         } finally {
             setDeleteUserLoading(false);
@@ -1777,49 +1587,6 @@ export default function AdminPanel() {
         }
     };
 
-    // Function to open tour duplicate modal
-    const openTourDuplicateModal = () => {
-        setTourDuplicateModalOpen(true);
-    };
-    
-    // Function to close tour duplicate modal
-    const closeTourDuplicateModal = () => {
-        setTourDuplicateModalOpen(false);
-        setSelectedTourToDuplicate('');
-    };
-    
-    // Function to handle tour duplication
-    const handleDuplicateTour = () => {
-        if (!selectedTourToDuplicate) return;
-        
-        const tourToDuplicate = tours.find(tour => tour._id === selectedTourToDuplicate);
-        if (!tourToDuplicate) return;
-        
-        // Set tour data from the selected tour
-        setTourData({
-            name: `${tourToDuplicate.name} (Copy)`,
-            city: tourToDuplicate.city,
-            description: tourToDuplicate.description || '',
-            detailedDescription: tourToDuplicate.detailedDescription || '',
-            tourType: tourToDuplicate.tourType,
-            price: tourToDuplicate.price.toString(),
-            vipCarType: tourToDuplicate.vipCarType || 'Vito',
-            carCapacity: {
-                min: tourToDuplicate.carCapacity?.min || 2,
-                max: tourToDuplicate.carCapacity?.max || 8
-            },
-            duration: tourToDuplicate.duration,
-            highlights: tourToDuplicate.highlights ? [...tourToDuplicate.highlights] : []
-        });
-        
-        // Close modal
-        closeTourDuplicateModal();
-        
-        // Show success message using toast
-        toast.success('Tour data duplicated successfully! Make changes as needed and submit to create a new tour.', {
-            duration: 3000
-        });
-    };
 
 
     const [pendingRequests, setPendingRequests] = useState([]);
@@ -2047,10 +1814,9 @@ export default function AdminPanel() {
             );
             
             setOfficeVouchers(filteredVouchers);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch office vouchers:', err);
-            setError(err.response?.data?.message || 'Failed to fetch office vouchers');
+            // setError(err.response?.data?.message || 'Failed to fetch office vouchers');
         } finally {
             setOfficeVouchersLoading(false);
         }
@@ -2352,10 +2118,9 @@ export default function AdminPanel() {
             });
             
             setFinancialData(financialArray);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch financial data:', err);
-            setError(err.response?.data?.message || 'Failed to fetch financial data');
+            // setError(err.response?.data?.message || 'Failed to fetch financial data');
         } finally {
             setFinancialLoading(false);
         }
@@ -2614,10 +2379,9 @@ export default function AdminPanel() {
             });
             
             setDebts(response.data.data);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch debts:', err);
-            setError(err.response?.data?.message || 'Failed to fetch debts');
+            // setError(err.response?.data?.message || 'Failed to fetch debts');
         } finally {
             setDebtLoading(false);
         }
@@ -2844,7 +2608,7 @@ export default function AdminPanel() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('You must be logged in to view pending requests');
+                // setError('You must be logged in to view pending requests');
                 setLoading(false);
                 return;
             }
@@ -2858,10 +2622,9 @@ export default function AdminPanel() {
             // Filter only users who are not approved
             const pendingUsers = response.data.filter(user => !user.isApproved);
             setPendingRequests(pendingUsers);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch pending requests:', err);
-            setError(err.response?.data?.message || 'Failed to fetch pending requests');
+            // setError(err.response?.data?.message || 'Failed to fetch pending requests');
         } finally {
             setLoading(false);
         }
@@ -3432,295 +3195,15 @@ export default function AdminPanel() {
                             )}
                             
                             {activeTab === 'tours' && (
-                                <Card className="w-full dark:bg-slate-950" id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Tour</h2>
-                                    
-                                    <div className="flex justify-end mb-4">
-                                        <CustomButton
-                                            variant="gray"
-                                            onClick={openTourDuplicateModal}
-                                            title="Duplicate existing tour data"
-                                            icon={HiDuplicate}
-                                        >
-                                            Duplicate Tour
-                                        </CustomButton>
-                                    </div>
-                                    
-                                    <form onSubmit={handleTourSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="tourName" value="Tour Name" />
-                                                </div>
-                                                <TextInput
-                                                    id="tourName"
-                                                    name="name"
-                                                    value={tourData.name}
-                                                    onChange={handleTourChange}
-                                                    required
-                                                />
-                                            </div>
-                                            
-                                            <div>
-                                                <CustomSelect
-                                                    id="tourCity"
-                                                    label="City"
-                                                    value={tourData.city}
-                                                    onChange={(value) => setTourData({...tourData, city: value})}
-                                                    options={[
-                                                        { value: "Antalya", label: "Antalya" },
-                                                        { value: "Bodrum", label: "Bodrum" },
-                                                        { value: "Bursa", label: "Bursa" },
-                                                        { value: "Cappadocia", label: "Cappadocia" },
-                                                        { value: "Fethiye", label: "Fethiye" },
-                                                        { value: "Istanbul", label: "Istanbul" },
-                                                        { value: "Trabzon", label: "Trabzon" }
-                                                    ]}
-                                                    placeholder="Select City"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                                                <div className={`grid grid-cols-1 ${tourData.tourType === 'Group' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
-                            <div>
-                                <CustomSelect
-                                    id="tourType"
-                                    label="Tour Type"
-                                    value={tourData.tourType}
-                                    onChange={(value) => setTourData({...tourData, tourType: value})}
-                                    options={[
-                                        { value: "Group", label: "Group Tour (per person)" },
-                                        { value: "VIP", label: "VIP Tour (per car)" }
-                                    ]}
-                                    required
-                                />
-                            </div>
-                            
-                            {tourData.tourType === 'VIP' && (
-                                <div>
-                                    <CustomSelect
-                                        id="vipCarType"
-                                        label="VIP Car Type"
-                                        value={tourData.vipCarType}
-                                        onChange={(value) => {
-                                            let minCapacity = 2;
-                                            let maxCapacity = 8;
-                                            
-                                            if (value === 'Sprinter') {
-                                                minCapacity = 9;
-                                                maxCapacity = 16;
-                                            }
-                                            
-                                            setTourData({
-                                                ...tourData,
-                                                vipCarType: value,
-                                                carCapacity: {
-                                                    min: minCapacity,
-                                                    max: maxCapacity
-                                                }
-                                            });
-                                        }}
-                                        options={[
-                                            { value: "Vito", label: "Vito (2-8 persons)" },
-                                            { value: "Sprinter", label: "Sprinter (9-16 persons)" }
-                                        ]}
-                                        required
-                                    />
+                                <div id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
+                                    <Tours />
                                 </div>
-                            )}
-                            
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($)' : 'Price per Car ($)'} />
-                                </div>
-                                <TextInput
-                                    id="tourPrice"
-                                    type="number"
-                                    name="price"
-                                    value={tourData.price}
-                                    onChange={handleTourChange}
-                                    required
-                                />
-                            </div>
-                            
-                            <div>
-                                <div className="mb-2 block">
-                                    <Label htmlFor="tourDuration" value="Duration (hours)" />
-                                </div>
-                                <TextInput
-                                    id="tourDuration"
-                                    type="number"
-                                    name="duration"
-                                    value={tourData.duration}
-                                    onChange={handleTourChange}
-                                    min={1}
-                                    required
-                                />
-                            </div>
-                        </div>
-                        
-                        {tourData.tourType === 'VIP' && (
-                            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                {tourData.vipCarType === 'Vito' 
-                                    ? 'Capacity: 2-8 persons' 
-                                    : 'Capacity: 9-16 persons'}
-                            </div>
-                        )}
-                        
-                        <div>
-                            <div className="mb-2 block">
-                                <Label htmlFor="tourDesc" value="Brief Description" />
-                            </div>
-                            <TextInput
-                                id="tourDesc"
-                                name="description"
-                                value={tourData.description}
-                                onChange={handleTourChange}
-                            />
-                        </div>
-                        
-                        <div>
-                            <TextInput
-                                id="tourDetailDesc"
-                                name="detailedDescription"
-                                as="textarea"
-                                rows={4}
-                                value={tourData.detailedDescription}
-                                onChange={handleTourChange}
-                                label="Detailed Description"
-                            />
-                        </div>
-                                        
-                                        <div>
-                                            <Label value="Tour Highlights" className="mb-2 block" />
-                                            <div className="flex gap-2 mb-3">
-                                                <TextInput
-                                                    placeholder="Add a highlight"
-                                                    value={highlightInput}
-                                                    onChange={(e) => setHighlightInput(e.target.value)}
-                                                    className="flex-1"
-                                                />
-                                                <CustomButton 
-                                                    type="button"
-                                                    onClick={handleAddHighlight}
-                                                    variant="purple"
-                                                    icon={HiPlus}
-                                                    title="Add highlight to tour"
-                                                >
-                                                    Add
-                                                </CustomButton>
-                                            </div>
-                                            
-                                            {tourData.highlights.length > 0 && (
-                                                <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
-                                                    <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Highlights:</h4>
-                                                    <ul className="space-y-2">
-                                                        {tourData.highlights.map((highlight, index) => (
-                                                            <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
-                                                                <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
-                                                                <CustomButton
-                                                                    variant="red"
-                                                                    size="xs"
-                                                                    onClick={() => handleRemoveHighlight(index)}
-                                                                    icon={HiX}
-                                                                    title="Remove highlight"
-                                                                />
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <CustomButton 
-                                            type="submit"
-                                            variant="pinkToOrange"
-                                        >
-                                            Add Tour
-                                        </CustomButton>
-                                        
-                                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
-                                    </form>
-                                </Card>
                             )}
 
                             {activeTab === 'airports' && (
-                                <Card className="w-full dark:bg-slate-950" id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
-                                    <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Add New Airport</h2>
-                                    
-                                    <form onSubmit={handleAirportSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="airportName" value="Airport Name" />
-                                                </div>
-                                                <TextInput
-                                                    id="airportName"
-                                                    name="name"
-                                                    value={airportData.name}
-                                                    onChange={handleAirportChange}
-                                                    required
-                                                />
-                                            </div>
-                                            
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="airportArabicName" value="Arabic Name" />
-                                                </div>
-                                                <TextInput
-                                                    id="airportArabicName"
-                                                    name="arabicName"
-                                                    value={airportData.arabicName}
-                                                    onChange={handleAirportChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        <CustomButton 
-                                            type="submit"
-                                            variant="pinkToOrange"
-                                        >
-                                            Add Airport
-                                        </CustomButton>
-                                        
-                                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
-                                    </form>
-                                    
-                                    <div className="mt-8">
-                                        <h3 className="text-xl font-bold mb-4 dark:text-white">Existing Airports</h3>
-                                        {airports.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {airports.map(airport => (
-                                                    <Card key={airport._id} className="overflow-hidden dark:bg-slate-900">
-                                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                                            <div>
-                                                                <p className="font-medium text-lg dark:text-white">{airport.name}</p>
-                                                                <p className="text-gray-600 dark:text-gray-400">{airport.arabicName}</p>
-                                                            </div>
-                                                            <CustomButton
-                                                                variant="red"
-                                                                size="xs"
-                                                                onClick={() => handleDeleteAirport(airport._id)}
-                                                                title="Delete airport"
-                                                                icon={({ className }) => (
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                    </svg>
-                                                                )}
-                                                            >
-                                                                Delete
-                                                            </CustomButton>
-                                                        </div>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <Alert color="info">No airports found.</Alert>
-                                        )}
-                                    </div>
-                                </Card>
+                                <div id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
+                                    <Airports />
+                                </div>
                             )}
 
                             {activeTab === 'offices' && (
@@ -3804,7 +3287,6 @@ export default function AdminPanel() {
                                             Add Office
                                         </CustomButton>
                                         
-                                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                     </form>
                                     
                                     <div className="mt-8">
@@ -4484,7 +3966,6 @@ export default function AdminPanel() {
                                         </div>
                                     )}
 
-                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                 </Card>
                             )}
 
@@ -5267,7 +4748,6 @@ export default function AdminPanel() {
                         </>
                     )}
 
-                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                 </Card>
                             )}
 
@@ -5659,7 +5139,6 @@ export default function AdminPanel() {
                                         )}
                                     </div>
 
-                                    {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                         </div>
                                     )}
 
@@ -5945,7 +5424,6 @@ export default function AdminPanel() {
                                 <Card className="w-full dark:bg-slate-950" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
                                     <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">User Management</h2>
                                     
-                                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
                                     {/* Desktop Table View */}
                                     <div className="hidden md:block">
@@ -7106,7 +6584,6 @@ export default function AdminPanel() {
                                 <Card className="w-full dark:bg-slate-950" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
                                     <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">Pending User Approval Requests</h2>
                                     
-                                    {error && <Alert color="failure" className="mb-4">{error}</Alert>}
                                     
                                     {/* Desktop Table View */}
                                     <div className="hidden md:block">
@@ -7451,77 +6928,6 @@ export default function AdminPanel() {
                                 />
                             )}
                             
-                            {/* Tour Duplicate Modal */}
-                            <Modal
-                                show={tourDuplicateModalOpen}
-                                onClose={closeTourDuplicateModal}
-                                size="lg"
-                                popup
-                                theme={{
-                                    content: {
-                                        base: "relative h-full w-full p-4 h-auto",
-                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
-                                    }
-                                }}
-                            >
-                                <Modal.Header>
-                                    <div className="text-center">
-                                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-                                            Duplicate Existing Tour
-                                        </h3>
-                                    </div>
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <div className="space-y-6">
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Select a tour to duplicate its data. You can modify the duplicated data before creating a new tour.
-                                        </p>
-                                        
-                                        {tours.length > 0 ? (
-                                            <>
-                                                <div>
-                                                    <Label htmlFor="selectTourToDuplicate" value="Select Tour" />
-                                                    <Select
-                                                        id="selectTourToDuplicate"
-                                                        value={selectedTourToDuplicate}
-                                                        onChange={(e) => setSelectedTourToDuplicate(e.target.value)}
-                                                        required
-                                                    >
-                                                        <option value="">Select a tour</option>
-                                                        {tours.map(tour => (
-                                                            <option key={tour._id} value={tour._id}>
-                                                                {tour.name} - {tour.city} ({tour.tourType})
-                                                            </option>
-                                                        ))}
-                                                    </Select>
-                                                </div>
-                                                
-                                                <div className="flex justify-end gap-3">
-                                                    <CustomButton
-                                                        variant="gray"
-                                                        onClick={closeTourDuplicateModal}
-                                                    >
-                                                        Cancel
-                                                    </CustomButton>
-                                                    <CustomButton
-                                                        variant="blue"
-                                                        onClick={handleDuplicateTour}
-                                                        disabled={!selectedTourToDuplicate}
-                                                        icon={HiDuplicate}
-                                                        title="Duplicate selected tour"
-                                                    >
-                                                        Duplicate
-                                                    </CustomButton>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <Alert color="info">
-                                                No tours available to duplicate. Please add a tour first.
-                                            </Alert>
-                                        )}
-                                    </div>
-                                </Modal.Body>
-                            </Modal>
 
                             {/* Delete User Confirmation Modal */}
                             <DeleteConfirmationModal

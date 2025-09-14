@@ -1,12 +1,14 @@
 import React from 'react'
 import axios from 'axios'
 import { useState, useEffect } from 'react'
-import { Checkbox, Card, Label, Alert, Select, Modal, Textarea, Accordion } from 'flowbite-react'
+import { Checkbox, Card, Label, Select, Textarea, Accordion } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiDuplicate, HiCalendar } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import CustomButton from '../CustomButton'
 import CustomSelect from '../Select'
 import TextInput from '../TextInput'
+import RahalatekLoader from '../RahalatekLoader'
+import CustomModal from '../CustomModal'
 
 
 
@@ -34,7 +36,7 @@ export default function Hotels() {
     const [useCustomHotelCity, setUseCustomHotelCity] = useState(false);
     const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
     const [airports, setAirports] = useState([]);
-    const [error, setError] = useState('');
+    const [modalLoading, setModalLoading] = useState(false);
 
     // Fetch airports data on component mount
     useEffect(() => {
@@ -48,7 +50,6 @@ export default function Hotels() {
         };
         
         fetchAirports();
-        fetchHotels();
     }, []);
 
     const getAirportOptions = () => {
@@ -110,13 +111,14 @@ export default function Hotels() {
     });
 
     const fetchHotels = async () => {
+        setModalLoading(true);
         try {
             const response = await axios.get('/api/hotels');
             setHotels(response.data);
-            setError('');
         } catch (err) {
             console.error('Failed to fetch hotels:', err);
-            setError(err.response?.data?.message || 'Failed to fetch hotels');
+        } finally {
+            setModalLoading(false);
         }
     };
 
@@ -341,7 +343,6 @@ export default function Hotels() {
 
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         try {
             // Get room types from the form
             const roomTypes = addRoomTypesToHotelData();
@@ -416,7 +417,6 @@ export default function Hotels() {
                 },
             });
         } catch (err) {
-            setError('Failed to add hotel');
             toast.error('Failed to add hotel', {
                 duration: 3000,
                 style: {
@@ -494,6 +494,10 @@ export default function Hotels() {
     // Function to open duplicate modal
     const openDuplicateModal = () => {
         setDuplicateModalOpen(true);
+        // Fetch hotels only when modal is opened
+        if (hotels.length === 0) {
+            fetchHotels();
+        }
     };
     
     // Function to close duplicate modal
@@ -1269,81 +1273,62 @@ export default function Hotels() {
                                             Add Hotel
                                         </CustomButton>
                                         
-                                        {error && <Alert color="failure" className="mt-4">{error}</Alert>}
                                     </form>
                                 </Card>
                         
                         {/* Duplicate Hotel Modal */}
-                        <Modal
-                                show={duplicateModalOpen}
-                                onClose={closeDuplicateModal}
-                                size="lg"
-                                popup
-                                theme={{
-                                    content: {
-                                        base: "relative h-full w-full p-4 h-auto",
-                                        inner: "relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[90vh]"
-                                    }
-                                }}
-                            >
-                                <Modal.Header>
-                                    <div className="text-center">
-                                        <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-                                            Duplicate Existing Hotel
-                                        </h3>
+                        <CustomModal
+                            isOpen={duplicateModalOpen}
+                            onClose={closeDuplicateModal}
+                            title="Duplicate Existing Hotel"
+                            subtitle="Select a hotel to duplicate its data. You can modify the duplicated data before creating a new hotel."
+                            maxWidth="md:max-w-2xl"
+                        >
+                            <div className="space-y-6">
+                                {modalLoading ? (
+                                    <div className="text-center py-12">
+                                        <RahalatekLoader size="sm" />
+                                        <p className="text-base text-gray-600 mt-4">Loading hotels...</p>
                                     </div>
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <div className="space-y-6">
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Select a hotel to duplicate its data. You can modify the duplicated data before creating a new hotel.
-                                        </p>
-                                        
-                                        {hotels.length > 0 ? (
-                                            <>
-                                                <div>
-                                                    <Label htmlFor="selectHotelToDuplicate" value="Select Hotel" />
-                                                    <Select
-                                                        id="selectHotelToDuplicate"
-                                                        value={selectedHotelToDuplicate}
-                                                        onChange={(e) => setSelectedHotelToDuplicate(e.target.value)}
-                                                        required
-                                                    >
-                                                        <option value="">Select a hotel</option>
-                                                        {hotels.map(hotel => (
-                                                            <option key={hotel._id} value={hotel._id}>
-                                                                {hotel.name} - {hotel.city} ({hotel.stars}★)
-                                                            </option>
-                                                        ))}
-                                                    </Select>
-                                                </div>
-                                                
-                                                <div className="flex justify-end gap-3">
-                                                    <CustomButton
-                                                        variant="gray"
-                                                        onClick={closeDuplicateModal}
-                                                    >
-                                                        Cancel
-                                                    </CustomButton>
-                                                    <CustomButton
-                                                        variant="blue"
-                                                        onClick={handleDuplicateHotel}
-                                                        disabled={!selectedHotelToDuplicate}
-                                                        icon={HiDuplicate}
-                                                        title="Duplicate selected hotel"
-                                                    >
-                                                        Duplicate
-                                                    </CustomButton>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <Alert color="info">
-                                                No hotels available to duplicate. Please add a hotel first.
-                                            </Alert>
-                                        )}
+                                ) : hotels.length > 0 ? (
+                                    <div className="space-y-2 relative">
+                                        <CustomSelect
+                                            id="selectHotelToDuplicate"
+                                            label="Select Hotel"
+                                            value={selectedHotelToDuplicate}
+                                            onChange={(value) => setSelectedHotelToDuplicate(value)}
+                                            options={[
+                                                { value: "", label: "Choose a hotel" },
+                                                ...hotels.map(hotel => ({
+                                                    value: hotel._id,
+                                                    label: `${hotel.name} - ${hotel.city} (${hotel.stars}★)`
+                                                }))
+                                            ]}
+                                            placeholder="Select a hotel to duplicate"
+                                            required
+                                        />
                                     </div>
-                                </Modal.Body>
-                            </Modal>
+                                ) : (
+                                    <div className="text-center text-gray-500">
+                                        No hotels available to duplicate. Please add a hotel first.
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                    <CustomButton variant="gray" onClick={closeDuplicateModal}>
+                                        Cancel
+                                    </CustomButton>
+                                    <CustomButton
+                                        variant="gray"
+                                        onClick={handleDuplicateHotel}
+                                        disabled={!selectedHotelToDuplicate || modalLoading}
+                                        icon={HiDuplicate}
+                                    >
+                                        Duplicate
+                                    </CustomButton>
+                                </div>
+                            </div>
+                        </CustomModal>
         </>
   )
 }
