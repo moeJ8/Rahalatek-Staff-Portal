@@ -31,16 +31,17 @@ import {
 
 } from 'react-icons/fa';
 import axios from 'axios';
-import RahalatekLoader from './RahalatekLoader';
-import CustomButton from './CustomButton';
-import CustomScrollbar from './CustomScrollbar';
-import ProfitChart from './ProfitChart';
-import VoucherTrendChart from './VoucherTrendChart';
-import MonthlyArrivalChart from './MonthlyArrivalChart';
-import CustomTooltip from './CustomTooltip';
-import Select from './Select';
-import UpcomingEventsWidget from './UpcomingEventsWidget';
-import LeaveVacationWidget from './LeaveVacationWidget';
+import RahalatekLoader from '../RahalatekLoader';
+import CustomButton from '../CustomButton';
+import CustomScrollbar from '../CustomScrollbar';
+import ProfitChart from '../ProfitChart';
+import VoucherTrendChart from '../VoucherTrendChart';
+import MonthlyArrivalChart from '../MonthlyArrivalChart';
+import CustomTooltip from '../CustomTooltip';
+import Select from '../Select';
+import UpcomingEventsWidget from '../UpcomingEventsWidget';
+import LeaveVacationWidget from '../LeaveVacationWidget';
+import ActiveVouchersModal from '../ActiveVouchersModal';
 
 export default function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
@@ -50,6 +51,7 @@ export default function Dashboard() {
     const [verifiedEmailsTooltip, setVerifiedEmailsTooltip] = useState({ visible: false, x: 0, y: 0 });
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState('USD');
+    const [showActiveVouchersModal, setShowActiveVouchersModal] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -713,18 +715,22 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                                 
-                                {/* Active (Await) */}
-                                <div className="flex items-center p-2 sm:p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/30 rounded-xl border border-yellow-200 dark:border-yellow-700 hover:shadow-lg transition-all duration-200">
+                                {/* Active (Await) - Clickable */}
+                                <button
+                                    onClick={() => setShowActiveVouchersModal(true)}
+                                    className="flex items-center p-2 sm:p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/30 rounded-xl border border-yellow-200 dark:border-yellow-700 hover:shadow-lg transition-all duration-200 cursor-pointer hover:from-yellow-100 hover:to-yellow-200 dark:hover:from-yellow-800/40 dark:hover:to-yellow-700/40 w-full text-left"
+                                    title="Click to view active vouchers"
+                                >
                                     <div className="p-1.5 sm:p-3 bg-yellow-100 dark:bg-yellow-800/50 rounded-full mr-2 sm:mr-4">
                                         <FaClock className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" />
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs sm:text-sm font-medium text-yellow-700 dark:text-yellow-300">Active (Await)</p>
-                                        <p className="text-base sm:text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                                    </div>
+                                    <div className="flex-1 min-w-0 text-left">
+                                        <p className="text-xs sm:text-sm font-medium text-yellow-700 dark:text-yellow-300 text-left">Active (Await)</p>
+                                        <p className="text-base sm:text-2xl font-bold text-yellow-900 dark:text-yellow-100 text-left">
                                             {analytics?.overview?.activeVouchers || 0}
                                         </p>
-                                                        </div>
-                                                    </div>
+                                    </div>
+                                </button>
                                 
                                 {/* Arrived */}
                                 <div className="flex items-center p-2 sm:p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-xl border border-green-200 dark:border-green-700 hover:shadow-lg transition-all duration-200">
@@ -1120,6 +1126,12 @@ export default function Dashboard() {
                         <div className="opacity-60">Verification rate: {analytics?.users?.approved ? Math.round(((analytics?.users?.verifiedEmails || 0) / analytics.users.approved) * 100) : 0}% of approved users</div>
                     </div>
                 )}
+
+            {/* Active Vouchers Modal */}
+            <ActiveVouchersModal 
+                show={showActiveVouchersModal}
+                onClose={() => setShowActiveVouchersModal(false)}
+            />
         </div>
     );
 }

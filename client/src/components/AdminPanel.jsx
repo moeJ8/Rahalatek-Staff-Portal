@@ -27,7 +27,7 @@ import PaymentDateControls from './PaymentDateControls'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 import AttendancePanel from './AttendancePanel'
 import EmailSchedulerPanel from './AdminPanel/EmailSchedulerPanel'
-import Dashboard from './Dashboard'
+import Dashboard from './AdminPanel/Dashboard'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
