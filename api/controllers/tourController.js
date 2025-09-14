@@ -1,4 +1,5 @@
 const Tour = require('../models/Tour');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 // Get all tours
 exports.getAllTours = async (req, res) => {
@@ -40,6 +41,10 @@ exports.addTour = async (req, res) => {
   try {
     const newTour = new Tour(req.body);
     const savedTour = await newTour.save();
+    
+    // Invalidate dashboard cache since tour count changed
+    await invalidateDashboardCache('Tour added');
+    
     res.status(201).json(savedTour);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -57,6 +62,10 @@ exports.updateTour = async (req, res) => {
     if (!updatedTour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
+    
+    // Invalidate dashboard cache since tour data changed
+    await invalidateDashboardCache('Tour updated');
+    
     res.status(200).json(updatedTour);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -85,6 +94,10 @@ exports.deleteTour = async (req, res) => {
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
+    
+    // Invalidate dashboard cache since tour count changed
+    await invalidateDashboardCache('Tour deleted');
+    
     res.status(200).json({ message: 'Tour deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

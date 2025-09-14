@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Airport = require('../models/Airport');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 // Get all airports
 router.get('/', async (req, res) => {
@@ -21,6 +22,10 @@ router.post('/', async (req, res) => {
 
     try {
         const newAirport = await airport.save();
+        
+        // Invalidate dashboard cache since airport count changed
+        await invalidateDashboardCache('Airport added');
+        
         res.status(201).json(newAirport);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -48,6 +53,10 @@ router.put('/:id', async (req, res) => {
         if (req.body.arabicName) airport.arabicName = req.body.arabicName;
 
         const updatedAirport = await airport.save();
+        
+        // Invalidate dashboard cache since airport data changed
+        await invalidateDashboardCache('Airport updated');
+        
         res.status(200).json(updatedAirport);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -59,6 +68,9 @@ router.delete('/:id', async (req, res) => {
     try {
         const airport = await Airport.findByIdAndDelete(req.params.id);
         if (!airport) return res.status(404).json({ message: 'Airport not found' });
+        
+        // Invalidate dashboard cache since airport count changed
+        await invalidateDashboardCache('Airport deleted');
         
         res.status(200).json({ message: 'Airport deleted' });
     } catch (error) {

@@ -1,4 +1,5 @@
 const Hotel = require('../models/Hotel');
+const { invalidateDashboardCache } = require('../utils/redis');
 
 exports.getAllHotels = async (req, res) => {
     try {
@@ -24,6 +25,10 @@ exports.addHotel = async (req, res) => {
         
         const hotel = new Hotel(hotelData);
         const newHotel = await hotel.save();
+        
+        // Invalidate dashboard cache since hotel count changed
+        await invalidateDashboardCache('Hotel added');
+        
         res.status(201).json(newHotel);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -72,6 +77,10 @@ exports.updateHotel = async (req, res) => {
         if (!updatedHotel) {
             return res.status(404).json({ message: 'Hotel not found' });
         }
+        
+        // Invalidate dashboard cache since hotel data changed
+        await invalidateDashboardCache('Hotel updated');
+        
         res.json(updatedHotel);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -97,6 +106,10 @@ exports.deleteHotel = async (req, res) => {
         if (!hotel) {
             return res.status(404).json({ message: 'Hotel not found' });
         }
+        
+        // Invalidate dashboard cache since hotel count changed
+        await invalidateDashboardCache('Hotel deleted');
+        
         res.json({ message: 'Hotel deleted successfully' });
     } catch (err) {
         res.status(500).json({ message: err.message });

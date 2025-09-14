@@ -539,6 +539,16 @@ const OfficeDetailPage = () => {
                 <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-6 mb-8 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
+                            <CustomButton
+                                variant="gray"
+                                size="sm"
+                                icon={HiArrowLeft}
+                                onClick={() => navigate('/dashboard?tab=financials')}
+                                className="mr-2"
+                                title="Back to Financials"
+                            >
+                                Back
+                            </CustomButton>
                             <div className="bg-teal-100 dark:bg-teal-900/30 p-3 rounded-xl">
                                 <HiOfficeBuilding className="h-8 w-8 text-teal-600 dark:text-teal-400" />
                             </div>

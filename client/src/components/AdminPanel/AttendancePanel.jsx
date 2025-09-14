@@ -2,19 +2,19 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Table } from 'flowbite-react';
 import { FaQrcode, FaPrint, FaCalendarDay, FaClock, FaUsers, FaChartLine, FaDownload, FaEye, FaCheck, FaTimes, FaCalendarAlt, FaList, FaChevronLeft, FaChevronRight, FaCog, FaCalendarCheck, FaTrash, FaPen, FaBusinessTime, FaGift, FaUserClock, FaUserCheck, FaGlobe, FaUser } from 'react-icons/fa';
 import { HiRefresh, HiPlus } from 'react-icons/hi';
-import CustomButton from './CustomButton';
-import RahalatekLoader from './RahalatekLoader';
-import CustomTable from './CustomTable';
-import SearchableSelect from './SearchableSelect';
-import Search from './Search';
-import CustomScrollbar from './CustomScrollbar';
-import Select from './Select';
-import CustomDatePicker from './CustomDatePicker';
-import TextInput from './TextInput';
-import CustomModal from './CustomModal';
-import CustomTooltip from './CustomTooltip';
-import DeleteConfirmationModal from './DeleteConfirmationModal';
-import CustomCheckbox from './CustomCheckbox';
+import CustomButton from '../CustomButton';
+import RahalatekLoader from '../RahalatekLoader';
+import CustomTable from '../CustomTable';
+import SearchableSelect from '../SearchableSelect';
+import Search from '../Search';
+import CustomScrollbar from '../CustomScrollbar';
+import Select from '../Select';
+import CustomDatePicker from '../CustomDatePicker';
+import TextInput from '../TextInput';
+import CustomModal from '../CustomModal';
+import CustomTooltip from '../CustomTooltip';
+import DeleteConfirmationModal from '../DeleteConfirmationModal';
+import CustomCheckbox from '../CustomCheckbox';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -6427,11 +6427,42 @@ function AttendanceCreateModal({ isOpen, onClose, initialData, users, onSubmit, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Prepare submission data based on status
+    const submitData = { ...formData };
+    
+    if (formData.status === 'checked-in') {
+      // Only check-in time, no check-out time
+      submitData.checkOutTime = null;
+    } else if (formData.status === 'not-checked-in') {
+      // No times at all
+      submitData.checkInTime = null;
+      submitData.checkOutTime = null;
+    }
+    // For 'checked-out' status, keep both times as they are
+    
+    onSubmit(submitData);
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      // Handle status changes
+      if (field === 'status') {
+        if (value === 'checked-in') {
+          // Clear checkout time for checked-in status
+          updated.checkOutTime = '';
+        } else if (value === 'not-checked-in') {
+          // Clear both times for not-checked-in status
+          updated.checkInTime = '';
+          updated.checkOutTime = '';
+        } else if (value === 'checked-out') {
+          // Set default times if they're empty
+          if (!prev.checkInTime) updated.checkInTime = '09:00';
+          if (!prev.checkOutTime) updated.checkOutTime = '17:00';
+        }
+      }
+      return updated;
+    });
   };
 
   const selectedUser = users.find(u => u._id === formData.userId);
@@ -6473,20 +6504,37 @@ function AttendanceCreateModal({ isOpen, onClose, initialData, users, onSubmit, 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
+          <Select
+            label="Status"
+            value={formData.status}
+            onChange={(value) => handleChange('status', value)}
+            options={[
+              { value: 'checked-in', label: 'Checked In' },
+              { value: 'checked-out', label: 'Checked Out' },
+              { value: 'not-checked-in', label: 'Not Checked In' }
+            ]}
+            required
+          />
+          
           <TextInput
             type="time"
             label="Check In Time"
             value={formData.checkInTime}
             onChange={(e) => handleChange('checkInTime', e.target.value)}
             step="60"
+            disabled={formData.status === 'not-checked-in'}
+            placeholder={formData.status === 'not-checked-in' ? 'Not applicable' : 'Select time'}
           />
+          
           <TextInput
             type="time"
             label="Check Out Time"
             value={formData.checkOutTime}
             onChange={(e) => handleChange('checkOutTime', e.target.value)}
             step="60"
+            disabled={formData.status === 'checked-in' || formData.status === 'not-checked-in'}
+            placeholder={formData.status === 'checked-in' || formData.status === 'not-checked-in' ? 'Not applicable' : 'Select time'}
           />
         </div>
 
