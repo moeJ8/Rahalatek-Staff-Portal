@@ -4523,22 +4523,15 @@ export default function AdminPanel() {
                                                 </CustomButton>
                                             </div>
                                             <div className="flex items-end col-span-2 md:col-span-1">
-                                                <div className="space-y-2">
-                                                    <CustomButton
-                                                        variant="blue"
-                                                        onClick={fetchFinancialData}
-                                                        disabled={financialLoading}
-                                                        className="w-full h-12"
-                                                        title="Refresh financial data"
-                                                    >
-                                                        {financialLoading ? 'Refreshing...' : 'Refresh Data'}
-                                                    </CustomButton>
-                                                    {lastRefreshTime && (
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                                                            Last updated: {lastRefreshTime.toLocaleTimeString()}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <CustomButton
+                                                    variant="blue"
+                                                    onClick={fetchFinancialData}
+                                                    disabled={financialLoading}
+                                                    className="w-full h-12"
+                                                    title="Refresh financial data"
+                                                >
+                                                    {financialLoading ? 'Refreshing...' : 'Refresh Data'}
+                                                </CustomButton>
                                             </div>
                                         </div>
                                     </div>
