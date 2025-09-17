@@ -543,9 +543,9 @@ const OfficeDetailPage = () => {
                                 variant="gray"
                                 size="sm"
                                 icon={HiArrowLeft}
-                                onClick={() => navigate('/dashboard?tab=financials')}
+                                onClick={() => navigate(-1)}
                                 className="mr-2"
-                                title="Back to Financials"
+                                title="Go back to previous page"
                             >
                                 Back
                             </CustomButton>

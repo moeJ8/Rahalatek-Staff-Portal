@@ -130,6 +130,25 @@ const FinancialFloatingTotalsPanel = ({
                     </p>
                   </div>
 
+                  {/* Total Remaining */}
+                  {totals.totalRemaining !== undefined && (
+                    <div className={`p-3 rounded-lg border ${totals.totalRemaining <= 0
+                      ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                      : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                    }`}>
+                      <h4 className={`text-sm font-semibold ${totals.totalRemaining <= 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                      }`}>Total Remaining</h4>
+                      <p className={`text-lg font-bold ${totals.totalRemaining <= 0
+                        ? 'text-green-900 dark:text-green-100'
+                        : 'text-red-900 dark:text-red-100'
+                      }`}>
+                        {getCurrencySymbol(currency)}{totals.totalRemaining.toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Profit */}
                   <div className={`p-3 rounded-lg border ${isProfitPositive
                     ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
@@ -254,13 +273,32 @@ const FinancialFloatingTotalsPanel = ({
                       </div>
                     </div>
 
-                    {/* Total */}
-                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <h4 className="text-base font-semibold text-blue-600 dark:text-blue-400">Total Revenue</h4>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                        {getCurrencySymbol(currency)}{totals.total.toFixed(2)}
+                  {/* Total */}
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <h4 className="text-base font-semibold text-blue-600 dark:text-blue-400">Total Revenue</h4>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                      {getCurrencySymbol(currency)}{totals.total.toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Total Remaining */}
+                  {totals.totalRemaining !== undefined && (
+                    <div className={`p-4 rounded-lg border ${totals.totalRemaining <= 0 
+                      ? 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700'
+                      : 'bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700'
+                    }`}>
+                      <h4 className={`text-base font-semibold ${totals.totalRemaining <= 0
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                      }`}>Total Remaining</h4>
+                      <p className={`text-2xl font-bold ${totals.totalRemaining <= 0
+                        ? 'text-green-900 dark:text-green-100'
+                        : 'text-red-900 dark:text-red-100'
+                      }`}>
+                        {getCurrencySymbol(currency)}{totals.totalRemaining.toFixed(2)}
                       </p>
                     </div>
+                  )}
 
                     {/* Profit */}
                     <div className={`p-4 rounded-lg border ${isProfitPositive

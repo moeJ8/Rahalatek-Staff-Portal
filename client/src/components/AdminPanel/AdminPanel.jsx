@@ -199,6 +199,7 @@ export default function AdminPanel() {
     const [financialData, setFinancialData] = useState([]);
     const [financialLoading, setFinancialLoading] = useState(false);
     const [allVouchers, setAllVouchers] = useState([]);
+    const [officePayments, setOfficePayments] = useState({}); // Store payments by office name
     const [financialFilters, setFinancialFilters] = useState({
         month: (new Date().getMonth() + 1).toString(), // Current month (1-12)
         year: new Date().getFullYear().toString(),
@@ -212,6 +213,9 @@ export default function AdminPanel() {
     
     // Add state for PDF download
     const [pdfDownloading, setPdfDownloading] = useState(false);
+    
+    // Add state for auto-refresh indicator
+    const [lastRefreshTime, setLastRefreshTime] = useState(null);
     
     // Add state for debt management
     const [debts, setDebts] = useState([]);
@@ -1178,6 +1182,25 @@ export default function AdminPanel() {
         }
     }, [financialFilters.currency, activeTab, dataLoaded]);
 
+    // Auto-refresh financial data every 2 minutes when on financials tab
+    useEffect(() => {
+        let intervalId;
+        
+        if (activeTab === 'financials' && dataLoaded) {
+            // Set up auto-refresh every 2 minutes (120000ms)
+            intervalId = setInterval(() => {
+                console.log('Auto-refreshing financial data...');
+                fetchFinancialData();
+            }, 120000);
+        }
+        
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [activeTab, dataLoaded]);
+
     // Single useEffect to handle all salary data loading
     useEffect(() => {
         if (activeTab === 'salaries' && salaryInnerTab === 'salaries' && dataLoaded && users.length > 0) {
@@ -1780,6 +1803,22 @@ export default function AdminPanel() {
 
 
 
+    // Calculate remaining amount for an office in the financial table
+    const calculateOfficeRemaining = (officeName, total) => {
+        const payments = officePayments[officeName] || [];
+        
+        // Only count approved OUTGOING payments (payments made to the office)
+        const totalPaid = payments.reduce((sum, payment) => {
+            if (payment.status === 'approved' && payment.type === 'OUTGOING') {
+                return sum + payment.amount;
+            }
+            return sum;
+        }, 0);
+        
+        return total - totalPaid;
+    };
+
+
     // Helper functions for vouchers
     const getCurrencySymbol = (currency) => {
         if (!currency) return '$';
@@ -1897,6 +1936,45 @@ export default function AdminPanel() {
             setAllUsers(response.data);
         } catch (error) {
             console.error('Error fetching users:', error);
+        }
+    };
+
+    // Fetch office payments for remaining calculations
+    const fetchOfficePayments = async (uniqueOffices) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return {};
+
+            const paymentsPromises = uniqueOffices.map(async (officeName) => {
+                try {
+                    const params = {};
+                    if (financialFilters.currency && financialFilters.currency !== 'ALL') {
+                        params.currency = financialFilters.currency;
+                    }
+
+                    const response = await axios.get(`/api/office-payments/${encodeURIComponent(officeName)}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                        params: params
+                    });
+                    return { officeName, payments: response.data || [] };
+                } catch (err) {
+                    if (err.response?.status !== 404) {
+                        console.error(`Failed to fetch payments for ${officeName}:`, err);
+                    }
+                    return { officeName, payments: [] };
+                }
+            });
+
+            const results = await Promise.all(paymentsPromises);
+            const paymentsMap = {};
+            results.forEach(({ officeName, payments }) => {
+                paymentsMap[officeName] = payments;
+            });
+            
+            return paymentsMap;
+        } catch (error) {
+            console.error('Error fetching office payments:', error);
+            return {};
         }
     };
 
@@ -2116,8 +2194,25 @@ export default function AdminPanel() {
                 if (a.month !== b.month) return b.month.localeCompare(a.month);
                 return b.total - a.total;
             });
+
+            // Fetch office payments for remaining calculations
+            const uniqueOffices = [...new Set(financialArray.map(item => item.officeName))];
+            
+            // Also get unique client offices for client payments
+            const uniqueClientOffices = [...new Set(filteredVouchers.map(voucher => {
+                return voucher.officeName || voucher.clientName;
+            }).filter(Boolean))];
+            
+            // Combine both provider and client offices
+            const allUniqueOffices = [...new Set([...uniqueOffices, ...uniqueClientOffices])];
+            
+            const paymentsMap = await fetchOfficePayments(allUniqueOffices);
+            setOfficePayments(paymentsMap);
             
             setFinancialData(financialArray);
+            
+            // Update last refresh time
+            setLastRefreshTime(new Date());
         } catch (err) {
             console.error('Failed to fetch financial data:', err);
             // setError(err.response?.data?.message || 'Failed to fetch financial data');
@@ -2152,9 +2247,10 @@ export default function AdminPanel() {
         acc.trips += item.trips;
         acc.flights += item.flights;
         acc.total += item.total;
+        acc.totalRemaining += calculateOfficeRemaining(item.officeName, item.total);
         acc.voucherCount += item.voucherCount;
         return acc;
-    }, { hotels: 0, transfers: 0, trips: 0, flights: 0, total: 0, voucherCount: 0 });
+    }, { hotels: 0, transfers: 0, trips: 0, flights: 0, total: 0, totalRemaining: 0, voucherCount: 0 });
 
     // Calculate total client revenue (independent of view filter)
     const totalClientRevenue = useMemo(() => {
@@ -4427,15 +4523,22 @@ export default function AdminPanel() {
                                                 </CustomButton>
                                             </div>
                                             <div className="flex items-end col-span-2 md:col-span-1">
-                                                <CustomButton
-                                                    variant="blue"
-                                                    onClick={fetchFinancialData}
-                                                    disabled={financialLoading}
-                                                    className="w-full h-12"
-                                                    title="Refresh financial data"
-                                                >
-                                                    {financialLoading ? 'Refreshing...' : 'Refresh Data'}
-                                                </CustomButton>
+                                                <div className="space-y-2">
+                                                    <CustomButton
+                                                        variant="blue"
+                                                        onClick={fetchFinancialData}
+                                                        disabled={financialLoading}
+                                                        className="w-full h-12"
+                                                        title="Refresh financial data"
+                                                    >
+                                                        {financialLoading ? 'Refreshing...' : 'Refresh Data'}
+                                                    </CustomButton>
+                                                    {lastRefreshTime && (
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                                                            Last updated: {lastRefreshTime.toLocaleTimeString()}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -4513,6 +4616,7 @@ export default function AdminPanel() {
                                         { label: 'Trips', className: 'text-purple-600 dark:text-purple-400' },
                                         { label: 'Flights', className: 'text-orange-600 dark:text-orange-400' },
                                         { label: 'Total', className: 'text-gray-900 dark:text-white' },
+                                        { label: 'Remaining', className: 'text-red-600 dark:text-red-400' },
                                         { label: 'Vouchers', className: '' }
                                     ]}
                                     data={filteredFinancialData}
@@ -4547,6 +4651,9 @@ export default function AdminPanel() {
                                             <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
                                                 {getCurrencySymbol(financialFilters.currency)}{item.total.toFixed(2)}
                                             </Table.Cell>
+                                            <Table.Cell className={`text-sm font-bold px-4 py-3 ${calculateOfficeRemaining(item.officeName, item.total) <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                {getCurrencySymbol(financialFilters.currency)}{calculateOfficeRemaining(item.officeName, item.total).toFixed(2)}
+                                            </Table.Cell>
                                             <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
                                                 {item.voucherCount}
                                             </Table.Cell>
@@ -4565,42 +4672,62 @@ export default function AdminPanel() {
                                         { label: '#', className: 'text-center' },
                                         { label: 'Client', className: '' },
                                         { label: 'Month', className: '' },
-                                        { label: 'Total Amount', className: 'text-gray-900 dark:text-white' },
+                                        { label: 'Total Amount', className: 'text-blue-600 dark:text-blue-400' },
+                                        { label: 'Paid', className: 'text-green-600 dark:text-green-400' },
+                                        { label: 'Remaining', className: 'text-red-600 dark:text-red-400' },
                                         { label: 'Vouchers', className: 'text-gray-900 dark:text-white' }
                                     ]}
                                     data={clientOfficeData}
-                                    renderRow={(office, index) => (
-                                        <>
-                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
-                                                {index + 1}
-                                            </Table.Cell>
-                                            <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                <div className="flex items-center gap-2">
-                                                    <Link 
-                                                        to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
-                                                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
-                                                    >
-                                                        {office.officeName}
-                                                    </Link>
-                                                    {office.isDirectClient && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
-                                                            <FaUser className="w-3 h-3 mr-1" />
-                                                            Direct
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                                {office.monthName} {office.year}
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-gray-900 dark:text-white font-medium px-4 py-3">
-                                                {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
-                                            </Table.Cell>
-                                            <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
-                                                {office.voucherCount}
-                                            </Table.Cell>
-                                        </>
-                                    )}
+                                    renderRow={(office, index) => {
+                                        const totalPaid = office.vouchers.reduce((sum, voucher) => {
+                                            const voucherSpecificPayments = Object.values(officePayments).flat().filter(payment => {
+                                                const relatedVoucherId = payment.relatedVoucher?._id || payment.relatedVoucher;
+                                                return relatedVoucherId === voucher._id && payment.status === 'approved' && payment.type === 'INCOMING';
+                                            });
+                                            return sum + voucherSpecificPayments.reduce((paidSum, payment) => paidSum + payment.amount, 0);
+                                        }, 0);
+                                        
+                                        const remaining = office.totalAmount - totalPaid;
+                                        
+                                        return (
+                                            <>
+                                                <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
+                                                    {index + 1}
+                                                </Table.Cell>
+                                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <Link 
+                                                            to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
+                                                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                                        >
+                                                            {office.officeName}
+                                                        </Link>
+                                                        {office.isDirectClient && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
+                                                                <FaUser className="w-3 h-3 mr-1" />
+                                                                Direct
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </Table.Cell>
+                                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                                    {office.monthName} {office.year}
+                                                </Table.Cell>
+                                                <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                                    {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
+                                                </Table.Cell>
+                                                <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                                    {getCurrencySymbol(financialFilters.currency)}{totalPaid.toFixed(2)}
+                                                </Table.Cell>
+                                                <Table.Cell className={`text-sm font-bold px-4 py-3 ${remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                    {getCurrencySymbol(financialFilters.currency)}{remaining.toFixed(2)}
+                                                </Table.Cell>
+                                                <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
+                                                    {office.voucherCount}
+                                                </Table.Cell>
+                                            </>
+                                        );
+                                    }}
                                     emptyMessage="No clients found"
                                     emptyIcon={() => (
                                         <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -4684,6 +4811,18 @@ export default function AdminPanel() {
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    {/* Remaining Amount */}
+                                                    <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                                                                Remaining Amount
+                                                            </div>
+                                                            <div className={`text-sm font-bold ${calculateOfficeRemaining(item.officeName, item.total) <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                {getCurrencySymbol(financialFilters.currency)}{calculateOfficeRemaining(item.officeName, item.total).toFixed(2)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))
@@ -4699,48 +4838,79 @@ export default function AdminPanel() {
                                             <p className="text-gray-500 dark:text-gray-400 font-medium">No clients found</p>
                                         </div>
                                     ) : (
-                                        clientOfficeData.map((office, index) => (
-                                            <div 
-                                                key={index} 
-                                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                                style={{
-                                                    animationDelay: `${index * 100}ms`
-                                                }}
-                                            >
-                                                <div className="space-y-3">
-                                                    {/* Header with Client and Total */}
-                                                    <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <Link 
-                                                                    to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
-                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
-                                                                >
-                                                                    {office.officeName}
-                                                                </Link>
-                                                                {office.isDirectClient && (
-                                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
-                                                                        <FaUser className="w-2 h-2 mr-1" />
-                                                                        Direct
-                                                                    </span>
-                                                                )}
+                                        clientOfficeData.map((office, index) => {
+                                            const totalPaid = office.vouchers.reduce((sum, voucher) => {
+                                                const voucherSpecificPayments = Object.values(officePayments).flat().filter(payment => {
+                                                    const relatedVoucherId = payment.relatedVoucher?._id || payment.relatedVoucher;
+                                                    return relatedVoucherId === voucher._id && payment.status === 'approved' && payment.type === 'INCOMING';
+                                                });
+                                                return sum + voucherSpecificPayments.reduce((paidSum, payment) => paidSum + payment.amount, 0);
+                                            }, 0);
+                                            
+                                            const remaining = office.totalAmount - totalPaid;
+                                            
+                                            return (
+                                                <div 
+                                                    key={index} 
+                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                    style={{
+                                                        animationDelay: `${index * 100}ms`
+                                                    }}
+                                                >
+                                                    <div className="space-y-3">
+                                                        {/* Header with Client and Total */}
+                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Link 
+                                                                        to={office.isDirectClient ? `/client/${encodeURIComponent(office.officeName)}` : `/office/${encodeURIComponent(office.officeName)}`}
+                                                                        className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
+                                                                    >
+                                                                        {office.officeName}
+                                                                    </Link>
+                                                                    {office.isDirectClient && (
+                                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
+                                                                            <FaUser className="w-2 h-2 mr-1" />
+                                                                            Direct
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">
+                                                                    {office.monthName} {office.year}
+                                                                </div>
                                                             </div>
-                                                            <div className="text-xs text-gray-600 dark:text-slate-300 mt-1">
-                                                                {office.monthName} {office.year}
+                                                            <div className="text-right">
+                                                                <div className="text-xs text-gray-600 dark:text-slate-300">
+                                                                    {office.voucherCount} vouchers
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <div className="text-lg font-bold text-gray-900 dark:text-white">
-                                                                {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
+
+                                                        {/* Payment Details */}
+                                                        <div className="grid grid-cols-3 gap-3">
+                                                            <div>
+                                                                <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">Total Amount</div>
+                                                                <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                                                    {getCurrencySymbol(financialFilters.currency)}{office.totalAmount.toFixed(2)}
+                                                                </div>
                                                             </div>
-                                                            <div className="text-xs text-gray-600 dark:text-slate-300">
-                                                                {office.voucherCount} vouchers
+                                                            <div>
+                                                                <div className="text-xs text-green-600 dark:text-green-400 mb-1">Paid</div>
+                                                                <div className="text-sm font-medium text-green-600 dark:text-green-400">
+                                                                    {getCurrencySymbol(financialFilters.currency)}{totalPaid.toFixed(2)}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-xs text-red-600 dark:text-red-400 mb-1">Remaining</div>
+                                                                <div className={`text-sm font-bold ${remaining <= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                                    {getCurrencySymbol(financialFilters.currency)}{remaining.toFixed(2)}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             )}
