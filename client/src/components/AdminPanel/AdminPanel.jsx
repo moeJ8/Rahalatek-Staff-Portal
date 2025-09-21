@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
@@ -24,15 +24,16 @@ import { getUserBonuses, saveMonthlyBonus, getUserSalary, updateUserSalary, getU
 import StatusControls from '../StatusControls'
 import PaymentDateControls from '../PaymentDateControls'
 import DeleteConfirmationModal from '../DeleteConfirmationModal'
-import AttendancePanel from './AttendancePanel'
-import EmailSchedulerPanel from './EmailSchedulerPanel'
-import Dashboard from './Dashboard'
-import Hotels from './Hotels'
-import Airports from './Airports'
-import Tours from './Tours'
-import Offices from './Offices'
-import Users from './Users'
-import UserRequests from './UserRequests'
+// Lazy-loaded components for better bundle splitting
+const AttendancePanel = React.lazy(() => import('./AttendancePanel'))
+const EmailSchedulerPanel = React.lazy(() => import('./EmailSchedulerPanel'))
+const Dashboard = React.lazy(() => import('./Dashboard'))
+const Hotels = React.lazy(() => import('./Hotels'))
+const Airports = React.lazy(() => import('./Airports'))
+const Tours = React.lazy(() => import('./Tours'))
+const Offices = React.lazy(() => import('./Offices'))
+const Users = React.lazy(() => import('./Users'))
+const UserRequests = React.lazy(() => import('./UserRequests'))
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -2915,28 +2916,38 @@ export default function AdminPanel() {
                             {/* Tab panels */}
                             {activeTab === 'dashboard' && (
                                 <div id="dashboard-panel" role="tabpanel" aria-labelledby="tab-dashboard">
-                                    <Dashboard />
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <Dashboard />
+                                    </Suspense>
                                 </div>
                             )}
                             
                             {activeTab === 'hotels' && (
-                                <Hotels />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <Hotels />
+                                </Suspense>
                             )}
                             
                             {activeTab === 'tours' && (
                                 <div id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
-                                    <Tours />
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <Tours />
+                                    </Suspense>
                                 </div>
                             )}
 
                             {activeTab === 'airports' && (
                                 <div id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
-                                    <Airports />
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <Airports />
+                                    </Suspense>
                                 </div>
                             )}
 
                             {activeTab === 'offices' && (
-                                <Offices />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <Offices />
+                                </Suspense>
                             )}
 
                             {activeTab === 'office-vouchers' && (isAdmin || isAccountant) && (
@@ -4896,7 +4907,9 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'users' && (isAdmin || isAccountant) && (
-                                <Users />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <Users />
+                                </Suspense>
                             )}
 
                             {(activeTab === 'salaries') && (isAdmin || isAccountant) && (
@@ -5788,12 +5801,16 @@ export default function AdminPanel() {
                             )}
                             
                             {activeTab === 'requests' && isAdmin && (
-                                <UserRequests />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <UserRequests />
+                                </Suspense>
                             )}
                             
                             {/* Attendance Panel */}
                             {activeTab === 'attendance' && (isAdmin || isAccountant) && (
-                                <AttendancePanel />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <AttendancePanel />
+                                </Suspense>
                             )}
                             
                             {/* Notifications Panel */}
@@ -5952,11 +5969,13 @@ export default function AdminPanel() {
                             
                             {/* Scheduler Management Panel - Admin Only */}
                             {activeTab === 'scheduler' && (
-                                <EmailSchedulerPanel 
-                                    isAdmin={isAdmin}
-                                    notificationLoading={notificationLoading}
-                                    setNotificationLoading={setNotificationLoading}
-                                />
+                                <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                    <EmailSchedulerPanel 
+                                        isAdmin={isAdmin}
+                                        notificationLoading={notificationLoading}
+                                        setNotificationLoading={setNotificationLoading}
+                                    />
+                                </Suspense>
                             )}
                             
 
