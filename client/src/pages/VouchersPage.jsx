@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Table, Modal, Alert, TextInput } from 'flowbite-react';
 import SearchableSelect from '../components/SearchableSelect';
 import Select from '../components/Select';
@@ -95,6 +95,60 @@ export default function VouchersPage() {
     }
   };
 
+  // Fetch vouchers function - defined early to be used in useEffect
+  const fetchVouchers = useCallback(async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
+    setLoading(true);
+    try {
+      const response = await getAllVouchers();
+      
+      let vouchersToShow = response.data;
+      
+      // Apply role-based filtering: normal users can only see their own vouchers
+      if (!userIsAdmin && !userIsAccountant && userId) {
+        vouchersToShow = response.data.filter(voucher => 
+          voucher.createdBy && voucher.createdBy._id === userId
+        );
+      }
+      
+      setVouchers(vouchersToShow);
+      setFilteredVouchers(vouchersToShow);
+      
+      // Extract unique users for filter dropdown
+      const users = vouchersToShow
+        .filter(voucher => voucher.createdBy && voucher.createdBy.username)
+        .map(voucher => voucher.createdBy)
+        .filter((user, index, arr) => 
+          arr.findIndex(u => u._id === user._id) === index
+        )
+        .sort((a, b) => a.username.localeCompare(b.username));
+      
+      setUniqueUsers(users);
+      
+      // Extract unique offices for filter dropdown
+      const officeNames = vouchersToShow
+        .map(voucher => voucher.officeName)
+        .filter(officeName => officeName && officeName.trim() !== '')
+        .filter((officeName, index, arr) => arr.indexOf(officeName) === index)
+        .sort();
+      
+      setUniqueOffices(officeNames);
+      
+      // Extract available years from creation dates
+      const years = vouchersToShow
+        .map(voucher => new Date(voucher.createdAt).getFullYear())
+        .filter((year, index, arr) => arr.indexOf(year) === index)
+        .sort((a, b) => b - a);
+      
+      setAvailableYears(years);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching vouchers:', err);
+      setError('Failed to load vouchers. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdmin, isAccountant, currentUserId]);
+
   // Initialize user info and fetch data
   useEffect(() => {
     const initializeUserAndFetchData = async () => {
@@ -118,7 +172,7 @@ export default function VouchersPage() {
     };
 
     initializeUserAndFetchData();
-  }, []);
+  }, [fetchVouchers]);
 
   const handleCreatedByUpdate = async (voucherId, newCreatedBy) => {
     try {
@@ -188,58 +242,7 @@ export default function VouchersPage() {
     return isAdmin && !isAccountant;
   };
 
-  const fetchVouchers = async (userIsAdmin = isAdmin, userIsAccountant = isAccountant, userId = currentUserId) => {
-    setLoading(true);
-    try {
-      const response = await getAllVouchers();
-      
-      let vouchersToShow = response.data;
-      
-      // Apply role-based filtering: normal users can only see their own vouchers
-      if (!userIsAdmin && !userIsAccountant && userId) {
-        vouchersToShow = response.data.filter(voucher => 
-          voucher.createdBy && voucher.createdBy._id === userId
-        );
-      }
-      
-      setVouchers(vouchersToShow);
-      setFilteredVouchers(vouchersToShow);
-      
-      // Extract unique users for filter dropdown
-      const users = vouchersToShow
-        .filter(voucher => voucher.createdBy && voucher.createdBy.username)
-        .map(voucher => voucher.createdBy)
-        .filter((user, index, arr) => 
-          arr.findIndex(u => u._id === user._id) === index
-        )
-        .sort((a, b) => a.username.localeCompare(b.username));
-      
-      setUniqueUsers(users);
-      
-      // Extract unique offices for filter dropdown
-      const offices = vouchersToShow
-        .filter(voucher => voucher.officeName)
-        .map(voucher => voucher.officeName)
-        .filter((office, index, arr) => arr.indexOf(office) === index)
-        .sort();
-      
-      setUniqueOffices(offices);
-      
-      // Extract unique years for filter dropdown (from created date)
-      const years = vouchersToShow
-        .map(voucher => new Date(voucher.createdAt).getFullYear())
-        .filter((year, index, arr) => arr.indexOf(year) === index)
-        .sort((a, b) => b - a); // Sort descending (newest first)
-      
-      setAvailableYears(years);
-      setError('');
-    } catch (err) {
-      console.error('Error fetching vouchers:', err);
-      setError('Failed to load vouchers. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   // Handle status update
   const handleStatusUpdate = async (voucherId, newStatus) => {
@@ -292,7 +295,7 @@ export default function VouchersPage() {
 
 
   // Helper function to check if a date falls within a range
-  const isDateInRange = (dateString, range, customDateValue = null) => {
+  const isDateInRange = useCallback((dateString, range, customDateValue = null) => {
     if (!dateString || !range) return true;
     
     const date = new Date(dateString);
@@ -332,7 +335,7 @@ export default function VouchersPage() {
       default:
         return true;
     }
-  };
+  }, [yearFilter]);
 
   // Filter vouchers based on search query, user filter, and date filters
   useEffect(() => {
@@ -407,7 +410,7 @@ export default function VouchersPage() {
     };
 
     applyFilters();
-  }, [searchQuery, userFilter, officeFilter, yearFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers]);
+  }, [searchQuery, userFilter, officeFilter, yearFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers, isDateInRange]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
