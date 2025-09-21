@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Label, TextInput } from 'flowbite-react';
 import { FaSearch, FaChevronDown } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
+import RahalatekLoader from './RahalatekLoader';
 
 const SearchableSelect = ({ 
   id, 
@@ -11,7 +12,8 @@ const SearchableSelect = ({
   placeholder = "Search...",
   label,
   required = false,
-  disabled = false
+  disabled = false,
+  loading = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,7 +137,13 @@ const SearchableSelect = ({
         <div className="absolute z-50 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
           <CustomScrollbar maxHeight="400px">
             <div className="p-1">
-              {filteredOptions.length > 0 ? (
+              {loading ? (
+                <div className="py-4 px-4 text-center">
+                  <div className="flex items-center justify-center">
+                    <RahalatekLoader size="sm" />
+                  </div>
+                </div>
+              ) : filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <div
                     key={option.value}

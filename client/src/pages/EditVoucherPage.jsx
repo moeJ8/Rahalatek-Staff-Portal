@@ -92,6 +92,7 @@ export default function EditVoucherPage() {
   const [offices, setOffices] = useState([]);
   const [isExistingClient, setIsExistingClient] = useState(false);
   const [existingClients, setExistingClients] = useState([]);
+  const [existingClientsLoading, setExistingClientsLoading] = useState(false);
   
   // Duplicate voucher functionality
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -116,15 +117,14 @@ export default function EditVoucherPage() {
         setLoading(true);
         const token = localStorage.getItem('token');
         
-        // Fetch voucher, hotels, tours, offices, and all vouchers in parallel
-        const [voucherResponse, hotelsResponse, toursResponse, officesResponse, allVouchersResponse] = await Promise.all([
+        // Fetch essential data only - voucher, hotels, tours, and offices
+        const [voucherResponse, hotelsResponse, toursResponse, officesResponse] = await Promise.all([
           axios.get(`/api/vouchers/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
           axios.get('/api/hotels'),
           axios.get('/api/tours'),
-          axios.get('/api/offices'),
-          axios.get('/api/vouchers')
+          axios.get('/api/offices')
         ]);
         
         const voucherData = voucherResponse.data.data;
@@ -162,7 +162,7 @@ export default function EditVoucherPage() {
           clientName: voucherData.clientName || '',
           nationality: voucherData.nationality || '',
           phoneNumber: voucherData.phoneNumber || '',
-          officeName: voucherData.officeName || '',
+          officeName: voucherData.officeName || 'Rahalatek Travel',
           arrivalDate: voucherData.arrivalDate ? new Date(voucherData.arrivalDate).toISOString().split('T')[0] : '',
           departureDate: voucherData.departureDate ? new Date(voucherData.departureDate).toISOString().split('T')[0] : '',
           capital: voucherData.capital || '',
@@ -236,13 +236,6 @@ export default function EditVoucherPage() {
         setHotels(hotelsResponse.data);
         setTours(toursResponse.data);
         setOffices(officesResponse.data.data);
-        
-        // Extract unique client names from existing vouchers
-        const clientNames = [...new Set(allVouchersResponse.data.data
-          .map(voucher => voucher.clientName)
-          .filter(name => name && name.trim() !== '')
-        )].sort();
-        setExistingClients(clientNames);
 
         const uniqueCities = [...new Set([
           ...hotelsResponse.data.map(h => h.city),
@@ -289,7 +282,25 @@ export default function EditVoucherPage() {
     fetchData();
   }, [id]);
 
-
+  // Lazy load existing clients only when needed (when user starts typing)
+  const fetchExistingClients = async () => {
+    if (existingClients.length === 0) {
+      setExistingClientsLoading(true);
+      try {
+        const voucherResponse = await axios.get('/api/vouchers');
+        const clientNames = [...new Set(voucherResponse.data.data
+          .map(voucher => voucher.clientName)
+          .filter(name => name && name.trim() !== '')
+        )].sort();
+        setExistingClients(clientNames);
+      } catch (err) {
+        console.error('Failed to load existing clients:', err);
+        // Don't show error toast for this non-critical feature
+      } finally {
+        setExistingClientsLoading(false);
+      }
+    }
+  };
 
   // Input change handlers
   const handleInputChange = (e) => {
@@ -1179,7 +1190,7 @@ export default function EditVoucherPage() {
         clientName: voucherToDuplicate.clientName,
         nationality: voucherToDuplicate.nationality,
         phoneNumber: voucherToDuplicate.phoneNumber || '',
-        officeName: voucherToDuplicate.officeName || '',
+        officeName: voucherToDuplicate.officeName || 'Rahalatek Travel',
         arrivalDate: voucherToDuplicate.arrivalDate ? new Date(voucherToDuplicate.arrivalDate).toISOString().split('T')[0] : '',
         departureDate: voucherToDuplicate.departureDate ? new Date(voucherToDuplicate.departureDate).toISOString().split('T')[0] : '',
         capital: voucherToDuplicate.capital || '',
@@ -1342,7 +1353,10 @@ export default function EditVoucherPage() {
                   checked={isExistingClient}
                   onChange={(e) => {
                     setIsExistingClient(e.target.checked);
-                    if (!e.target.checked) {
+                    if (e.target.checked) {
+                      // Lazy load existing clients when user switches to existing client mode
+                      fetchExistingClients();
+                    } else {
                       // Clear client name when switching to manual input
                       setFormData({...formData, clientName: ''});
                     }
@@ -1363,6 +1377,7 @@ export default function EditVoucherPage() {
                   label: client
                 }))}
                 placeholder="Select existing client..."
+                loading={existingClientsLoading}
                 required
               />
             ) : (
@@ -1407,8 +1422,8 @@ export default function EditVoucherPage() {
                     value={formData.officeName}
                     onChange={(e) => setFormData({...formData, officeName: e.target.value})}
                     options={[
-                      { value: '', label: 'Direct Client (No Office)' },
-                      ...offices.map(office => ({
+                      { value: 'Rahalatek Travel', label: 'Rahalatek Travel - Turkey (Direct Client)' },
+                      ...offices.filter(office => office.name !== 'Rahalatek Travel').map(office => ({
                         value: office.name,
                         label: `${office.name} - ${office.location}`
                       }))

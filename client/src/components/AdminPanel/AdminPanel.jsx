@@ -2,7 +2,7 @@ import React from 'react'
 import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
-import { HiPlus, HiX, HiTrash, HiCalendar, HiDuplicate, HiRefresh } from 'react-icons/hi'
+import { HiPlus, HiX, HiTrash, HiRefresh } from 'react-icons/hi'
 import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from '../UserBadge'
@@ -30,19 +30,14 @@ import Dashboard from './Dashboard'
 import Hotels from './Hotels'
 import Airports from './Airports'
 import Tours from './Tours'
+import Offices from './Offices'
+import Users from './Users'
+import UserRequests from './UserRequests'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
     const navigate = useNavigate();
     
-    // Helper function to format date as dd/mm/yyyy
-    const formatDateDDMMYYYY = (dateString) => {
-        const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    };
     
     // Check user role
     const authUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -134,10 +129,7 @@ export default function AdminPanel() {
             fetchUsers();
         }
         
-        // Fetch pending requests when switching to requests tab
-        if (tabName === 'requests' && dataLoaded) {
-            fetchPendingRequests();
-        }
+        // User requests are now handled by UserRequests component
         
         
         // Tours data is now handled by the Tours component
@@ -168,13 +160,6 @@ export default function AdminPanel() {
         }
     };
 
-    const [officeData, setOfficeData] = useState({
-        name: '',
-        location: '',
-        email: '',
-        phoneNumber: '',
-        description: ''
-    });
     const [offices, setOffices] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -215,7 +200,8 @@ export default function AdminPanel() {
     const [pdfDownloading, setPdfDownloading] = useState(false);
     
     // Add state for auto-refresh indicator
-    const [lastRefreshTime, setLastRefreshTime] = useState(null);
+    
+    const [, setLastRefreshTime] = useState(null);
     
     // Add state for debt management
     const [debts, setDebts] = useState([]);
@@ -242,8 +228,6 @@ export default function AdminPanel() {
     const [debtToDelete, setDebtToDelete] = useState(null);
     const [deleteDebtLoading, setDeleteDebtLoading] = useState(false);
     
-    // Add state for office search
-    const [officeSearchQuery, setOfficeSearchQuery] = useState('');
     
     // Calculate totals by currency
     const totalsByCurrency = useMemo(() => {
@@ -265,20 +249,6 @@ export default function AdminPanel() {
         }, {});
     }, [officeVouchers]);
 
-    // Filter offices based on search query
-    const filteredOffices = useMemo(() => {
-        if (!officeSearchQuery.trim()) {
-            return offices;
-        }
-        
-        const searchLower = officeSearchQuery.toLowerCase();
-        return offices.filter(office => 
-            office.name.toLowerCase().includes(searchLower) ||
-            office.location.toLowerCase().includes(searchLower) ||
-            office.email.toLowerCase().includes(searchLower) ||
-            office.phoneNumber.toLowerCase().includes(searchLower)
-        );
-    }, [offices, officeSearchQuery]);
 
     // Salaries/Bonuses tab state
     const [selectedUserForSalary, setSelectedUserForSalary] = useState('');
@@ -1118,114 +1088,8 @@ export default function AdminPanel() {
         }
     };
 
-
-
-    
-    useEffect(() => {
-        // Only fetch data on first load or when explicitly needed
-        if (!dataLoaded) {
-            const fetchInitialData = async () => {
-                setLoading(true);
-                try {
-                    const [hotelsResponse, officesResponse] = await Promise.all([
-                        axios.get('/api/hotels'),
-                        axios.get('/api/offices')
-                    ]);
-                    
-                    setHotels(hotelsResponse.data);
-                    setOffices(officesResponse.data.data);
-                    
-                    // Only fetch users if starting on users/salaries tab or requests tab
-                    if (activeTab === 'users' || activeTab === 'salaries') {
-                        await fetchUsers();
-                    } else if (activeTab === 'requests') {
-                        await fetchPendingRequests();
-                    }
-                    
-                    setDataLoaded(true);
-                } catch (err) {
-                    console.error('Failed to fetch data:', err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            
-            fetchInitialData();
-        }
-    }, [activeTab, dataLoaded]);
-    
-    // Only fetch users data when switching to users tab and haven't loaded it yet
-    useEffect(() => {
-        if (activeTab === 'users' && dataLoaded && users.length === 0) {
-            fetchUsers();
-        }
-        
-        if (activeTab === 'requests' && dataLoaded) {
-            fetchPendingRequests();
-        }
-        
-        
-        // Tours are now handled by Tours component
-    }, [activeTab, dataLoaded, hotels.length]);
-
-    // Auto-fetch debts when filters change
-    useEffect(() => {
-        if (activeTab === 'debts' && dataLoaded) {
-            fetchDebts();
-        }
-    }, [debtFilters, activeTab, dataLoaded]);
-
-    // Auto-fetch financial data when currency filter changes
-    useEffect(() => {
-        if (activeTab === 'financials' && dataLoaded) {
-            fetchFinancialData();
-        }
-    }, [financialFilters.currency, activeTab, dataLoaded]);
-
-    // Auto-refresh financial data every 2 minutes when on financials tab
-    useEffect(() => {
-        let intervalId;
-        
-        if (activeTab === 'financials' && dataLoaded) {
-            // Set up auto-refresh every 2 minutes (120000ms)
-            intervalId = setInterval(() => {
-                console.log('Auto-refreshing financial data...');
-                fetchFinancialData();
-            }, 120000);
-        }
-        
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    }, [activeTab, dataLoaded]);
-
-    // Single useEffect to handle all salary data loading
-    useEffect(() => {
-        if (activeTab === 'salaries' && salaryInnerTab === 'salaries' && dataLoaded && users.length > 0) {
-            loadAvailableSalaryOptions().then(() => {
-                loadAllUsersSalaryData();
-            });
-        }
-    }, [activeTab, salaryInnerTab, dataLoaded, users.length, salaryCardsYear, salaryCardsMonth]);
-
-
-    const fetchOffices = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get('/api/offices');
-            setOffices(response.data.data);
-        } catch (err) {
-            console.error('Failed to fetch offices:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    
-
-    const fetchUsers = async () => {
+    // Fetch users data function - defined early to be used in useEffects
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -1278,306 +1142,417 @@ export default function AdminPanel() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [authUser.id, authUser._id, authUser.username, authUser.isAdmin, authUser.isAccountant]);
 
-
-
-    const handleOfficeChange = (e) => {
-        const { name, value } = e.target;
-        setOfficeData({
-            ...officeData,
-            [name]: value,
-        });
-    };
-
-
- 
-
-
-    const handleOfficeSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await axios.post('/api/offices', officeData);
-            setOffices([...offices, response.data.data]);
-            setOfficeData({
-                name: '',
-                location: '',
-                email: '',
-                phoneNumber: '',
-                description: ''
-            });
-            toast.success('Office added successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            // setError('Failed to add office');
-            console.log(err);
-        }
-    };
-
-
-    const handleDeleteOffice = async (id) => {
-        try {
-            await axios.delete(`/api/offices/${id}`);
-            setOffices(offices.filter(office => office._id !== id));
-            toast.success('Office deleted successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            // setError('Failed to delete office');
-            console.log(err);
-        }
-    };
-
-    const handleToggleAdminStatus = async (userId, currentStatus) => {
+    // Fetch debts data function - defined early to be used in useEffects
+    const fetchDebts = useCallback(async () => {
+        setDebtLoading(true);
         try {
             const token = localStorage.getItem('token');
-            if (!token) {
-                // setError('You must be logged in to update user roles');
-                return;
-            }
+            const params = new URLSearchParams();
+            if (debtFilters.office) params.append('office', debtFilters.office);
+            if (debtFilters.status) params.append('status', debtFilters.status);
+            if (debtFilters.type) params.append('type', debtFilters.type);
             
-            await axios.patch('/api/auth/users/role', 
-                { userId, isAdmin: !currentStatus },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            
-            // Update the local state
-            setUsers(users.map(user => 
-                user._id === userId 
-                    ? { ...user, isAdmin: !currentStatus, isAccountant: !currentStatus ? false : user.isAccountant } 
-                    : user
-            ));
-            
-            toast.success('User role updated successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            // setError(err.response?.data?.message || 'Failed to update user role');
-            console.log(err);
-        }
-    };
-
-    const handleToggleAccountantStatus = async (userId, currentStatus) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // setError('You must be logged in to update user roles');
-                return;
-            }
-            
-            await axios.patch('/api/auth/users/role', 
-                { userId, isAccountant: !currentStatus },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            
-            // Update the local state
-            setUsers(users.map(user => 
-                user._id === userId 
-                    ? { ...user, isAccountant: !currentStatus, isAdmin: !currentStatus ? false : user.isAdmin } 
-                    : user
-            ));
-            
-            toast.success('User role updated successfully!', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
-        } catch (err) {
-            // setError(err.response?.data?.message || 'Failed to update user role');
-            console.log(err);
-        }
-    };
-
-    const handleToggleApprovalStatus = async (userId, currentStatus) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // setError('You must be logged in to update user approval status');
-                return;
-            }
-            
-            await axios.patch('/api/auth/users/approve', 
-                { userId, isApproved: !currentStatus },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            
-            if (activeTab === 'requests') {
-                setPendingRequests(pendingRequests.filter(user => user._id !== userId));
-                toast.success('User approved successfully!', {
-                    duration: 3000,
-                    style: {
-                        background: '#4CAF50',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        padding: '16px',
-                    },
-                    iconTheme: {
-                        primary: '#fff',
-                        secondary: '#4CAF50',
-                    },
-                });
-            } else {
-                setUsers(users.map(user => 
-                    user._id === userId 
-                        ? { ...user, isApproved: !currentStatus } 
-                        : user
-                ));
-                
-                toast.success(`User ${!currentStatus ? 'approved' : 'unapproved'} successfully!`, {
-                    duration: 3000,
-                    style: {
-                        background: '#4CAF50',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        padding: '16px',
-                    },
-                    iconTheme: {
-                        primary: '#fff',
-                        secondary: '#4CAF50',
-                    },
-                });
-            }
-        } catch (err) {
-            // setError(err.response?.data?.message || 'Failed to update user approval status');
-            console.log(err);
-        }
-    };
-
-    // Add state variables for the delete user modal
-    const [deleteUserModalOpen, setDeleteUserModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
-    const [deleteUserLoading, setDeleteUserLoading] = useState(false);
-
-    // Update the handleDeleteUser function to use the modal
-    const handleDeleteUser = async () => {
-        if (!userToDelete) return;
-        
-        setDeleteUserLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // setError('You must be logged in to delete users');
-                setDeleteUserLoading(false);
-                return;
-            }
-            
-            await axios.delete(`/api/auth/users/${userToDelete._id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+            const response = await axios.get(`/api/debts?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${token}` }
             });
             
-            // Update the appropriate state based on active tab
-            if (activeTab === 'requests') {
-                setPendingRequests(pendingRequests.filter(user => user._id !== userToDelete._id));
-                toast.success('User request rejected successfully!', {
-                    duration: 3000,
-                    style: {
-                        background: '#4CAF50',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        padding: '16px',
-                    },
-                    iconTheme: {
-                        primary: '#fff',
-                        secondary: '#4CAF50',
-                    },
-                });
-            } else {
-                setUsers(users.filter(user => user._id !== userToDelete._id));
-                toast.success('User deleted successfully!', {
-                    duration: 3000,
-                    style: {
-                        background: '#4CAF50',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        padding: '16px',
-                    },
-                    iconTheme: {
-                        primary: '#fff',
-                        secondary: '#4CAF50',
-                    },
-                });
-            }
-            
-            closeDeleteUserModal();
+            setDebts(response.data.data);
         } catch (err) {
-            // setError(err.response?.data?.message || 'Failed to delete user');
-            console.log(err);
+            console.error('Failed to fetch debts:', err);
+            // setError(err.response?.data?.message || 'Failed to fetch debts');
         } finally {
-            setDeleteUserLoading(false);
+            setDebtLoading(false);
+        }
+    }, [debtFilters.office, debtFilters.status, debtFilters.type]);
+
+    // Fetch office payments function - defined early to be used in useEffects
+    const fetchOfficePayments = useCallback(async (uniqueOffices) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return {};
+
+            const paymentsPromises = uniqueOffices.map(async (officeName) => {
+                try {
+                    const params = {};
+                    if (financialFilters.currency && financialFilters.currency !== 'ALL') {
+                        params.currency = financialFilters.currency;
+                    }
+
+                    const response = await axios.get(`/api/office-payments/${encodeURIComponent(officeName)}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                        params: params
+                    });
+                    return { officeName, payments: response.data || [] };
+                } catch (err) {
+                    if (err.response?.status !== 404) {
+                        console.error(`Failed to fetch payments for ${officeName}:`, err);
+                    }
+                    return { officeName, payments: [] };
+                }
+            });
+
+            const results = await Promise.all(paymentsPromises);
+            const paymentsMap = {};
+            results.forEach(({ officeName, payments }) => {
+                paymentsMap[officeName] = payments;
+            });
+            
+            return paymentsMap;
+        } catch (error) {
+            console.error('Error fetching office payments:', error);
+            return {};
+        }
+    }, [financialFilters.currency]);
+
+    // Fetch financial data function - defined early to be used in useEffects
+    const fetchFinancialData = useCallback(async () => {
+        setFinancialLoading(true);
+        try {
+            const response = await getAllVouchers();
+            const vouchers = response.data;
+            
+            // Store all vouchers for client office calculations
+            setAllVouchers(vouchers);
+            
+            // Filter vouchers by selected currency first
+            const filteredVouchers = vouchers.filter(voucher => {
+                const voucherCurrency = voucher.currency || 'USD';
+                return voucherCurrency === financialFilters.currency;
+            });
+            
+            // Aggregate payment data by office and month for selected currency
+            const aggregatedData = {};
+            const voucherTracker = {}; // Track vouchers per office-month to avoid double counting
+            
+            filteredVouchers.forEach(voucher => {
+                const voucherDate = new Date(voucher.createdAt);
+                const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
+
+                // Process each payment type from the old payments structure
+                if (voucher.payments) {
+                    Object.keys(voucher.payments).forEach(paymentType => {
+                        const payment = voucher.payments[paymentType];
+                        if (payment.officeName && payment.price > 0) {
+                            const key = `${payment.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: payment.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key][paymentType] += payment.price;
+                            aggregatedData[key].total += payment.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process hotels array for office payments
+                if (voucher.hotels && Array.isArray(voucher.hotels)) {
+                    voucher.hotels.forEach(hotel => {
+                        if (hotel.officeName && hotel.price > 0) {
+                            const key = `${hotel.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: hotel.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].hotels += hotel.price;
+                            aggregatedData[key].total += hotel.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process transfers array for office payments
+                if (voucher.transfers && Array.isArray(voucher.transfers)) {
+                    voucher.transfers.forEach(transfer => {
+                        if (transfer.officeName && transfer.price > 0) {
+                            const key = `${transfer.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: transfer.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].transfers += transfer.price;
+                            aggregatedData[key].total += transfer.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process trips array for office payments
+                if (voucher.trips && Array.isArray(voucher.trips)) {
+                    voucher.trips.forEach(trip => {
+                        if (trip.officeName && trip.price > 0) {
+                            const key = `${trip.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: trip.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].trips += trip.price;
+                            aggregatedData[key].total += trip.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+
+                // Process flights array for office payments
+                if (voucher.flights && Array.isArray(voucher.flights)) {
+                    voucher.flights.forEach(flight => {
+                        if (flight.officeName && flight.price > 0) {
+                            const key = `${flight.officeName}-${monthYear}`;
+
+                            if (!aggregatedData[key]) {
+                                aggregatedData[key] = {
+                                    officeName: flight.officeName,
+                                    month: monthYear,
+                                    year: voucherDate.getFullYear(),
+                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
+                                    hotels: 0,
+                                    transfers: 0,
+                                    trips: 0,
+                                    flights: 0,
+                                    total: 0,
+                                    currency: voucher.currency || 'USD',
+                                    voucherCount: 0,
+                                    voucherIds: new Set()
+                                };
+                                voucherTracker[key] = new Set();
+                            }
+
+                            aggregatedData[key].flights += flight.price;
+                            aggregatedData[key].total += flight.price;
+
+                            // Track unique vouchers
+                            if (!voucherTracker[key].has(voucher._id)) {
+                                voucherTracker[key].add(voucher._id);
+                                aggregatedData[key].voucherCount++;
+                            }
+                        }
+                    });
+                }
+            });
+            
+            // Convert to array, clean up, and sort
+            const financialArray = Object.values(aggregatedData).map(item => {
+                // Remove the voucherIds set that was used for tracking
+                const { voucherIds: _voucherIds, ...cleanItem } = item;
+                return cleanItem;
+            }).sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                if (a.month !== b.month) return b.month.localeCompare(a.month);
+                return b.total - a.total;
+            });
+
+            // Fetch office payments for remaining calculations
+            const uniqueOffices = [...new Set(financialArray.map(item => item.officeName))];
+            
+            // Also get unique client offices for client payments
+            const uniqueClientOffices = [...new Set(filteredVouchers.map(voucher => {
+                return voucher.officeName || voucher.clientName;
+            }).filter(Boolean))];
+            
+            // Combine both provider and client offices
+            const allUniqueOffices = [...new Set([...uniqueOffices, ...uniqueClientOffices])];
+            
+            const paymentsMap = await fetchOfficePayments(allUniqueOffices);
+            setOfficePayments(paymentsMap);
+            
+            setFinancialData(financialArray);
+            
+            // Update last refresh time
+            setLastRefreshTime(new Date());
+        } catch (err) {
+            console.error('Failed to fetch financial data:', err);
+            // setError(err.response?.data?.message || 'Failed to fetch financial data');
+        } finally {
+            setFinancialLoading(false);
+        }
+    }, [financialFilters.currency, fetchOfficePayments]);
+
+    
+    useEffect(() => {
+        // Only fetch data on first load or when explicitly needed
+        if (!dataLoaded) {
+            const fetchInitialData = async () => {
+                setLoading(true);
+                try {
+                    const [hotelsResponse, officesResponse] = await Promise.all([
+                        axios.get('/api/hotels'),
+                        axios.get('/api/offices')
+                    ]);
+                    
+                    setHotels(hotelsResponse.data);
+                    setOffices(officesResponse.data.data);
+                    
+                    // Only fetch users if starting on users/salaries tab
+                    if (activeTab === 'users' || activeTab === 'salaries') {
+                        await fetchUsers();
+                    }
+                    // User requests are now handled by UserRequests component
+                    
+                    setDataLoaded(true);
+                } catch (err) {
+                    console.error('Failed to fetch data:', err);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            
+            fetchInitialData();
+        }
+    }, [activeTab, dataLoaded, fetchUsers]);
+    
+    // Only fetch users data when switching to users tab and haven't loaded it yet
+    useEffect(() => {
+        if (activeTab === 'users' && dataLoaded && users.length === 0) {
+            fetchUsers();
+        }
+        
+        // User requests are now handled by UserRequests component
+        
+        
+        // Tours are now handled by Tours component
+    }, [activeTab, dataLoaded, hotels.length, fetchUsers, users.length]);
+
+    // Auto-fetch debts when filters change
+    useEffect(() => {
+        if (activeTab === 'debts' && dataLoaded) {
+            fetchDebts();
+        }
+    }, [debtFilters, activeTab, dataLoaded, fetchDebts]);
+
+    // Auto-fetch financial data when currency filter changes
+    useEffect(() => {
+        if (activeTab === 'financials' && dataLoaded) {
+            fetchFinancialData();
+        }
+    }, [financialFilters.currency, activeTab, dataLoaded, fetchFinancialData]);
+
+    // Auto-refresh financial data every 2 minutes when on financials tab
+    useEffect(() => {
+        let intervalId;
+        
+        if (activeTab === 'financials' && dataLoaded) {
+            // Set up auto-refresh every 2 minutes (120000ms)
+            intervalId = setInterval(() => {
+                console.log('Auto-refreshing financial data...');
+                fetchFinancialData();
+            }, 120000);
+        }
+        
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [activeTab, dataLoaded, fetchFinancialData]);
+
+    // Single useEffect to handle all salary data loading
+    useEffect(() => {
+        if (activeTab === 'salaries' && salaryInnerTab === 'salaries' && dataLoaded && users.length > 0) {
+            loadAvailableSalaryOptions().then(() => {
+                loadAllUsersSalaryData();
+            });
+        }
+    }, [activeTab, salaryInnerTab, dataLoaded, users.length, salaryCardsYear, salaryCardsMonth, loadAvailableSalaryOptions, loadAllUsersSalaryData]);
+
+
+    const fetchOffices = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/offices');
+            setOffices(response.data.data);
+        } catch (err) {
+            console.error('Failed to fetch offices:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Add functions to open and close the delete user modal
-    const openDeleteUserModal = (user) => {
-        setUserToDelete(user);
-        setDeleteUserModalOpen(true);
-    };
+    
 
-    const closeDeleteUserModal = () => {
-        setDeleteUserModalOpen(false);
-        setUserToDelete(null);
-    };
+
+
 
     // Inside the component, handle keyboard navigation with tab changing
     const handleTabKeyDown = (e, tabName) => {
@@ -1612,7 +1587,6 @@ export default function AdminPanel() {
 
 
 
-    const [pendingRequests, setPendingRequests] = useState([]);
 
     // Add a new function to fetch pending requests
     // Handle generating arrival reminders manually
@@ -1939,287 +1913,7 @@ export default function AdminPanel() {
         }
     };
 
-    // Fetch office payments for remaining calculations
-    const fetchOfficePayments = async (uniqueOffices) => {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) return {};
 
-            const paymentsPromises = uniqueOffices.map(async (officeName) => {
-                try {
-                    const params = {};
-                    if (financialFilters.currency && financialFilters.currency !== 'ALL') {
-                        params.currency = financialFilters.currency;
-                    }
-
-                    const response = await axios.get(`/api/office-payments/${encodeURIComponent(officeName)}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        params: params
-                    });
-                    return { officeName, payments: response.data || [] };
-                } catch (err) {
-                    if (err.response?.status !== 404) {
-                        console.error(`Failed to fetch payments for ${officeName}:`, err);
-                    }
-                    return { officeName, payments: [] };
-                }
-            });
-
-            const results = await Promise.all(paymentsPromises);
-            const paymentsMap = {};
-            results.forEach(({ officeName, payments }) => {
-                paymentsMap[officeName] = payments;
-            });
-            
-            return paymentsMap;
-        } catch (error) {
-            console.error('Error fetching office payments:', error);
-            return {};
-        }
-    };
-
-    // Fetch and aggregate financial data
-    const fetchFinancialData = async () => {
-        setFinancialLoading(true);
-        try {
-            const response = await getAllVouchers();
-            const vouchers = response.data;
-            
-            // Store all vouchers for client office calculations
-            setAllVouchers(vouchers);
-            
-            // Filter vouchers by selected currency first
-            const filteredVouchers = vouchers.filter(voucher => {
-                const voucherCurrency = voucher.currency || 'USD';
-                return voucherCurrency === financialFilters.currency;
-            });
-            
-            // Aggregate payment data by office and month for selected currency
-            const aggregatedData = {};
-            const voucherTracker = {}; // Track vouchers per office-month to avoid double counting
-            
-            filteredVouchers.forEach(voucher => {
-                const voucherDate = new Date(voucher.createdAt);
-                const monthYear = `${voucherDate.getFullYear()}-${String(voucherDate.getMonth() + 1).padStart(2, '0')}`;
-
-                // Process each payment type from the old payments structure
-                if (voucher.payments) {
-                    Object.keys(voucher.payments).forEach(paymentType => {
-                        const payment = voucher.payments[paymentType];
-                        if (payment.officeName && payment.price > 0) {
-                            const key = `${payment.officeName}-${monthYear}`;
-
-                            if (!aggregatedData[key]) {
-                                aggregatedData[key] = {
-                                    officeName: payment.officeName,
-                                    month: monthYear,
-                                    year: voucherDate.getFullYear(),
-                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                    hotels: 0,
-                                    transfers: 0,
-                                    trips: 0,
-                                    flights: 0,
-                                    total: 0,
-                                    currency: voucher.currency || 'USD',
-                                    voucherCount: 0,
-                                    voucherIds: new Set()
-                                };
-                                voucherTracker[key] = new Set();
-                            }
-
-                            aggregatedData[key][paymentType] += payment.price;
-                            aggregatedData[key].total += payment.price;
-
-                            // Track unique vouchers
-                            if (!voucherTracker[key].has(voucher._id)) {
-                                voucherTracker[key].add(voucher._id);
-                                aggregatedData[key].voucherCount++;
-                            }
-                        }
-                    });
-                }
-
-                // Process hotels array for office payments
-                if (voucher.hotels && Array.isArray(voucher.hotels)) {
-                    voucher.hotels.forEach(hotel => {
-                        if (hotel.officeName && hotel.price > 0) {
-                            const key = `${hotel.officeName}-${monthYear}`;
-
-                            if (!aggregatedData[key]) {
-                                aggregatedData[key] = {
-                                    officeName: hotel.officeName,
-                                    month: monthYear,
-                                    year: voucherDate.getFullYear(),
-                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                    hotels: 0,
-                                    transfers: 0,
-                                    trips: 0,
-                                    flights: 0,
-                                    total: 0,
-                                    currency: voucher.currency || 'USD',
-                                    voucherCount: 0,
-                                    voucherIds: new Set()
-                                };
-                                voucherTracker[key] = new Set();
-                            }
-
-                            aggregatedData[key].hotels += hotel.price;
-                            aggregatedData[key].total += hotel.price;
-
-                            // Track unique vouchers
-                            if (!voucherTracker[key].has(voucher._id)) {
-                                voucherTracker[key].add(voucher._id);
-                                aggregatedData[key].voucherCount++;
-                            }
-                        }
-                    });
-                }
-
-                // Process transfers array for office payments
-                if (voucher.transfers && Array.isArray(voucher.transfers)) {
-                    voucher.transfers.forEach(transfer => {
-                        if (transfer.officeName && transfer.price > 0) {
-                            const key = `${transfer.officeName}-${monthYear}`;
-
-                            if (!aggregatedData[key]) {
-                                aggregatedData[key] = {
-                                    officeName: transfer.officeName,
-                                    month: monthYear,
-                                    year: voucherDate.getFullYear(),
-                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                    hotels: 0,
-                                    transfers: 0,
-                                    trips: 0,
-                                    flights: 0,
-                                    total: 0,
-                                    currency: voucher.currency || 'USD',
-                                    voucherCount: 0,
-                                    voucherIds: new Set()
-                                };
-                                voucherTracker[key] = new Set();
-                            }
-
-                            aggregatedData[key].transfers += transfer.price;
-                            aggregatedData[key].total += transfer.price;
-
-                            // Track unique vouchers
-                            if (!voucherTracker[key].has(voucher._id)) {
-                                voucherTracker[key].add(voucher._id);
-                                aggregatedData[key].voucherCount++;
-                            }
-                        }
-                    });
-                }
-
-                // Process trips array for office payments
-                if (voucher.trips && Array.isArray(voucher.trips)) {
-                    voucher.trips.forEach(trip => {
-                        if (trip.officeName && trip.price > 0) {
-                            const key = `${trip.officeName}-${monthYear}`;
-
-                            if (!aggregatedData[key]) {
-                                aggregatedData[key] = {
-                                    officeName: trip.officeName,
-                                    month: monthYear,
-                                    year: voucherDate.getFullYear(),
-                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                    hotels: 0,
-                                    transfers: 0,
-                                    trips: 0,
-                                    flights: 0,
-                                    total: 0,
-                                    currency: voucher.currency || 'USD',
-                                    voucherCount: 0,
-                                    voucherIds: new Set()
-                                };
-                                voucherTracker[key] = new Set();
-                            }
-
-                            aggregatedData[key].trips += trip.price;
-                            aggregatedData[key].total += trip.price;
-
-                            // Track unique vouchers
-                            if (!voucherTracker[key].has(voucher._id)) {
-                                voucherTracker[key].add(voucher._id);
-                                aggregatedData[key].voucherCount++;
-                            }
-                        }
-                    });
-                }
-
-                // Process flights array for office payments
-                if (voucher.flights && Array.isArray(voucher.flights)) {
-                    voucher.flights.forEach(flight => {
-                        if (flight.officeName && flight.price > 0) {
-                            const key = `${flight.officeName}-${monthYear}`;
-
-                            if (!aggregatedData[key]) {
-                                aggregatedData[key] = {
-                                    officeName: flight.officeName,
-                                    month: monthYear,
-                                    year: voucherDate.getFullYear(),
-                                    monthName: voucherDate.toLocaleString('default', { month: 'long' }),
-                                    hotels: 0,
-                                    transfers: 0,
-                                    trips: 0,
-                                    flights: 0,
-                                    total: 0,
-                                    currency: voucher.currency || 'USD',
-                                    voucherCount: 0,
-                                    voucherIds: new Set()
-                                };
-                                voucherTracker[key] = new Set();
-                            }
-
-                            aggregatedData[key].flights += flight.price;
-                            aggregatedData[key].total += flight.price;
-
-                            // Track unique vouchers
-                            if (!voucherTracker[key].has(voucher._id)) {
-                                voucherTracker[key].add(voucher._id);
-                                aggregatedData[key].voucherCount++;
-                            }
-                        }
-                    });
-                }
-            });
-            
-            // Convert to array, clean up, and sort
-            const financialArray = Object.values(aggregatedData).map(item => {
-                // Remove the voucherIds set that was used for tracking
-                const { voucherIds: _voucherIds, ...cleanItem } = item;
-                return cleanItem;
-            }).sort((a, b) => {
-                if (a.year !== b.year) return b.year - a.year;
-                if (a.month !== b.month) return b.month.localeCompare(a.month);
-                return b.total - a.total;
-            });
-
-            // Fetch office payments for remaining calculations
-            const uniqueOffices = [...new Set(financialArray.map(item => item.officeName))];
-            
-            // Also get unique client offices for client payments
-            const uniqueClientOffices = [...new Set(filteredVouchers.map(voucher => {
-                return voucher.officeName || voucher.clientName;
-            }).filter(Boolean))];
-            
-            // Combine both provider and client offices
-            const allUniqueOffices = [...new Set([...uniqueOffices, ...uniqueClientOffices])];
-            
-            const paymentsMap = await fetchOfficePayments(allUniqueOffices);
-            setOfficePayments(paymentsMap);
-            
-            setFinancialData(financialArray);
-            
-            // Update last refresh time
-            setLastRefreshTime(new Date());
-        } catch (err) {
-            console.error('Failed to fetch financial data:', err);
-            // setError(err.response?.data?.message || 'Failed to fetch financial data');
-        } finally {
-            setFinancialLoading(false);
-        }
-    };
 
     // Filter financial data based on current filters
     const filteredFinancialData = financialData.filter(item => {
@@ -2461,27 +2155,6 @@ export default function AdminPanel() {
     };
 
     // Debt management functions
-    const fetchDebts = async () => {
-        setDebtLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const params = new URLSearchParams();
-            if (debtFilters.office) params.append('office', debtFilters.office);
-            if (debtFilters.status) params.append('status', debtFilters.status);
-            if (debtFilters.type) params.append('type', debtFilters.type);
-            
-            const response = await axios.get(`/api/debts?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            
-            setDebts(response.data.data);
-        } catch (err) {
-            console.error('Failed to fetch debts:', err);
-            // setError(err.response?.data?.message || 'Failed to fetch debts');
-        } finally {
-            setDebtLoading(false);
-        }
-    };
 
     const handleDebtSubmit = async (e) => {
         e.preventDefault();
@@ -2699,32 +2372,6 @@ export default function AdminPanel() {
         }));
     };
 
-    const fetchPendingRequests = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // setError('You must be logged in to view pending requests');
-                setLoading(false);
-                return;
-            }
-            
-            const response = await axios.get('/api/auth/users', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            
-            // Filter only users who are not approved
-            const pendingUsers = response.data.filter(user => !user.isApproved);
-            setPendingRequests(pendingUsers);
-        } catch (err) {
-            console.error('Failed to fetch pending requests:', err);
-            // setError(err.response?.data?.message || 'Failed to fetch pending requests');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -2936,14 +2583,7 @@ export default function AdminPanel() {
                                         aria-selected={activeTab === 'requests'}
                                         aria-controls="requests-panel"
                                     >
-                                    <span className="flex items-center gap-2">
-                                            User Requests
-                                            {pendingRequests.length > 0 && (
-                                            <span className="min-w-[18px] h-[18px] text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
-                                                    {pendingRequests.length > 9 ? '9+' : pendingRequests.length}
-                                                </span>
-                                            )}
-                                    </span>
+                                    User Requests
                                     </button>
                                 )}
                                 <button
@@ -3222,14 +2862,7 @@ export default function AdminPanel() {
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20" />
                                         </svg>
-                                        <div className="flex items-center gap-2">
-                                                User Requests
-                                                {pendingRequests.length > 0 && (
-                                                    <span className="min-w-[18px] h-[18px] text-xs font-bold text-red-600 bg-red-50 border border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 rounded-full flex items-center justify-center">
-                                                        {pendingRequests.length > 9 ? '9+' : pendingRequests.length}
-                                                    </span>
-                                                )}
-                                        </div>
+                                        User Requests
                                         </button>
                                     )}
                                 
@@ -3303,328 +2936,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'offices' && (
-                                <Card className="w-full dark:bg-slate-950" id="offices-panel" role="tabpanel" aria-labelledby="tab-offices">
-                                    <h2 className="text-xl md:text-2xl font-bold mb-4 dark:text-white text-center">Add New Office</h2>
-                                    
-                                    <form onSubmit={handleOfficeSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="officeName" value="Office Name" />
-                                                </div>
-                                                <TextInput
-                                                    id="officeName"
-                                                    name="name"
-                                                    value={officeData.name}
-                                                    onChange={handleOfficeChange}
-                                                    required
-                                                />
-                                            </div>
-                                            
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="officeLocation" value="Location" />
-                                                </div>
-                                                <TextInput
-                                                    id="officeLocation"
-                                                    name="location"
-                                                    value={officeData.location}
-                                                    onChange={handleOfficeChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="officeEmail" value="Email" />
-                                                </div>
-                                                <TextInput
-                                                    id="officeEmail"
-                                                    name="email"
-                                                    type="email"
-                                                    value={officeData.email}
-                                                    onChange={handleOfficeChange}
-                                                    required
-                                                />
-                                            </div>
-                                            
-                                            <div>
-                                                <div className="mb-2 block">
-                                                    <Label htmlFor="officePhoneNumber" value="Phone Number" />
-                                                </div>
-                                                <TextInput
-                                                    id="officePhoneNumber"
-                                                    name="phoneNumber"
-                                                    value={officeData.phoneNumber}
-                                                    onChange={handleOfficeChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        <div>
-                                            <TextInput
-                                                id="officeDescription"
-                                                name="description"
-                                                as="textarea"
-                                                rows={3}
-                                                value={officeData.description}
-                                                onChange={handleOfficeChange}
-                                                label="Description"
-                                            />
-                                        </div>
-                                        
-                                        <CustomButton 
-                                            type="submit"
-                                            variant="pinkToOrange"
-                                        >
-                                            Add Office
-                                        </CustomButton>
-                                        
-                                    </form>
-                                    
-                                    <div className="mt-8">
-                                        <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Existing Offices</h3>
-                                        
-                                        {/* Search Bar */}
-                                        <div className="mb-6">
-                                            <Search
-                                                placeholder="Search offices by name, location, email, or phone number..."
-                                                value={officeSearchQuery}
-                                                onChange={(e) => setOfficeSearchQuery(e.target.value)}
-                                            />
-                                        </div>
-                                        
-                                        {filteredOffices.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-                                                {filteredOffices.map(office => (
-                                                    <Card key={office._id} className="overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow duration-200">
-                                                        <div className="p-3 md:p-4">
-                                                            {/* Desktop Layout: flex with actions on right */}
-                                                            <div className="hidden md:flex">
-                                                                {/* Left side - Office info and contact details */}
-                                                                <div className="flex-1 pr-3">
-                                                                    {/* Office name and location */}
-                                                                    <div className="mb-3">
-                                                                        <h4 className="font-semibold text-base md:text-lg text-slate-900 dark:text-white truncate" title={office.name}>
-                                                                            {office.name}
-                                                                        </h4>
-                                                                        <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                            </svg>
-                                                                            {office.location}
-                                                                        </p>
-                                                                    </div>
-                                                                    
-                                                                    {/* Contact details */}
-                                                                    <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                                                                        <div className="flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                            </svg>
-                                                                            <span className="text-slate-700 dark:text-slate-300 truncate" title={office.email}>
-                                                                                {office.email}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                                            </svg>
-                                                                            <span className="text-slate-700 dark:text-slate-300">
-                                                                                {office.phoneNumber}
-                                                                            </span>
-                                                                        </div>
-                                                                        {office.description && (
-                                                                            <div className="flex items-start">
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                                </svg>
-                                                                                <span className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                                                                                    {office.description}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                {/* Right side - Action buttons (Desktop) */}
-                                                                <div className="flex flex-col space-y-1 md:space-y-2">
-                                                                    <CustomButton
-                                                                        variant="green"
-                                                                        size="xs"
-                                                                        onClick={() => navigate(`/office/${encodeURIComponent(office.name)}`)}
-                                                                        title="View office details"
-                                                                        className="text-xs"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        View
-                                                                    </CustomButton>
-                                                                    <CustomButton
-                                                                        variant="blue"
-                                                                        size="xs"
-                                                                        onClick={() => navigate(`/edit-office/${office._id}`)}
-                                                                        title="Edit office"
-                                                                        className="text-xs"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Edit
-                                                                    </CustomButton>
-                                                                    <CustomButton
-                                                                        variant="red"
-                                                                        size="xs"
-                                                                        onClick={() => handleDeleteOffice(office._id)}
-                                                                        title="Delete office"
-                                                                        className="text-xs"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Delete
-                                                                    </CustomButton>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Mobile Layout: stacked with actions at bottom */}
-                                                            <div className="md:hidden">
-                                                                {/* Office info and contact details */}
-                                                                <div className="mb-3">
-                                                                    {/* Office name and location */}
-                                                                    <div className="mb-3">
-                                                                        <h4 className="font-semibold text-base md:text-lg text-slate-900 dark:text-white truncate" title={office.name}>
-                                                                            {office.name}
-                                                                        </h4>
-                                                                        <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                            </svg>
-                                                                            {office.location}
-                                                                        </p>
-                                                                    </div>
-                                                                    
-                                                                    {/* Contact details */}
-                                                                    <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                                                                        <div className="flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                            </svg>
-                                                                            <span className="text-slate-700 dark:text-slate-300 truncate" title={office.email}>
-                                                                                {office.email}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center">
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-green-500 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                                            </svg>
-                                                                            <span className="text-slate-700 dark:text-slate-300">
-                                                                                {office.phoneNumber}
-                                                                            </span>
-                                                                        </div>
-                                                                        {office.description && (
-                                                                            <div className="flex items-start">
-                                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                                </svg>
-                                                                                <span className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                                                                                    {office.description}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                {/* Action buttons at bottom (Mobile) */}
-                                                                <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
-                                                                    <CustomButton
-                                                                        variant="green"
-                                                                        size="xs"
-                                                                        onClick={() => navigate(`/office/${encodeURIComponent(office.name)}`)}
-                                                                        title="View office details"
-                                                                        className="text-xs flex-1"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        View
-                                                                    </CustomButton>
-                                                                    <CustomButton
-                                                                        variant="blue"
-                                                                        size="xs"
-                                                                        onClick={() => navigate(`/edit-office/${office._id}`)}
-                                                                        title="Edit office"
-                                                                        className="text-xs flex-1"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Edit
-                                                                    </CustomButton>
-                                                                    <CustomButton
-                                                                        variant="red"
-                                                                        size="xs"
-                                                                        onClick={() => handleDeleteOffice(office._id)}
-                                                                        title="Delete office"
-                                                                        className="text-xs flex-1"
-                                                                        icon={({ className }) => (
-                                                                            <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                            </svg>
-                                                                        )}
-                                                                    >
-                                                                        Delete
-                                                                    </CustomButton>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                                                <div className="flex items-center">
-                                                    <div className="flex-shrink-0">
-                                                        <svg className="h-5 w-5 text-blue-400 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                                                        </svg>
-                                                    </div>
-                                                    <div className="ml-3">
-                                                        <p className="text-sm text-blue-700 dark:text-blue-200">
-                                                            {officeSearchQuery.trim() 
-                                                                ? `No offices found matching "${officeSearchQuery}".`
-                                                                : "No offices found."
-                                                            }
-                                                        </p>
-                                                        {officeSearchQuery.trim() && (
-                                                            <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                                                                Try adjusting your search terms or clearing the search to see all offices.
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Card>
+                                <Offices />
                             )}
 
                             {activeTab === 'office-vouchers' && (isAdmin || isAccountant) && (
@@ -4143,7 +3455,7 @@ export default function AdminPanel() {
                                                                 {financialTotals.voucherCount.toLocaleString()}
                                                             </p>
                                                         </div>
-                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-purple-500 dark:bg-purple-600 rounded-md md:rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0 flex-shrink-0">
+                                                        <div className="w-8 h-8 md:w-12 md:h-12 bg-purple-500 dark:bg-purple-600 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0">
                                                             <FaFileInvoiceDollar className="w-4 h-4 md:w-6 md:h-6 text-white" />
                                                         </div>
                                                     </div>
@@ -5584,275 +4896,7 @@ export default function AdminPanel() {
                             )}
 
                             {activeTab === 'users' && (isAdmin || isAccountant) && (
-                                <Card className="w-full dark:bg-slate-950" id="users-panel" role="tabpanel" aria-labelledby="tab-users">
-                                    <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">User Management</h2>
-                                    
-                                    
-                                    {/* Desktop Table View */}
-                                    <div className="hidden md:block">
-                                    <CustomTable
-                                        headers={[
-                                            { label: 'Username', className: '' },
-                                            { label: 'Role', className: 'text-center' },
-                                            ...(isAdmin ? [
-                                                { label: 'Admin Actions', className: '' },
-                                                { label: 'Accountant Actions', className: '' },
-                                                { label: 'Salary', className: '' },
-                                                { label: 'Delete', className: '' }
-                                            ] : [
-                                                { label: 'Salary', className: '' }
-                                            ])
-                                        ]}
-                                        data={users.sort((a, b) => {
-                                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
-                                            const getRolePriority = (user) => {
-                                                if (user.isAdmin) return 3;
-                                                if (user.isAccountant) return 2;
-                                                return 1;
-                                            };
-                                            return getRolePriority(b) - getRolePriority(a);
-                                        })}
-                                        renderRow={(user) => (
-                                            <>
-                                                <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
-                                                    <button
-                                                        onClick={() => navigate(`/profile/${user._id}`)}
-                                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium cursor-pointer"
-                                                        title="View user profile"
-                                                    >
-                                                        {user.username}
-                                                    </button>
-                                                </Table.Cell>
-                                                <Table.Cell className="flex items-center justify-center px-4 py-3">
-                                                    <UserBadge user={user} />
-                                                </Table.Cell>
-                                                {isAdmin && (
-                                                    <>
-                                                        <Table.Cell className="px-4 py-3">
-                                                            <div className="flex items-center">
-                                                                {user.isAdmin ? (
-                                                                    <CustomButton
-                                                                        variant="orange"
-                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                        title="Revoke admin privileges"
-                                                                    >
-                                                                        Revoke
-                                                                    </CustomButton>
-                                                                ) : (
-                                                                    <CustomButton
-                                                                        variant="blue"
-                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                        disabled={user.isAccountant}
-                                                                        title="Assign admin privileges"
-                                                                    >
-                                                                        Assign
-                                                                    </CustomButton>
-                                                                )}
-                                                            </div>
-                                                        </Table.Cell>
-                                                        <Table.Cell className="px-4 py-3">
-                                                            <div className="flex items-center">
-                                                                {user.isAccountant ? (
-                                                                    <CustomButton
-                                                                        variant="orange"
-                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                        title="Revoke accountant privileges"
-                                                                    >
-                                                                        Revoke
-                                                                    </CustomButton>
-                                                                ) : (
-                                                                    <CustomButton
-                                                                        variant="teal"
-                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                        disabled={user.isAdmin}
-                                                                        title="Assign accountant privileges"
-                                                                    >
-                                                                        Assign
-                                                                    </CustomButton>
-                                                                )}
-                                                            </div>
-                                                        </Table.Cell>
-                                                    </>
-                                                )}
-                                                {(isAdmin || isAccountant) && (
-                                                    <Table.Cell className="px-4 py-3 text-sm">
-                                                        {isAccountant && user.isAdmin ? (
-                                                            <span className="text-gray-500 dark:text-gray-400">Restricted</span>
-                                                        ) : (
-                                                            typeof user.salaryAmount === 'number' ? (
-                                                                <span className="font-semibold text-green-600 dark:text-green-400">
-                                                                    {getCurrencySymbol(user.salaryCurrency || 'USD')}{Number(user.salaryAmount).toFixed(2)}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-gray-500 dark:text-gray-400">N/A</span>
-                                                            )
-                                                        )}
-                                                    </Table.Cell>
-                                                )}
-                                                {isAdmin && (
-                                                    <Table.Cell className="px-4 py-3">
-                                                        <CustomButton
-                                                            variant="red"
-                                                            onClick={() => openDeleteUserModal(user)}
-                                                            title="Delete user"
-                                                            icon={({ className }) => (
-                                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            )}
-                                                        >
-                                                            Delete
-                                                        </CustomButton>
-                                                    </Table.Cell>
-                                                )}
-                                            </>
-                                        )}
-                                        emptyMessage="No users found. Admin users can manage other users here."
-                                        emptyIcon={() => (
-                                            <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                            </svg>
-                                        )}
-                                    />
-                                    </div>
-
-                                    {/* Mobile Cards View - same style as AttendancePanel */}
-                                    <div className="sm:hidden space-y-5">
-                                        {users.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                                </svg>
-                                                <p className="text-gray-500 dark:text-gray-400">No users found. Admin users can manage other users here.</p>
-                                            </div>
-                                        ) : (
-                                            users.sort((a, b) => {
-                                                // Sort by role priority: Admin (3) > Accountant (2) > User (1)
-                                                const getRolePriority = (user) => {
-                                                    if (user.isAdmin) return 3;
-                                                    if (user.isAccountant) return 2;
-                                                    return 1;
-                                                };
-                                                return getRolePriority(b) - getRolePriority(a);
-                                            }).map((user, index) => (
-                                                <div 
-                                                    key={user._id} 
-                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                                    style={{
-                                                        animationDelay: `${index * 100}ms`
-                                                    }}
-                                                >
-                                                    <div className="space-y-3">
-                                                        {/* Header with Username and Role */}
-                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
-                                                            <div>
-                                                                <button
-                                                                    onClick={() => navigate(`/profile/${user._id}`)}
-                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
-                                                                    title="View user profile"
-                                                                >
-                                                                    {user.username}
-                                                                </button>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <UserBadge user={user} />
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Salary Information */}
-                                                        {(isAdmin || isAccountant) && (
-                                                            <div>
-                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Salary</div>
-                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {isAccountant && user.isAdmin ? (
-                                                                        <span className="text-gray-500 dark:text-gray-400">Restricted</span>
-                                                                    ) : (
-                                                                        typeof user.salaryAmount === 'number' ? (
-                                                                            <span className="font-semibold text-green-600 dark:text-green-400">
-                                                                                {getCurrencySymbol(user.salaryCurrency || 'USD')}{Number(user.salaryAmount).toFixed(2)}
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="text-gray-500 dark:text-gray-400">N/A</span>
-                                                                        )
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Admin Actions */}
-                                                        {isAdmin && (
-                                                            <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
-                                                                {/* Admin Status Toggle */}
-                                                                {user.isAdmin ? (
-                                                                    <CustomButton
-                                                                        variant="orange"
-                                                                        size="xs"
-                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                        title="Revoke admin privileges"
-                                                                        className="text-xs"
-                                                                    >
-                                                                        Revoke
-                                                                    </CustomButton>
-                                                                ) : (
-                                                                    <CustomButton
-                                                                        variant="blue"
-                                                                        size="xs"
-                                                                        onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                                        disabled={user.isAccountant}
-                                                                        title="Assign admin privileges"
-                                                                        className="text-xs"
-                                                                    >
-                                                                        Admin
-                                                                    </CustomButton>
-                                                                )}
-
-                                                                {/* Accountant Status Toggle */}
-                                                                {user.isAccountant ? (
-                                                                    <CustomButton
-                                                                        variant="orange"
-                                                                        size="xs"
-                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                        title="Revoke accountant privileges"
-                                                                        className="text-xs"
-                                                                    >
-                                                                        Revoke
-                                                                    </CustomButton>
-                                                                ) : (
-                                                                    <CustomButton
-                                                                        variant="teal"
-                                                                        size="xs"
-                                                                        onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                                        disabled={user.isAdmin}
-                                                                        title="Assign accountant privileges"
-                                                                        className="text-xs"
-                                                                    >
-                                                                        Accountant
-                                                                    </CustomButton>
-                                                                )}
-
-                                                                {/* Delete Button */}
-                                                                <CustomButton
-                                                                    variant="red"
-                                                                    size="xs"
-                                                                    onClick={() => openDeleteUserModal(user)}
-                                                                    title="Delete user"
-                                                                    className="text-xs"
-                                                                    icon={({ className }) => (
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                        </svg>
-                                                                    )}
-                                                                >
-                                                                    Delete
-                                                                </CustomButton>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </Card>
+                                <Users />
                             )}
 
                             {(activeTab === 'salaries') && (isAdmin || isAccountant) && (
@@ -6744,183 +5788,7 @@ export default function AdminPanel() {
                             )}
                             
                             {activeTab === 'requests' && isAdmin && (
-                                <Card className="w-full dark:bg-slate-950" id="requests-panel" role="tabpanel" aria-labelledby="tab-requests">
-                                    <h2 className="text-xl md:text-2xl font-bold mb-1 dark:text-white mx-auto">Pending User Approval Requests</h2>
-                                    
-                                    
-                                    {/* Desktop Table View */}
-                                    <div className="hidden md:block">
-                                                        <CustomTable
-                        headers={[
-                            { label: 'Username', className: '' },
-                            { label: 'Email', className: '' },
-                            { label: 'Phone Number', className: '' },
-                            { label: 'Registration Date', className: '' },
-                            { label: 'Actions', className: '' }
-                        ]}
-                        data={pendingRequests}
-                        renderRow={(user) => (
-                            <>
-                                <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white px-4 py-3">
-                                    <button
-                                        onClick={() => navigate(`/profile/${user._id}`)}
-                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium cursor-pointer"
-                                        title="View user profile"
-                                    >
-                                        {user.username}
-                                    </button>
-                                </Table.Cell>
-                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                    {user.email || '-'}
-                                </Table.Cell>
-                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                    {user.phoneNumber && user.countryCode 
-                                        ? `${user.countryCode} ${user.phoneNumber}`
-                                        : user.phoneNumber || '-'
-                                    }
-                                </Table.Cell>
-                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                    {formatDateDDMMYYYY(user.createdAt)}
-                                </Table.Cell>
-                                <Table.Cell className="px-4 py-3">
-                                    <div className="flex items-center space-x-2">
-                                        <CustomButton
-                                            variant="green"
-                                            onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
-                                            title="Approve user account"
-                                            icon={({ className }) => (
-                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
-                                        >
-                                            Approve
-                                        </CustomButton>
-                                        <CustomButton
-                                            variant="red"
-                                            onClick={() => openDeleteUserModal(user)}
-                                            title="Reject user account"
-                                            icon={({ className }) => (
-                                                <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            )}
-                                        >
-                                            Reject
-                                        </CustomButton>
-                                    </div>
-                                </Table.Cell>
-                            </>
-                        )}
-                        emptyMessage="No pending requests"
-                        emptyDescription="There are no new user accounts awaiting approval at this time. New registration requests will appear here when users sign up."
-                        emptyIcon={() => (
-                            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full">
-                                <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                </svg>
-                            </div>
-                        )}
-                    />
-                                    </div>
-
-                                    {/* Mobile Cards View - same style as AttendancePanel */}
-                                    <div className="sm:hidden space-y-5">
-                                        {pendingRequests.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-full">
-                                                    <svg className="w-8 h-8 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                                    </svg>
-                                                </div>
-                                                <p className="text-gray-500 dark:text-gray-400 font-medium">No pending requests</p>
-                                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">There are no new user accounts awaiting approval at this time. New registration requests will appear here when users sign up.</p>
-                                            </div>
-                                        ) : (
-                                            pendingRequests.map((user, index) => (
-                                                <div 
-                                                    key={user._id} 
-                                                    className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                                                    style={{
-                                                        animationDelay: `${index * 100}ms`
-                                                    }}
-                                                >
-                                                    <div className="space-y-3">
-                                                        {/* Header with Username and Registration Date */}
-                                                        <div className="flex justify-between items-start border-b border-gray-100 dark:border-gray-700 pb-3">
-                                                            <div>
-                                                                <button
-                                                                    onClick={() => navigate(`/profile/${user._id}`)}
-                                                                    className="font-semibold text-gray-900 dark:text-white text-sm hover:text-blue-600 dark:hover:text-blue-400 hover:underline"
-                                                                    title="View user profile"
-                                                                >
-                                                                    {user.username}
-                                                                </button>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <div className="text-xs text-gray-600 dark:text-slate-300">Registered</div>
-                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {formatDateDDMMYYYY(user.createdAt)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Contact Information */}
-                                                        <div className="grid grid-cols-1 gap-3">
-                                                            <div>
-                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Email</div>
-                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {user.email || '-'}
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-xs text-gray-600 dark:text-slate-300 mb-1">Phone Number</div>
-                                                                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                    {user.phoneNumber && user.countryCode 
-                                                                        ? `${user.countryCode} ${user.phoneNumber}`
-                                                                        : user.phoneNumber || '-'
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Action Buttons */}
-                                                        <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
-                                                            <CustomButton
-                                                                variant="green"
-                                                                size="xs"
-                                                                onClick={() => handleToggleApprovalStatus(user._id, user.isApproved)}
-                                                                title="Approve user account"
-                                                                className="text-xs"
-                                                                icon={({ className }) => (
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                                    </svg>
-                                                                )}
-                                                            >
-                                                                Approve
-                                                            </CustomButton>
-                                                            <CustomButton
-                                                                variant="red"
-                                                                size="xs"
-                                                                onClick={() => openDeleteUserModal(user)}
-                                                                title="Reject user account"
-                                                                className="text-xs"
-                                                                icon={({ className }) => (
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                    </svg>
-                                                                )}
-                                                            >
-                                                                Reject
-                                                            </CustomButton>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </Card>
+                                <UserRequests />
                             )}
                             
                             {/* Attendance Panel */}
@@ -7092,15 +5960,6 @@ export default function AdminPanel() {
                             )}
                             
 
-                            {/* Delete User Confirmation Modal */}
-                            <DeleteConfirmationModal
-                                show={deleteUserModalOpen}
-                                onClose={closeDeleteUserModal}
-                                onConfirm={handleDeleteUser}
-                                isLoading={deleteUserLoading}
-                                itemType={activeTab === 'requests' ? 'user request' : 'user'}
-                                itemName={userToDelete?.username}
-                            />
 
                             {/* Debt Modal */}
                             <CustomModal

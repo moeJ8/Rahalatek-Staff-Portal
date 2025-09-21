@@ -26,7 +26,7 @@ export default function VoucherForm({ onSuccess }) {
     clientName: '',
     nationality: '',
     phoneNumber: '',
-    officeName: '',
+    officeName: 'Rahalatek Travel',
     arrivalDate: '',
     departureDate: '',
     capital: '',
@@ -134,6 +134,7 @@ export default function VoucherForm({ onSuccess }) {
   const [offices, setOffices] = useState([]);
   const [isExistingClient, setIsExistingClient] = useState(false);
   const [existingClients, setExistingClients] = useState([]);
+  const [existingClientsLoading, setExistingClientsLoading] = useState(false);
 
   // Duplicate voucher functionality
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
@@ -199,7 +200,7 @@ export default function VoucherForm({ onSuccess }) {
         clientName: `${voucherToDuplicate.clientName} (Copy)`,
         nationality: voucherToDuplicate.nationality,
         phoneNumber: voucherToDuplicate.phoneNumber || '',
-        officeName: voucherToDuplicate.officeName || '',
+        officeName: voucherToDuplicate.officeName || 'Rahalatek Travel',
         arrivalDate: voucherToDuplicate.arrivalDate ? new Date(voucherToDuplicate.arrivalDate).toISOString().split('T')[0] : '',
         departureDate: voucherToDuplicate.departureDate ? new Date(voucherToDuplicate.departureDate).toISOString().split('T')[0] : '',
         capital: voucherToDuplicate.capital || '',
@@ -296,28 +297,21 @@ export default function VoucherForm({ onSuccess }) {
   // Date formatting is now handled by CustomDatePicker
   
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchEssentialData = async () => {
       setLoading(true);
       try {
-        const [hotelResponse, tourResponse, officeResponse, voucherResponse] = await Promise.all([
+        // Only fetch essential data needed for form functionality
+        const [hotelResponse, tourResponse, officeResponse] = await Promise.all([
           axios.get('/api/hotels'),
           axios.get('/api/tours'),
-          axios.get('/api/offices'),
-          axios.get('/api/vouchers')
+          axios.get('/api/offices')
         ]);
         
         setHotels(hotelResponse.data);
         setTours(tourResponse.data);
         setOffices(officeResponse.data.data);
         
-        // Extract unique client names from existing vouchers
-        const clientNames = [...new Set(voucherResponse.data.data
-          .map(voucher => voucher.clientName)
-          .filter(name => name && name.trim() !== '')
-        )].sort();
-        setExistingClients(clientNames);
-        
-        // Extract unique cities
+        // Extract unique cities from hotels and tours
         const uniqueCities = [...new Set([
           ...hotelResponse.data.map(h => h.city),
           ...tourResponse.data.map(t => t.city)
@@ -345,8 +339,28 @@ export default function VoucherForm({ onSuccess }) {
       }
     };
     
-    fetchData();
+    fetchEssentialData();
   }, []);
+
+  // Lazy load existing clients only when needed (when user starts typing)
+  const fetchExistingClients = async () => {
+    if (existingClients.length === 0) {
+      setExistingClientsLoading(true);
+      try {
+        const voucherResponse = await axios.get('/api/vouchers');
+        const clientNames = [...new Set(voucherResponse.data.data
+          .map(voucher => voucher.clientName)
+          .filter(name => name && name.trim() !== '')
+        )].sort();
+        setExistingClients(clientNames);
+      } catch (err) {
+        console.error('Failed to load existing clients:', err);
+        // Don't show error toast for this non-critical feature
+      } finally {
+        setExistingClientsLoading(false);
+      }
+    }
+  };
 
 
 
@@ -1299,7 +1313,10 @@ export default function VoucherForm({ onSuccess }) {
                         checked={isExistingClient}
                         onChange={(e) => {
                           setIsExistingClient(e.target.checked);
-                          if (!e.target.checked) {
+                          if (e.target.checked) {
+                            // Lazy load existing clients when user switches to existing client mode
+                            fetchExistingClients();
+                          } else {
                             // Clear client name when switching to manual input
                             setFormData({...formData, clientName: ''});
                           }
@@ -1320,6 +1337,7 @@ export default function VoucherForm({ onSuccess }) {
                         label: client
                       }))}
                       placeholder="Select existing client..."
+                      loading={existingClientsLoading}
                       required
                     />
                   ) : (
@@ -1364,8 +1382,8 @@ export default function VoucherForm({ onSuccess }) {
                     value={formData.officeName}
                     onChange={(e) => setFormData({...formData, officeName: e.target.value})}
                     options={[
-                      { value: '', label: 'Direct Client (No Office)' },
-                      ...offices.map(office => ({
+                      { value: 'Rahalatek Travel', label: 'Rahalatek Travel - Turkey (Direct Client)' },
+                      ...offices.filter(office => office.name !== 'Rahalatek Travel').map(office => ({
                         value: office.name,
                         label: `${office.name} - ${office.location}`
                       }))
