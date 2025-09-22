@@ -20,7 +20,9 @@ export default function HotelsPage() {
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [starFilter, setStarFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
+  const [availableCountries, setAvailableCountries] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [hotelToDelete, setHotelToDelete] = useState(null);
@@ -42,8 +44,10 @@ export default function HotelsPage() {
         setHotels(hotelsData);
         setFilteredHotels(hotelsData);
         
-        // Extract unique cities for the city filter
+        // Extract unique countries and cities for filters
+        const countries = [...new Set(hotelsData.map(hotel => hotel.country).filter(Boolean))].sort();
         const cities = [...new Set(hotelsData.map(hotel => hotel.city))].sort();
+        setAvailableCountries(countries);
         setAvailableCities(cities);
         
         setError('');
@@ -65,6 +69,10 @@ export default function HotelsPage() {
       filtered = filtered.filter(hotel => hotel.stars === parseInt(starFilter));
     }
 
+    if (countryFilter) {
+      filtered = filtered.filter(hotel => hotel.country === countryFilter);
+    }
+
     if (cityFilter) {
       filtered = filtered.filter(hotel => hotel.city === cityFilter);
     }
@@ -75,12 +83,13 @@ export default function HotelsPage() {
         hotel =>
           hotel.name.toLowerCase().includes(searchTermLower) ||
           hotel.city.toLowerCase().includes(searchTermLower) ||
+          (hotel.country && hotel.country.toLowerCase().includes(searchTermLower)) ||
           (hotel.description && hotel.description.toLowerCase().includes(searchTermLower))
       );
     }
     
     setFilteredHotels(filtered);
-  }, [searchTerm, starFilter, cityFilter, hotels]);
+  }, [searchTerm, starFilter, countryFilter, cityFilter, hotels]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -88,6 +97,12 @@ export default function HotelsPage() {
   
   const handleStarFilter = (value) => {
     setStarFilter(value);
+  };
+
+  const handleCountryFilter = (value) => {
+    setCountryFilter(value);
+    // Reset city filter when country changes
+    setCityFilter('');
   };
   
   const handleCityFilter = (value) => {
@@ -97,6 +112,7 @@ export default function HotelsPage() {
   const resetFilters = () => {
     setSearchTerm('');
     setStarFilter('');
+    setCountryFilter('');
     setCityFilter('');
   };
 
@@ -181,7 +197,7 @@ export default function HotelsPage() {
           </div>
           
           {/* Filter Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
             <div className="w-full">
               <Select 
                 value={starFilter}
@@ -198,6 +214,19 @@ export default function HotelsPage() {
                 className="w-full"
               />
             </div>
+
+            <div className="w-full">
+              <Select 
+                value={countryFilter}
+                onChange={handleCountryFilter}
+                placeholder="Filter by Country"
+                options={[
+                  { value: '', label: 'Filter by Country' },
+                  ...availableCountries.map(country => ({ value: country, label: country }))
+                ]}
+                className="w-full"
+              />
+            </div>
             
             <div className="w-full">
               <Select 
@@ -206,9 +235,12 @@ export default function HotelsPage() {
                 placeholder="Filter by City"
                 options={[
                   { value: '', label: 'Filter by City' },
-                  ...availableCities.map(city => ({ value: city, label: city }))
+                  ...availableCities
+                    .filter(city => !countryFilter || hotels.some(hotel => hotel.city === city && hotel.country === countryFilter))
+                    .map(city => ({ value: city, label: city }))
                 ]}
                 className="w-full"
+                disabled={countryFilter && !hotels.some(hotel => hotel.country === countryFilter)}
               />
             </div>
             
@@ -216,7 +248,7 @@ export default function HotelsPage() {
               <CustomButton 
                 variant="red" 
                 onClick={resetFilters}
-                disabled={!searchTerm && !starFilter && !cityFilter}
+                disabled={!searchTerm && !starFilter && !countryFilter && !cityFilter}
                 className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
@@ -227,7 +259,7 @@ export default function HotelsPage() {
           
           {/* Results count */}
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-            {(searchTerm || starFilter || cityFilter) ? (
+            {(searchTerm || starFilter || countryFilter || cityFilter) ? (
               <p>Found {filteredHotels.length} result{filteredHotels.length !== 1 ? 's' : ''}</p>
             ) : (
               <p>Showing all {filteredHotels.length} hotels</p>

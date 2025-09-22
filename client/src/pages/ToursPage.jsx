@@ -18,8 +18,10 @@ export default function ToursPage() {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [durationFilter, setDurationFilter] = useState('');
+  const [availableCountries, setAvailableCountries] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [tourToDelete, setTourToDelete] = useState(null);
@@ -45,8 +47,10 @@ export default function ToursPage() {
         setTours(sortedTours);
         setFilteredTours(sortedTours);
         
-        // Extract unique cities for city filter
+        // Extract unique countries and cities for filters
+        const countries = [...new Set(sortedTours.map(tour => tour.country).filter(Boolean))].sort();
         const cities = [...new Set(sortedTours.map(tour => tour.city))].sort();
+        setAvailableCountries(countries);
         setAvailableCities(cities);
         
         setError('');
@@ -64,6 +68,11 @@ export default function ToursPage() {
   // Filter tours based on search term and filters
   useEffect(() => {
     let filtered = tours;
+    
+    // Apply country filter
+    if (countryFilter) {
+      filtered = filtered.filter(tour => tour.country === countryFilter);
+    }
     
     // Apply city filter
     if (cityFilter) {
@@ -89,6 +98,7 @@ export default function ToursPage() {
         tour =>
           tour.name.toLowerCase().includes(searchTermLower) ||
           tour.city.toLowerCase().includes(searchTermLower) ||
+          (tour.country && tour.country.toLowerCase().includes(searchTermLower)) ||
           (tour.description && tour.description.toLowerCase().includes(searchTermLower)) ||
           (tour.highlights && tour.highlights.some(highlight => 
             highlight.toLowerCase().includes(searchTermLower)
@@ -97,12 +107,18 @@ export default function ToursPage() {
     }
     
     setFilteredTours(filtered);
-  }, [searchTerm, cityFilter, durationFilter, tours]);
+  }, [searchTerm, countryFilter, cityFilter, durationFilter, tours]);
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
   
+  const handleCountryFilter = (value) => {
+    setCountryFilter(value);
+    // Reset city filter when country changes
+    setCityFilter('');
+  };
+
   const handleCityFilter = (value) => {
     setCityFilter(value);
   };
@@ -113,6 +129,7 @@ export default function ToursPage() {
   
   const resetFilters = () => {
     setSearchTerm('');
+    setCountryFilter('');
     setCityFilter('');
     setDurationFilter('');
   };
@@ -189,7 +206,20 @@ export default function ToursPage() {
           </div>
           
           {/* Filter Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+            <div className="w-full">
+              <Select 
+                value={countryFilter}
+                onChange={handleCountryFilter}
+                placeholder="Filter by Country"
+                options={[
+                  { value: '', label: 'Filter by Country' },
+                  ...availableCountries.map(country => ({ value: country, label: country }))
+                ]}
+                className="w-full"
+              />
+            </div>
+
             <div className="w-full">
               <Select 
                 value={cityFilter}
@@ -197,9 +227,12 @@ export default function ToursPage() {
                 placeholder="Filter by City"
                 options={[
                   { value: '', label: 'Filter by City' },
-                  ...availableCities.map(city => ({ value: city, label: city }))
+                  ...availableCities
+                    .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
+                    .map(city => ({ value: city, label: city }))
                 ]}
                 className="w-full"
+                disabled={countryFilter && !tours.some(tour => tour.country === countryFilter)}
               />
             </div>
             
@@ -222,7 +255,7 @@ export default function ToursPage() {
               <CustomButton 
                 variant="red" 
                 onClick={resetFilters}
-                disabled={!searchTerm && !cityFilter && !durationFilter}
+                disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter}
                 className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
@@ -233,7 +266,7 @@ export default function ToursPage() {
           
           {/* Results count */}
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-            {(searchTerm || cityFilter || durationFilter) ? (
+            {(searchTerm || countryFilter || cityFilter || durationFilter) ? (
               <p>Found {filteredTours.length} result{filteredTours.length !== 1 ? 's' : ''}</p>
             ) : (
               <p>Showing all {filteredTours.length} tours</p>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaStar, FaBed, FaUtensils, FaPlane, FaCarSide, FaCalendarAlt, FaChild } from 'react-icons/fa';
+import { FaStar, FaBed, FaUtensils, FaPlane, FaCarSide, FaCalendarAlt, FaChild, FaMapMarkerAlt, FaGlobeAmericas } from 'react-icons/fa';
 import { getMonthName, getRoomPriceForMonth } from '../utils/pricingUtils';
 
 const HotelInfo = ({ hotelData }) => {
@@ -23,10 +23,25 @@ const HotelInfo = ({ hotelData }) => {
         <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate text-center">
           {hotelData.name}
         </h5>
+        
+        {/* Small Country and City badges */}
+        <div className="flex justify-center gap-1 mb-2">
+          {hotelData.country && (
+            <span className="inline-flex items-center text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded-full">
+              <FaGlobeAmericas className="w-2.5 h-2.5 mr-1" />
+              {hotelData.country}
+            </span>
+          )}
+          <span className="inline-flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
+            <FaMapMarkerAlt className="w-2.5 h-2.5 mr-1" />
+            {hotelData.city}
+          </span>
+        </div>
+        
         <div className="flex justify-center">
-          <span className="flex items-center text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded whitespace-nowrap">
+          <span className="flex items-center text-sm bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded whitespace-nowrap">
             {renderStars(hotelData.stars)}
-            <span className="ml-1 text-gray-700 dark:text-gray-300">{hotelData.stars}-star</span>
+            <span className="ml-1 text-yellow-700 dark:text-yellow-300">{hotelData.stars}-star</span>
           </span>
         </div>
       </div>

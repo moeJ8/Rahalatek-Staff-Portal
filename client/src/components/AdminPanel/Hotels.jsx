@@ -9,12 +9,15 @@ import CustomSelect from '../Select'
 import TextInput from '../TextInput'
 import RahalatekLoader from '../RahalatekLoader'
 import CustomModal from '../CustomModal'
+import SearchableSelect from '../SearchableSelect'
+import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
 
 
 
 export default function Hotels() {
     const [hotelData, setHotelData] = useState({
         name: '',
+        country: '',
         city: '',
         stars: '',
         roomTypes: [],
@@ -136,6 +139,15 @@ export default function Hotels() {
         setHotelData({
             ...hotelData,
             city: ''
+        });
+    };
+
+    // Handle country change and reset city
+    const handleCountryChange = (country) => {
+        setHotelData({
+            ...hotelData,
+            country: country,
+            city: '' // Reset city when country changes
         });
     };
 
@@ -359,6 +371,7 @@ export default function Hotels() {
             // Reset the form
             setHotelData({
                 name: '',
+                country: '',
                 city: '',
                 stars: '',
                 roomTypes: [],
@@ -556,6 +569,7 @@ export default function Hotels() {
         // Set the hotel data with duplicated data
         setHotelData({
             name: hotelToDuplicate.name + ' (Copy)',
+            country: hotelToDuplicate.country || '',
             city: hotelToDuplicate.city,
             stars: hotelToDuplicate.stars.toString(),
             roomTypes: [],
@@ -616,7 +630,7 @@ export default function Hotels() {
                                     </div>
                                     
                                     <form onSubmit={handleHotelSubmit} className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div className="md:col-span-1">
                                                 <div className="mb-2 block">
                                                     <Label htmlFor="hotelName" value="Hotel Name" />
@@ -627,6 +641,22 @@ export default function Hotels() {
                                                     value={hotelData.name}
                                                     onChange={handleHotelChange}
                                                     required
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-1">
+                                                <div className="mb-2 block">
+                                                    <Label htmlFor="hotelCountry" value="Country" />
+                                                </div>
+                                                <SearchableSelect
+                                                    id="hotelCountry"
+                                                    value={hotelData.country}
+                                                    onChange={(e) => handleCountryChange(e.target.value)}
+                                                    options={[
+                                                        { value: '', label: 'Select Country' },
+                                                        ...getCountries().map(country => ({ value: country, label: country }))
+                                                    ]}
+                                                    placeholder="Search for a country..."
                                                 />
                                             </div>
                                             
@@ -653,23 +683,20 @@ export default function Hotels() {
                                         required
                                     />
                                 ) : (
-                                    <CustomSelect
+                                    <SearchableSelect
                                         id="hotelCity"
                                         value={hotelData.city}
-                                        onChange={(value) => handleHotelChange({ target: { name: 'city', value } })}
+                                        onChange={(e) => handleHotelChange({ target: { name: 'city', value: e.target.value } })}
                                         options={[
                                             { value: '', label: 'Select City' },
-                                            { value: 'Antalya', label: 'Antalya' },
-                                            { value: 'Bodrum', label: 'Bodrum' },
-                                            { value: 'Bursa', label: 'Bursa' },
-                                            { value: 'Cappadocia', label: 'Cappadocia' },
-                                            { value: 'Fethiye', label: 'Fethiye' },
-                                            { value: 'Istanbul', label: 'Istanbul' },
-                                            { value: 'Trabzon', label: 'Trabzon' }
+                                            ...getCitiesByCountry(hotelData.country).map(city => ({ value: city, label: city }))
                                         ]}
-                                        placeholder="Select City"
-                                        required
+                                        placeholder="Search for a city..."
+                                        disabled={!hotelData.country}
                                     />
+                                )}
+                                {!hotelData.country && !useCustomHotelCity && (
+                                    <p className="text-xs text-gray-500 mt-1">Select a country first</p>
                                 )}
                             </div>
                                             

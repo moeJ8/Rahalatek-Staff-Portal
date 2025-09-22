@@ -3,8 +3,21 @@ const { invalidateDashboardCache } = require('../utils/redis');
 
 exports.getAllHotels = async (req, res) => {
     try {
+        const { country, city } = req.query;
+        let query = {};
+        
+        // Filter by country if provided
+        if (country) {
+            query.country = country;
+        }
+        
+        // Filter by city if provided
+        if (city) {
+            query.city = city;
+        }
+        
         // Sort by updatedAt in descending order (newest first)
-        const hotels = await Hotel.find().sort({ updatedAt: -1 });
+        const hotels = await Hotel.find(query).sort({ updatedAt: -1 });
         res.json(hotels);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -20,7 +33,8 @@ exports.addHotel = async (req, res) => {
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
             breakfastPrice: req.body.breakfastPrice ? Number(req.body.breakfastPrice) : 0,
-            airport: req.body.airport || null
+            airport: req.body.airport || null,
+            country: req.body.country // Add country field
         };
         
         const hotel = new Hotel(hotelData);
@@ -40,6 +54,38 @@ exports.getHotelsByCity = async (req, res) => {
         const { city } = req.params;
         const hotels = await Hotel.find({ city });
         res.json(hotels);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get hotels by country
+exports.getHotelsByCountry = async (req, res) => {
+    try {
+        const { country } = req.params;
+        const hotels = await Hotel.find({ country }).sort({ updatedAt: -1 });
+        res.json(hotels);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get cities by country
+exports.getCitiesByCountry = async (req, res) => {
+    try {
+        const { country } = req.params;
+        const cities = await Hotel.distinct('city', { country });
+        res.json(cities.sort());
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get all countries
+exports.getCountries = async (req, res) => {
+    try {
+        const countries = await Hotel.distinct('country');
+        res.json(countries.sort());
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -70,7 +116,8 @@ exports.updateHotel = async (req, res) => {
             transportationPrice: Number(req.body.transportationPrice),
             breakfastIncluded: Boolean(req.body.breakfastIncluded),
             breakfastPrice: req.body.breakfastPrice ? Number(req.body.breakfastPrice) : 0,
-            airport: req.body.airport || null
+            airport: req.body.airport || null,
+            country: req.body.country // Add country field
         };
         
         const updatedHotel = await Hotel.findByIdAndUpdate(id, hotelData, { new: true });

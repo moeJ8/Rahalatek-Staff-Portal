@@ -6,6 +6,15 @@ const router = express.Router();
 // Get all hotels
 router.get('/', hotelController.getAllHotels);
 
+// Get hotels by country
+router.get('/country/:country', hotelController.getHotelsByCountry);
+
+// Get cities by country
+router.get('/country/:country/cities', hotelController.getCitiesByCountry);
+
+// Get all countries
+router.get('/countries', hotelController.getCountries);
+
 // Get hotels by city
 router.get('/city/:city', hotelController.getHotelsByCity);
 

@@ -8,11 +8,14 @@ import CustomSelect from '../Select'
 import TextInput from '../TextInput'
 import RahalatekLoader from '../RahalatekLoader'
 import CustomModal from '../CustomModal'
+import SearchableSelect from '../SearchableSelect'
+import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
 
 export default function Tours() {
     
     const [tourData, setTourData] = useState({
         name: '',
+        country: '',
         city: '',
         description: '',
         detailedDescription: '',
@@ -55,6 +58,15 @@ export default function Tours() {
         });
     };
 
+    // Handle country change and reset city
+    const handleCountryChange = (country) => {
+        setTourData({
+            ...tourData,
+            country: country,
+            city: '' // Reset city when country changes
+        });
+    };
+
     const handleAddHighlight = () => {
         if (highlightInput.trim()) {
             setTourData({
@@ -88,6 +100,7 @@ export default function Tours() {
             await axios.post('/api/tours', tourDataWithPolicies);
             setTourData({
                 name: '',
+                country: '',
                 city: '',
                 description: '',
                 detailedDescription: '',
@@ -160,6 +173,7 @@ export default function Tours() {
         // Set tour data from the selected tour
         setTourData({
             name: `${tourToDuplicate.name} (Copy)`,
+            country: tourToDuplicate.country || '',
             city: tourToDuplicate.city,
             description: tourToDuplicate.description || '',
             detailedDescription: tourToDuplicate.detailedDescription || '',
@@ -211,7 +225,7 @@ export default function Tours() {
                 </div>
                 
                 <form onSubmit={handleTourSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <div className="mb-2 block">
                                 <Label htmlFor="tourName" value="Tour Name" />
@@ -224,25 +238,37 @@ export default function Tours() {
                                 required
                             />
                         </div>
+
+                        <div>
+                            <Label value="Country" className="block mb-2" />
+                            <SearchableSelect
+                                id="tourCountry"
+                                value={tourData.country}
+                                onChange={(e) => handleCountryChange(e.target.value)}
+                                options={[
+                                    { value: '', label: 'Select Country' },
+                                    ...getCountries().map(country => ({ value: country, label: country }))
+                                ]}
+                                placeholder="Search for a country..."
+                            />
+                        </div>
                         
                         <div>
-                            <CustomSelect
+                            <Label value="City" className="block mb-2" />
+                            <SearchableSelect
                                 id="tourCity"
-                                label="City"
                                 value={tourData.city}
-                                onChange={(value) => setTourData({...tourData, city: value})}
+                                onChange={(e) => setTourData({...tourData, city: e.target.value})}
                                 options={[
-                                    { value: "Antalya", label: "Antalya" },
-                                    { value: "Bodrum", label: "Bodrum" },
-                                    { value: "Bursa", label: "Bursa" },
-                                    { value: "Cappadocia", label: "Cappadocia" },
-                                    { value: "Fethiye", label: "Fethiye" },
-                                    { value: "Istanbul", label: "Istanbul" },
-                                    { value: "Trabzon", label: "Trabzon" }
+                                    { value: '', label: 'Select City' },
+                                    ...getCitiesByCountry(tourData.country).map(city => ({ value: city, label: city }))
                                 ]}
-                                placeholder="Select City"
-                                required
+                                placeholder="Search for a city..."
+                                disabled={!tourData.country}
                             />
+                            {!tourData.country && (
+                                <p className="text-xs text-gray-500 mt-1">Select a country first</p>
+                            )}
                         </div>
                     </div>
                     

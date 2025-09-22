@@ -20,13 +20,175 @@ const arabicDayOrdinals = [
 
 // Add city name translations
 const cityTranslations = {
+  // Turkey
   'Antalya': 'انطاليا',
   'Bodrum': 'بودروم',
   'Bursa': 'بورصة',
   'Cappadocia': 'كابادوكيا',
   'Fethiye': 'فتحية',
   'Istanbul': 'اسطنبول',
-  'Trabzon': 'طرابزون'
+  'Trabzon': 'طرابزون',
+  
+  // Malaysia
+  'Kuala Lumpur': 'كوالالمبور',
+  'Penang': 'بينانغ',
+  'Langkawi': 'لنكاوي',
+  'Malacca': 'ملقا',
+  'Johor Bahru': 'جوهور بهرو',
+  'Kota Kinabalu': 'كوتا كينابالو',
+  'Kuching': 'كوتشينغ',
+  'Cameron Highlands': 'مرتفعات الكاميرون',
+  'Genting Highlands': 'مرتفعات جنتنغ',
+  
+  // Thailand
+  'Bangkok': 'بانكوك',
+  'Phuket': 'فوكيت',
+  'Pattaya': 'باتايا',
+  'Chiang Mai': 'شيانغ ماي',
+  'Krabi': 'كرابي',
+  'Koh Samui': 'كوه ساموي',
+  'Hua Hin': 'هوا هين',
+  'Ayutthaya': 'أيوتايا',
+  'Chiang Rai': 'شيانغ راي',
+  'Kanchanaburi': 'كانشانابوري',
+  
+  // Indonesia
+  'Jakarta': 'جاكرتا',
+  'Bali': 'بالي',
+  'Yogyakarta': 'يوجياكارتا',
+  'Bandung': 'باندونغ',
+  'Surabaya': 'سورابايا',
+  'Medan': 'ميدان',
+  'Lombok': 'لومبوك',
+  'Bogor': 'بوغور',
+  'Malang': 'مالانغ',
+  'Solo': 'سولو',
+  'Ubud': 'أوبود',
+  'Sanur': 'سانور',
+  'Seminyak': 'سيمينياك',
+  
+  // Saudi Arabia
+  'Riyadh': 'الرياض',
+  'Jeddah': 'جدة',
+  'Mecca': 'مكة المكرمة',
+  'Medina': 'المدينة المنورة',
+  'Dammam': 'الدمام',
+  'Khobar': 'الخبر',
+  'Taif': 'الطائف',
+  'Abha': 'أبها',
+  'Tabuk': 'تبوك',
+  'Al Khobar': 'الخبر',
+  
+  // Morocco
+  'Casablanca': 'الدار البيضاء',
+  'Marrakech': 'مراكش',
+  'Rabat': 'الرباط',
+  'Fez': 'فاس',
+  'Tangier': 'طنجة',
+  'Agadir': 'أكادير',
+  'Meknes': 'مكناس',
+  'Essaouira': 'الصويرة',
+  'Chefchaouen': 'شفشاون',
+  'Ouarzazate': 'ورزازات',
+  
+  // Egypt
+  'Cairo': 'القاهرة',
+  'Alexandria': 'الإسكندرية',
+  'Luxor': 'الأقصر',
+  'Aswan': 'أسوان',
+  'Hurghada': 'الغردقة',
+  'Sharm El Sheikh': 'شرم الشيخ',
+  'Dahab': 'دهب',
+  'Marsa Alam': 'مرسى علم',
+  'Taba': 'طابا',
+  'Giza': 'الجيزة',
+  
+  // Azerbaijan
+  'Baku': 'باكو',
+  'Ganja': 'جانجا',
+  'Sumgayit': 'سومغايت',
+  'Mingachevir': 'مينجتشفير',
+  'Qabalah': 'قبالة',
+  'Shaki': 'شاكي',
+  'Lankaran': 'لانكاران',
+  'Shamakhi': 'شماخي',
+  'Quba': 'قوبا',
+  'Gabala': 'جابالا',
+  
+  // Georgia
+  'Tbilisi': 'تبليسي',
+  'Batumi': 'باتومي',
+  'Kutaisi': 'كوتايسي',
+  'Rustavi': 'روستافي',
+  'Zugdidi': 'زوجديدي',
+  'Gori': 'غوري',
+  'Telavi': 'تيلافي',
+  'Mestia': 'ميستيا',
+  'Kazbegi': 'كازبيجي',
+  'Sighnaghi': 'سيغناغي',
+  'Mtskheta': 'متسخيتا',
+  'Borjomi': 'بورجومي',
+  
+  // Albania
+  'Tirana': 'تيرانا',
+  'Durres': 'دوريس',
+  'Vlore': 'فلورا',
+  'Shkoder': 'شكودرا',
+  'Fier': 'فيير',
+  'Korce': 'كورتشا',
+  'Berat': 'بيرات',
+  'Gjirokaster': 'جيروكاسترا',
+  'Sarande': 'ساراندا',
+  'Kruje': 'كروجا'
+};
+
+// Country flag mappings
+const countryFlags = {
+  'Turkey': '🇹🇷',
+  'Malaysia': '🇲🇾',
+  'Thailand': '🇹🇭',
+  'Indonesia': '🇮🇩',
+  'Saudi Arabia': '🇸🇦',
+  'Morocco': '🇲🇦',
+  'Egypt': '🇪🇬',
+  'Azerbaijan': '🇦🇿',
+  'Georgia': '🇬🇪',
+  'Albania': '🇦🇱'
+};
+
+// Helper function to get country from city
+const getCountryFromCity = (city) => {
+  // Import the COUNTRY_CITIES mapping
+  const countryCitiesMap = {
+    "Turkey": ['Istanbul', 'Antalya', 'Cappadocia', 'Trabzon', 'Bodrum', 'Fethiye', 'Bursa'],
+    "Malaysia": ['Kuala Lumpur', 'Penang', 'Langkawi', 'Malacca', 'Johor Bahru', 'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands'],
+    "Thailand": ['Bangkok', 'Phuket', 'Pattaya', 'Chiang Mai', 'Krabi', 'Koh Samui', 'Hua Hin', 'Ayutthaya', 'Chiang Rai', 'Kanchanaburi'],
+    "Indonesia": ['Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan', 'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak'],
+    "Saudi Arabia": ['Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 'Taif', 'Abha', 'Tabuk', 'Al Khobar'],
+    "Morocco": ['Casablanca', 'Marrakech', 'Rabat', 'Fez', 'Tangier', 'Agadir', 'Meknes', 'Essaouira', 'Chefchaouen', 'Ouarzazate'],
+    "Egypt": ['Cairo', 'Alexandria', 'Luxor', 'Aswan', 'Hurghada', 'Sharm El Sheikh', 'Dahab', 'Marsa Alam', 'Taba', 'Giza'],
+    "Azerbaijan": ['Baku', 'Ganja', 'Sumgayit', 'Mingachevir', 'Qabalah', 'Shaki', 'Lankaran', 'Shamakhi', 'Quba', 'Gabala'],
+    "Georgia": ['Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori', 'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi'],
+    "Albania": ['Tirana', 'Durres', 'Vlore', 'Shkoder', 'Fier', 'Korce', 'Berat', 'Gjirokaster', 'Sarande', 'Kruje']
+  };
+  
+  for (const [country, cities] of Object.entries(countryCitiesMap)) {
+    if (cities.includes(city)) {
+      return country;
+    }
+  }
+  return 'Turkey'; // Default fallback
+};
+
+// Helper function to get unique countries from selected cities
+const getCountriesFromCities = (cities) => {
+  const countries = [...new Set(cities.map(city => getCountryFromCity(city)))];
+  return countries;
+};
+
+// Helper function to generate flags string from countries
+const getFlagsFromCountries = (countries) => {
+  return countries.map(country => countryFlags[country] || '🌍').join(' ');
 };
 
 export const generateBookingMessage = ({
@@ -47,6 +209,10 @@ export const generateBookingMessage = ({
 }) => {
   const totalNights = calculateDuration(startDate, endDate);
   const finalPrice = tripPrice || calculatedPrice;
+
+  // Get countries from selected cities
+  const countries = getCountriesFromCities(selectedCities);
+  const flagsString = getFlagsFromCountries(countries);
 
   // Format cities for Arabic message
   const formattedCities = selectedCities
@@ -258,7 +424,7 @@ ${hotelData.description ? `${RLM}${hotelData.description}` : ''}
     tours.find(tour => tour._id === tourId)
   ).filter(Boolean);
 
-  const itinerary = `${RLM}🇹🇷 بكج ${formattedCities} 🇹🇷
+  const itinerary = `${RLM}${flagsString} بكج ${formattedCities} ${flagsString}
 ${RLM}🗓 من ${formattedStartDate} لغاية ${formattedEndDate}
 ${RLM}⏰ المدة ${totalNights} ليالي
 ${guestsInfo}

@@ -63,7 +63,19 @@ const CheckBoxDropDown = ({
         if (value.length === 1) {
             return options.find(opt => opt.value === value[0])?.label || placeholder;
         }
-        return `${value.length} options selected`;
+        
+        // Show selected option names instead of count
+        const selectedLabels = value
+            .map(val => options.find(opt => opt.value === val)?.label)
+            .filter(Boolean);
+            
+        if (selectedLabels.length <= 3) {
+            // Show all names if 3 or fewer
+            return selectedLabels.join(', ');
+        } else {
+            // Show first 2 names + count for more than 3
+            return `${selectedLabels.slice(0, 2).join(', ')} +${selectedLabels.length - 2} more`;
+        }
     };
 
     return (
@@ -77,7 +89,7 @@ const CheckBoxDropDown = ({
                     onClick={() => setShowDropdown(!showDropdown)}
                     {...props}
                 >
-                    <span className="text-gray-800 dark:text-gray-200 font-medium">
+                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm truncate">
                         {getDisplayText()}
                     </span>
                     <svg className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

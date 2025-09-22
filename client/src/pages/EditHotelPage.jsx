@@ -9,12 +9,14 @@ import CustomSelect from '../components/Select';
 import TextInput from '../components/TextInput';
 import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
+import { getCountries, getCitiesByCountry } from '../utils/countryCities';
 
 export default function EditHotelPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [hotelData, setHotelData] = useState({
         name: '',
+        country: '',
         city: '',
         stars: 3,
         roomTypes: [],
@@ -210,6 +212,15 @@ export default function EditHotelPage() {
                 [name]: value
             });
         }
+    };
+
+    // Handle country change and reset city
+    const handleCountryChange = (country) => {
+        setHotelData({
+            ...hotelData,
+            country: country,
+            city: '' // Reset city when country changes
+        });
     };
 
     const handleTransportationChange = (field, value) => {
@@ -439,7 +450,7 @@ export default function EditHotelPage() {
                 <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Hotel</h2>
                 
                 <form onSubmit={handleHotelSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <div className="mb-2 block">
                                 <Label htmlFor="name" value="Hotel Name" /> 
@@ -452,6 +463,21 @@ export default function EditHotelPage() {
                                 required
                             />
                         </div>
+
+                        <div>
+                            <CustomSelect
+                                id="hotelCountry"
+                                label="Country"
+                                value={hotelData.country || ''}
+                                onChange={handleCountryChange}
+                                options={[
+                                    { value: '', label: 'Select Country' },
+                                    ...getCountries().map(country => ({ value: country, label: country }))
+                                ]}
+                                placeholder="Select Country"
+                                required
+                            />
+                        </div>
                         
                         <div>
                             <CustomSelect
@@ -460,17 +486,16 @@ export default function EditHotelPage() {
                                 value={hotelData.city}
                                 onChange={(value) => setHotelData({...hotelData, city: value})}
                                 options={[
-                                    { value: "Antalya", label: "Antalya" },
-                                    { value: "Bodrum", label: "Bodrum" },
-                                    { value: "Bursa", label: "Bursa" },
-                                    { value: "Cappadocia", label: "Cappadocia" },
-                                    { value: "Fethiye", label: "Fethiye" },
-                                    { value: "Istanbul", label: "Istanbul" },
-                                    { value: "Trabzon", label: "Trabzon" }
+                                    { value: '', label: 'Select City' },
+                                    ...getCitiesByCountry(hotelData.country || '').map(city => ({ value: city, label: city }))
                                 ]}
                                 placeholder="Select City"
+                                disabled={!hotelData.country}
                                 required
                             />
+                            {!hotelData.country && (
+                                <p className="text-xs text-gray-500 mt-1">Select a country first</p>
+                            )}
                         </div>
                     </div>
 

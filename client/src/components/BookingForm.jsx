@@ -9,6 +9,7 @@ import RoomAllocator from './RoomAllocator'
 import PriceBreakdown from './PriceBreakdown'
 import HotelDetailModal from './HotelDetailModal'
 import SearchableSelect from './SearchableSelect'
+import CheckBoxDropDown from './CheckBoxDropDown'
 import CustomButton from './CustomButton'
 import CustomDatePicker from './CustomDatePicker'
 import RahalatekLoader from './RahalatekLoader'
@@ -18,6 +19,12 @@ import {
   calculateMultiHotelTotalPrice
 } from '../utils/pricingUtils'
 import { generateBookingMessage } from '../utils/messageGenerator'
+import { 
+  getCountries, 
+  getCitiesByCountry, 
+  getCountryOptions,
+  getCityOptions
+} from '../utils/countryCities'
 
 export default function BookingForm() {
     // Initial state from localStorage or defaults
@@ -40,6 +47,7 @@ export default function BookingForm() {
     
     // Replace single hotel selection with array of hotel entries
     const [hotelEntries, setHotelEntries] = useState(savedState?.hotelEntries || []);
+    const [selectedCountries, setSelectedCountries] = useState(savedState?.selectedCountries || []);
     const [selectedCities, setSelectedCities] = useState(savedState?.selectedCities || []);
     const [message, setMessage] = useState('');
     const [availableTours, setAvailableTours] = useState([]);
@@ -80,6 +88,7 @@ export default function BookingForm() {
     const resetForm = () => {
       // Reset all form fields to initial values
       setHotelEntries([]);
+      setSelectedCountries([]);
       setSelectedCities([]);
       setMessage('');
       setSelectedTours([]);
@@ -107,6 +116,7 @@ export default function BookingForm() {
       const saveFormData = () => {
         try {
           const formData = {
+            selectedCountries,
             selectedCities,
             hotelEntries,
             startDate,
@@ -133,6 +143,7 @@ export default function BookingForm() {
       
       saveFormData();
     }, [
+      selectedCountries,
       selectedCities, 
       hotelEntries,
       startDate, 
@@ -191,6 +202,27 @@ export default function BookingForm() {
     };
     
 
+    // Update cities when countries change
+    useEffect(() => {
+      if (selectedCountries.includes('')) {
+        // "All Countries" selected - show all cities
+        const allCities = getCountries().flatMap(country => getCitiesByCountry(country));
+        setSelectedCities([...new Set(allCities)]);
+      } else if (selectedCountries.length > 0) {
+        // Specific countries selected - show only their cities
+        const countriesCities = selectedCountries.flatMap(country => getCitiesByCountry(country));
+        const uniqueCities = [...new Set(countriesCities)];
+        
+        // Keep only cities that belong to selected countries
+        setSelectedCities(prevCities => 
+          prevCities.filter(city => uniqueCities.includes(city))
+        );
+      } else {
+        // No countries selected - clear cities
+        setSelectedCities([]);
+      }
+    }, [selectedCountries]);
+
     useEffect(() => {
       if (selectedCities.length > 0) {
         const filteredTours = tours.filter(tour => selectedCities.includes(tour.city));
@@ -201,6 +233,20 @@ export default function BookingForm() {
     }, [selectedCities, tours]);
 
   
+  const handleCountrySelection = (countries) => {
+    setSelectedCountries(countries);
+    // Clear hotel entries and tours when countries change
+    setHotelEntries([]);
+    setSelectedTours([]);
+  };
+
+  const handleCitySelection = (cities) => {
+    setSelectedCities(cities);
+    // Clear hotel entries and tours when cities change
+    setHotelEntries([]);
+    setSelectedTours([]);
+  };
+
   const handleNumGuestsChange = (e) => {
     const newGuestCount = parseInt(e.target.value);
     setNumGuests(newGuestCount);
@@ -579,17 +625,19 @@ export default function BookingForm() {
 
   return (
     <div>
-      <div className="relative mb-6">
-        <h2 className="text-2xl font-bold text-center dark:text-white">Booking Form</h2>
-        <CustomButton 
-          variant="gray" 
-          size="xs" 
-          onClick={resetForm}
-          className="absolute right-0 top-0"
-          icon={FaUndoAlt}
-        >
-          Reset
-        </CustomButton>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h2 className="text-2xl font-bold text-center sm:text-left dark:text-white">Booking Form</h2>
+          <CustomButton 
+            variant="gray" 
+            size="xs" 
+            onClick={resetForm}
+            className="self-center sm:self-auto"
+            icon={FaUndoAlt}
+          >
+            Reset
+          </CustomButton>
+        </div>
       </div>
       
       {loading ? (
@@ -631,66 +679,52 @@ export default function BookingForm() {
             </div>
           </div>
           
-          <div>
-            <div className="mb-2 block">
-              <Label value="Select Cities" className="dark:text-white text-lg" />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Select one or more cities for your package
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="mb-2 block">
+                <Label value="Select Countries" className="dark:text-white text-sm font-medium" />
+              </div>
+              <CheckBoxDropDown
+                id="countrySelection"
+                value={selectedCountries}
+                onChange={handleCountrySelection}
+                options={getCountryOptions()}
+                placeholder="Select countries..."
+                allOptionsLabel="All Countries"
+                allowMultiple={true}
+              />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                "Istanbul",
-                "Antalya",
-                "Cappadocia",
-                "Bodrum",
-                "Fethiye",
-                "Bursa",
-                "Trabzon"
-              ].map((city) => (
-                <div
-                  key={city}
-                  onClick={() => {
-                    if (selectedCities.includes(city)) {
-                      setSelectedCities(selectedCities.filter(c => c !== city));
-                      setHotelEntries([]);
-                      setSelectedTours([]);
-                    } else {
-                      setSelectedCities([...selectedCities, city]);
-                      setHotelEntries([]);
-                      setSelectedTours([]);
-                    }
-                  }}
-                  className={`
-                    cursor-pointer p-4 rounded-lg border-2 transition-all duration-200
-                    ${selectedCities.includes(city)
-                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
-                    }
-                  `}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className={`font-medium ${
-                      selectedCities.includes(city)
-                        ? 'text-purple-700 dark:text-purple-300'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}>
-                      {city}
-                    </p>
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                      selectedCities.includes(city)
-                        ? 'bg-purple-500 border-purple-500'
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}>
-                      {selectedCities.includes(city) && (
-                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            
+            <div className={`${selectedCountries.length === 0 && !selectedCountries.includes('') ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <div className="mb-2 block">
+                <Label value="Select Cities" className="dark:text-white text-sm font-medium" />
+              </div>
+              <CheckBoxDropDown
+                id="citySelection"
+                value={selectedCities}
+                onChange={handleCitySelection}
+                options={(() => {
+                  if (selectedCountries.includes('') || selectedCountries.length === 0) {
+                    // Show all cities if "All Countries" is selected or no countries selected
+                    const allCities = getCountries().flatMap(country => getCitiesByCountry(country));
+                    return [...new Set(allCities)].sort().map(city => ({
+                      value: city,
+                      label: city
+                    }));
+                  } else {
+                    // Show only cities from selected countries
+                    const countriesCities = selectedCountries.flatMap(country => getCitiesByCountry(country));
+                    return [...new Set(countriesCities)].sort().map(city => ({
+                      value: city,
+                      label: city
+                    }));
+                  }
+                })()}
+                placeholder={selectedCountries.length === 0 && !selectedCountries.includes('') ? "Select countries first..." : "Select cities..."}
+                allOptionsLabel="All Cities"
+                allowMultiple={true}
+                disabled={selectedCountries.length === 0 && !selectedCountries.includes('')}
+              />
             </div>
           </div>
           

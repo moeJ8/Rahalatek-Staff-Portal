@@ -1,8 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, Label, Checkbox, Select } from 'flowbite-react';
-import { FaCrown, FaUsers, FaCar, FaSearch, FaCheck, FaCalendarDay, FaGripLines, FaArrowsAltV } from 'react-icons/fa';
+import { FaCrown, FaUsers, FaCar, FaSearch, FaCheck, FaCalendarDay, FaGripLines, FaArrowsAltV, FaMapMarkerAlt, FaGlobeAmericas } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
 import Search from './Search';
+import { inferCountryFromCity } from '../utils/countryCities';
+
+// Country flag-based color schemes
+const countryColors = {
+  'Turkey': 'bg-red-600', // Turkish flag red
+  'Malaysia': 'bg-blue-800', // Malaysian flag blue
+  'Thailand': 'bg-red-700', // Thai flag red
+  'Indonesia': 'bg-red-600', // Indonesian flag red
+  'Saudi Arabia': 'bg-green-700', // Saudi flag green
+  'Morocco': 'bg-red-600', // Moroccan flag red
+  'Egypt': 'bg-red-600', // Egyptian flag red
+  'Azerbaijan': 'bg-blue-700', // Azerbaijani flag blue
+  'Georgia': 'bg-red-600', // Georgian flag red
+  'Albania': 'bg-red-700' // Albanian flag red
+};
 
 const TourSelector = ({ 
   availableTours, 
@@ -34,10 +49,15 @@ const TourSelector = ({
 
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(tour => 
-        tour.name.toLowerCase().includes(searchLower) || 
-        (tour.description && tour.description.toLowerCase().includes(searchLower))
-      );
+      filtered = filtered.filter(tour => {
+        const country = inferCountryFromCity(tour.city) || '';
+        return (
+          tour.name.toLowerCase().includes(searchLower) || 
+          (tour.description && tour.description.toLowerCase().includes(searchLower)) ||
+          (tour.city && tour.city.toLowerCase().includes(searchLower)) ||
+          country.toLowerCase().includes(searchLower)
+        );
+      });
     }
     
     setFilteredTours(filtered);
@@ -119,7 +139,7 @@ const TourSelector = ({
           {/* Search Bar */}
           <div>
             <Search
-              placeholder="Search tours..."
+              placeholder="Search tours by name, city, or country..."
               value={searchTerm}
               onChange={handleSearch}
               showClearButton={true}
@@ -234,11 +254,11 @@ const TourSelector = ({
                         </div>
                       )}
                       <Label htmlFor={tour._id} className="flex-1">
-                        <div className="font-medium dark:text-white flex items-center">
-                          {tour.name}
+                        <div className="font-medium dark:text-white flex items-center flex-wrap">
+                          <span className="mr-2">{tour.name}</span>
                           {tour.tourType === 'VIP' ? (
                             <span 
-                              className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                              className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
                               bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
                               style={{ 
                                 color: '#7B5804', 
@@ -251,7 +271,7 @@ const TourSelector = ({
                             </span>
                           ) : (
                             <span 
-                              className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                              className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
                               bg-blue-600 text-white"
                               style={{ 
                                 fontSize: '0.65rem'
@@ -260,7 +280,36 @@ const TourSelector = ({
                               <FaUsers className="mr-1" style={{fontSize: '0.65rem'}} />Group
                             </span>
                           )}
+                          
+                          {/* Location Information - inline with badges */}
+                          {tour.city && (
+                            <>
+                              {inferCountryFromCity(tour.city) && (
+                                <span 
+                                  className={`mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                  ${countryColors[inferCountryFromCity(tour.city)] || 'bg-gray-600'} text-white`}
+                                  style={{ 
+                                    fontSize: '0.65rem'
+                                  }}
+                                >
+                                  <FaGlobeAmericas className="mr-1" style={{fontSize: '0.65rem'}} />
+                                  {inferCountryFromCity(tour.city)}
+                                </span>
+                              )}
+                              <span 
+                                className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                bg-green-600 text-white"
+                                style={{ 
+                                  fontSize: '0.65rem'
+                                }}
+                              >
+                                <FaMapMarkerAlt className="mr-1" style={{fontSize: '0.65rem'}} />
+                                {tour.city}
+                              </span>
+                            </>
+                          )}
                         </div>
+                        
                         <div className="text-sm text-gray-600 dark:text-gray-400">{tour.description}</div>
                         <div className="text-sm text-blue-600 dark:text-blue-400">
                           ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'} • {tour.duration} hours

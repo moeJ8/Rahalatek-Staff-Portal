@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaMapMarkerAlt, FaClock, FaUsers, FaCrown, FaCar, FaGem, FaDollarSign, FaInfoCircle, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaClock, FaUsers, FaCrown, FaCar, FaGem, FaDollarSign, FaInfoCircle, FaChevronDown, FaChevronUp, FaGlobeAmericas } from 'react-icons/fa';
 import { Badge, Button } from 'flowbite-react';
 
 const TourInfo = ({ tourData }) => {
@@ -17,17 +17,24 @@ const TourInfo = ({ tourData }) => {
   return (
     <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 rounded-lg h-full min-h-[24rem] flex flex-col mb-2">
       <h5 
-        className="text-xl font-bold text-gray-900 dark:text-white mb-4 break-words"
+        className="text-xl font-bold text-gray-900 dark:text-white mb-3 break-words"
         dir={isRTL ? "rtl" : "ltr"}
       >
         {tourData.name}
       </h5>
       
-      <div className="flex">
-        <Badge color="info" className="text-sm flex items-center">
-          <FaMapMarkerAlt className="text-blue-600 dark:text-blue-400" /> 
-          <span className="text-blue-700 dark:text-blue-300 font-medium">{tourData.city}</span>
-        </Badge>
+      {/* Small Country and City badges */}
+      <div className="flex justify-center gap-1 mb-3">
+        {tourData.country && (
+          <span className="inline-flex items-center text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded-full">
+            <FaGlobeAmericas className="w-2.5 h-2.5 mr-1" />
+            {tourData.country}
+          </span>
+        )}
+        <span className="inline-flex items-center text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
+          <FaMapMarkerAlt className="w-2.5 h-2.5 mr-1" />
+          {tourData.city}
+        </span>
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-2 gap-3 gap-y-3 mt-4">

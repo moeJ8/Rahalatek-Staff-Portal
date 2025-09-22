@@ -70,7 +70,46 @@ const airportTransportationSchema = new mongoose.Schema({
 
 const hotelSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    city: { type: String, required: true },
+    city: { 
+        type: String, 
+        required: true,
+        enum: [
+            // Turkey - existing cities + Fethiye and Bursa
+            'Istanbul', 'Antalya', 'Cappadocia', 'Trabzon', 'Bodrum', 'Fethiye', 'Bursa',
+            // Malaysia
+            'Kuala Lumpur', 'Penang', 'Langkawi', 'Malacca', 'Johor Bahru',
+            'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands',
+            // Thailand
+            'Bangkok', 'Phuket', 'Pattaya', 'Chiang Mai', 'Krabi', 'Koh Samui',
+            'Hua Hin', 'Ayutthaya', 'Chiang Rai', 'Kanchanaburi',
+            // Indonesia
+            'Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan',
+            'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak',
+            // Saudi Arabia
+            'Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 
+            'Taif', 'Abha', 'Tabuk', 'Al Khobar',
+            // Morocco
+            'Casablanca', 'Marrakech', 'Rabat', 'Fez', 'Tangier', 'Agadir',
+            'Meknes', 'Essaouira', 'Chefchaouen', 'Ouarzazate',
+            // Egypt
+            'Cairo', 'Alexandria', 'Luxor', 'Aswan', 'Hurghada', 'Sharm El Sheikh',
+            'Dahab', 'Marsa Alam', 'Taba', 'Giza',
+            // Azerbaijan
+            'Baku', 'Ganja', 'Sumgayit', 'Mingachevir', 'Qabalah', 'Shaki',
+            'Lankaran', 'Shamakhi', 'Quba', 'Gabala',
+            // Georgia
+            'Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori',
+            'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi',
+            // Albania
+            'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Fier', 'Korce',
+            'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
+        ]
+    },
+    country: { 
+        type: String, 
+        required: true,
+        enum: ['Turkey', 'Malaysia', 'Thailand', 'Indonesia', 'Saudi Arabia', 'Morocco', 'Egypt', 'Azerbaijan', 'Georgia', 'Albania']
+    },
     stars: { type: Number, required: true },
     roomTypes: [roomTypeSchema],
     breakfastIncluded: { type: Boolean, required: true },

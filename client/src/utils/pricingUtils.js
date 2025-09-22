@@ -390,10 +390,11 @@ export const getRoomTypeInArabic = (roomType) => {
 
 export const getCityNameInArabic = (cityName) => {
   const cityMap = {
+    // Turkey
     'Istanbul': 'اسطنبول',
     'Trabzon': 'طرابزون',
     'Uzungol': 'أوزنجول',
-    'Antalya': 'أنطاليا',
+    'Antalya': 'انطاليا',
     'Bodrum': 'بودروم',
     'Bursa': 'بورصة',
     'Cappadocia': 'كابادوكيا',
@@ -401,7 +402,119 @@ export const getCityNameInArabic = (cityName) => {
     'Izmir': 'إزمير',
     'Konya': 'قونيا',
     'Marmaris': 'مرمريس',
-    'Pamukkale': 'باموكالي'
+    'Pamukkale': 'باموكالي',
+    
+    // Malaysia
+    'Kuala Lumpur': 'كوالالمبور',
+    'Penang': 'بينانغ',
+    'Langkawi': 'لنكاوي',
+    'Malacca': 'ملقا',
+    'Johor Bahru': 'جوهور بهرو',
+    'Kota Kinabalu': 'كوتا كينابالو',
+    'Kuching': 'كوتشينغ',
+    'Cameron Highlands': 'مرتفعات الكاميرون',
+    'Genting Highlands': 'مرتفعات جنتنغ',
+    
+    // Thailand
+    'Bangkok': 'بانكوك',
+    'Phuket': 'فوكيت',
+    'Pattaya': 'باتايا',
+    'Chiang Mai': 'شيانغ ماي',
+    'Krabi': 'كرابي',
+    'Koh Samui': 'كوه ساموي',
+    'Hua Hin': 'هوا هين',
+    'Ayutthaya': 'أيوتايا',
+    'Chiang Rai': 'شيانغ راي',
+    'Kanchanaburi': 'كانشانابوري',
+    
+    // Indonesia
+    'Jakarta': 'جاكرتا',
+    'Bali': 'بالي',
+    'Yogyakarta': 'يوجياكارتا',
+    'Bandung': 'باندونغ',
+    'Surabaya': 'سورابايا',
+    'Medan': 'ميدان',
+    'Lombok': 'لومبوك',
+    'Bogor': 'بوغور',
+    'Malang': 'مالانغ',
+    'Solo': 'سولو',
+    'Ubud': 'أوبود',
+    'Sanur': 'سانور',
+    'Seminyak': 'سيمينياك',
+    
+    // Saudi Arabia
+    'Riyadh': 'الرياض',
+    'Jeddah': 'جدة',
+    'Mecca': 'مكة المكرمة',
+    'Medina': 'المدينة المنورة',
+    'Dammam': 'الدمام',
+    'Khobar': 'الخبر',
+    'Taif': 'الطائف',
+    'Abha': 'أبها',
+    'Tabuk': 'تبوك',
+    'Al Khobar': 'الخبر',
+    
+    // Morocco
+    'Casablanca': 'الدار البيضاء',
+    'Marrakech': 'مراكش',
+    'Rabat': 'الرباط',
+    'Fez': 'فاس',
+    'Tangier': 'طنجة',
+    'Agadir': 'أكادير',
+    'Meknes': 'مكناس',
+    'Essaouira': 'الصويرة',
+    'Chefchaouen': 'شفشاون',
+    'Ouarzazate': 'ورزازات',
+    
+    // Egypt
+    'Cairo': 'القاهرة',
+    'Alexandria': 'الإسكندرية',
+    'Luxor': 'الأقصر',
+    'Aswan': 'أسوان',
+    'Hurghada': 'الغردقة',
+    'Sharm El Sheikh': 'شرم الشيخ',
+    'Dahab': 'دهب',
+    'Marsa Alam': 'مرسى علم',
+    'Taba': 'طابا',
+    'Giza': 'الجيزة',
+    
+    // Azerbaijan
+    'Baku': 'باكو',
+    'Ganja': 'جانجا',
+    'Sumgayit': 'سومغايت',
+    'Mingachevir': 'مينجتشفير',
+    'Qabalah': 'قبالة',
+    'Shaki': 'شاكي',
+    'Lankaran': 'لانكاران',
+    'Shamakhi': 'شماخي',
+    'Quba': 'قوبا',
+    'Gabala': 'جابالا',
+    
+    // Georgia
+    'Tbilisi': 'تبليسي',
+    'Batumi': 'باتومي',
+    'Kutaisi': 'كوتايسي',
+    'Rustavi': 'روستافي',
+    'Zugdidi': 'زوجديدي',
+    'Gori': 'غوري',
+    'Telavi': 'تيلافي',
+    'Mestia': 'ميستيا',
+    'Kazbegi': 'كازبيجي',
+    'Sighnaghi': 'سيغناغي',
+    'Mtskheta': 'متسخيتا',
+    'Borjomi': 'بورجومي',
+    
+    // Albania
+    'Tirana': 'تيرانا',
+    'Durres': 'دوريس',
+    'Vlore': 'فلورا',
+    'Shkoder': 'شكودرا',
+    'Fier': 'فيير',
+    'Korce': 'كورتشا',
+    'Berat': 'بيرات',
+    'Gjirokaster': 'جيروكاسترا',
+    'Sarande': 'ساراندا',
+    'Kruje': 'كروجا'
   };
   return cityMap[cityName] || cityName;
 };

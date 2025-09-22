@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { formatDisplayDate } from '../utils/voucherGenerator';
 import { Link } from 'react-router-dom';
+import { inferCountryFromCity } from '../utils/countryCities';
 
 // Helper function to get currency symbol
 const getCurrencySymbol = (currency) => {
@@ -1489,7 +1490,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         </button>
                       </div>
                     </td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.city}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                      {hotel.city}
+                      {(hotel.country || inferCountryFromCity(hotel.city)) && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({hotel.country || inferCountryFromCity(hotel.city)})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.hotelName}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.roomType}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{hotel.nights}</td>
@@ -1564,7 +1572,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         </button>
                       </div>
                     </td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.city || ''}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                      {transfer.city || ''}
+                      {transfer.city && (transfer.country || inferCountryFromCity(transfer.city)) && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({transfer.country || inferCountryFromCity(transfer.city)})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{formatDisplayDate(transfer.date)}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.time || ''}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{transfer.flightNumber || ''}</td>
@@ -1635,7 +1650,14 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         </button>
                       </div>
                     </td>
-                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.city}</td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                      {trip.city}
+                      {(trip.country || inferCountryFromCity(trip.city)) && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({trip.country || inferCountryFromCity(trip.city)})
+                        </span>
+                      )}
+                    </td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.tourName}</td>
                     <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">{trip.type}</td>
                     <td className="px-2 md:px-4 py-2 border">

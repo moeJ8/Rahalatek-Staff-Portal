@@ -9,6 +9,7 @@ import CustomSelect from '../components/Select';
 import TextInput from '../components/TextInput';
 import RahalatekLoader from '../components/RahalatekLoader';
 import toast from 'react-hot-toast';
+import { getCountries, getCitiesByCountry } from '../utils/countryCities';
 
 
 export default function EditTourPage() {
@@ -17,6 +18,7 @@ export default function EditTourPage() {
 
     const [tourData, setTourData] = useState({
         name: '',
+        country: '',
         city: '',
         description: '',
         detailedDescription: '',
@@ -54,6 +56,15 @@ export default function EditTourPage() {
         setTourData({
             ...tourData,
             [name]: value,
+        });
+    };
+
+    // Handle country change and reset city
+    const handleCountryChange = (country) => {
+        setTourData({
+            ...tourData,
+            country: country,
+            city: '' // Reset city when country changes
         });
     };
 
@@ -123,7 +134,7 @@ export default function EditTourPage() {
                     <h2 className="text-2xl font-bold mb-4 dark:text-white mx-auto">Edit Tour</h2>
                     
                     <form onSubmit={handleTourSubmit} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <div className="mb-2 block">
                                     <Label htmlFor="tourName" value="Tour Name" /> 
@@ -136,6 +147,21 @@ export default function EditTourPage() {
                                     required
                                 />
                             </div>
+
+                            <div>
+                                <CustomSelect
+                                    id="tourCountry"
+                                    label="Country"
+                                    value={tourData.country || ''}
+                                    onChange={handleCountryChange}
+                                    options={[
+                                        { value: '', label: 'Select Country' },
+                                        ...getCountries().map(country => ({ value: country, label: country }))
+                                    ]}
+                                    placeholder="Select Country"
+                                    required
+                                />
+                            </div>
                             
                             <div>
                                 <CustomSelect
@@ -144,17 +170,16 @@ export default function EditTourPage() {
                                     value={tourData.city}
                                     onChange={(value) => setTourData({...tourData, city: value})}
                                     options={[
-                                        { value: "Antalya", label: "Antalya" },
-                                        { value: "Bodrum", label: "Bodrum" },
-                                        { value: "Bursa", label: "Bursa" },
-                                        { value: "Cappadocia", label: "Cappadocia" },
-                                        { value: "Fethiye", label: "Fethiye" },
-                                        { value: "Istanbul", label: "Istanbul" },
-                                        { value: "Trabzon", label: "Trabzon" }
+                                        { value: '', label: 'Select City' },
+                                        ...getCitiesByCountry(tourData.country || '').map(city => ({ value: city, label: city }))
                                     ]}
                                     placeholder="Select City"
+                                    disabled={!tourData.country}
                                     required
                                 />
+                                {!tourData.country && (
+                                    <p className="text-xs text-gray-500 mt-1">Select a country first</p>
+                                )}
                             </div>
                         </div>
                         

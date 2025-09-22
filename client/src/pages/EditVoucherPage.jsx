@@ -12,6 +12,7 @@ import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import SearchableSelect from '../components/SearchableSelect';
 import { HiDuplicate } from 'react-icons/hi';
+import { getCountries, getCitiesByCountry, inferCountryFromCity } from '../utils/countryCities';
 
 // Helper function to get profit color classes based on value
 const getProfitColorClass = (profit) => {
@@ -170,6 +171,7 @@ export default function EditVoucherPage() {
           currency: voucherData.currency || 'USD',
           hotels: (voucherData.hotels || []).map(hotel => ({
             ...hotel,
+            country: hotel.country || inferCountryFromCity(hotel.city) || '',
             checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
             checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : '',
             officeName: hotel.officeName || '',
@@ -187,6 +189,7 @@ export default function EditVoucherPage() {
           })),
           trips: Array.isArray(voucherData.trips) ? voucherData.trips.map(trip => ({
             ...trip,
+            country: trip.country || inferCountryFromCity(trip.city) || '',
             officeName: trip.officeName || '',
             price: trip.price || 0,
             adults: trip.adults !== undefined ? trip.adults : null,
@@ -316,11 +319,19 @@ export default function EditVoucherPage() {
     const updatedHotels = [...formData.hotels];
     updatedHotels[index][field] = value;
     
-    // If selecting a hotel name, populate the city
+    // If changing country, reset city
+    if (field === 'country') {
+      updatedHotels[index].city = '';
+    }
+    
+    // If selecting a hotel name, populate the city and country
     if (field === 'hotelName' && !useCustomHotel[index]) {
       const selectedHotel = hotels.find(h => h.name === value);
       if (selectedHotel) {
         updatedHotels[index].city = selectedHotel.city;
+        if (selectedHotel.country) {
+          updatedHotels[index].country = selectedHotel.country;
+        }
       }
     }
     
@@ -399,6 +410,7 @@ export default function EditVoucherPage() {
       hotels: [
         ...prev.hotels,
         { 
+          country: '',
           city: '', 
           hotelName: '', 
           roomType: '', 
@@ -632,12 +644,20 @@ export default function EditVoucherPage() {
     const updatedTrips = [...formData.trips];
     updatedTrips[index][field] = value;
     
-    // If selecting a tour name and not in custom mode, populate the city and type
+    // If changing country, reset city
+    if (field === 'country') {
+      updatedTrips[index].city = '';
+    }
+    
+    // If selecting a tour name and not in custom mode, populate the city, country and type
     if (field === 'tourName' && !useCustomTour[index]) {
       const selectedTour = tours.find(t => t.name === value);
       if (selectedTour) {
         updatedTrips[index].city = selectedTour.city;
         updatedTrips[index].type = selectedTour.tourType;
+        if (selectedTour.country) {
+          updatedTrips[index].country = selectedTour.country;
+        }
       }
     }
     
@@ -653,6 +673,7 @@ export default function EditVoucherPage() {
       trips: [
         ...prev.trips,
         { 
+          country: '',
           city: '', 
           tourName: '', 
           count: 1, 
@@ -1526,7 +1547,21 @@ export default function EditVoucherPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label value="Country" className="block mb-2" />
+                  <SearchableSelect
+                    id={`hotelCountry-${index}`}
+                    value={hotel.country || ''}
+                    onChange={(e) => handleHotelChange(index, 'country', e.target.value)}
+                    options={[
+                      { value: '', label: 'Select Country' },
+                      ...getCountries().map(country => ({ value: country, label: country }))
+                    ]}
+                    placeholder="Search for a country..."
+                  />
+                </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <Label value="City" className="block" />
@@ -1547,15 +1582,20 @@ export default function EditVoucherPage() {
                       placeholder="Enter city name"
                     />
                   ) : (
-                    <Select 
-                      value={hotel.city} 
-                      onChange={(value) => handleHotelChange(index, 'city', value)}
+                    <SearchableSelect
+                      id={`hotelCity-${index}`}
+                      value={hotel.city}
+                      onChange={(e) => handleHotelChange(index, 'city', e.target.value)}
                       options={[
                         { value: '', label: 'Select City' },
-                        ...cities.map(city => ({ value: city, label: city }))
+                        ...getCitiesByCountry(hotel.country || '').map(city => ({ value: city, label: city }))
                       ]}
-                      placeholder="Select City"
+                      placeholder="Search for a city..."
+                      disabled={!hotel.country}
                     />
+                  )}
+                  {!hotel.country && !useCustomHotelCity[index] && (
+                    <p className="text-xs text-gray-500 mt-1">Select a country first</p>
                   )}
                 </div>
                 
@@ -1584,10 +1624,14 @@ export default function EditVoucherPage() {
                       value={hotel.hotelName}
                       onChange={(e) => handleHotelChange(index, 'hotelName', e.target.value)}
                       options={hotels
-                        .filter(h => !hotel.city || h.city === hotel.city)
+                        .filter(h => {
+                          const countryMatch = !hotel.country || h.country === hotel.country;
+                          const cityMatch = !hotel.city || h.city === hotel.city;
+                          return countryMatch && cityMatch;
+                        })
                         .map(h => ({
                           value: h.name,
-                          label: h.stars ? `${h.name} (${h.stars}★) - ${h.city}` : h.name
+                          label: h.stars ? `${h.name} (${h.stars}★) - ${h.city}${h.country ? `, ${h.country}` : ''}` : h.name
                         }))}
                       placeholder="Search for a hotel..."
                     />
@@ -1812,15 +1856,41 @@ export default function EditVoucherPage() {
                       placeholder="Enter city name"
                     />
                   ) : (
-                    <Select
+                    <SearchableSelect
+                      id={`transferCity-${index}`}
                       value={transfer.city || ''}
-                      onChange={(value) => handleTransferChange(index, 'city', value)}
+                      onChange={(e) => handleTransferChange(index, 'city', e.target.value)}
                       options={[
                         { value: '', label: 'Select a city' },
-                        ...cities.map(city => ({ value: city, label: city }))
+                        ...(() => {
+                          // Get unique countries from selected hotels
+                          const hotelCountries = [...new Set(
+                            formData.hotels
+                              .map(hotel => hotel.country)
+                              .filter(country => country && country.trim() !== '')
+                          )];
+                          
+                          // Get cities from all hotel countries
+                          const availableCities = hotelCountries.flatMap(country => 
+                            getCitiesByCountry(country)
+                          );
+                          
+                          // Remove duplicates and sort
+                          const uniqueCities = [...new Set(availableCities)].sort();
+                          
+                          return uniqueCities.map(city => ({ value: city, label: city }));
+                        })()
                       ]}
-                      placeholder="Select a city"
+                      placeholder={
+                        formData.hotels.some(hotel => hotel.country) 
+                          ? "Search for a city..." 
+                          : "Select hotel countries first"
+                      }
+                      disabled={!formData.hotels.some(hotel => hotel.country)}
                     />
+                  )}
+                  {!formData.hotels.some(hotel => hotel.country) && !useCustomTransferCity[index] && (
+                    <p className="text-xs text-gray-500 mt-1">Select hotel countries first to see available cities</p>
                   )}
                 </div>
                 
@@ -1988,7 +2058,21 @@ export default function EditVoucherPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label value="Country" className="block mb-2" />
+                  <SearchableSelect
+                    id={`tripCountry-${index}`}
+                    value={trip.country || ''}
+                    onChange={(e) => handleTripChange(index, 'country', e.target.value)}
+                    options={[
+                      { value: '', label: 'Select Country' },
+                      ...getCountries().map(country => ({ value: country, label: country }))
+                    ]}
+                    placeholder="Search for a country..."
+                  />
+                </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <Label value="City" className="block" />
@@ -2009,15 +2093,20 @@ export default function EditVoucherPage() {
                       placeholder="Enter city name"
                     />
                   ) : (
-                    <Select 
-                      value={trip.city} 
-                      onChange={(value) => handleTripChange(index, 'city', value)}
+                    <SearchableSelect
+                      id={`tripCity-${index}`}
+                      value={trip.city}
+                      onChange={(e) => handleTripChange(index, 'city', e.target.value)}
                       options={[
                         { value: '', label: 'Select City' },
-                        ...cities.map(city => ({ value: city, label: city }))
+                        ...getCitiesByCountry(trip.country || '').map(city => ({ value: city, label: city }))
                       ]}
-                      placeholder="Select City"
+                      placeholder="Search for a city..."
+                      disabled={!trip.country}
                     />
+                  )}
+                  {!trip.country && !useCustomTripCity[index] && (
+                    <p className="text-xs text-gray-500 mt-1">Select a country first</p>
                   )}
                 </div>
                 
@@ -2046,10 +2135,14 @@ export default function EditVoucherPage() {
                       value={trip.tourName} 
                       onChange={(e) => handleTripChange(index, 'tourName', e.target.value)}
                       options={tours
-                        .filter(t => !trip.city || t.city === trip.city)
+                        .filter(t => {
+                          const countryMatch = !trip.country || t.country === trip.country;
+                          const cityMatch = !trip.city || t.city === trip.city;
+                          return countryMatch && cityMatch;
+                        })
                         .map(t => ({
                           value: t.name,
-                          label: `${t.name} - ${t.tourType} (${t.city})`
+                          label: `${t.name} - ${t.tourType} (${t.city}${t.country ? `, ${t.country}` : ''})`
                         }))}
                       placeholder="Search for a tour..."
                     />
@@ -2555,20 +2648,22 @@ export default function EditVoucherPage() {
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="capital" value="Capital (Preview Only)" className="mb-2 block" />
+                  <Label htmlFor="capital" value="Capital (Read Only)" className="mb-2 block" />
                   <div className="flex">
                     <TextInput
                       id="capital"
                       name="capital"
                       value={formData.capital}
-                      onChange={handleInputChange}
-                      placeholder="This will only show in preview"
+                      placeholder="Capital will be calculated automatically"
                       className="flex-grow"
+                      readOnly
+                      disabled
                     />
                     <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-slate-600 dark:text-gray-400 dark:border-slate-600">
                       {formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₺'}
                     </span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">Capital is calculated automatically and cannot be edited manually</p>
                 </div>
 
                                  <div>

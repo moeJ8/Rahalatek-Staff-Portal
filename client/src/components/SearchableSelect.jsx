@@ -115,6 +115,8 @@ const SearchableSelect = ({
               onClick={handleInputClick}
               onKeyDown={handleKeyDown}
               autoComplete="off"
+              autoFill="off"
+              data-form-type="other"
               disabled={disabled}
               className={`w-full bg-transparent border-0 pl-10 pr-10 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             />

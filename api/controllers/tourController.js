@@ -4,8 +4,21 @@ const { invalidateDashboardCache } = require('../utils/redis');
 // Get all tours
 exports.getAllTours = async (req, res) => {
   try {
+    const { country, city } = req.query;
+    let query = {};
+    
+    // Filter by country if provided
+    if (country) {
+      query.country = country;
+    }
+    
+    // Filter by city if provided
+    if (city) {
+      query.city = city;
+    }
+    
     // Sort by updatedAt in descending order (newest first)
-    const tours = await Tour.find().sort({ updatedAt: -1 });
+    const tours = await Tour.find(query).sort({ updatedAt: -1 });
     res.status(200).json(tours);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -18,6 +31,38 @@ exports.getToursByCity = async (req, res) => {
     const { city } = req.params;
     const tours = await Tour.find({ city: { $regex: city, $options: 'i' } });
     res.status(200).json(tours);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get tours by country
+exports.getToursByCountry = async (req, res) => {
+  try {
+    const { country } = req.params;
+    const tours = await Tour.find({ country }).sort({ updatedAt: -1 });
+    res.status(200).json(tours);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get cities by country for tours
+exports.getTourCitiesByCountry = async (req, res) => {
+  try {
+    const { country } = req.params;
+    const cities = await Tour.distinct('city', { country });
+    res.status(200).json(cities.sort());
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all countries for tours
+exports.getTourCountries = async (req, res) => {
+  try {
+    const countries = await Tour.distinct('country');
+    res.status(200).json(countries.sort());
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
