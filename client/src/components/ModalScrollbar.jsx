@@ -1,25 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const ModalScrollbar = ({ children, className = "", maxHeight = "55vh" }) => {
-  return (
-    <div 
-      className={`
-        relative
-        ${className}
-      `}
-      style={{ maxHeight, overflow: 'hidden' }}
-    >
-      <div 
-        className="modal-scrollbar h-full overflow-y-auto pr-2 scroll-smooth"
-        style={{
-          maxHeight
-        }}
-      >
-        {children}
-      </div>
-      
-      {/* Custom scrollbar styles */}
-      <style jsx global>{`
+  useEffect(() => {
+    // Inject the CSS styles once when component mounts
+    const styleId = 'modal-scrollbar-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
         .modal-scrollbar::-webkit-scrollbar {
           width: 8px;
         }
@@ -60,7 +48,27 @@ const ModalScrollbar = ({ children, className = "", maxHeight = "55vh" }) => {
         .dark .modal-scrollbar {
           scrollbar-color: #475569 #1e293b;
         }
-      `}</style>
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  return (
+    <div 
+      className={`
+        relative
+        ${className}
+      `}
+      style={{ maxHeight, overflow: 'hidden' }}
+    >
+      <div 
+        className="modal-scrollbar h-full overflow-y-auto pr-2 scroll-smooth"
+        style={{
+          maxHeight
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 };

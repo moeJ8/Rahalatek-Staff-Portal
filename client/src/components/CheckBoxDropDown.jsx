@@ -10,6 +10,7 @@ const CheckBoxDropDown = ({
     placeholder = "Select options...",
     allowMultiple = true,
     allOptionsLabel = "All Options",
+    allowEmpty = false,
     className = "",
     id,
     ...props 
@@ -45,7 +46,7 @@ const CheckBoxDropDown = ({
             const currentValues = value.filter(v => v !== ''); // Remove "All Options" if present
             if (currentValues.includes(optionValue)) {
                 newValues = currentValues.filter(v => v !== optionValue);
-                if (newValues.length === 0) newValues = ['']; // Default to "All Options" if none selected
+                if (newValues.length === 0 && !allowEmpty) newValues = ['']; // Default to "All Options" if none selected and allowEmpty is false
             } else {
                 newValues = [...currentValues, optionValue];
             }

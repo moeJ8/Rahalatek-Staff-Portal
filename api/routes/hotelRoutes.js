@@ -18,14 +18,20 @@ router.get('/countries', hotelController.getCountries);
 // Get hotels by city
 router.get('/city/:city', hotelController.getHotelsByCity);
 
+// Public route - get all hotels
+router.get('/public', hotelController.getAllHotels);
+
+// Public route - get hotel by slug (must be before /:id route)
+router.get('/public/:slug', hotelController.getHotelBySlug);
+
 // Get hotel by ID
 router.get('/:id', hotelController.getHotelById);
 
 // Add new hotel
-router.post('/', hotelController.addHotel);
+router.post('/', verifyToken, hotelController.addHotel);
 
 // Update hotel
-router.put('/:id', hotelController.updateHotel);
+router.put('/:id', verifyToken, hotelController.updateHotel);
 
 // Delete hotel
 router.delete('/:id', verifyToken, hotelController.deleteHotel);

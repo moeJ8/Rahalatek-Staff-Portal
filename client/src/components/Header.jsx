@@ -7,13 +7,19 @@ import UserDropdown from './UserDropdown';
 import NotificationDropdown from './NotificationDropdown';
 import Searchbar from './Searchbar';
 import UserCalendar from './UserCalendar';
-import { FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock } from 'react-icons/fa';
+import { 
+  FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
+  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, 
+  FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout 
+} from 'react-icons/fa';
+import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
 
 export default function Header() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [mobileMenuExpanded, setMobileMenuExpanded] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [hoveredIndicator, setHoveredIndicator] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -91,6 +97,12 @@ export default function Header() {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
+    setMobileMenuExpanded(false);
+  };
+
+  // Check if current page is a public page where sign-in should be hidden
+  const isPublicPage = () => {
+    return location.pathname.startsWith('/hotels/') || location.pathname.startsWith('/tours/');
   };
 
   const handleCalendarClick = () => {
@@ -277,15 +289,44 @@ export default function Header() {
               </>
             ) : (
               <>
-                <CustomDarkModeToggle />
-                <CustomButton 
-                  as={Link} 
-                  to="/signin"
-                  variant="blueToTeal" 
-                  size="sm"
+                {/* Guest Navigation Links */}
+                <Link 
+                  to="/guest/hotels" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isActive('/guest/hotels') 
+                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                  }`}
                 >
-                  Sign In
-                </CustomButton>
+                  Hotels
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                    isActive('/guest/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
+                </Link>
+                <Link 
+                  to="/guest/tours" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isActive('/guest/tours') 
+                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                  }`}
+                >
+                  Tours
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                    isActive('/guest/tours') ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
+                </Link>
+                <CustomDarkModeToggle />
+                {!isPublicPage() && (
+                  <CustomButton 
+                    as={Link} 
+                    to="/signin"
+                    variant="blueToTeal" 
+                    size="sm"
+                  >
+                    Sign In
+                  </CustomButton>
+                )}
               </>
             )}
             
@@ -294,7 +335,6 @@ export default function Header() {
           
           {/* Mobile Burger Menu Button */}
           <div className="xl:hidden flex items-center gap-2">
-            <CustomDarkModeToggle />
             {user && <NotificationDropdown />}
             {user && renderAttendanceIndicators()}
             <button 
@@ -327,102 +367,135 @@ export default function Header() {
           </div>
         </div>
         
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu Dropdown - 3x3 Grid */}
         {mobileMenuOpen && (
-          <div className="xl:hidden mt-4 py-2 border-t dark:border-gray-700">
-            <div className="flex flex-col space-y-3">
-              {user ? (
-                <>
+          <div className="xl:hidden mt-4 py-4 border-t dark:border-gray-700">
+            {user ? (
+              <>
+                {/* 3x3 Grid for Authenticated Users */}
+                <div className="grid grid-cols-3 gap-4 px-2">
+                  {/* Row 1 */}
                   <Link 
                     to="/"
                     onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
                   >
-                    Home
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
+                    <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Home</span>
                   </Link>
                   
                   <Link 
                     to="/booking"
                     onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/booking') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
                   >
-                    Booking
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/booking') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
+                    <FaClipboardList className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Booking</span>
                   </Link>
                   
                   <Link 
                     to="/vouchers"
                     onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/vouchers') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
                   >
-                    Vouchers
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/vouchers') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
+                    <FaTicketAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Vouchers</span>
                   </Link>
                   
-                  {(user.isAdmin || user.isAccountant) && (
+                  {/* Row 2 */}
+                  <Link 
+                    to="/hotels"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/hotels') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Hotels</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/tours"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/tours') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Tours</span>
+                  </Link>
+                  
+                  {(user.isAdmin || user.isAccountant) ? (
                     <Link 
                       to="/dashboard"
                       onClick={closeMobileMenu}
-                      className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                         isActive('/dashboard') 
-                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                       }`}
                     >
-                      Dashboard
-                      <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                        isActive('/dashboard') ? 'w-8' : 'w-0 group-hover:w-8'
-                      }`}></span>
+                      <FaChartLine className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-xs font-medium text-center">Dashboard</span>
+                    </Link>
+                  ) : (
+                    <Link 
+                      to="/profile"
+                      onClick={closeMobileMenu}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                        isActive('/profile') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                      }`}
+                    >
+                      <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-xs font-medium text-center">Profile</span>
+                    </Link>
+                  )}
+                  
+                  {/* Row 3 */}
+                  {(user.isAdmin || user.isAccountant) && (
+                    <Link 
+                      to="/profile"
+                      onClick={closeMobileMenu}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                        isActive('/profile') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                      }`}
+                    >
+                      <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="text-xs font-medium text-center">Profile</span>
                     </Link>
                   )}
                   
                   <Link 
-                    to="/profile"
-                    onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
-                      isActive('/profile') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                    }`}
-                  >
-                    Profile
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/profile') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
-                  </Link>
-                  
-                  <Link 
                     to="/attendance"
                     onClick={closeMobileMenu}
-                    className={`py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium ${
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/attendance') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
                   >
-                    My Attendance
-                    <span className={`absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/attendance') ? 'w-8' : 'w-0 group-hover:w-8'
-                    }`}></span>
+                    <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Attendance</span>
                   </Link>
                   
                   <button 
@@ -430,33 +503,137 @@ export default function Header() {
                       closeMobileMenu();
                       handleCalendarClick();
                     }}
-                    className="py-3 px-4 rounded-lg transition-all duration-300 relative group font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-left w-full"
+                    className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md"
                   >
-                    My Calendar
-                    <span className="absolute bottom-0 left-4 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-8"></span>
+                    <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Calendar</span>
                   </button>
-                   
-                   <button
-                     onClick={handleLogout}
-                     className="py-2 px-1 text-red-500 dark:text-red-400 text-left"
-                   >
-                     Logout ({user.username})
-                   </button>
-                 </>
-               ) : (
-                 <>
-                   <Link 
-                     to="/signin"
-                     onClick={closeMobileMenu}
-                     className="py-2 px-1 text-blue-500 dark:text-blue-400"
-                   >
-                     Sign In
-                   </Link>
-                 </>
-               )}
-             </div>
-           </div>
-                 )}
+                </div>
+                
+                {/* Collapsible More Options Section */}
+                <div className="mt-4 px-2">
+                  <button
+                    onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
+                    className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <span className="text-sm font-medium mr-2">More</span>
+                    {mobileMenuExpanded ? (
+                      <HiChevronUp className="text-lg transition-transform duration-200" />
+                    ) : (
+                      <HiChevronDown className="text-lg transition-transform duration-200" />
+                    )}
+                  </button>
+                  
+                  {/* Expanded Options */}
+                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="flex justify-center">
+                      {/* Theme Toggle */}
+                      <div className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md">
+                        <div className="transform group-hover:scale-110 transition-transform duration-200">
+                          <CustomDarkModeToggle />
+                        </div>
+                        <span className="text-xs font-medium text-center mt-1">Theme</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Logout Button - Below Grid */}
+                <div className="mt-6 px-2">
+                  <CustomButton
+                    onClick={handleLogout}
+                    variant="red"
+                    size="lg"
+                    className="w-full flex items-center justify-center gap-3"
+                  >
+                    <FaLogout className="text-lg" />
+                    <span>Logout ({user.username})</span>
+                  </CustomButton>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Guest Mobile Navigation - 2 Column Grid */}
+                <div className="grid grid-cols-2 gap-4 px-2">
+                  <Link 
+                    to="/guest/hotels"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/guest/hotels') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Hotels</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/guest/tours"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/guest/tours') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Tours</span>
+                  </Link>
+                </div>
+                
+                {/* Collapsible More Options Section for Guests */}
+                <div className="mt-4 px-2">
+                  <button
+                    onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
+                    className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <span className="text-sm font-medium mr-2">More</span>
+                    {mobileMenuExpanded ? (
+                      <HiChevronUp className="text-lg transition-transform duration-200" />
+                    ) : (
+                      <HiChevronDown className="text-lg transition-transform duration-200" />
+                    )}
+                  </button>
+                  
+                  {/* Expanded Options for Guests */}
+                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="flex justify-center">
+                      {/* Theme Toggle */}
+                      <div className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md">
+                        <div className="transform group-hover:scale-110 transition-transform duration-200">
+                          <CustomDarkModeToggle />
+                        </div>
+                        <span className="text-xs font-medium text-center mt-1">Theme</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Sign In Button for Guests */}
+                {!isPublicPage() && (
+                  <div className="mt-6 px-2">
+                    <CustomButton
+                      as={Link}
+                      to="/signin"
+                      onClick={closeMobileMenu}
+                      variant="blueToTeal"
+                      size="lg"
+                      className="w-full flex items-center justify-center gap-3"
+                    >
+                      <FaSignInAlt className="text-lg" />
+                      <span>Sign In</span>
+                    </CustomButton>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* User Calendar Modal */}

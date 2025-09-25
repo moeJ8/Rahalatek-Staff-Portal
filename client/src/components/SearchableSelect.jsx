@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Label, TextInput } from 'flowbite-react';
-import { FaSearch, FaChevronDown } from 'react-icons/fa';
+import { FaSearch, FaChevronDown, FaTimes } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
 import RahalatekLoader from './RahalatekLoader';
 
@@ -19,8 +19,26 @@ const SearchableSelect = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOptions, setFilteredOptions] = useState(options);
   const [selectedLabel, setSelectedLabel] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
+  const [modalEnter, setModalEnter] = useState(false);
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
+  const modalRef = useRef(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     setFilteredOptions(options.filter(option => 
@@ -49,17 +67,63 @@ const SearchableSelect = ({
     };
   }, []);
 
-  // Focus input when dropdown opens
+  // Handle modal animations
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (showMobileModal) {
+      setTimeout(() => setModalEnter(true), 50);
+    } else {
+      setModalEnter(false);
+    }
+  }, [showMobileModal]);
+
+  // Prevent body scroll when mobile modal is open
+  useEffect(() => {
+    if (showMobileModal && isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showMobileModal, isMobile]);
+
+  // Focus input when dropdown opens (desktop only)
+  useEffect(() => {
+    if (isOpen && inputRef.current && !isMobile) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   const handleSelect = (option) => {
     onChange({ target: { value: option.value } });
     setIsOpen(false);
+    
+    if (isMobile && showMobileModal) {
+      setModalEnter(false);
+      setTimeout(() => setShowMobileModal(false), 300);
+    } else {
+      setShowMobileModal(false);
+    }
+    
     setSearchTerm('');
+  };
+
+  const handleMobileToggle = () => {
+    if (disabled) return;
+    
+    if (isMobile) {
+      if (showMobileModal) {
+        // Close with animation
+        setModalEnter(false);
+        setTimeout(() => setShowMobileModal(false), 300);
+      } else {
+        setShowMobileModal(true);
+      }
+    } else {
+      setIsOpen(!isOpen);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -67,7 +131,7 @@ const SearchableSelect = ({
   };
 
   const handleInputFocus = () => {
-    if (!disabled) {
+    if (!disabled && !isMobile) {
       setIsOpen(true);
     }
   };
@@ -75,7 +139,13 @@ const SearchableSelect = ({
   const handleInputClick = (e) => {
     e.stopPropagation();
     if (!disabled) {
-      setIsOpen(true);
+      if (isMobile) {
+        // Prevent focus and keyboard on mobile
+        e.target.blur();
+        setShowMobileModal(true);
+      } else {
+        setIsOpen(true);
+      }
     }
   };
 
@@ -109,33 +179,31 @@ const SearchableSelect = ({
               id={id}
               type="text"
               placeholder={placeholder}
-              value={isOpen ? searchTerm : selectedLabel}
+              value={isOpen && !isMobile ? searchTerm : selectedLabel}
               onChange={handleInputChange}
               onFocus={handleInputFocus}
               onClick={handleInputClick}
               onKeyDown={handleKeyDown}
               autoComplete="off"
-              autoFill="off"
               data-form-type="other"
               disabled={disabled}
+              readOnly={isMobile}
               className={`w-full bg-transparent border-0 pl-10 pr-10 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             />
             <div 
               className={`absolute right-3 transition-colors duration-200 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:text-blue-500 dark:hover:text-blue-400'}`}
               onClick={(e) => {
                 e.stopPropagation();
-                if (!disabled) {
-                  setIsOpen(!isOpen);
-                }
+                handleMobileToggle();
               }}
             >
-              <FaChevronDown className={`text-gray-500 dark:text-gray-400 w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+              <FaChevronDown className={`text-gray-500 dark:text-gray-400 w-4 h-4 transition-transform duration-200 ${(isOpen && !isMobile) || showMobileModal ? 'rotate-180' : ''}`} />
             </div>
           </div>
         </div>
       </div>
       
-      {isOpen && !disabled && (
+      {isOpen && !disabled && !isMobile && (
         <div className="absolute z-50 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200">
           <CustomScrollbar maxHeight="400px">
             <div className="p-1">
@@ -166,6 +234,98 @@ const SearchableSelect = ({
               )}
             </div>
           </CustomScrollbar>
+        </div>
+      )}
+
+       {/* Mobile Modal */}
+       {showMobileModal && isMobile && !disabled && (
+         <div 
+           className={`fixed inset-0 z-50 flex items-start justify-center pt-4 px-4 bg-black/50 ${modalEnter ? 'backdrop-blur-sm' : 'backdrop-blur-0'} transition-all duration-300`}
+           onClick={(e) => {
+             if (e.target === e.currentTarget) {
+               setModalEnter(false);
+               setTimeout(() => {
+                 setShowMobileModal(false);
+                 setSearchTerm('');
+               }, 300);
+             }
+           }}
+         >
+           <div 
+             ref={modalRef}
+             className={`w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl transform transition-all duration-300 ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+             style={{ maxHeight: '90vh' }}
+           >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-600 rounded-t-2xl px-4 py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {label || 'Select Option'}
+                  {required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
+                </h3>
+                <button
+                  onClick={() => {
+                    setModalEnter(false);
+                    setTimeout(() => setShowMobileModal(false), 300);
+                  }}
+                  className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Mobile Search */}
+              <div className="mt-3 relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search options..."
+                  value={searchTerm}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-hidden">
+              <CustomScrollbar maxHeight="60vh">
+                <div className="p-2">
+                  {loading ? (
+                    <div className="py-8 text-center">
+                      <RahalatekLoader size="sm" />
+                    </div>
+                  ) : filteredOptions.length > 0 ? (
+                    filteredOptions.map((option) => (
+                      <div
+                        key={option.value}
+                        className={`p-4 rounded-xl cursor-pointer text-sm font-medium transition-all duration-200 mb-2 ${
+                          value === option.value 
+                            ? 'bg-blue-500/20 dark:bg-blue-400/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-600' 
+                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600'
+                        }`}
+                        onClick={() => handleSelect(option)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{option.label}</span>
+                          {value === option.value && (
+                            <div className="w-5 h-5 rounded-full bg-blue-500 dark:bg-blue-400 flex items-center justify-center">
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 px-4 text-gray-500 dark:text-gray-400 text-center text-sm font-medium">
+                      No results found
+                    </div>
+                  )}
+                </div>
+              </CustomScrollbar>
+            </div>
+          </div>
         </div>
       )}
     </div>

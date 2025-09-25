@@ -3,11 +3,12 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Card, Label, Textarea, Select } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiPlus, HiX } from 'react-icons/hi';
+import { HiPlus, HiX, HiTrash } from 'react-icons/hi';
 import CustomButton from '../components/CustomButton';
 import CustomSelect from '../components/Select';
 import TextInput from '../components/TextInput';
 import RahalatekLoader from '../components/RahalatekLoader';
+import ImageUploader from '../components/ImageUploader';
 import toast from 'react-hot-toast';
 import { getCountries, getCitiesByCountry } from '../utils/countryCities';
 
@@ -30,10 +31,14 @@ export default function EditTourPage() {
             max: 8
         },
         duration: 1,
-        highlights: []
+        highlights: [],
+        policies: [],
+        faqs: [],
+        images: []
     });
     const [loading, setLoading] = useState(true);
     const [highlightInput, setHighlightInput] = useState('');
+    const [policyInput, setPolicyInput] = useState('');
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -117,6 +122,54 @@ export default function EditTourPage() {
         setTourData({
             ...tourData,
             highlights: updatedHighlights
+        });
+    };
+
+    const handleAddPolicy = () => {
+        if (policyInput.trim()) {
+            setTourData({
+                ...tourData,
+                policies: [...tourData.policies, policyInput.trim()]
+            });
+            setPolicyInput('');
+        }
+    };
+
+    const handleRemovePolicy = (index) => {
+        const updatedPolicies = [...tourData.policies];
+        updatedPolicies.splice(index, 1);
+        setTourData({
+            ...tourData,
+            policies: updatedPolicies
+        });
+    };
+
+    // FAQ handlers
+    const handleAddFaq = () => {
+        setTourData({
+            ...tourData,
+            faqs: [...tourData.faqs, { question: '', answer: '' }]
+        });
+    };
+
+    const handleRemoveFaq = (index) => {
+        const updatedFaqs = [...tourData.faqs];
+        updatedFaqs.splice(index, 1);
+        setTourData({
+            ...tourData,
+            faqs: updatedFaqs
+        });
+    };
+
+    const handleFaqChange = (index, field, value) => {
+        const updatedFaqs = [...tourData.faqs];
+        updatedFaqs[index] = {
+            ...updatedFaqs[index],
+            [field]: value
+        };
+        setTourData({
+            ...tourData,
+            faqs: updatedFaqs
         });
     };
 
@@ -331,6 +384,117 @@ export default function EditTourPage() {
                                     </ul>
                                 </div>
                             )}
+                        </div>
+                        
+                        {/* Tour Policies */}
+                        <div>
+                            <Label value="Tour Policies" className="mb-2 block" />
+                            <div className="flex gap-2 mb-3">
+                                <TextInput
+                                    placeholder="Add a policy"
+                                    value={policyInput}
+                                    onChange={(e) => setPolicyInput(e.target.value)}
+                                    className="flex-1"
+                                />
+                                <CustomButton 
+                                    type="button"
+                                    onClick={handleAddPolicy} 
+                                    variant="purple"
+                                    size="sm"
+                                    icon={HiPlus}
+                                >
+                                    Add
+                                </CustomButton>
+                            </div>
+                            
+                            {tourData.policies && tourData.policies.length > 0 && (
+                                <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Policies:</h4>
+                                    <ul className="space-y-2">
+                                        {tourData.policies.map((policy, index) => (
+                                            <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <span className="text-gray-800 dark:text-gray-200">• {policy}</span>
+                                                <CustomButton 
+                                                    variant="red" 
+                                                    size="xs"
+                                                    onClick={() => handleRemovePolicy(index)}
+                                                    icon={HiX}
+                                                    title="Remove policy"
+                                                />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Tour FAQs */}
+                        <div>
+                            <Label htmlFor="faqs" value="Tour FAQs" className="mb-3 block" />
+                            <div className="space-y-4">
+                                {(tourData.faqs || []).map((faq, index) => (
+                                    <div key={index} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h4 className="font-medium text-gray-900 dark:text-white">FAQ #{index + 1}</h4>
+                                            <CustomButton 
+                                                variant="red"
+                                                size="xs"
+                                                onClick={() => handleRemoveFaq(index)}
+                                                icon={HiTrash}
+                                                title="Remove FAQ"
+                                            >
+                                                Remove
+                                            </CustomButton>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div>
+                                                <TextInput
+                                                    label="Question"
+                                                    value={faq.question}
+                                                    onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                                                    placeholder="Enter FAQ question"
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <TextInput
+                                                    label="Answer"
+                                                    as="textarea"
+                                                    rows={3}
+                                                    value={faq.answer}
+                                                    onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                                                    placeholder="Enter FAQ answer"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                <CustomButton
+                                    variant="blue"
+                                    size="sm"
+                                    onClick={handleAddFaq}
+                                    icon={HiPlus}
+                                >
+                                    Add FAQ
+                                </CustomButton>
+                            </div>
+                        </div>
+                        
+                        {/* Tour Images */}
+                        <div>
+                            <div className="mb-2 block">
+                                <Label value="Tour Images" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                            </div>
+                            <ImageUploader
+                                onImagesUploaded={(images) => setTourData({...tourData, images})}
+                                folder="tours"
+                                maxImages={8}
+                                existingImages={tourData.images || []}
+                            />
                         </div>
                         
                         <CustomButton type="submit" variant="pinkToOrange">

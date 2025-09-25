@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button } from 'flowbite-react';
-import { FaStar, FaBed, FaUtensils, FaPlane, FaCarSide, FaChild, FaInfo, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaTimes } from 'react-icons/fa';
+import { FaStar, FaBed, FaUtensils, FaPlane, FaCarSide, FaChild, FaInfo, FaMoneyBillWave, FaChevronDown, FaChevronUp, FaTimes, FaConciergeBell } from 'react-icons/fa';
 import { getMonthName } from '../utils/pricingUtils';
 import CustomScrollbar from './CustomScrollbar';
 
@@ -41,6 +41,7 @@ const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
 
   const tabs = [
     { id: 'general', label: 'General Info', icon: FaInfo },
+    { id: 'amenities', label: 'Services', icon: FaConciergeBell },
     { id: 'rooms', label: 'Room Types', icon: FaBed },
     { id: 'pricing', label: 'Monthly Prices', icon: FaMoneyBillWave }
   ];
@@ -149,16 +150,104 @@ const HotelDetailModal = ({ isOpen, onClose, hotelData }) => {
             </div>
           </div>
         );
+      case 'amenities':
+        return (
+          <div className="p-4">
+            {hotelData.amenities && Object.keys(hotelData.amenities).length > 0 ? (
+              <div className="space-y-6">
+                {Object.entries(hotelData.amenities).map(([categoryKey, categoryData]) => {
+                  if (!categoryData || typeof categoryData !== 'object') return null;
+                  
+                  const selectedAmenities = Object.entries(categoryData).filter(([, value]) => value === true);
+                  if (selectedAmenities.length === 0) return null;
+
+                  // Format category title
+                  const categoryTitle = categoryKey
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, str => str.toUpperCase())
+                    .replace(/([a-z])([A-Z])/g, '$1 $2');
+
+                  return (
+                    <div key={categoryKey} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                        {categoryTitle}
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {selectedAmenities.map(([amenityKey]) => {
+                          // Format amenity label
+                          const amenityLabel = amenityKey
+                            .replace(/([A-Z])/g, ' $1')
+                            .replace(/^./, str => str.toUpperCase())
+                            .replace(/([a-z])([A-Z])/g, '$1 $2')
+                            .replace(/24h/g, '24h')
+                            .replace(/80 Percent/g, '80%')
+                            .replace(/1999/g, '1999');
+
+                          return (
+                            <div key={amenityKey} className="flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{amenityLabel}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm text-center">
+                <FaConciergeBell className="mx-auto text-gray-400 text-4xl mb-4" />
+                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Services Listed</h4>
+                <p className="text-gray-600 dark:text-gray-400">
+                  This hotel doesn't have detailed amenities and services information available.
+                </p>
+              </div>
+            )}
+          </div>
+        );
       case 'rooms':
         return (
           <div className="p-4">
             {hotelData.roomTypes && hotelData.roomTypes.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {hotelData.roomTypes.map((roomType, index) => (
                   <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                       {roomType.type}
                     </h4>
+                    
+                    {/* Room Images */}
+                    {roomType.images && roomType.images.length > 0 && (
+                      <div className="mb-4">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Room Images</h5>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {roomType.images.map((image, imgIndex) => (
+                            <div key={imgIndex} className="relative group">
+                              <img
+                                src={image.url}
+                                alt={image.altText || `${roomType.type} room ${imgIndex + 1}`}
+                                className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700 hover:opacity-90 transition-opacity cursor-pointer"
+                                onClick={() => window.open(image.url, '_blank')}
+                              />
+                              {image.isPrimary && (
+                                <div className="absolute top-1 left-1 bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center space-x-1">
+                                  <FaStar className="w-2 h-2" />
+                                  <span>Primary</span>
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Click to enlarge
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Pricing Information */}
                     <div className="flex flex-col space-y-2">
                       <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
                         <span className="text-gray-700 dark:text-gray-300">Base Price Per Night (Adult):</span>

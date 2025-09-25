@@ -115,18 +115,52 @@ const TextInput = forwardRef(({
       
       <div className="relative">
         {as === "textarea" ? (
-          <textarea
-            ref={ref}
-            id={id}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            disabled={disabled}
-            required={required}
-            rows={rows || 3}
-            className={baseClassName}
-            {...props}
-          />
+          <>
+            <style>{`
+              .custom-textarea-scrollbar::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+              }
+              
+              .custom-textarea-scrollbar::-webkit-scrollbar-track {
+                background: #f1f5f9;
+              }
+              
+              .custom-textarea-scrollbar::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+              }
+              
+              .custom-textarea-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+              }
+              
+              .dark .custom-textarea-scrollbar::-webkit-scrollbar-track {
+                background: #1e293b;
+              }
+              
+              .dark .custom-textarea-scrollbar::-webkit-scrollbar-thumb {
+                background: #475569;
+                border-radius: 4px;
+              }
+              
+              .dark .custom-textarea-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #64748b;
+              }
+            `}</style>
+            <textarea
+              ref={ref}
+              id={id}
+              value={value}
+              onChange={onChange}
+              placeholder={placeholder}
+              disabled={disabled}
+              required={required}
+              rows={rows || 3}
+              className={`${baseClassName} resize-none custom-textarea-scrollbar`}
+              {...props}
+            />
+          </>
         ) : (
           <>
             <input

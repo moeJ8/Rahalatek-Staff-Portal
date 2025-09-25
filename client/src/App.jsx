@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import React, { useState, useEffect, Suspense } from 'react'
 import { Toaster } from 'react-hot-toast'
 import ProtectedRoute from './components/ProtectedRoute'
+import GuestOnlyRoute from './components/GuestOnlyRoute'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import StayOnTop from './components/StayOnTop'
@@ -28,7 +29,12 @@ const OfficeDetailPage = React.lazy(() => import('./pages/OfficeDetailPage'))
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const EmailVerificationPage = React.lazy(() => import('./pages/EmailVerificationPage'))
+const PublicHotelPage = React.lazy(() => import('./pages/PublicHotelPage'))
+const PublicTourPage = React.lazy(() => import('./pages/PublicTourPage'))
+const GuestHotelsPage = React.lazy(() => import('./pages/GuestHotelsPage'))
+const GuestToursPage = React.lazy(() => import('./pages/GuestToursPage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
+const GuestNotFoundPage = React.lazy(() => import('./pages/GuestNotFoundPage'))
 
 // Component to conditionally render ScrollToTop based on current route
 const ConditionalScrollToTop = () => {
@@ -128,7 +134,17 @@ function App() {
                 <Route path="/profile/:userId" element={<ProfilePage />} />
               </Route>
               
-              <Route path="*" element={user ? <NotFoundPage /> : <Navigate to="/signin" />} />
+              {/* Guest Only Routes - Only accessible to non-authenticated users */}
+              <Route element={<GuestOnlyRoute />}>
+                <Route path="/guest/hotels" element={<GuestHotelsPage />} />
+                <Route path="/guest/tours" element={<GuestToursPage />} />
+              </Route>
+              
+              {/* Public Routes - Accessible without authentication */}
+              <Route path="/hotels/:slug" element={<PublicHotelPage />} />
+              <Route path="/tours/:slug" element={<PublicTourPage />} />
+              
+              <Route path="*" element={user ? <NotFoundPage /> : <GuestNotFoundPage />} />
             </Routes>
           </Suspense>
         </main>

@@ -7,6 +7,12 @@ const tourSchema = new mongoose.Schema({
         trim: true,
         maxlength: [100, 'A tour name cannot exceed 100 characters']
     },
+    slug: { 
+        type: String, 
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
     city: {
         type: String,
         required: [true, 'A tour must have a city'],
@@ -107,12 +113,28 @@ const tourSchema = new mongoose.Schema({
         type: String 
     }],
     
+    policies: [{ 
+        type: String 
+    }],
+    
+    faqs: [{
+        question: { type: String, required: true },
+        answer: { type: String, required: true }
+    }],
+    
     childrenPolicies: {
         under3: { type: String, default: 'Free' },
         above3: { type: String, default: 'Adult price' }
     },
     
     startDates: [Date],
+    images: [{
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
+        altText: { type: String, default: '' },
+        isPrimary: { type: Boolean, default: false },
+        uploadedAt: { type: Date, default: Date.now }
+    }],
     createdAt: {
         type: Date,
         default: Date.now(),
@@ -122,6 +144,63 @@ const tourSchema = new mongoose.Schema({
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
+});
+
+// Generate slug from name before saving
+tourSchema.pre('save', async function(next) {
+    if (this.isModified('name') || this.isNew) {
+        let baseSlug = this.name
+            .toLowerCase()
+            .trim()
+            // Replace Arabic and other non-Latin characters with transliteration or removal
+            .replace(/[\u0621-\u064A\u0660-\u0669\u06F0-\u06F9]/g, (match) => {
+                // Basic Arabic to Latin transliteration map
+                const arabicMap = {
+                    'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'aa',
+                    'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j',
+                    'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh',
+                    'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
+                    'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z',
+                    'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q',
+                    'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+                    'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a',
+                    'ة': 'h', 'ء': '', 'ئ': 'i', 'ؤ': 'u'
+                };
+                return arabicMap[match] || '';
+            })
+            // Remove any remaining special characters except letters, numbers, spaces, and hyphens
+            .replace(/[^\w\s\u00C0-\u024F\u1E00-\u1EFF-]/g, '')
+            // Replace multiple spaces/underscores with single hyphens
+            .replace(/[\s_-]+/g, '-')
+            // Remove leading/trailing hyphens
+            .replace(/^-+|-+$/g, '');
+        
+        // If slug is empty after processing, generate a fallback
+        if (!baseSlug) {
+            baseSlug = `tour-${Date.now()}`;
+        }
+        
+        let slug = baseSlug;
+        let counter = 1;
+        
+        // Check for existing slugs and append number if needed
+        while (true) {
+            const existingTour = await this.constructor.findOne({ 
+                slug: slug,
+                _id: { $ne: this._id } // Exclude current tour when updating
+            });
+            
+            if (!existingTour) {
+                break;
+            }
+            
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+        
+        this.slug = slug;
+    }
+    next();
 });
 
 const Tour = mongoose.model('Tour', tourSchema);

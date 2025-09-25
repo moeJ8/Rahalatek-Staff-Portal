@@ -6,6 +6,7 @@ const CustomButton = ({
   disabled = false, 
   variant = 'primary', 
   size = 'sm',
+  shape = 'rounded', // 'rounded' or 'circular'
   className = '',
   title,
   icon: Icon,
@@ -15,9 +16,21 @@ const CustomButton = ({
   ...props 
 }) => {
   const getVariantClasses = () => {
-    const baseClasses = "flex items-center justify-center gap-1 font-medium rounded-md transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseClasses = "flex items-center justify-center font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed";
     
-    const sizeClasses = {
+    // Shape classes
+    const shapeClasses = {
+      rounded: "rounded-md gap-1",
+      circular: "rounded-full"
+    };
+    
+    // Size classes - different for circular vs rounded
+    const sizeClasses = shape === 'circular' ? {
+      xs: "w-6 h-6 text-xs",
+      sm: "w-8 h-8 text-sm", 
+      md: "w-10 h-10 text-sm",
+      lg: "w-12 h-12 text-base"
+    } : {
       xs: "px-2 py-1.5 text-xs",
       sm: "px-3 py-2 text-sm",
       md: "px-4 py-2.5 text-sm",
@@ -62,10 +75,13 @@ const CustomButton = ({
       gray: "text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-300",
       
       // Primary variant (default)
-      primary: "text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
+      primary: "text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300",
+      
+      // White variant - for overlay buttons
+      white: "text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:text-gray-800 dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-gray-200"
     };
 
-    return `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`;
+    return `${baseClasses} ${shapeClasses[shape]} ${sizeClasses[size]} ${variantClasses[variant]}`;
   };
 
   return (

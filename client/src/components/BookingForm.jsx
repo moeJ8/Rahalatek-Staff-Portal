@@ -692,6 +692,7 @@ export default function BookingForm() {
                 placeholder="Select countries..."
                 allOptionsLabel="All Countries"
                 allowMultiple={true}
+                allowEmpty={true}
               />
             </div>
             
@@ -704,20 +705,23 @@ export default function BookingForm() {
                 value={selectedCities}
                 onChange={handleCitySelection}
                 options={(() => {
-                  if (selectedCountries.includes('') || selectedCountries.length === 0) {
-                    // Show all cities if "All Countries" is selected or no countries selected
+                  if (selectedCountries.includes('')) {
+                    // Show all cities if "All Countries" is selected
                     const allCities = getCountries().flatMap(country => getCitiesByCountry(country));
                     return [...new Set(allCities)].sort().map(city => ({
                       value: city,
                       label: city
                     }));
-                  } else {
+                  } else if (selectedCountries.length > 0) {
                     // Show only cities from selected countries
                     const countriesCities = selectedCountries.flatMap(country => getCitiesByCountry(country));
                     return [...new Set(countriesCities)].sort().map(city => ({
                       value: city,
                       label: city
                     }));
+                  } else {
+                    // No countries selected - show empty options
+                    return [];
                   }
                 })()}
                 placeholder={selectedCountries.length === 0 && !selectedCountries.includes('') ? "Select countries first..." : "Select cities..."}

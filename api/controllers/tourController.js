@@ -84,6 +84,13 @@ exports.getTourById = async (req, res) => {
 // Add new tour
 exports.addTour = async (req, res) => {
   try {
+    // Check if user is authorized to add tours
+    if (!req.user.isAdmin && !req.user.isAccountant) {
+      return res.status(403).json({ 
+        message: 'Access denied. Only administrators and accountants can add tours.' 
+      });
+    }
+
     const newTour = new Tour(req.body);
     const savedTour = await newTour.save();
     
@@ -99,14 +106,24 @@ exports.addTour = async (req, res) => {
 // Update tour
 exports.updateTour = async (req, res) => {
   try {
-    const updatedTour = await Tour.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!updatedTour) {
+    // Check if user is authorized to update tours
+    if (!req.user.isAdmin && !req.user.isAccountant) {
+      return res.status(403).json({ 
+        message: 'Access denied. Only administrators and accountants can update tours.' 
+      });
+    }
+
+    // Find the tour first
+    const tour = await Tour.findById(req.params.id);
+    if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
+    
+    // Update the tour properties
+    Object.assign(tour, req.body);
+    
+    // Save the tour - this will trigger the pre-save middleware to update slug
+    const updatedTour = await tour.save();
     
     // Invalidate dashboard cache since tour data changed
     await invalidateDashboardCache('Tour updated');
@@ -144,6 +161,22 @@ exports.deleteTour = async (req, res) => {
     await invalidateDashboardCache('Tour deleted');
     
     res.status(200).json({ message: 'Tour deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Public route - get tour by slug
+exports.getTourBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const tour = await Tour.findOne({ slug: slug });
+    
+    if (!tour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+    
+    res.json(tour);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

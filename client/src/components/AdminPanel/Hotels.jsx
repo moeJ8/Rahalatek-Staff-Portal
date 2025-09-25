@@ -10,6 +10,9 @@ import TextInput from '../TextInput'
 import RahalatekLoader from '../RahalatekLoader'
 import CustomModal from '../CustomModal'
 import SearchableSelect from '../SearchableSelect'
+import ImageUploader from '../ImageUploader'
+import RoomImageUploader from '../RoomImageUploader'
+import HotelAmenitiesModal from '../HotelAmenitiesModal'
 import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
 
 
@@ -31,15 +34,26 @@ export default function Hotels() {
         },
         airport: '',
         airportTransportation: [],
-        description: ''
+        description: '',
+        locationDescription: '',
+        images: [],
+        amenities: {},
+        faqs: []
     });
     const [customRoomTypes, setCustomRoomTypes] = useState([]);
+    const [roomImages, setRoomImages] = useState({});
     const [hotels, setHotels] = useState([]);
     const [selectedHotelToDuplicate, setSelectedHotelToDuplicate] = useState('');
     const [useCustomHotelCity, setUseCustomHotelCity] = useState(false);
     const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
     const [airports, setAirports] = useState([]);
     const [modalLoading, setModalLoading] = useState(false);
+    const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
+    
+    // Room highlights and details state
+    const [roomHighlights, setRoomHighlights] = useState({});
+    const [roomDetails, setRoomDetails] = useState({});
+    const [highlightInputs, setHighlightInputs] = useState({}); // Store highlight input for each room type
 
     // Fetch airports data on component mount
     useEffect(() => {
@@ -142,6 +156,14 @@ export default function Hotels() {
         });
     };
 
+    // Handle amenities save
+    const handleAmenitiesSave = (amenities) => {
+        setHotelData({
+            ...hotelData,
+            amenities: amenities
+        });
+    };
+
     // Handle country change and reset city
     const handleCountryChange = (country) => {
         setHotelData({
@@ -182,6 +204,17 @@ export default function Hotels() {
                 ...monthlyPrices,
                 [roomType]: resetMonthlyPrices
             });
+            
+            // Reset room highlights and details
+            setRoomHighlights({
+                ...roomHighlights,
+                [roomType]: []
+            });
+            
+            setRoomDetails({
+                ...roomDetails,
+                [roomType]: {}
+            });
         } else {
             // Initialize monthly prices for newly checked room types
             const initialMonthlyPrices = {};
@@ -195,6 +228,36 @@ export default function Hotels() {
             setMonthlyPrices({
                 ...monthlyPrices,
                 [roomType]: initialMonthlyPrices
+            });
+            
+            // Initialize room highlights and details
+            setRoomHighlights({
+                ...roomHighlights,
+                [roomType]: []
+            });
+            
+            setRoomDetails({
+                ...roomDetails,
+                [roomType]: {
+                    size: { value: '', unit: 'sq m' },
+                    view: '',
+                    sleeps: 1,
+                    bedType: '',
+                    bathroom: '',
+                    balcony: false,
+                    airConditioning: false,
+                    soundproofed: false,
+                    freeWifi: false,
+                    minibar: false,
+                    safe: false,
+                    tv: false,
+                    hairdryer: false,
+                    bathrobes: false,
+                    freeCots: false,
+                    smokingAllowed: false,
+                    petFriendly: false,
+                    accessibleRoom: false
+                }
             });
         }
     };
@@ -311,6 +374,67 @@ export default function Hotels() {
         });
     };
 
+    const handleRoomImagesUploaded = (roomType, images) => {
+        setRoomImages(prev => ({
+            ...prev,
+            [roomType]: images
+        }));
+    };
+
+    // Room highlights handlers
+    const handleAddHighlight = (roomType) => {
+        const highlightInput = highlightInputs[roomType] || '';
+        if (highlightInput.trim()) {
+            setRoomHighlights({
+                ...roomHighlights,
+                [roomType]: [...(roomHighlights[roomType] || []), highlightInput.trim()]
+            });
+            setHighlightInputs({
+                ...highlightInputs,
+                [roomType]: ''
+            });
+        }
+    };
+
+    const handleRemoveHighlight = (roomType, index) => {
+        const currentHighlights = roomHighlights[roomType] || [];
+        setRoomHighlights({
+            ...roomHighlights,
+            [roomType]: currentHighlights.filter((_, i) => i !== index)
+        });
+    };
+
+    const handleHighlightInputChange = (roomType, value) => {
+        setHighlightInputs({
+            ...highlightInputs,
+            [roomType]: value
+        });
+    };
+
+    // Room details handlers
+    const handleRoomDetailChange = (roomType, field, value) => {
+        setRoomDetails({
+            ...roomDetails,
+            [roomType]: {
+                ...roomDetails[roomType],
+                [field]: value
+            }
+        });
+    };
+
+    const handleRoomSizeChange = (roomType, value) => {
+        setRoomDetails({
+            ...roomDetails,
+            [roomType]: {
+                ...roomDetails[roomType],
+                size: {
+                    ...roomDetails[roomType]?.size,
+                    value: value
+                }
+            }
+        });
+    };
+
     const addRoomTypesToHotelData = () => {
         const roomTypes = [];
         
@@ -326,6 +450,21 @@ export default function Hotels() {
                 // Add monthly prices if they exist
                 if (monthlyPrices[roomType]) {
                     roomTypeData.monthlyPrices = monthlyPrices[roomType];
+                }
+
+                // Add images if they exist
+                if (roomImages[roomType] && roomImages[roomType].length > 0) {
+                    roomTypeData.images = roomImages[roomType];
+                }
+
+                // Add highlights if they exist
+                if (roomHighlights[roomType] && roomHighlights[roomType].length > 0) {
+                    roomTypeData.highlights = roomHighlights[roomType];
+                }
+
+                // Add details if they exist
+                if (roomDetails[roomType]) {
+                    roomTypeData.details = roomDetails[roomType];
                 }
                 
                 roomTypes.push(roomTypeData);
@@ -344,6 +483,21 @@ export default function Hotels() {
                 // Add monthly prices if they exist
                 if (monthlyPrices[roomType.id]) {
                     roomTypeData.monthlyPrices = monthlyPrices[roomType.id];
+                }
+
+                // Add images if they exist
+                if (roomImages[roomType.id] && roomImages[roomType.id].length > 0) {
+                    roomTypeData.images = roomImages[roomType.id];
+                }
+
+                // Add highlights if they exist
+                if (roomHighlights[roomType.id] && roomHighlights[roomType.id].length > 0) {
+                    roomTypeData.highlights = roomHighlights[roomType.id];
+                }
+
+                // Add details if they exist
+                if (roomDetails[roomType.id]) {
+                    roomTypeData.details = roomDetails[roomType.id];
                 }
                 
                 roomTypes.push(roomTypeData);
@@ -385,7 +539,9 @@ export default function Hotels() {
                 },
                 airport: '',
                 airportTransportation: [],
-                description: ''
+                description: '',
+                images: [],
+                amenities: {}
             });
             
             // Reset room type related states
@@ -519,6 +675,35 @@ export default function Hotels() {
         setSelectedHotelToDuplicate('');
     };
 
+    // FAQ handlers
+    const handleAddFaq = () => {
+        setHotelData({
+            ...hotelData,
+            faqs: [...hotelData.faqs, { question: '', answer: '' }]
+        });
+    };
+
+    const handleRemoveFaq = (index) => {
+        const updatedFaqs = [...hotelData.faqs];
+        updatedFaqs.splice(index, 1);
+        setHotelData({
+            ...hotelData,
+            faqs: updatedFaqs
+        });
+    };
+
+    const handleFaqChange = (index, field, value) => {
+        const updatedFaqs = [...hotelData.faqs];
+        updatedFaqs[index] = {
+            ...updatedFaqs[index],
+            [field]: value
+        };
+        setHotelData({
+            ...hotelData,
+            faqs: updatedFaqs
+        });
+    };
+
     // Function to handle hotel duplication
     const handleDuplicateHotel = () => {
         if (!selectedHotelToDuplicate) return;
@@ -533,6 +718,11 @@ export default function Hotels() {
         const newRoomTypeChildrenPrices = { ...roomTypeChildrenPrices };
         const newMonthlyPrices = { ...monthlyPrices };
         
+        // Prepare room images, highlights, and details objects
+        const newRoomImages = {};
+        const newRoomHighlights = {};
+        const newRoomDetails = {};
+        
         // Process room types
         hotelToDuplicate.roomTypes.forEach(roomType => {
             const type = roomType.type;
@@ -546,6 +736,21 @@ export default function Hotels() {
                 // Copy monthly prices if available
                 if (roomType.monthlyPrices) {
                     newMonthlyPrices[type] = roomType.monthlyPrices;
+                }
+                
+                // Copy room images if available
+                if (roomType.images && roomType.images.length > 0) {
+                    newRoomImages[type] = roomType.images;
+                }
+                
+                // Copy room highlights if available
+                if (roomType.highlights && roomType.highlights.length > 0) {
+                    newRoomHighlights[type] = roomType.highlights;
+                }
+                
+                // Copy room details if available
+                if (roomType.details) {
+                    newRoomDetails[type] = roomType.details;
                 }
             } else {
                 // It's a custom room type
@@ -562,6 +767,21 @@ export default function Hotels() {
                 // Copy monthly prices if available
                 if (roomType.monthlyPrices) {
                     newMonthlyPrices[customId] = roomType.monthlyPrices;
+                }
+                
+                // Copy room images if available
+                if (roomType.images && roomType.images.length > 0) {
+                    newRoomImages[customId] = roomType.images;
+                }
+                
+                // Copy room highlights if available
+                if (roomType.highlights && roomType.highlights.length > 0) {
+                    newRoomHighlights[customId] = roomType.highlights;
+                }
+                
+                // Copy room details if available
+                if (roomType.details) {
+                    newRoomDetails[customId] = roomType.details;
                 }
             }
         });
@@ -583,7 +803,11 @@ export default function Hotels() {
             },
             airport: hotelToDuplicate.airport || '',
             airportTransportation: hotelToDuplicate.airportTransportation || [],
-            description: hotelToDuplicate.description || ''
+            description: hotelToDuplicate.description || '',
+            locationDescription: hotelToDuplicate.locationDescription || '',
+            images: hotelToDuplicate.images || [],
+            amenities: hotelToDuplicate.amenities || {},
+            faqs: hotelToDuplicate.faqs || []
         });
         
         // Set the room type data
@@ -592,6 +816,9 @@ export default function Hotels() {
         setRoomTypeChildrenPrices(newRoomTypeChildrenPrices);
         setMonthlyPrices(newMonthlyPrices);
         setCustomRoomTypes(newCustomRoomTypes);
+        setRoomImages(newRoomImages);
+        setRoomHighlights(newRoomHighlights);
+        setRoomDetails(newRoomDetails);
         
         // Close modal
         closeDuplicateModal();
@@ -796,6 +1023,160 @@ export default function Hotels() {
                                                                         />
                                                                     </div>
                                                                     
+                                                                    {/* Room Images */}
+                                                                    <div className="mt-3">
+                                                                        <Label className="text-xs font-medium mb-2 block">Room Images</Label>
+                                                                        <RoomImageUploader
+                                                                            onImagesUploaded={(images) => handleRoomImagesUploaded(roomType, images)}
+                                                                            roomType={roomType}
+                                                                            maxImages={5}
+                                                                            existingImages={roomImages[roomType] || []}
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Room Highlights */}
+                                                                    <div className="mt-3">
+                                                                        <Label className="text-xs font-medium mb-2 block">Room Highlights</Label>
+                                                                        <div className="flex gap-2 mb-3">
+                                                                            <TextInput
+                                                                                placeholder="Add a highlight"
+                                                                                value={highlightInputs[roomType] || ''}
+                                                                                onChange={(e) => handleHighlightInputChange(roomType, e.target.value)}
+                                                                                className="flex-1"
+                                                                                size="sm"
+                                                                            />
+                                                                            <CustomButton 
+                                                                                type="button"
+                                                                                onClick={() => handleAddHighlight(roomType)}
+                                                                                variant="purple"
+                                                                                size="xs"
+                                                                                icon={HiPlus}
+                                                                                title="Add highlight to room"
+                                                                            >
+                                                                                Add
+                                                                            </CustomButton>
+                                                                        </div>
+                                                                        
+                                                                        {(roomHighlights[roomType] || []).length > 0 && (
+                                                                            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                                                                <h4 className="text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">Added Highlights:</h4>
+                                                                                <ul className="space-y-2">
+                                                                                    {(roomHighlights[roomType] || []).map((highlight, index) => (
+                                                                                        <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
+                                                                                            <span className="text-xs text-gray-800 dark:text-gray-200">• {highlight}</span>
+                                                                                            <CustomButton
+                                                                                                variant="red"
+                                                                                                size="xs"
+                                                                                                onClick={() => handleRemoveHighlight(roomType, index)}
+                                                                                                icon={HiX}
+                                                                                                title="Remove highlight"
+                                                                                            />
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Room Details */}
+                                                                    <div className="mt-3">
+                                                                        <Accordion collapseAll className="border-none">
+                                                                            <Accordion.Panel>
+                                                                                <Accordion.Title className="text-xs font-medium p-2 bg-gray-100 dark:bg-slate-800 flex items-center">
+                                                                                    <HiPlus className="mr-2" size={14} />
+                                                                                    Room Details & Amenities
+                                                                                </Accordion.Title>
+                                                                                <Accordion.Content className="p-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
+                                                                                    <div className="space-y-3">
+                                                                                        {/* Basic Details */}
+                                                                                        <div className="grid grid-cols-2 gap-2">
+                                                                                            <div>
+                                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Size (sq m)</Label>
+                                                                                                <TextInput
+                                                                                                    type="number"
+                                                                                                    size="sm"
+                                                                                                    placeholder="23"
+                                                                                                    value={roomDetails[roomType]?.size?.value || ""}
+                                                                                                    onChange={(e) => handleRoomSizeChange(roomType, e.target.value)}
+                                                                                                    className="text-xs"
+                                                                                                />
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Sleeps</Label>
+                                                                                                <Select
+                                                                                                    size="sm"
+                                                                                                    value={roomDetails[roomType]?.sleeps || 1}
+                                                                                                    onChange={(e) => handleRoomDetailChange(roomType, 'sleeps', parseInt(e.target.value))}
+                                                                                                    className="text-xs"
+                                                                                                >
+                                                                                                    <option value={1}>1 Guest</option>
+                                                                                                    <option value={2}>2 Guests</option>
+                                                                                                    <option value={3}>3 Guests</option>
+                                                                                                    <option value={4}>4 Guests</option>
+                                                                                                    <option value={5}>5 Guests</option>
+                                                                                                    <option value={6}>6 Guests</option>
+                                                                                                </Select>
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        <div className="grid grid-cols-2 gap-2">
+                                                                                            <div>
+                                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">View</Label>
+                                                                                                <TextInput
+                                                                                                    size="sm"
+                                                                                                    placeholder="Sea view, City view, etc."
+                                                                                                    value={roomDetails[roomType]?.view || ""}
+                                                                                                    onChange={(e) => handleRoomDetailChange(roomType, 'view', e.target.value)}
+                                                                                                    className="text-xs"
+                                                                                                />
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Bed Type</Label>
+                                                                                                <TextInput
+                                                                                                    size="sm"
+                                                                                                    placeholder="1 Double Bed, Twin beds, etc."
+                                                                                                    value={roomDetails[roomType]?.bedType || ""}
+                                                                                                    onChange={(e) => handleRoomDetailChange(roomType, 'bedType', e.target.value)}
+                                                                                                    className="text-xs"
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Amenities Checkboxes */}
+                                                                                        <div>
+                                                                                            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Room Amenities</Label>
+                                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                                                {[
+                                                                                                    { key: 'balcony', label: 'Balcony' },
+                                                                                                    { key: 'airConditioning', label: 'Air conditioning' },
+                                                                                                    { key: 'soundproofed', label: 'Soundproofed' },
+                                                                                                    { key: 'freeWifi', label: 'Free WiFi' },
+                                                                                                    { key: 'minibar', label: 'Minibar' },
+                                                                                                    { key: 'tv', label: 'LCD TV' },
+                                                                                                    { key: 'hairdryer', label: 'Hairdryer' },
+                                                                                                    { key: 'bathrobes', label: 'Bathrobes' },
+                                                                                                    { key: 'freeCots', label: 'Free cots/infant beds' },
+                                                                                                    { key: 'safe', label: 'Safe' }
+                                                                                                ].map(({ key, label }) => (
+                                                                                                    <div key={key} className="flex items-center gap-2">
+                                                                                                        <Checkbox
+                                                                                                            id={`${roomType}-${key}`}
+                                                                                                            checked={roomDetails[roomType]?.[key] || false}
+                                                                                                            onChange={(e) => handleRoomDetailChange(roomType, key, e.target.checked)}
+                                                                                                        />
+                                                                                                        <Label htmlFor={`${roomType}-${key}`} className="text-xs text-gray-600 dark:text-gray-400">
+                                                                                                            {label}
+                                                                                                        </Label>
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </Accordion.Content>
+                                                                            </Accordion.Panel>
+                                                                        </Accordion>
+                                                                    </div>
+
                                                                     {/* Monthly pricing accordion */}
                                                                     <div className="mt-2">
                                                                         <Accordion collapseAll className="border-none">
@@ -935,6 +1316,17 @@ export default function Hotels() {
                                                                                 placeholder="Additional fee"
                                                                                 value={roomTypeChildrenPrices[roomType.id] || ''}
                                                                                 onChange={(e) => handleCustomRoomTypeChildrenPriceChange(index, e.target.value)}
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Room Images */}
+                                                                        <div className="mt-3">
+                                                                            <Label className="text-xs font-medium mb-2 block">Room Images</Label>
+                                                                            <RoomImageUploader
+                                                                                onImagesUploaded={(images) => handleRoomImagesUploaded(roomType.id, images)}
+                                                                                roomType={roomType.name || `Custom Room ${index + 1}`}
+                                                                                maxImages={5}
+                                                                                existingImages={roomImages[roomType.id] || []}
                                                                             />
                                                                         </div>
                                                                         
@@ -1292,6 +1684,114 @@ export default function Hotels() {
                                                 label="Hotel Description"
                                             />
                                         </div>
+
+                                        <div>
+                                            <TextInput
+                                                id="locationDescription"
+                                                name="locationDescription"
+                                                as="textarea"
+                                                rows={3}
+                                                value={hotelData.locationDescription}
+                                                onChange={handleHotelChange}
+                                                label="Location Description"
+                                            />
+                                        </div>
+
+                                        {/* Hotel Amenities & Services */}
+                                        <div>
+                                            <div className="mb-2 block">
+                                                <Label value="Amenities & Services" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                                            </div>
+                                            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-slate-900">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                        Configure Hotel Services
+                                                    </span>
+                                                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                                                        {Object.values(hotelData.amenities || {}).some(category => 
+                                                            typeof category === 'object' && Object.values(category).some(val => val === true)
+                                                        ) ? 'Amenities configured' : 'No amenities selected'}
+                                                    </span>
+                                                </div>
+                                                <CustomButton
+                                                    type="button"
+                                                    variant="blueToTeal"
+                                                    size="sm"
+                                                    onClick={() => setAmenitiesModalOpen(true)}
+                                                >
+                                                    Configure Services
+                                                </CustomButton>
+                                            </div>
+                                        </div>
+
+                                        {/* Hotel Images */}
+                                        <div>
+                                            <div className="mb-2 block">
+                                                <Label value="Hotel Images" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                                            </div>
+                                            <ImageUploader
+                                                onImagesUploaded={(images) => setHotelData({...hotelData, images})}
+                                                folder="hotels"
+                                                maxImages={10}
+                                                existingImages={hotelData.images || []}
+                                            />
+                                        </div>
+
+                                        {/* Hotel FAQs */}
+                                        <div>
+                                            <Label htmlFor="faqs" value="Hotel FAQs" className="mb-3 block" />
+                                            <div className="space-y-4">
+                                                {(hotelData.faqs || []).map((faq, index) => (
+                                                    <div key={index} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                        <div className="flex justify-between items-center mb-3">
+                                                            <h4 className="font-medium text-gray-900 dark:text-white">FAQ #{index + 1}</h4>
+                                                            <CustomButton 
+                                                                variant="red"
+                                                                size="xs"
+                                                                onClick={() => handleRemoveFaq(index)}
+                                                                icon={HiTrash}
+                                                                title="Remove FAQ"
+                                                            >
+                                                                Remove
+                                                            </CustomButton>
+                                                        </div>
+                                                        
+                                                        <div className="space-y-3">
+                                                            <div>
+                                                                <TextInput
+                                                                    label="Question"
+                                                                    value={faq.question}
+                                                                    onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                                                                    placeholder="Enter FAQ question"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            
+                                                            <div>
+                                                                <TextInput
+                                                                    label="Answer"
+                                                                    as="textarea"
+                                                                    rows={3}
+                                                                    value={faq.answer}
+                                                                    onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                                                                    placeholder="Enter FAQ answer"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                <CustomButton
+                                                    variant="blue"
+                                                    size="sm"
+                                                    onClick={handleAddFaq}
+                                                    icon={HiPlus}
+                                                >
+                                                    Add FAQ
+                                                </CustomButton>
+                                            </div>
+                                        </div>
                                         
                                         <CustomButton 
                                             type="submit"
@@ -1356,6 +1856,14 @@ export default function Hotels() {
                                 </div>
                             </div>
                         </CustomModal>
+
+                        {/* Hotel Amenities Modal */}
+                        <HotelAmenitiesModal
+                            isOpen={amenitiesModalOpen}
+                            onClose={() => setAmenitiesModalOpen(false)}
+                            amenities={hotelData.amenities}
+                            onSave={handleAmenitiesSave}
+                        />
         </>
   )
 }

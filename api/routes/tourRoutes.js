@@ -8,9 +8,11 @@ router.get('/country/:country', tourController.getToursByCountry);
 router.get('/country/:country/cities', tourController.getTourCitiesByCountry);
 router.get('/countries', tourController.getTourCountries);
 router.get('/city/:city', tourController.getToursByCity);
+// Public route - get tour by slug (must be before /:id route)
+router.get('/public/:slug', tourController.getTourBySlug);
 router.get('/:id', tourController.getTourById);
-router.post('/', tourController.addTour);
-router.put('/:id', tourController.updateTour);
+router.post('/', verifyToken, tourController.addTour);
+router.put('/:id', verifyToken, tourController.updateTour);
 router.delete('/:id', verifyToken, tourController.deleteTour);
 
 module.exports = router;

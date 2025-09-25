@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { Card, Label } from 'flowbite-react'
-import { HiPlus, HiX, HiDuplicate } from 'react-icons/hi'
+import { HiPlus, HiX, HiDuplicate, HiTrash } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import CustomButton from '../CustomButton'
 import CustomSelect from '../Select'
@@ -9,6 +9,7 @@ import TextInput from '../TextInput'
 import RahalatekLoader from '../RahalatekLoader'
 import CustomModal from '../CustomModal'
 import SearchableSelect from '../SearchableSelect'
+import ImageUploader from '../ImageUploader'
 import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
 
 export default function Tours() {
@@ -27,10 +28,14 @@ export default function Tours() {
             max: 8
         },
         duration: 1,
-        highlights: []
+        highlights: [],
+        policies: [],
+        faqs: [],
+        images: []
     });
     const [tours, setTours] = useState([]);
     const [highlightInput, setHighlightInput] = useState('');
+    const [policyInput, setPolicyInput] = useState('');
     const [modalLoading, setModalLoading] = useState(false);
     
     // Add state for tour duplication
@@ -86,6 +91,54 @@ export default function Tours() {
         });
     };
 
+    const handleAddPolicy = () => {
+        if (policyInput.trim()) {
+            setTourData({
+                ...tourData,
+                policies: [...tourData.policies, policyInput.trim()]
+            });
+            setPolicyInput('');
+        }
+    };
+
+    const handleRemovePolicy = (index) => {
+        const updatedPolicies = [...tourData.policies];
+        updatedPolicies.splice(index, 1);
+        setTourData({
+            ...tourData,
+            policies: updatedPolicies
+        });
+    };
+
+    // FAQ handlers
+    const handleAddFaq = () => {
+        setTourData({
+            ...tourData,
+            faqs: [...tourData.faqs, { question: '', answer: '' }]
+        });
+    };
+
+    const handleRemoveFaq = (index) => {
+        const updatedFaqs = [...tourData.faqs];
+        updatedFaqs.splice(index, 1);
+        setTourData({
+            ...tourData,
+            faqs: updatedFaqs
+        });
+    };
+
+    const handleFaqChange = (index, field, value) => {
+        const updatedFaqs = [...tourData.faqs];
+        updatedFaqs[index] = {
+            ...updatedFaqs[index],
+            [field]: value
+        };
+        setTourData({
+            ...tourData,
+            faqs: updatedFaqs
+        });
+    };
+
     const handleTourSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -112,7 +165,10 @@ export default function Tours() {
                     max: 8
                 },
                 duration: 1,
-                highlights: []
+                highlights: [],
+                policies: [],
+                faqs: [],
+                images: []
             });
             fetchTours(); // Refresh tours list
             toast.success('Tour added successfully!', {
@@ -185,7 +241,10 @@ export default function Tours() {
                 max: tourToDuplicate.carCapacity?.max || 8
             },
             duration: tourToDuplicate.duration,
-            highlights: tourToDuplicate.highlights ? [...tourToDuplicate.highlights] : []
+            highlights: tourToDuplicate.highlights ? [...tourToDuplicate.highlights] : [],
+            policies: tourToDuplicate.policies ? [...tourToDuplicate.policies] : [],
+            faqs: tourToDuplicate.faqs ? [...tourToDuplicate.faqs] : [],
+            images: tourToDuplicate.images ? [...tourToDuplicate.images] : []
         });
         
         // Close modal
@@ -421,6 +480,117 @@ export default function Tours() {
                                 </ul>
                             </div>
                         )}
+                    </div>
+                    
+                    {/* Tour Policies */}
+                    <div>
+                        <Label value="Tour Policies" className="mb-2 block" />
+                        <div className="flex gap-2 mb-3">
+                            <TextInput
+                                placeholder="Add a policy"
+                                value={policyInput}
+                                onChange={(e) => setPolicyInput(e.target.value)}
+                                className="flex-1"
+                            />
+                            <CustomButton 
+                                type="button"
+                                onClick={handleAddPolicy}
+                                variant="purple"
+                                icon={HiPlus}
+                                title="Add policy to tour"
+                            >
+                                Add
+                            </CustomButton>
+                        </div>
+                        
+                        {tourData.policies.length > 0 && (
+                            <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Policies:</h4>
+                                <ul className="space-y-2">
+                                    {tourData.policies.map((policy, index) => (
+                                        <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
+                                            <span className="text-gray-800 dark:text-gray-200">• {policy}</span>
+                                            <CustomButton
+                                                variant="red"
+                                                size="xs"
+                                                onClick={() => handleRemovePolicy(index)}
+                                                icon={HiX}
+                                                title="Remove policy"
+                                            />
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Tour FAQs */}
+                    <div>
+                        <Label htmlFor="faqs" value="Tour FAQs" className="mb-3 block" />
+                        <div className="space-y-4">
+                            {(tourData.faqs || []).map((faq, index) => (
+                                <div key={index} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="font-medium text-gray-900 dark:text-white">FAQ #{index + 1}</h4>
+                                        <CustomButton 
+                                            variant="red"
+                                            size="xs"
+                                            onClick={() => handleRemoveFaq(index)}
+                                            icon={HiTrash}
+                                            title="Remove FAQ"
+                                        >
+                                            Remove
+                                        </CustomButton>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        <div>
+                                            <TextInput
+                                                label="Question"
+                                                value={faq.question}
+                                                onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                                                placeholder="Enter FAQ question"
+                                                required
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <TextInput
+                                                label="Answer"
+                                                as="textarea"
+                                                rows={3}
+                                                value={faq.answer}
+                                                onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                                                placeholder="Enter FAQ answer"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            <CustomButton
+                                variant="blue"
+                                size="sm"
+                                onClick={handleAddFaq}
+                                icon={HiPlus}
+                            >
+                                Add FAQ
+                            </CustomButton>
+                        </div>
+                    </div>
+                    
+                    {/* Tour Images */}
+                    <div>
+                        <div className="mb-2 block">
+                            <Label value="Tour Images" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                        </div>
+                        <ImageUploader
+                            onImagesUploaded={(images) => setTourData({...tourData, images})}
+                            folder="tours"
+                            maxImages={8}
+                            existingImages={tourData.images || []}
+                        />
                     </div>
                     
                     <CustomButton 

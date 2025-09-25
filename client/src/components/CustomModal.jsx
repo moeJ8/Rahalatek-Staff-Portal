@@ -35,13 +35,13 @@ const CustomModal = ({
       <div className={`relative w-full p-4 max-w-md ${maxWidth} ${className}`}>
         <div className={`relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[85vh] transform transition-all duration-300 overflow-visible ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
+          <div className="flex items-start justify-between p-3 sm:p-4 border-b rounded-t dark:border-gray-600">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                 {title}
               </h3>
               {subtitle && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {subtitle}
                 </p>
               )}
