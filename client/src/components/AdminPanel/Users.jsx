@@ -60,6 +60,7 @@ export default function Users() {
                     username: authUser.username || 'Me',
                     isAdmin: !!authUser.isAdmin,
                     isAccountant: !!authUser.isAccountant,
+                    isContentManager: !!authUser.isContentManager,
                     isApproved: true
                 });
             }
@@ -98,7 +99,7 @@ export default function Users() {
         } finally {
             setLoading(false);
         }
-    }, [authUser.id, authUser._id, authUser.username, authUser.isAdmin, authUser.isAccountant]);
+    }, [authUser.id, authUser._id, authUser.username, authUser.isAdmin, authUser.isAccountant, authUser.isContentManager]);
 
     // Load data on component mount
     useEffect(() => {
@@ -125,7 +126,7 @@ export default function Users() {
             // Update the user in the local state
             setUsers(users.map(user => 
                 user._id === userId 
-                    ? { ...user, isAdmin: !currentStatus, isAccountant: false } // Remove accountant role when making admin
+                    ? { ...user, isAdmin: !currentStatus, isAccountant: false, isContentManager: false } // Remove other roles when making admin
                     : user
             ));
             
@@ -183,11 +184,69 @@ export default function Users() {
             // Update the user in the local state
             setUsers(users.map(user => 
                 user._id === userId 
-                    ? { ...user, isAccountant: !currentStatus, isAdmin: false } // Remove admin role when making accountant
+                    ? { ...user, isAccountant: !currentStatus, isAdmin: false, isContentManager: false } // Remove other roles when making accountant
                     : user
             ));
             
             toast.success(`User ${!currentStatus ? 'promoted to' : 'removed from'} accountant successfully!`, {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+            
+        } catch (err) {
+            console.log(err);
+            toast.error('Failed to update user role. Please try again.', {
+                duration: 4000,
+                style: {
+                    background: '#EF4444',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#EF4444',
+                },
+            });
+        }
+    };
+
+    // Handle content manager status toggle
+    const handleToggleContentManagerStatus = async (userId, currentStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+            
+            await axios.patch('/api/auth/users/role', 
+                { userId, isContentManager: !currentStatus },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Update the user in the local state
+            setUsers(users.map(user => 
+                user._id === userId 
+                    ? { ...user, isContentManager: !currentStatus, isAdmin: false, isAccountant: false } // Remove other roles when making content manager
+                    : user
+            ));
+            
+            toast.success(`User ${!currentStatus ? 'promoted to' : 'removed from'} content manager successfully!`, {
                 duration: 3000,
                 style: {
                     background: '#4CAF50',
@@ -314,6 +373,7 @@ export default function Users() {
                             ...(isAdmin ? [
                                 { label: 'Admin Actions', className: '' },
                                 { label: 'Accountant Actions', className: '' },
+                                { label: 'Content Manager Actions', className: '' },
                                 { label: 'Salary', className: '' },
                                 { label: 'Delete', className: '' }
                             ] : [
@@ -321,10 +381,11 @@ export default function Users() {
                             ])
                         ]}
                         data={users.sort((a, b) => {
-                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
+                            // Sort by role priority: Admin (4) > Accountant (3) > Content Manager (2) > User (1)
                             const getRolePriority = (user) => {
-                                if (user.isAdmin) return 3;
-                                if (user.isAccountant) return 2;
+                                if (user.isAdmin) return 4;
+                                if (user.isAccountant) return 3;
+                                if (user.isContentManager) return 2;
                                 return 1;
                             };
                             return getRolePriority(b) - getRolePriority(a);
@@ -359,7 +420,7 @@ export default function Users() {
                                                     <CustomButton
                                                         variant="blue"
                                                         onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                        disabled={user.isAccountant}
+                                                        disabled={user.isAccountant || user.isContentManager}
                                                         title="Assign admin privileges"
                                                     >
                                                         Assign
@@ -381,8 +442,30 @@ export default function Users() {
                                                     <CustomButton
                                                         variant="teal"
                                                         onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                        disabled={user.isAdmin}
+                                                        disabled={user.isAdmin || user.isContentManager}
                                                         title="Assign accountant privileges"
+                                                    >
+                                                        Assign
+                                                    </CustomButton>
+                                                )}
+                                            </div>
+                                        </Table.Cell>
+                                        <Table.Cell className="px-4 py-3">
+                                            <div className="flex items-center">
+                                                {user.isContentManager ? (
+                                                    <CustomButton
+                                                        variant="orange"
+                                                        onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
+                                                        title="Revoke content manager privileges"
+                                                    >
+                                                        Revoke
+                                                    </CustomButton>
+                                                ) : (
+                                                    <CustomButton
+                                                        variant="purple"
+                                                        onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
+                                                        disabled={user.isAdmin || user.isAccountant}
+                                                        title="Assign content manager privileges"
                                                     >
                                                         Assign
                                                     </CustomButton>
@@ -444,10 +527,11 @@ export default function Users() {
                         </div>
                     ) : (
                         users.sort((a, b) => {
-                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
+                            // Sort by role priority: Admin (4) > Accountant (3) > Content Manager (2) > User (1)
                             const getRolePriority = (user) => {
-                                if (user.isAdmin) return 3;
-                                if (user.isAccountant) return 2;
+                                if (user.isAdmin) return 4;
+                                if (user.isAccountant) return 3;
+                                if (user.isContentManager) return 2;
                                 return 1;
                             };
                             return getRolePriority(b) - getRolePriority(a);
@@ -515,7 +599,7 @@ export default function Users() {
                                                     variant="blue"
                                                     size="xs"
                                                     onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
-                                                    disabled={user.isAccountant}
+                                                    disabled={user.isAccountant || user.isContentManager}
                                                     title="Assign admin privileges"
                                                     className="text-xs"
                                                 >
@@ -539,11 +623,35 @@ export default function Users() {
                                                     variant="teal"
                                                     size="xs"
                                                     onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
-                                                    disabled={user.isAdmin}
+                                                    disabled={user.isAdmin || user.isContentManager}
                                                     title="Assign accountant privileges"
                                                     className="text-xs"
                                                 >
                                                     Accountant
+                                                </CustomButton>
+                                            )}
+
+                                            {/* Content Manager Status Toggle */}
+                                            {user.isContentManager ? (
+                                                <CustomButton
+                                                    variant="orange"
+                                                    size="xs"
+                                                    onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
+                                                    title="Revoke content manager privileges"
+                                                    className="text-xs"
+                                                >
+                                                    Revoke
+                                                </CustomButton>
+                                            ) : (
+                                                <CustomButton
+                                                    variant="purple"
+                                                    size="xs"
+                                                    onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
+                                                    disabled={user.isAdmin || user.isAccountant}
+                                                    title="Assign content manager privileges"
+                                                    className="text-xs"
+                                                >
+                                                    Content Manager
                                                 </CustomButton>
                                             )}
 

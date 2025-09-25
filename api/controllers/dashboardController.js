@@ -150,7 +150,7 @@ exports.getDashboardAnalytics = async (req, res) => {
             
             User.find({ isApproved: true })
             .limit(10)
-            .select('username email isApproved isAdmin isAccountant salaryAmount salaryCurrency createdAt')
+            .select('username email isApproved isAdmin isAccountant isContentManager salaryAmount salaryCurrency createdAt')
         ]);
 
         // Removed unused financial calculations for performance

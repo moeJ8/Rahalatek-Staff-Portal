@@ -208,6 +208,7 @@ class NotificationService {
             const getRoleDisplayName = (role) => {
                 if (role.isAdmin) return 'Admin';
                 if (role.isAccountant) return 'Accountant';
+                if (role.isContentManager) return 'Content Manager';
                 return 'User';
             };
 
@@ -217,7 +218,7 @@ class NotificationService {
 
             let priority = 'medium';
             if (newRole.isAdmin && !oldRole.isAdmin) priority = 'high';
-            if (!newRole.isAdmin && !newRole.isAccountant && (oldRole.isAdmin || oldRole.isAccountant)) {
+            if (!newRole.isAdmin && !newRole.isAccountant && !newRole.isContentManager && (oldRole.isAdmin || oldRole.isAccountant || oldRole.isContentManager)) {
                 priority = 'high';
             }
 

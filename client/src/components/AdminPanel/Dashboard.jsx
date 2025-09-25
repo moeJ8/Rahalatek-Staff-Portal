@@ -1003,10 +1003,11 @@ export default function Dashboard() {
                                 <CustomScrollbar maxHeight="500px">
                                     <div className="space-y-2 sm:space-y-3">
                                         {analytics.recentActivity.users.sort((a, b) => {
-                                            // Sort by role priority: Admin (3) > Accountant (2) > User (1)
+                                            // Sort by role priority: Admin (4) > Accountant (3) > Content Manager (2) > User (1)
                                             const getRolePriority = (user) => {
-                                                if (user.isAdmin) return 3;
-                                                if (user.isAccountant) return 2;
+                                                if (user.isAdmin) return 4;
+                                                if (user.isAccountant) return 3;
+                                                if (user.isContentManager) return 2;
                                                 return 1;
                                             };
                                             return getRolePriority(b) - getRolePriority(a);
@@ -1022,6 +1023,11 @@ export default function Dashboard() {
                                                     role: 'Accountant', 
                                                     mobileRole: 'Acc',
                                                     color: 'bg-green-500 text-white border border-green-600 shadow-md' 
+                                                };
+                                                if (user.isContentManager) return { 
+                                                    role: 'Manager', 
+                                                    mobileRole: 'Mgr',
+                                                    color: 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
                                                 };
                                                 return { 
                                                     role: 'User', 

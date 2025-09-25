@@ -10,6 +10,10 @@ export default function UserBadge({ user, size = 'sm' }) {
       text: 'Accountant', 
       classes: 'bg-green-500 text-white border border-green-600 shadow-md'
     };
+    if (user?.isContentManager) return {
+      text: 'Manager', 
+      classes: 'bg-yellow-500 text-white border border-yellow-600 shadow-md'
+    };
     return {
       text: 'User',
       classes: 'bg-gray-500 text-white border border-gray-600 shadow-md'

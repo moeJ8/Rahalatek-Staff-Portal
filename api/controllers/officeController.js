@@ -3,6 +3,13 @@ const Office = require('../models/Office');
 // Create a new office
 exports.createOffice = async (req, res) => {
     try {
+        // Check if user is authorized to create offices
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                success: false,
+                message: 'Access denied. Only administrators, accountants, and content managers can create offices.' 
+            });
+        }
         const { name, location, email, phoneNumber, description } = req.body;
 
         const office = new Office({
@@ -75,6 +82,13 @@ exports.getOfficeById = async (req, res) => {
 // Update office
 exports.updateOffice = async (req, res) => {
     try {
+        // Check if user is authorized to update offices
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                success: false,
+                message: 'Access denied. Only administrators, accountants, and content managers can update offices.' 
+            });
+        }
         const { name, location, email, phoneNumber, description } = req.body;
 
         const office = await Office.findByIdAndUpdate(
@@ -112,6 +126,13 @@ exports.updateOffice = async (req, res) => {
 // Delete office
 exports.deleteOffice = async (req, res) => {
     try {
+        // Check if user is authorized to delete offices
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                success: false,
+                message: 'Access denied. Only administrators, accountants, and content managers can delete offices.' 
+            });
+        }
         const office = await Office.findByIdAndDelete(req.params.id);
 
         if (!office) {

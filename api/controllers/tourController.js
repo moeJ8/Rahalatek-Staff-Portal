@@ -85,9 +85,9 @@ exports.getTourById = async (req, res) => {
 exports.addTour = async (req, res) => {
   try {
     // Check if user is authorized to add tours
-    if (!req.user.isAdmin && !req.user.isAccountant) {
+    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators and accountants can add tours.' 
+        message: 'Access denied. Only administrators, accountants, and content managers can add tours.' 
       });
     }
 
@@ -107,9 +107,9 @@ exports.addTour = async (req, res) => {
 exports.updateTour = async (req, res) => {
   try {
     // Check if user is authorized to update tours
-    if (!req.user.isAdmin && !req.user.isAccountant) {
+    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators and accountants can update tours.' 
+        message: 'Access denied. Only administrators, accountants, and content managers can update tours.' 
       });
     }
 
@@ -138,17 +138,9 @@ exports.updateTour = async (req, res) => {
 exports.deleteTour = async (req, res) => {
   try {
     // Check if user is authorized to delete tours
-    // Only full admins can delete tours, not accountants
-    if (!req.user.isAdmin) {
+    if (!req.user.isAdmin && !req.user.isContentManager) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators can delete tours.' 
-      });
-    }
-
-    // Additional check to ensure accountants cannot delete even if they somehow get admin token
-    if (req.user.isAccountant && !req.user.isAdmin) {
-      return res.status(403).json({ 
-        message: 'Accountants are not authorized to delete tours.' 
+        message: 'Access denied. Only administrators and content managers can delete tours.' 
       });
     }
 

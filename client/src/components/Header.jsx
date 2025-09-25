@@ -267,7 +267,7 @@ export default function Header() {
                     isActive('/vouchers') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
-                {(user?.isAdmin || user?.isAccountant) && (
+                {(user?.isAdmin || user?.isAccountant || user?.isContentManager) && (
                   <Link 
                     to="/dashboard" 
                     className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
@@ -441,7 +441,7 @@ export default function Header() {
                     <span className="text-xs font-medium text-center">Tours</span>
                   </Link>
                   
-                  {(user.isAdmin || user.isAccountant) ? (
+                  {(user.isAdmin || user.isAccountant || user.isContentManager) ? (
                     <Link 
                       to="/dashboard"
                       onClick={closeMobileMenu}

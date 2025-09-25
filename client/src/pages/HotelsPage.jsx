@@ -173,8 +173,9 @@ export default function HotelsPage() {
     }
   };
 
-      const isAdmin = user && user.isAdmin;
-    const isAccountant = user && user.isAccountant;
+  const isAdmin = user && user.isAdmin;
+  const isAccountant = user && user.isAccountant;
+  const isContentManager = user && user.isContentManager;
 
   // Helper functions
   const renderStars = (count) => {
@@ -308,7 +309,7 @@ export default function HotelsPage() {
         </div>
         
         {/* Create button above hotel cards */}
-        {(isAdmin || isAccountant) && (
+        {(isAdmin || isAccountant || isContentManager) && (
           <div className="flex justify-end mb-4 px-2 sm:px-4">
             <CustomButton
               as={Link}
@@ -335,7 +336,7 @@ export default function HotelsPage() {
               return (
                 <div
                   key={hotel._id}
-                  className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+                  className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col h-full"
                   onClick={() => window.open(`/hotels/${hotel.slug}`, '_blank', 'noopener,noreferrer')}
                 >
                   {/* Hotel Image */}
@@ -353,7 +354,7 @@ export default function HotelsPage() {
                   </div>
                   
                   {/* Hotel Details */}
-                  <div className="p-3 sm:p-4 md:p-6">
+                  <div className="p-3 sm:p-4 md:p-6 flex-1 flex flex-col">
                     {/* Hotel Name */}
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
                       {hotel.name}
@@ -477,7 +478,7 @@ export default function HotelsPage() {
                     )}
 
                     {/* Hotel Services */}
-                    <div className="space-y-2 mb-3 sm:mb-4 text-xs">
+                    <div className="space-y-2 mb-2 text-xs">
                       {/* Breakfast Info */}
                       <div className="flex items-center space-x-1">
                         <FaUtensils className="text-blue-500 dark:text-teal-400 w-3 h-3" />
@@ -508,7 +509,45 @@ export default function HotelsPage() {
                         <div className="flex items-center space-x-1">
                           <FaCarSide className="text-blue-500 dark:text-teal-400 w-3 h-3" />
                           <span className="text-gray-700 dark:text-gray-300">
-                            Airport Transfer: <span className="text-green-600 dark:text-green-400 font-semibold">${hotel.transportation.vitoReceptionPrice || hotel.transportation.sprinterReceptionPrice || hotel.transportation.busReceptionPrice || 0}</span> per person
+                            <span className="font-medium">Airport Transfer:</span>
+                            <span className="text-xs ml-1">
+                              {[
+                                (hotel.transportation.vitoReceptionPrice || hotel.transportation.vitoFarewellPrice) && (
+                                  <span key="vito">
+                                    Vito: <span className="text-green-600 dark:text-green-400 font-semibold">
+                                      {hotel.transportation.vitoReceptionPrice ? '$' + hotel.transportation.vitoReceptionPrice : ''}
+                                      {hotel.transportation.vitoReceptionPrice && hotel.transportation.vitoFarewellPrice ? '/' : ''}
+                                      {hotel.transportation.vitoFarewellPrice ? '$' + hotel.transportation.vitoFarewellPrice : ''}
+                                    </span>
+                                  </span>
+                                ),
+                                
+                                (hotel.transportation.sprinterReceptionPrice || hotel.transportation.sprinterFarewellPrice) && (
+                                  <span key="sprinter">
+                                    Sprinter: <span className="text-green-600 dark:text-green-400 font-semibold">
+                                      {hotel.transportation.sprinterReceptionPrice ? '$' + hotel.transportation.sprinterReceptionPrice : ''}
+                                      {hotel.transportation.sprinterReceptionPrice && hotel.transportation.sprinterFarewellPrice ? '/' : ''}
+                                      {hotel.transportation.sprinterFarewellPrice ? '$' + hotel.transportation.sprinterFarewellPrice : ''}
+                                    </span>
+                                  </span>
+                                ),
+                                
+                                (hotel.transportation.busReceptionPrice || hotel.transportation.busFarewellPrice) && (
+                                  <span key="bus">
+                                    Bus: <span className="text-green-600 dark:text-green-400 font-semibold">
+                                      {hotel.transportation.busReceptionPrice ? '$' + hotel.transportation.busReceptionPrice : ''}
+                                      {hotel.transportation.busReceptionPrice && hotel.transportation.busFarewellPrice ? '/' : ''}
+                                      {hotel.transportation.busFarewellPrice ? '$' + hotel.transportation.busFarewellPrice : ''}
+                                    </span>
+                                  </span>
+                                )
+                              ].filter(Boolean).map((item, index, array) => (
+                                <span key={item.key}>
+                                  {item}
+                                  {index < array.length - 1 && <span className="text-gray-400">, </span>}
+                                </span>
+                              ))}
+                            </span>
                           </span>
                         </div>
                       )}
@@ -516,12 +555,15 @@ export default function HotelsPage() {
 
                     {/* Description */}
                     {hotel.description && (
-                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
+                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
                         {truncateDescription(hotel.description)}
                       </p>
                     )}
 
-                    {/* Action Buttons */}
+                  </div>
+
+                  {/* Action Buttons - Always at bottom */}
+                  <div className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 mt-auto">
                     <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                       <CustomButton 
@@ -547,7 +589,7 @@ export default function HotelsPage() {
                       </CustomButton>
                   </div>
                   
-                  {(isAdmin || isAccountant) && (
+                  {(isAdmin || isAccountant || isContentManager) && (
                         <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                       <CustomButton 
                         as={Link} 
@@ -559,7 +601,7 @@ export default function HotelsPage() {
                       >
                         Edit
                       </CustomButton>
-                      {isAdmin && (
+                      {(isAdmin || isContentManager) && (
                         <CustomButton 
                           variant="red"
                           size="sm"
@@ -571,7 +613,7 @@ export default function HotelsPage() {
                       )}
                     </div>
                   )}
-                </div>
+                    </div>
                   </div>
                 </div>
               );

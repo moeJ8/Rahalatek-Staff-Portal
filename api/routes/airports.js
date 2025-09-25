@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Airport = require('../models/Airport');
+const { verifyToken } = require('../middleware/auth');
 const { invalidateDashboardCache } = require('../utils/redis');
 
 // Get all airports
@@ -14,13 +15,19 @@ router.get('/', async (req, res) => {
 });
 
 // Create a new airport
-router.post('/', async (req, res) => {
-    const airport = new Airport({
-        name: req.body.name,
-        arabicName: req.body.arabicName
-    });
-
+router.post('/', verifyToken, async (req, res) => {
     try {
+        // Check if user is authorized to add airports
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                message: 'Access denied. Only administrators, accountants, and content managers can add airports.' 
+            });
+        }
+
+        const airport = new Airport({
+            name: req.body.name,
+            arabicName: req.body.arabicName
+        });
         const newAirport = await airport.save();
         
         // Invalidate dashboard cache since airport count changed
@@ -44,8 +51,14 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update an airport
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
     try {
+        // Check if user is authorized to update airports
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                message: 'Access denied. Only administrators, accountants, and content managers can update airports.' 
+            });
+        }
         const airport = await Airport.findById(req.params.id);
         if (!airport) return res.status(404).json({ message: 'Airport not found' });
 
@@ -64,8 +77,14 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete an airport
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
     try {
+        // Check if user is authorized to delete airports
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+            return res.status(403).json({ 
+                message: 'Access denied. Only administrators, accountants, and content managers can delete airports.' 
+            });
+        }
         const airport = await Airport.findByIdAndDelete(req.params.id);
         if (!airport) return res.status(404).json({ message: 'Airport not found' });
         

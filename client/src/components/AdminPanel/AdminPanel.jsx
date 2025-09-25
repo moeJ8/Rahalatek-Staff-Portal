@@ -44,6 +44,7 @@ export default function AdminPanel() {
     const authUser = JSON.parse(localStorage.getItem('user') || '{}');
     const isAdmin = authUser.isAdmin || false;
     const isAccountant = authUser.isAccountant || false;
+    const isContentManager = authUser.isContentManager || false;
     const isNotificationsOnlyRoute = window.location.pathname === '/notifications/manage';
     
     const getInitialTab = () => {
@@ -58,12 +59,14 @@ export default function AdminPanel() {
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
             ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+            : isContentManager
+            ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
             : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests, scheduler is admin-only
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
         }
-        return 'dashboard';
+        return isContentManager ? 'hotels' : 'dashboard';
     };
 
     const [activeTab, setActiveTab] = useState(getInitialTab);
@@ -75,12 +78,14 @@ export default function AdminPanel() {
             const tabParam = params.get('tab');
             const availableTabs = isAdmin 
                 ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                : isContentManager
+                ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
                 : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
             
             if (availableTabs.includes(tabParam)) {
                 setActiveTab(tabParam);
             } else {
-                setActiveTab('dashboard');
+                setActiveTab(isContentManager ? 'hotels' : 'dashboard');
             }
         };
 
@@ -90,10 +95,12 @@ export default function AdminPanel() {
         // Also listen for programmatic navigation by checking URL changes
         const checkUrlChange = () => {
             const params = new URLSearchParams(window.location.search);
-            const tabParam = params.get('tab') || 'dashboard';
+            const tabParam = params.get('tab') || (isContentManager ? 'hotels' : 'dashboard');
             if (tabParam !== activeTab) {
                 const availableTabs = isAdmin 
                     ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                    : isContentManager
+                    ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
                     : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
                 
                 if (availableTabs.includes(tabParam)) {
@@ -109,12 +116,16 @@ export default function AdminPanel() {
             window.removeEventListener('popstate', handlePopState);
             clearInterval(interval);
         };
-    }, [activeTab, isAdmin]);
+    }, [activeTab, isAdmin, isContentManager]);
 
     const handleTabChange = (tabName) => {
-        // Prevent accountants from accessing admin-only tabs
+        // Prevent unauthorized access to restricted tabs
         if (!isAdmin && tabName === 'requests') {
-            console.warn('Access denied: Accountants cannot access user requests tab');
+            console.warn('Access denied: Only administrators can access user requests tab');
+            return;
+        }
+        if (isContentManager && !['hotels', 'tours', 'airports', 'offices'].includes(tabName)) {
+            console.warn('Access denied: Content managers can only access content management tabs');
             return;
         }
         
@@ -1562,6 +1573,8 @@ export default function AdminPanel() {
             e.preventDefault();
             const tabs = isAdmin 
                 ? ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'users', 'requests']
+                : isContentManager
+                ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
                 : ['hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials']; // Accountants can access financials but not users/requests
             const currentIndex = tabs.indexOf(activeTab);
             
@@ -2389,22 +2402,24 @@ export default function AdminPanel() {
                 <div className="md:hidden w-full fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
                     <div className="overflow-x-auto scrollbar-hide">
                         <div className="flex space-x-1 px-4 py-2 min-w-max" role="tablist" aria-label="Admin Sections">
-                                <button
-                                id="tab-dashboard-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'dashboard' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('dashboard')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'dashboard'}
-                                    aria-controls="dashboard-panel"
-                                >
-                                    Dashboard
-                                </button>
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-dashboard-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'dashboard' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('dashboard')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'dashboard'}
+                                        aria-controls="dashboard-panel"
+                                    >
+                                        Dashboard
+                                    </button>
+                                )}
                                 <button
                                 id="tab-hotels-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2469,55 +2484,61 @@ export default function AdminPanel() {
                                 >
                                     Offices
                                 </button>
-                                <button
-                                id="tab-office-vouchers-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'office-vouchers' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('office-vouchers')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'office-vouchers'}
-                                    aria-controls="office-vouchers-panel"
-                                >
-                                    Office Vouchers
-                                </button>
-                                <button
-                                id="tab-financials-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'financials' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('financials')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'financials'}
-                                    aria-controls="financials-panel"
-                                >
-                                    Financials
-                                </button>
-                                <button
-                                id="tab-debts-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'debts' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('debts')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'debts'}
-                                    aria-controls="debts-panel"
-                                >
-                                Debts
-                                </button>
-                                {(isAdmin || isAccountant) && (
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-office-vouchers-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'office-vouchers' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('office-vouchers')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'office-vouchers'}
+                                        aria-controls="office-vouchers-panel"
+                                    >
+                                        Office Vouchers
+                                    </button>
+                                )}
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-financials-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'financials' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('financials')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'financials'}
+                                        aria-controls="financials-panel"
+                                    >
+                                        Financials
+                                    </button>
+                                )}
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-debts-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'debts' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('debts')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'debts'}
+                                        aria-controls="debts-panel"
+                                    >
+                                    Debts
+                                    </button>
+                                )}
+                                {(isAdmin || isAccountant) && !isContentManager && (
                                     <button
                                     id="tab-salaries-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2553,22 +2574,24 @@ export default function AdminPanel() {
                                         Attendance
                                     </button>
                                 )}
-                                <button
-                                id="tab-users-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'users' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('users')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'users')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'users'}
-                                    aria-controls="users-panel"
-                                >
-                                    Users
-                                </button>
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-users-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'users' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('users')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'users')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'users'}
+                                        aria-controls="users-panel"
+                                    >
+                                        Users
+                                    </button>
+                                )}
                                 {isAdmin && (
                                     <button
                                     id="tab-requests-mobile"
@@ -2587,22 +2610,24 @@ export default function AdminPanel() {
                                     User Requests
                                     </button>
                                 )}
-                                <button
-                                id="tab-notifications-mobile"
-                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                        activeTab === 'notifications' 
-                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
-                                    }`}
-                                    onClick={() => handleTabChange('notifications')}
-                                    onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
-                                    tabIndex={0}
-                                    role="tab"
-                                    aria-selected={activeTab === 'notifications'}
-                                    aria-controls="notifications-panel"
-                                >
-                                    Notifications
-                                </button>
+                                {!isContentManager && (
+                                    <button
+                                    id="tab-notifications-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'notifications' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('notifications')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'notifications')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'notifications'}
+                                        aria-controls="notifications-panel"
+                                    >
+                                        Notifications
+                                    </button>
+                                )}
 
                                 {/* Show Scheduler tab to admin only */}
                                 {isAdmin && (
@@ -2643,23 +2668,25 @@ export default function AdminPanel() {
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
                             <nav className="p-2" role="tablist" aria-label="Admin Sections">
-                                    <button
-                                    id="tab-dashboard"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'dashboard' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                        onClick={() => handleTabChange('dashboard')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'dashboard'}
-                                        aria-controls="dashboard-panel"
-                                    >
-                                    <FaChartLine className="h-5 w-5 mr-3" />
-                                        Dashboard
-                                    </button>
+                                    {!isContentManager && (
+                                        <button
+                                        id="tab-dashboard"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'dashboard' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                            onClick={() => handleTabChange('dashboard')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'dashboard')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'dashboard'}
+                                            aria-controls="dashboard-panel"
+                                        >
+                                        <FaChartLine className="h-5 w-5 mr-3" />
+                                            Dashboard
+                                        </button>
+                                    )}
                                     <button
                                     id="tab-hotels"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2730,59 +2757,65 @@ export default function AdminPanel() {
                                     <FaBuilding className="h-5 w-5 mr-3" />
                                         Offices
                                     </button>
-                                    <button
-                                    id="tab-office-vouchers"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'office-vouchers' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                        onClick={() => handleTabChange('office-vouchers')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'office-vouchers'}
-                                        aria-controls="office-vouchers-panel"
-                                    >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                        Office Vouchers
-                                    </button>
-                                    <button
-                                    id="tab-financials"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'financials' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                        onClick={() => handleTabChange('financials')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'financials'}
-                                        aria-controls="financials-panel"
-                                    >
-                                    <FaDollarSign className="h-5 w-5 mr-3" />
-                                        Financials
-                                    </button>
-                                    <button
-                                    id="tab-debts"
-                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
-                                        activeTab === 'debts' 
-                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
-                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
-                                    }`}
-                                        onClick={() => handleTabChange('debts')}
-                                        onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
-                                        tabIndex={0}
-                                        role="tab"
-                                        aria-selected={activeTab === 'debts'}
-                                        aria-controls="debts-panel"
-                                    >
-                                    <FaFileInvoiceDollar className="h-5 w-5 mr-3" />
-                                    Debt Management
-                                    </button>
+                                    {!isContentManager && (
+                                        <button
+                                        id="tab-office-vouchers"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'office-vouchers' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                            onClick={() => handleTabChange('office-vouchers')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'office-vouchers')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'office-vouchers'}
+                                            aria-controls="office-vouchers-panel"
+                                        >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                            Office Vouchers
+                                        </button>
+                                    )}
+                                    {!isContentManager && (
+                                        <button
+                                        id="tab-financials"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'financials' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                            onClick={() => handleTabChange('financials')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'financials')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'financials'}
+                                            aria-controls="financials-panel"
+                                        >
+                                        <FaDollarSign className="h-5 w-5 mr-3" />
+                                            Financials
+                                        </button>
+                                    )}
+                                    {!isContentManager && (
+                                        <button
+                                        id="tab-debts"
+                                        className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                            activeTab === 'debts' 
+                                                ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                        }`}
+                                            onClick={() => handleTabChange('debts')}
+                                            onKeyDown={(e) => handleTabKeyDown(e, 'debts')}
+                                            tabIndex={0}
+                                            role="tab"
+                                            aria-selected={activeTab === 'debts'}
+                                            aria-controls="debts-panel"
+                                        >
+                                        <FaFileInvoiceDollar className="h-5 w-5 mr-3" />
+                                        Debt Management
+                                        </button>
+                                    )}
                                     {(isAdmin || isAccountant) && (
                                         <button
                                         id="tab-salaries"
@@ -2823,7 +2856,8 @@ export default function AdminPanel() {
                                         </button>
                                     )}
                                 
-                                {/* Show Users tab to both admins and accountants */}
+                                {/* Show Users tab to admins and accountants only, not content managers */}
+                                {!isContentManager && (
                                     <button
                                     id="tab-users"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2843,6 +2877,7 @@ export default function AdminPanel() {
                                     </svg>
                                         Users
                                     </button>
+                                )}
                                 
                                 {/* Only show User Requests tab to full admins */}
                                     {isAdmin && (
@@ -2867,7 +2902,8 @@ export default function AdminPanel() {
                                         </button>
                                     )}
                                 
-                                {/* Show Notifications tab to all users */}
+                                {/* Show Notifications tab to admins and accountants only, not content managers */}
+                                {!isContentManager && (
                                     <button
                                     id="tab-notifications"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2885,6 +2921,7 @@ export default function AdminPanel() {
                                     <FaBell className="h-5 w-5 mr-3" />
                                         Notifications
                                     </button>
+                                )}
 
                                 {/* Show Scheduler tab to admin only */}
                                 {isAdmin && (
@@ -2914,7 +2951,7 @@ export default function AdminPanel() {
                         <div className="flex-1">
                             
                             {/* Tab panels */}
-                            {activeTab === 'dashboard' && (
+                            {activeTab === 'dashboard' && !isContentManager && (
                                 <div id="dashboard-panel" role="tabpanel" aria-labelledby="tab-dashboard">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <Dashboard />

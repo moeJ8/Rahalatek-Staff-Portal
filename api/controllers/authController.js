@@ -68,7 +68,7 @@ exports.register = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -80,6 +80,7 @@ exports.register = async (req, res) => {
                 username: user.username,
                 isAdmin: user.isAdmin,
                 isAccountant: user.isAccountant,
+                isContentManager: user.isContentManager,
                 isApproved: user.isApproved,
                 message: 'Account created successfully. Please wait for admin approval to login.'
             }
@@ -120,7 +121,7 @@ exports.login = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -132,6 +133,7 @@ exports.login = async (req, res) => {
                 username: user.username,
                 isAdmin: user.isAdmin,
                 isAccountant: user.isAccountant,
+                isContentManager: user.isContentManager,
                 isApproved: user.isApproved
             }
         });
@@ -165,7 +167,7 @@ exports.updateUserRole = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
         
-        const { userId, isAdmin, isAccountant } = req.body;
+        const { userId, isAdmin, isAccountant, isContentManager } = req.body;
         
         // Make sure you can't modify your own admin status
         if (userId === req.user.userId) {
@@ -181,13 +183,36 @@ exports.updateUserRole = async (req, res) => {
         // Store old role for comparison
         const oldRole = {
             isAdmin: oldUser.isAdmin || false,
-            isAccountant: oldUser.isAccountant || false
+            isAccountant: oldUser.isAccountant || false,
+            isContentManager: oldUser.isContentManager || false
         };
         
         // Find and update the user
         const updateData = {};
-        if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
-        if (isAccountant !== undefined) updateData.isAccountant = isAccountant;
+        if (isAdmin !== undefined) {
+            updateData.isAdmin = isAdmin;
+            // When setting admin status, clear other roles
+            if (isAdmin) {
+                updateData.isAccountant = false;
+                updateData.isContentManager = false;
+            }
+        }
+        if (isAccountant !== undefined) {
+            updateData.isAccountant = isAccountant;
+            // When setting accountant status, clear other roles
+            if (isAccountant) {
+                updateData.isAdmin = false;
+                updateData.isContentManager = false;
+            }
+        }
+        if (isContentManager !== undefined) {
+            updateData.isContentManager = isContentManager;
+            // When setting content manager status, clear other roles
+            if (isContentManager) {
+                updateData.isAdmin = false;
+                updateData.isAccountant = false;
+            }
+        }
         
         const user = await User.findByIdAndUpdate(
             userId, 
@@ -202,12 +227,14 @@ exports.updateUserRole = async (req, res) => {
         // Create new role object
         const newRole = {
             isAdmin: user.isAdmin || false,
-            isAccountant: user.isAccountant || false
+            isAccountant: user.isAccountant || false,
+            isContentManager: user.isContentManager || false
         };
         
         // Check if role actually changed
         const roleChanged = oldRole.isAdmin !== newRole.isAdmin || 
-                           oldRole.isAccountant !== newRole.isAccountant;
+                           oldRole.isAccountant !== newRole.isAccountant ||
+                           oldRole.isContentManager !== newRole.isContentManager;
         
         // Create notification if role changed
         if (roleChanged) {

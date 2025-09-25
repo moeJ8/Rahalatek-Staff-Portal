@@ -194,6 +194,7 @@ export default function ToursPage() {
 
   const isAdmin = user && user.isAdmin;
   const isAccountant = user && user.isAccountant;
+  const isContentManager = user && user.isContentManager;
 
   // Helper functions
   const getCountryCode = (country) => {
@@ -333,7 +334,7 @@ export default function ToursPage() {
         </div>
         
         {/* Create button above tour cards */}
-        {(isAdmin || isAccountant) && (
+        {(isAdmin || isAccountant || isContentManager) && (
           <div className="flex justify-end mb-4 px-2 sm:px-4">
             <CustomButton
               as={Link}
@@ -360,7 +361,7 @@ export default function ToursPage() {
               return (
                 <div
                   key={tour._id}
-                  className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+                  className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col h-full"
                   onClick={() => window.open(`/tours/${tour.slug}`, '_blank', 'noopener,noreferrer')}
                 >
                   {/* Tour Image */}
@@ -383,7 +384,7 @@ export default function ToursPage() {
                   </div>
 
                   {/* Tour Details */}
-                  <div className="p-3 sm:p-4 md:p-6">
+                  <div className="p-3 sm:p-4 md:p-6 flex-1 flex flex-col">
                     {/* Tour Name */}
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
                       {tour.name}
@@ -413,7 +414,7 @@ export default function ToursPage() {
                     </div>
 
                     {/* Tour Details */}
-                    <div className="space-y-2 mb-3 sm:mb-4 text-xs">
+                    <div className="space-y-2 mb-1 text-xs">
                       {/* Price */}
                       <div className="flex items-center space-x-1">
                         <FaDollarSign className="text-blue-500 dark:text-teal-400 w-3 h-3" />
@@ -442,7 +443,7 @@ export default function ToursPage() {
 
                     {/* Highlights */}
                     {tour.highlights && tour.highlights.length > 0 && (
-                      <div className="mb-3 sm:mb-4">
+                      <div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -477,12 +478,15 @@ export default function ToursPage() {
 
                     {/* Description */}
                     {tour.description && (
-                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
+                      <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
                         {truncateDescription(tour.description)}
                       </p>
                     )}
 
-                    {/* Action Buttons */}
+                  </div>
+
+                  {/* Action Buttons - Always at bottom */}
+                  <div className="px-3 sm:px-4 md:px-6 pb-3 sm:pb-4 md:pb-6 mt-auto">
                     <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2">
                         <CustomButton 
@@ -499,7 +503,7 @@ export default function ToursPage() {
                         </CustomButton>
                       </div>
                       
-                      {(isAdmin || isAccountant) && (
+                      {(isAdmin || isAccountant || isContentManager) && (
                         <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                           <CustomButton 
                             as={Link} 
@@ -511,7 +515,7 @@ export default function ToursPage() {
                           >
                             Edit
                           </CustomButton>
-                          {isAdmin && (
+                          {(isAdmin || isContentManager) && (
                             <CustomButton 
                               variant="red"
                               size="sm"

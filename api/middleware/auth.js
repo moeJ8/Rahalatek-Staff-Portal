@@ -23,7 +23,8 @@ exports.verifyToken = (req, res, next) => {
         req.user = {
             userId: decoded.userId,
             isAdmin: decoded.isAdmin,
-            isAccountant: decoded.isAccountant
+            isAccountant: decoded.isAccountant,
+            isContentManager: decoded.isContentManager
         };
         
         next();

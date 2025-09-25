@@ -62,12 +62,14 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
   const getUserRole = () => {
     if (user?.isAdmin) return { text: 'Admin', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
     if (user?.isAccountant) return { text: 'Accountant', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
+    if (user?.isContentManager) return { text: 'Content Manager', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
     return { text: 'User', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
   };
 
   const getAvatarImage = () => {
     if (user?.isAdmin) return '/adminAvatar.png';
     if (user?.isAccountant) return '/accountantAvatar.png';
+    if (user?.isContentManager) return '/accountantAvatar.png'; // Use accountant avatar for now
     return '/normalUserAvatar.png';
   };
 
