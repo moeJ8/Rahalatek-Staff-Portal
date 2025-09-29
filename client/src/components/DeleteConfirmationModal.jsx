@@ -47,7 +47,6 @@ export default function DeleteConfirmationModal({
             onClick={onConfirm}
             loading={isLoading}
             disabled={isLoading}
-            icon={FaTrash}
           >
             {itemType.includes('move to trash') ? 'Yes, move to trash' : 
              itemType.includes('permanently') ? 'Yes, delete forever' : 

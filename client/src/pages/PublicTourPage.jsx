@@ -41,13 +41,50 @@ const PublicTourPage = () => {
         }
 
         const response = await axios.get(`/api/tours/public/${slug}`);
-        setTour(response.data);
+        const tourData = response.data;
+        setTour(tourData);
+
+        // Set dynamic page title and meta tags with tour data
+        if (tourData && tourData.name) {
+          document.title = `${tourData.name} | Rahalatek`;
+          
+          // Update meta description with tour details
+          const metaDescription = document.querySelector('meta[name="description"]');
+          if (metaDescription) {
+            const description = tourData.description 
+              ? tourData.description.substring(0, 150) + '...'
+              : `Discover ${tourData.name} with Rahalatek. ${tourData.tourType} tour in ${tourData.city}, ${tourData.country}. Duration: ${tourData.duration} hours.`;
+            metaDescription.setAttribute('content', description);
+          }
+
+          // Update keywords with tour-specific terms
+          const metaKeywords = document.querySelector('meta[name="keywords"]');
+          if (metaKeywords) {
+            const keywords = `${tourData.name}, ${tourData.city}, ${tourData.country}, ${tourData.tourType.toLowerCase()} tour, guided tour, travel, tourism, ${tourData.duration} hours, tour booking, travel experiences`;
+            metaKeywords.setAttribute('content', keywords);
+          }
+
+          // Update Open Graph with tour details
+          const ogTitle = document.querySelector('meta[property="og:title"]');
+          if (ogTitle) {
+            ogTitle.setAttribute('content', `${tourData.name} | Rahalatek`);
+          }
+
+          const ogDescription = document.querySelector('meta[property="og:description"]');
+          if (ogDescription) {
+            const ogDesc = tourData.description 
+              ? tourData.description.substring(0, 200) + '...'
+              : `Discover ${tourData.name} with Rahalatek. ${tourData.tourType} tour in ${tourData.city}, ${tourData.country}.`;
+            ogDescription.setAttribute('content', ogDesc);
+          }
+        }
 
         // Fetch other tours
         await fetchOtherTours();
       } catch (error) {
         console.error('Failed to fetch tour:', error);
         setTour(null);
+        document.title = 'Tour Not Found | Rahalatek';
       } finally {
         setLoading(false);
       }

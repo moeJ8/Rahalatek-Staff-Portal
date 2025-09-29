@@ -9,7 +9,7 @@ export default function NotFoundPage() {
       <div className="max-w-2xl w-full text-center">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
-          <Link to="/" className="transition-transform duration-300 hover:scale-105">
+          <Link to="/home" className="transition-transform duration-300 hover:scale-105">
             <img 
               src="/Logolight.png" 
               alt="Rahalatek Logo" 
@@ -50,7 +50,7 @@ export default function NotFoundPage() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-md sm:max-w-none mx-auto">
-          <Link to="/" className="w-full sm:w-auto">
+          <Link to="/home" className="w-full sm:w-auto">
             <CustomButton
               variant="blue"
               size="lg"

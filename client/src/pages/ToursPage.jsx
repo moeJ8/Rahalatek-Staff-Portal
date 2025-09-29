@@ -419,7 +419,11 @@ export default function ToursPage() {
                       <div className="flex items-center space-x-1">
                         <FaDollarSign className="text-blue-500 dark:text-teal-400 w-3 h-3" />
                         <span className="text-gray-700 dark:text-gray-300">
-                          Price: <span className="text-green-600 dark:text-green-400 font-semibold">${tour.price}</span> {tour.tourType === 'Group' ? 'per person' : 'per car'}
+                          Price: <span className="text-green-600 dark:text-green-400 font-semibold">${tour.price}</span> {tour.tourType === 'Group' ? 'per person' : 'per car'} | Total: {tour.totalPrice && Number(tour.totalPrice) > 0 ? (
+                            <span className="text-green-600 dark:text-green-400 font-semibold">${tour.totalPrice}</span>
+                          ) : (
+                            <span className="text-gray-500 dark:text-gray-400">No pricing available</span>
+                          )}
                         </span>
                       </div>
 

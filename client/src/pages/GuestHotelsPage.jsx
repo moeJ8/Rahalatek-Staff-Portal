@@ -41,6 +41,40 @@ const GuestHotelsPage = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
 
+  // Set page title and meta tags
+  useEffect(() => {
+    document.title = 'Rahalatek | Hotels';
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 
+        'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels, resorts, and boutique accommodations worldwide. Book your perfect stay today.'
+      );
+    }
+
+    // Update keywords
+    const metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute('content', 
+        'hotels, luxury hotels, accommodations, resorts, boutique hotels, 3-star hotels, 4-star hotels, 5-star hotels, hotel booking, premium accommodations, hotel rooms, hospitality, lodging, hotel deals'
+      );
+    }
+
+    // Update Open Graph
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', 'Browse Hotels - Rahalatek | Luxury Hotels & Accommodations');
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      ogDescription.setAttribute('content', 
+        'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels and resorts worldwide.'
+      );
+    }
+  }, []);
+
   // Fetch hotels
   useEffect(() => {
     const fetchHotels = async () => {
@@ -122,7 +156,15 @@ const GuestHotelsPage = () => {
     setCityFilter('');
   };
 
-  const handleHotelClick = (hotel) => {
+  const handleHotelClick = async (hotel) => {
+    try {
+      // Increment view count
+      await axios.post(`/api/hotels/public/${hotel.slug}/view`);
+    } catch (error) {
+      console.error('Error incrementing hotel views:', error);
+    }
+    
+    // Navigate to hotel page
     navigate(`/hotels/${hotel.slug}`);
   };
 

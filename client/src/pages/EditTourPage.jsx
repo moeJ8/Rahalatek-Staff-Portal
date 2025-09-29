@@ -11,6 +11,7 @@ import RahalatekLoader from '../components/RahalatekLoader';
 import ImageUploader from '../components/ImageUploader';
 import toast from 'react-hot-toast';
 import { getCountries, getCitiesByCountry } from '../utils/countryCities';
+import { validateSlug, formatSlug, formatSlugWhileTyping, getSlugPreview } from '../utils/slugValidation';
 
 
 export default function EditTourPage() {
@@ -19,12 +20,14 @@ export default function EditTourPage() {
 
     const [tourData, setTourData] = useState({
         name: '',
+        slug: '',
         country: '',
         city: '',
         description: '',
         detailedDescription: '',
         tourType: 'Group',
         price: '',
+        totalPrice: '',
         vipCarType: 'Vito',
         carCapacity: {
             min: 2,
@@ -39,6 +42,7 @@ export default function EditTourPage() {
     const [loading, setLoading] = useState(true);
     const [highlightInput, setHighlightInput] = useState('');
     const [policyInput, setPolicyInput] = useState('');
+    const [slugError, setSlugError] = useState('');
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -62,6 +66,25 @@ export default function EditTourPage() {
             ...tourData,
             [name]: value,
         });
+    };
+
+    // Handle slug input with validation
+    const handleSlugChange = (e) => {
+        const value = e.target.value;
+        const formattedSlug = formatSlugWhileTyping(value);
+        
+        setTourData({
+            ...tourData,
+            slug: formattedSlug,
+        });
+
+        // Validate slug and show error if invalid
+        const validation = validateSlug(formattedSlug);
+        if (!validation.isValid) {
+            setSlugError(validation.message);
+        } else {
+            setSlugError('');
+        }
     };
 
     // Handle country change and reset city
@@ -94,8 +117,36 @@ export default function EditTourPage() {
     
     const handleTourSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate slug before submission
+        if (tourData.slug && tourData.slug.trim()) {
+            const validation = validateSlug(tourData.slug);
+            if (!validation.isValid) {
+                toast.error(validation.message, {
+                    duration: 4000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
+                return;
+            }
+        }
+        
         try {
-            await axios.put(`/api/tours/${id}`, tourData);
+            const finalTourData = {
+                ...tourData,
+                slug: tourData.slug ? formatSlug(tourData.slug) : '', // Final formatting
+            };
+            
+            await axios.put(`/api/tours/${id}`, finalTourData);
             showSuccessMessage('Tour updated successfully!');
             setTimeout(() => {
                 navigate('/tours');
@@ -293,7 +344,7 @@ export default function EditTourPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <div className="mb-2 block">
-                                    <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($)' : 'Price per Car ($)'} />
+                                    <Label htmlFor="tourPrice" value={tourData.tourType === 'Group' ? 'Price per Person ($) (Capital)' : 'Price per Car ($) (Capital)'} />
                                 </div>
                                 <TextInput
                                     id="tourPrice"
@@ -302,6 +353,19 @@ export default function EditTourPage() {
                                     value={tourData.price}
                                     onChange={handleTourChange}
                                     required
+                                />
+                            </div>
+                            
+                            <div>
+                                <div className="mb-2 block">
+                                    <Label htmlFor="tourTotalPrice" value="Total Price ($)" />
+                                </div>
+                                <TextInput
+                                    id="tourTotalPrice"
+                                    type="number"
+                                    name="totalPrice"
+                                    value={tourData.totalPrice}
+                                    onChange={handleTourChange}
                                 />
                             </div>
                             
@@ -495,6 +559,27 @@ export default function EditTourPage() {
                                 maxImages={8}
                                 existingImages={tourData.images || []}
                             />
+                        </div>
+
+                        {/* Custom URL Slug */}
+                        <div>
+                            <div className="mb-2 block">
+                                <Label htmlFor="tourSlug" value="Custom URL Slug (Optional)" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                            </div>
+                            <TextInput
+                                id="tourSlug"
+                                name="slug"
+                                value={tourData.slug}
+                                onChange={handleSlugChange}
+                                placeholder="e.g., istanbul-historic-tour"
+                                className={slugError ? 'border-red-500' : ''}
+                            />
+                            {slugError && (
+                                <p className="text-red-500 text-xs mt-1">{slugError}</p>
+                            )}
+                            <p className="text-gray-500 text-xs mt-1">
+                                Preview: <span className="font-mono">/tours/{getSlugPreview(tourData.slug, tourData.name)}</span>
+                            </p>
                         </div>
                         
                         <CustomButton type="submit" variant="pinkToOrange">

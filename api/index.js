@@ -26,6 +26,8 @@ const holidayRoutes = require('./routes/holidayRoutes');
 const userLeaveRoutes = require('./routes/userLeaveRoutes');
 const schedulerRoutes = require('./routes/schedulerRoutes');
 const imageRoutes = require('./routes/imageRoutes');
+const carouselRoutes = require('./routes/carouselRoutes');
+const destinationRoutes = require('./routes/destinationRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const SchedulerService = require('./services/schedulerService');
@@ -82,6 +84,8 @@ app.use('/api/holidays', holidayRoutes);
 app.use('/api/user-leave', userLeaveRoutes);
 app.use('/api/scheduler', schedulerRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/carousel', carouselRoutes);
+app.use('/api/destinations', destinationRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

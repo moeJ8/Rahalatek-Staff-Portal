@@ -44,6 +44,73 @@ const GuestToursPage = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
 
+  // Set page title and meta tags (dynamically based on filters)
+  useEffect(() => {
+    // Dynamic title based on city filter
+    if (cityFilter) {
+      document.title = `${cityFilter} Tours | Rahalatek`;
+    } else if (countryFilter) {
+      document.title = `${countryFilter} Tours | Rahalatek`;
+    } else {
+      document.title = 'Rahalatek | Tours';
+    }
+    
+    // Update meta description based on location
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      let description;
+      if (cityFilter) {
+        description = `Discover amazing tours in ${cityFilter} with Rahalatek. Browse guided tours, VIP experiences, and travel packages in ${cityFilter}. Book your perfect ${cityFilter} tour today.`;
+      } else if (countryFilter) {
+        description = `Explore ${countryFilter} tours with Rahalatek. Find guided tours, VIP experiences, and travel packages throughout ${countryFilter}. Book your perfect ${countryFilter} tour today.`;
+      } else {
+        description = 'Browse amazing guided tours and travel experiences with Rahalatek. Find group tours, VIP private tours, cultural experiences, and adventure tours worldwide. Book your perfect tour today.';
+      }
+      metaDescription.setAttribute('content', description);
+    }
+
+    // Update keywords based on location
+    const metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      let keywords;
+      if (cityFilter) {
+        keywords = `${cityFilter} tours, ${cityFilter} travel, ${cityFilter} guided tours, ${cityFilter} experiences, tours in ${cityFilter}, ${cityFilter} tourism, ${cityFilter} attractions, ${cityFilter} sightseeing, visit ${cityFilter}, ${cityFilter} tour packages`;
+      } else if (countryFilter) {
+        keywords = `${countryFilter} tours, ${countryFilter} travel, ${countryFilter} guided tours, ${countryFilter} experiences, tours in ${countryFilter}, ${countryFilter} tourism, ${countryFilter} attractions, ${countryFilter} vacation`;
+      } else {
+        keywords = 'tours, guided tours, travel experiences, group tours, VIP tours, private tours, cultural tours, adventure tours, city tours, tour booking, travel packages, sightseeing tours, tour guide, travel activities';
+      }
+      metaKeywords.setAttribute('content', keywords);
+    }
+
+    // Update Open Graph based on location
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      let title;
+      if (cityFilter) {
+        title = `${cityFilter} Tours | Rahalatek`;
+      } else if (countryFilter) {
+        title = `${countryFilter} Tours | Rahalatek`;
+      } else {
+        title = 'Browse Tours - Rahalatek | Guided Tours & Travel Experiences';
+      }
+      ogTitle.setAttribute('content', title);
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      let description;
+      if (cityFilter) {
+        description = `Discover amazing tours in ${cityFilter} with Rahalatek. Browse guided tours and VIP experiences in ${cityFilter}.`;
+      } else if (countryFilter) {
+        description = `Explore ${countryFilter} tours with Rahalatek. Find guided tours and travel experiences throughout ${countryFilter}.`;
+      } else {
+        description = 'Browse amazing guided tours and travel experiences with Rahalatek. Find group tours, VIP private tours, and adventure tours worldwide.';
+      }
+      ogDescription.setAttribute('content', description);
+    }
+  }, [cityFilter, countryFilter]);
+
   // Fetch tours
   useEffect(() => {
     const fetchTours = async () => {
@@ -155,7 +222,15 @@ const GuestToursPage = () => {
     setTourTypeFilter('');
   };
 
-  const handleTourClick = (tour) => {
+  const handleTourClick = async (tour) => {
+    try {
+      // Increment view count
+      await axios.post(`/api/tours/public/${tour.slug}/view`);
+    } catch (error) {
+      console.error('Error incrementing tour views:', error);
+    }
+    
+    // Navigate to tour page
     navigate(`/tours/${tour.slug}`);
   };
 
@@ -290,6 +365,21 @@ const GuestToursPage = () => {
               {truncateDescription(tour.description, screenType)}
             </p>
           )}
+
+          {/* Price Display */}
+          <div className="mb-3 sm:mb-4">
+            <div className="text-right">
+              {tour.totalPrice && Number(tour.totalPrice) > 0 ? (
+                <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
+                  ${tour.totalPrice}
+                </span>
+              ) : (
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  Contact for pricing
+                </span>
+              )}
+            </div>
+          </div>
 
           {/* View Tour Button */}
           <div className="flex items-center justify-between">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import GuestNotFoundPage from '../pages/GuestNotFoundPage';
 
 export default function ProtectedRoute({ requireAdmin, requireFullAdmin, requireContentManager }) {
   const token = localStorage.getItem('token');
@@ -18,11 +19,11 @@ export default function ProtectedRoute({ requireAdmin, requireFullAdmin, require
         : true;
 
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace />;
+    return <GuestNotFoundPage />;
   }
   
   if ((requireAdmin || requireFullAdmin || requireContentManager) && !hasRequiredRole) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <Outlet />;

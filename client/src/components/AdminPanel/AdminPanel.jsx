@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiRefresh } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope, FaPalette } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from '../UserBadge'
 import CustomButton from '../CustomButton'
@@ -34,6 +34,7 @@ const Tours = React.lazy(() => import('./Tours'))
 const Offices = React.lazy(() => import('./Offices'))
 const Users = React.lazy(() => import('./Users'))
 const UserRequests = React.lazy(() => import('./UserRequests'))
+const UIManagement = React.lazy(() => import('./UIManagement'))
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -98,9 +99,9 @@ export default function AdminPanel() {
             const tabParam = params.get('tab') || (isContentManager ? 'hotels' : 'dashboard');
             if (tabParam !== activeTab) {
                 const availableTabs = isAdmin 
-                    ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                    ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler', 'ui-management']
                     : isContentManager
-                    ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
+                    ? ['hotels', 'tours', 'airports', 'offices', 'ui-management'] // Content Managers can only access content management tabs
                     : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
                 
                 if (availableTabs.includes(tabParam)) {
@@ -124,7 +125,7 @@ export default function AdminPanel() {
             console.warn('Access denied: Only administrators can access user requests tab');
             return;
         }
-        if (isContentManager && !['hotels', 'tours', 'airports', 'offices'].includes(tabName)) {
+        if (isContentManager && !['hotels', 'tours', 'airports', 'offices', 'ui-management'].includes(tabName)) {
             console.warn('Access denied: Content managers can only access content management tabs');
             return;
         }
@@ -866,6 +867,7 @@ export default function AdminPanel() {
                         username: user.username,
                         isAdmin: user.isAdmin || false,
                         isAccountant: user.isAccountant || false,
+                        isContentManager: user.isContentManager || false,
                         salary: currentSalary,
                         currency: currentCurrency,
                         totalBonus: totalBonus,
@@ -881,6 +883,7 @@ export default function AdminPanel() {
                         username: user.username,
                         isAdmin: user.isAdmin || false,
                         isAccountant: user.isAccountant || false,
+                        isContentManager: user.isContentManager || false,
                         salary: 0,
                         currency: 'USD',
                         totalBonus: 0,
@@ -2648,6 +2651,26 @@ export default function AdminPanel() {
                                         Email Scheduler
                                     </button>
                                 )}
+                                
+                                {/* Show UI Management tab to admin and content managers */}
+                                {(isAdmin || isContentManager) && (
+                                    <button
+                                    id="tab-ui-management-mobile"
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            activeTab === 'ui-management' 
+                                            ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                        }`}
+                                        onClick={() => handleTabChange('ui-management')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'ui-management')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'ui-management'}
+                                        aria-controls="ui-management-panel"
+                                    >
+                                        UI Management
+                                    </button>
+                                )}
                         </div>
                     </div>
                             </div>
@@ -2941,6 +2964,27 @@ export default function AdminPanel() {
                                     >
                                     <FaEnvelope className="h-5 w-5 mr-3" />
                                         Email Scheduler
+                                    </button>
+                                )}
+
+                                {/* Show UI Management tab to admin and content managers */}
+                                {(isAdmin || isContentManager) && (
+                                    <button
+                                    id="tab-ui-management"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'ui-management' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('ui-management')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'ui-management')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'ui-management'}
+                                        aria-controls="ui-management-panel"
+                                    >
+                                    <FaPalette className="h-5 w-5 mr-3" />
+                                        UI Management
                                     </button>
                                 )}
                             </nav>
@@ -5098,16 +5142,7 @@ export default function AdminPanel() {
                                                                             <h5 className="font-semibold text-gray-900 dark:text-white mr-2">
                                                                                 {userData.username}
                                                                             </h5>
-                                                                            {userData.isAdmin && (
-                                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                                                                    Admin
-                                                                                </span>
-                                                                            )}
-                                                                            {userData.isAccountant && !userData.isAdmin && (
-                                                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                                                                                    Accountant
-                                                                                </span>
-                                                                            )}
+                                                                            <UserBadge user={userData} size="sm" />
                                                                         </div>
                                                                         
                                                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -6013,6 +6048,15 @@ export default function AdminPanel() {
                                         setNotificationLoading={setNotificationLoading}
                                     />
                                 </Suspense>
+                            )}
+
+                            {/* UI Management Panel - Admin and Content Manager */}
+                            {activeTab === 'ui-management' && (isAdmin || isContentManager) && (
+                                <div id="ui-management-panel" role="tabpanel" aria-labelledby="tab-ui-management">
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <UIManagement />
+                                    </Suspense>
+                                </div>
                             )}
                             
 

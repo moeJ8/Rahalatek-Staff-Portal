@@ -83,6 +83,40 @@ exports.getHotelBySlug = async (req, res) => {
     }
 };
 
+// Increment hotel views
+exports.incrementHotelViews = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const hotel = await Hotel.findOneAndUpdate(
+            { slug: slug },
+            { $inc: { views: 1 } },
+            { new: true }
+        );
+        
+        if (!hotel) {
+            return res.status(404).json({ message: 'Hotel not found' });
+        }
+        
+        res.json({ success: true, views: hotel.views });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Get featured hotels (sorted by views)
+exports.getFeaturedHotels = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
+        const hotels = await Hotel.find({})
+            .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
+            .limit(limit);
+        
+        res.json(hotels);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Get hotels by country
 exports.getHotelsByCountry = async (req, res) => {
     try {

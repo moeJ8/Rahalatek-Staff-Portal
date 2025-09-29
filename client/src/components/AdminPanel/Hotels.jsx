@@ -14,12 +14,14 @@ import ImageUploader from '../ImageUploader'
 import RoomImageUploader from '../RoomImageUploader'
 import HotelAmenitiesModal from '../HotelAmenitiesModal'
 import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
+import { validateSlug, formatSlug, formatSlugWhileTyping, getSlugPreview } from '../../utils/slugValidation'
 
 
 
 export default function Hotels() {
     const [hotelData, setHotelData] = useState({
         name: '',
+        slug: '',
         country: '',
         city: '',
         stars: '',
@@ -48,6 +50,7 @@ export default function Hotels() {
     const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
     const [airports, setAirports] = useState([]);
     const [modalLoading, setModalLoading] = useState(false);
+    const [slugError, setSlugError] = useState('');
     const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
     
     // Room highlights and details state
@@ -145,6 +148,25 @@ export default function Hotels() {
             ...hotelData,
             [name]: type === 'checkbox' ? checked : value,
         });
+    };
+
+    // Handle slug input with validation
+    const handleSlugChange = (e) => {
+        const value = e.target.value;
+        const formattedSlug = formatSlugWhileTyping(value);
+        
+        setHotelData({
+            ...hotelData,
+            slug: formattedSlug,
+        });
+
+        // Validate slug and show error if invalid
+        const validation = validateSlug(formattedSlug);
+        if (!validation.isValid) {
+            setSlugError(validation.message);
+        } else {
+            setSlugError('');
+        }
     };
 
     const toggleCustomHotelCity = () => {
@@ -509,6 +531,29 @@ export default function Hotels() {
 
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate slug before submission
+        if (hotelData.slug && hotelData.slug.trim()) {
+            const validation = validateSlug(hotelData.slug);
+            if (!validation.isValid) {
+                toast.error(validation.message, {
+                    duration: 4000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
+                return;
+            }
+        }
+        
         try {
             // Get room types from the form
             const roomTypes = addRoomTypesToHotelData();
@@ -516,6 +561,7 @@ export default function Hotels() {
             // Create a new hotel data object with the room types included
             const hotelDataWithRoomTypes = {
                 ...hotelData,
+                slug: hotelData.slug ? formatSlug(hotelData.slug) : '', // Final formatting
                 roomTypes: roomTypes
             };
             
@@ -525,6 +571,7 @@ export default function Hotels() {
             // Reset the form
             setHotelData({
                 name: '',
+                slug: '',
                 country: '',
                 city: '',
                 stars: '',
@@ -570,6 +617,7 @@ export default function Hotels() {
             });
             
             setCustomRoomTypes([]);
+            setSlugError('');
             
             toast.success('Hotel added successfully!', {
                 duration: 3000,
@@ -789,6 +837,7 @@ export default function Hotels() {
         // Set the hotel data with duplicated data
         setHotelData({
             name: hotelToDuplicate.name + ' (Copy)',
+            slug: '', // Clear slug for duplication to allow auto-generation
             country: hotelToDuplicate.country || '',
             city: hotelToDuplicate.city,
             stars: hotelToDuplicate.stars.toString(),
@@ -1103,19 +1152,19 @@ export default function Hotels() {
                                                                                             </div>
                                                                                             <div>
                                                                                                 <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Sleeps</Label>
-                                                                                                <Select
-                                                                                                    size="sm"
+                                                                                                <CustomSelect
                                                                                                     value={roomDetails[roomType]?.sleeps || 1}
-                                                                                                    onChange={(e) => handleRoomDetailChange(roomType, 'sleeps', parseInt(e.target.value))}
+                                                                                                    onChange={(value) => handleRoomDetailChange(roomType, 'sleeps', parseInt(value))}
+                                                                                                    options={[
+                                                                                                        { value: 1, label: '1 Guest' },
+                                                                                                        { value: 2, label: '2 Guests' },
+                                                                                                        { value: 3, label: '3 Guests' },
+                                                                                                        { value: 4, label: '4 Guests' },
+                                                                                                        { value: 5, label: '5 Guests' },
+                                                                                                        { value: 6, label: '6 Guests' }
+                                                                                                    ]}
                                                                                                     className="text-xs"
-                                                                                                >
-                                                                                                    <option value={1}>1 Guest</option>
-                                                                                                    <option value={2}>2 Guests</option>
-                                                                                                    <option value={3}>3 Guests</option>
-                                                                                                    <option value={4}>4 Guests</option>
-                                                                                                    <option value={5}>5 Guests</option>
-                                                                                                    <option value={6}>6 Guests</option>
-                                                                                                </Select>
+                                                                                                />
                                                                                             </div>
                                                                                         </div>
 
@@ -1328,6 +1377,150 @@ export default function Hotels() {
                                                                                 maxImages={5}
                                                                                 existingImages={roomImages[roomType.id] || []}
                                                                             />
+                                                                        </div>
+
+                                                                        {/* Room Highlights */}
+                                                                        <div className="mt-3">
+                                                                            <Label className="text-xs font-medium mb-2 block">Room Highlights</Label>
+                                                                            <div className="flex gap-2 mb-3">
+                                                                                <TextInput
+                                                                                    placeholder="Add a highlight"
+                                                                                    value={highlightInputs[roomType.id] || ''}
+                                                                                    onChange={(e) => handleHighlightInputChange(roomType.id, e.target.value)}
+                                                                                    className="flex-1"
+                                                                                    size="sm"
+                                                                                />
+                                                                                <CustomButton 
+                                                                                    type="button"
+                                                                                    onClick={() => handleAddHighlight(roomType.id)}
+                                                                                    variant="purple"
+                                                                                    size="xs"
+                                                                                    icon={HiPlus}
+                                                                                    title="Add highlight to room"
+                                                                                >
+                                                                                    Add
+                                                                                </CustomButton>
+                                                                            </div>
+                                                                            
+                                                                            {(roomHighlights[roomType.id] || []).length > 0 && (
+                                                                                <div className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                                                                    <h5 className="text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Added Highlights:</h5>
+                                                                                    <ul className="space-y-1">
+                                                                                        {(roomHighlights[roomType.id] || []).map((highlight, highlightIndex) => (
+                                                                                            <li key={highlightIndex} className="flex justify-between items-center p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800">
+                                                                                                <span className="text-xs text-gray-800 dark:text-gray-200">• {highlight}</span>
+                                                                                                <CustomButton
+                                                                                                    variant="red"
+                                                                                                    size="xs"
+                                                                                                    onClick={() => handleRemoveHighlight(roomType.id, highlightIndex)}
+                                                                                                    icon={HiX}
+                                                                                                    title="Remove highlight"
+                                                                                                />
+                                                                                            </li>
+                                                                                        ))}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Room Details & Amenities */}
+                                                                        <div className="mt-3">
+                                                                            <Accordion collapseAll className="border-none">
+                                                                                <Accordion.Panel>
+                                                                                    <Accordion.Title className="text-xs font-medium p-2 bg-gray-100 dark:bg-slate-800 flex items-center">
+                                                                                        <HiPlus className="mr-2" size={14} />
+                                                                                        Room Details & Amenities
+                                                                                    </Accordion.Title>
+                                                                                    <Accordion.Content className="p-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
+                                                                                        <div className="space-y-3">
+                                                                                            {/* Basic Details */}
+                                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                                                <div>
+                                                                                                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Size (sq m)</Label>
+                                                                                                    <TextInput
+                                                                                                        type="number"
+                                                                                                        size="sm"
+                                                                                                        placeholder="23"
+                                                                                                        value={roomDetails[roomType.id]?.size?.value || ""}
+                                                                                                        onChange={(e) => handleRoomSizeChange(roomType.id, e.target.value)}
+                                                                                                        className="text-xs"
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Sleeps</Label>
+                                                                                                    <CustomSelect
+                                                                                                        value={roomDetails[roomType.id]?.sleeps || 1}
+                                                                                                        onChange={(value) => handleRoomDetailChange(roomType.id, 'sleeps', parseInt(value))}
+                                                                                                        options={[
+                                                                                                            { value: 1, label: '1 Guest' },
+                                                                                                            { value: 2, label: '2 Guests' },
+                                                                                                            { value: 3, label: '3 Guests' },
+                                                                                                            { value: 4, label: '4 Guests' },
+                                                                                                            { value: 5, label: '5 Guests' },
+                                                                                                            { value: 6, label: '6 Guests' }
+                                                                                                        ]}
+                                                                                                        className="text-xs"
+                                                                                                    />
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className="grid grid-cols-2 gap-2">
+                                                                                                <div>
+                                                                                                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">View</Label>
+                                                                                                    <TextInput
+                                                                                                        size="sm"
+                                                                                                        placeholder="Sea view, City view, etc."
+                                                                                                        value={roomDetails[roomType.id]?.view || ""}
+                                                                                                        onChange={(e) => handleRoomDetailChange(roomType.id, 'view', e.target.value)}
+                                                                                                        className="text-xs"
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div>
+                                                                                                    <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Bed Type</Label>
+                                                                                                    <TextInput
+                                                                                                        size="sm"
+                                                                                                        placeholder="1 Double Bed, Twin beds, etc."
+                                                                                                        value={roomDetails[roomType.id]?.bedType || ""}
+                                                                                                        onChange={(e) => handleRoomDetailChange(roomType.id, 'bedType', e.target.value)}
+                                                                                                        className="text-xs"
+                                                                                                    />
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            {/* Amenities Checkboxes */}
+                                                                                            <div>
+                                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Room Amenities</Label>
+                                                                                                <div className="grid grid-cols-2 gap-1">
+                                                                                                    {[
+                                                                                                        { key: 'balcony', label: 'Balcony' },
+                                                                                                        { key: 'airConditioning', label: 'Air conditioning' },
+                                                                                                        { key: 'soundproofed', label: 'Soundproofed' },
+                                                                                                        { key: 'freeWifi', label: 'Free WiFi' },
+                                                                                                        { key: 'minibar', label: 'Minibar' },
+                                                                                                        { key: 'tv', label: 'LCD TV' },
+                                                                                                        { key: 'hairdryer', label: 'Hairdryer' },
+                                                                                                        { key: 'bathrobes', label: 'Bathrobes' },
+                                                                                                        { key: 'freeCots', label: 'Free cots/infant beds' },
+                                                                                                        { key: 'safe', label: 'Safe' }
+                                                                                                    ].map(({ key, label }) => (
+                                                                                                        <div key={key} className="flex items-center gap-1">
+                                                                                                            <Checkbox
+                                                                                                                id={`${roomType.id}-${key}`}
+                                                                                                                checked={roomDetails[roomType.id]?.[key] || false}
+                                                                                                                onChange={(e) => handleRoomDetailChange(roomType.id, key, e.target.checked)}
+                                                                                                                className="scale-75"
+                                                                                                            />
+                                                                                                            <Label htmlFor={`${roomType.id}-${key}`} className="text-xs text-gray-600 dark:text-gray-400">
+                                                                                                                {label}
+                                                                                                            </Label>
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </Accordion.Content>
+                                                                                </Accordion.Panel>
+                                                                            </Accordion>
                                                                         </div>
                                                                         
                                                                         {/* Monthly pricing accordion for custom room types */}
@@ -1735,6 +1928,27 @@ export default function Hotels() {
                                                 maxImages={10}
                                                 existingImages={hotelData.images || []}
                                             />
+                                        </div>
+
+                                        {/* Custom URL Slug */}
+                                        <div>
+                                            <div className="mb-2 block">
+                                                <Label htmlFor="hotelSlug" value="Custom URL Slug (Optional)" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                                            </div>
+                                            <TextInput
+                                                id="hotelSlug"
+                                                name="slug"
+                                                value={hotelData.slug}
+                                                onChange={handleSlugChange}
+                                                placeholder="e.g., grand-hotel-istanbul"
+                                                className={slugError ? 'border-red-500' : ''}
+                                            />
+                                            {slugError && (
+                                                <p className="text-red-500 text-xs mt-1">{slugError}</p>
+                                            )}
+                                            <p className="text-gray-500 text-xs mt-1">
+                                                Preview: <span className="font-mono">/hotels/{getSlugPreview(hotelData.slug, hotelData.name)}</span>
+                                            </p>
                                         </div>
 
                                         {/* Hotel FAQs */}

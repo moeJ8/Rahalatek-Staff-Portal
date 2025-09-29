@@ -211,7 +211,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-20">
-            <Link to="/" className="flex items-center">
+            <Link to={user ? "/home" : "/"} className="flex items-center">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"} 
                 alt="Logo" 
@@ -229,16 +229,16 @@ export default function Header() {
             {user ? (
               <>
                 <Link 
-                  to="/" 
+                  to="/home" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/') 
+                    isActive('/home') 
                       ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                       : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                   }`}
                 >
                   Home
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
+                    isActive('/home') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
                 <Link 
@@ -291,6 +291,19 @@ export default function Header() {
               <>
                 {/* Guest Navigation Links */}
                 <Link 
+                  to="/" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isActive('/') 
+                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                  }`}
+                >
+                  Home
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                    isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
+                </Link>
+                <Link 
                   to="/guest/hotels" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isActive('/guest/hotels') 
@@ -321,7 +334,7 @@ export default function Header() {
                   <CustomButton 
                     as={Link} 
                     to="/signin"
-                    variant="blueToTeal" 
+                    variant="rippleBlueToYellowTeal" 
                     size="sm"
                   >
                     Sign In
@@ -376,10 +389,10 @@ export default function Header() {
                 <div className="grid grid-cols-3 gap-4 px-2">
                   {/* Row 1 */}
                   <Link 
-                    to="/"
+                    to="/home"
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                      isActive('/') 
+                      isActive('/home') 
                         ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
@@ -555,8 +568,21 @@ export default function Header() {
               </>
             ) : (
               <>
-                {/* Guest Mobile Navigation - 2 Column Grid */}
-                <div className="grid grid-cols-2 gap-4 px-2">
+                {/* Guest Mobile Navigation - 3 Column Grid */}
+                <div className="grid grid-cols-3 gap-4 px-2">
+                  <Link 
+                    to="/"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Home</span>
+                  </Link>
+                  
                   <Link 
                     to="/guest/hotels"
                     onClick={closeMobileMenu}
@@ -621,7 +647,7 @@ export default function Header() {
                       as={Link}
                       to="/signin"
                       onClick={closeMobileMenu}
-                      variant="blueToTeal"
+                      variant="rippleBlueToYellowTeal"
                       size="lg"
                       className="w-full flex items-center justify-center gap-3"
                     >

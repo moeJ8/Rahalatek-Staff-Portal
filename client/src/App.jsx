@@ -33,6 +33,8 @@ const PublicHotelPage = React.lazy(() => import('./pages/PublicHotelPage'))
 const PublicTourPage = React.lazy(() => import('./pages/PublicTourPage'))
 const GuestHotelsPage = React.lazy(() => import('./pages/GuestHotelsPage'))
 const GuestToursPage = React.lazy(() => import('./pages/GuestToursPage'))
+const GuestHomePage = React.lazy(() => import('./pages/Visitors/GuestHomePage'))
+const GuestCountryPage = React.lazy(() => import('./pages/Visitors/GuestCountryPage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const GuestNotFoundPage = React.lazy(() => import('./pages/GuestNotFoundPage'))
 
@@ -103,7 +105,7 @@ function App() {
             </div>
           }>
             <Routes>
-              <Route path="/signin" element={user ? <Navigate to="/" /> : <SignInPage />} />
+              <Route path="/signin" element={user ? <Navigate to="/home" /> : <SignInPage />} />
               <Route path="/verify-email" element={<EmailVerificationPage />} />
               
               {/* Protected Routes - Admin and Accountant access */}
@@ -117,9 +119,8 @@ function App() {
               </Route>
               
               <Route element={<ProtectedRoute requireAdmin={false} />}>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/home" element={<HomePage />} />
                 <Route path="/booking" element={<BookingPage />} />
-                <Route path="/home" element={<Navigate to="/booking" replace />} />
                 <Route path="/vouchers" element={<VouchersPage />} />
                 <Route path="/vouchers/new" element={<CreateVoucherPage />} />
                 <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
@@ -136,8 +137,10 @@ function App() {
               
               {/* Guest Only Routes - Only accessible to non-authenticated users */}
               <Route element={<GuestOnlyRoute />}>
+                <Route path="/" element={<GuestHomePage />} />
                 <Route path="/guest/hotels" element={<GuestHotelsPage />} />
                 <Route path="/guest/tours" element={<GuestToursPage />} />
+                <Route path="/country/:country" element={<GuestCountryPage />} />
               </Route>
               
               {/* Public Routes - Accessible without authentication */}

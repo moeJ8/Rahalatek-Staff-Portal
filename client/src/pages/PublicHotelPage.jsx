@@ -60,10 +60,46 @@ const PublicHotelPage = () => {
         }
 
         const response = await axios.get(`/api/hotels/public/${slug}`);
-        setHotel(response.data);
+        const hotelData = response.data;
+        setHotel(hotelData);
         
-        if (response.data.roomTypes && response.data.roomTypes.length > 0) {
-          setSelectedRoomType(response.data.roomTypes[0]);
+        // Set dynamic page title and meta tags with hotel data
+        if (hotelData && hotelData.name) {
+          document.title = `${hotelData.name} | Rahalatek`;
+          
+          // Update meta description with hotel details
+          const metaDescription = document.querySelector('meta[name="description"]');
+          if (metaDescription) {
+            const description = hotelData.description 
+              ? hotelData.description.substring(0, 150) + '...'
+              : `Experience luxury at ${hotelData.name} with Rahalatek. ${hotelData.stars}-star hotel in ${hotelData.city}, ${hotelData.country}. Premium accommodations and excellent service.`;
+            metaDescription.setAttribute('content', description);
+          }
+
+          // Update keywords with hotel-specific terms
+          const metaKeywords = document.querySelector('meta[name="keywords"]');
+          if (metaKeywords) {
+            const keywords = `${hotelData.name}, ${hotelData.city}, ${hotelData.country}, ${hotelData.stars} star hotel, luxury hotel, hotel booking, accommodations, hospitality, premium hotel, travel, tourism`;
+            metaKeywords.setAttribute('content', keywords);
+          }
+
+          // Update Open Graph with hotel details
+          const ogTitle = document.querySelector('meta[property="og:title"]');
+          if (ogTitle) {
+            ogTitle.setAttribute('content', `${hotelData.name} | Rahalatek`);
+          }
+
+          const ogDescription = document.querySelector('meta[property="og:description"]');
+          if (ogDescription) {
+            const ogDesc = hotelData.description 
+              ? hotelData.description.substring(0, 200) + '...'
+              : `Experience luxury at ${hotelData.name} with Rahalatek. ${hotelData.stars}-star hotel in ${hotelData.city}, ${hotelData.country}.`;
+            ogDescription.setAttribute('content', ogDesc);
+          }
+        }
+        
+        if (hotelData.roomTypes && hotelData.roomTypes.length > 0) {
+          setSelectedRoomType(hotelData.roomTypes[0]);
         }
 
         // Fetch other hotels

@@ -82,8 +82,20 @@ export default function GuestNotFoundPage({
           <div className="w-full sm:w-auto">
             <CustomButton
               as={Link}
+              to="/"
+              variant="rippleBlueToTeal"
+              size="lg"
+              icon={FaHome}
+              className="w-full px-6 py-3"
+            >
+              Back to Home
+            </CustomButton>
+          </div>
+          <div className="w-full sm:w-auto">
+            <CustomButton
+              as={Link}
               to="/guest/hotels"
-              variant="blue"
+              variant="rippleTealToBlue"
               size="lg"
               icon={FaBuilding}
               className="w-full px-6 py-3"
@@ -95,7 +107,7 @@ export default function GuestNotFoundPage({
             <CustomButton
               as={Link}
               to="/guest/tours"
-              variant="green"
+              variant="rippleGrayToGreen"
               size="lg"
               icon={FaMapMarkerAlt}
               className="w-full px-6 py-3"

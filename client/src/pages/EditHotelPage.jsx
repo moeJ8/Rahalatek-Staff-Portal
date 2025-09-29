@@ -13,12 +13,14 @@ import RoomImageUploader from '../components/RoomImageUploader';
 import HotelAmenitiesModal from '../components/HotelAmenitiesModal';
 import toast from 'react-hot-toast';
 import { getCountries, getCitiesByCountry } from '../utils/countryCities';
+import { validateSlug, formatSlug, formatSlugWhileTyping, getSlugPreview } from '../utils/slugValidation';
 
 export default function EditHotelPage() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [hotelData, setHotelData] = useState({
         name: '',
+        slug: '',
         country: '',
         city: '',
         stars: 3,
@@ -87,9 +89,10 @@ export default function EditHotelPage() {
         "CUSTOM": {}
     });
     
-    const [customRoomType, setCustomRoomType] = useState("");
+    const [customRoomTypes, setCustomRoomTypes] = useState([]);
     const [roomImages, setRoomImages] = useState({});
     const [loading, setLoading] = useState(true);
+    const [slugError, setSlugError] = useState('');
     const [airports, setAirports] = useState([]);
     const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
     
@@ -157,8 +160,40 @@ export default function EditHotelPage() {
                 if (!fetchedHotel.amenities) {
                     fetchedHotel.amenities = {};
                 }
+
+                // Sanitize potentially null/undefined fields to ensure controlled inputs
+                const sanitizedHotel = {
+                    ...fetchedHotel,
+                    name: fetchedHotel.name || '',
+                    country: fetchedHotel.country || '',
+                    city: fetchedHotel.city || '',
+                    description: fetchedHotel.description || '',
+                    locationDescription: fetchedHotel.locationDescription || '',
+                    airport: fetchedHotel.airport || '',
+                    breakfastPrice: fetchedHotel.breakfastPrice || 0,
+                    transportation: {
+                        vitoReceptionPrice: fetchedHotel.transportation?.vitoReceptionPrice || 0,
+                        vitoFarewellPrice: fetchedHotel.transportation?.vitoFarewellPrice || 0,
+                        sprinterReceptionPrice: fetchedHotel.transportation?.sprinterReceptionPrice || 0,
+                        sprinterFarewellPrice: fetchedHotel.transportation?.sprinterFarewellPrice || 0,
+                        busReceptionPrice: fetchedHotel.transportation?.busReceptionPrice || 0,
+                        busFarewellPrice: fetchedHotel.transportation?.busFarewellPrice || 0
+                    },
+                    airportTransportation: (fetchedHotel.airportTransportation || []).map(item => ({
+                        ...item,
+                        airport: item.airport || '',
+                        transportation: {
+                            vitoReceptionPrice: item.transportation?.vitoReceptionPrice || 0,
+                            vitoFarewellPrice: item.transportation?.vitoFarewellPrice || 0,
+                            sprinterReceptionPrice: item.transportation?.sprinterReceptionPrice || 0,
+                            sprinterFarewellPrice: item.transportation?.sprinterFarewellPrice || 0,
+                            busReceptionPrice: item.transportation?.busReceptionPrice || 0,
+                            busFarewellPrice: item.transportation?.busFarewellPrice || 0
+                        }
+                    }))
+                };
                 
-                setHotelData(fetchedHotel);
+                setHotelData(sanitizedHotel);
                 const newSelectedRoomTypes = {
                     "SINGLE ROOM": false,
                     "DOUBLE ROOM": false,
@@ -196,74 +231,196 @@ export default function EditHotelPage() {
                 const newRoomImages = {};
                 const newRoomHighlights = {};
                 const newRoomDetails = {};
-                
-                let hasCustom = false;
-                let customTypeName = "";
+                const loadedCustomRoomTypes = [];
                 
                 // Set the selected states and prices based on existing room types
                 fetchedHotel.roomTypes.forEach(roomType => {
-                    const roomTypeName = standardRoomTypes.includes(roomType.type) ? roomType.type : "CUSTOM";
-                    
-                    newSelectedRoomTypes[roomTypeName] = true;
-                    newRoomTypePrices[roomTypeName] = roomType.pricePerNight.toString();
-                    newRoomTypeChildrenPrices[roomTypeName] = roomType.childrenPricePerNight?.toString() || "0";
+                    if (standardRoomTypes.includes(roomType.type)) {
+                        // Handle standard room types
+                        const roomTypeName = roomType.type;
+                        
+                        newSelectedRoomTypes[roomTypeName] = true;
+                        newRoomTypePrices[roomTypeName] = roomType.pricePerNight.toString();
+                        newRoomTypeChildrenPrices[roomTypeName] = roomType.childrenPricePerNight?.toString() || "0";
 
-                    // Initialize monthly prices if they exist in the data
-                    if (roomType.monthlyPrices) {
-                        newMonthlyPrices[roomTypeName] = roomType.monthlyPrices;
-                    } else {
-                        // Create empty monthly price structure if it doesn't exist
-                        const emptyMonthlyPrices = {};
-                        months.forEach(month => {
-                            emptyMonthlyPrices[month] = {
-                                adult: 0,
-                                child: 0
+                        // Initialize monthly prices if they exist in the data
+                        if (roomType.monthlyPrices) {
+                            // Sanitize monthly prices to ensure no null values
+                            const sanitizedMonthlyPrices = {};
+                            months.forEach(month => {
+                                sanitizedMonthlyPrices[month] = {
+                                    adult: roomType.monthlyPrices[month]?.adult || 0,
+                                    child: roomType.monthlyPrices[month]?.child || 0
+                                };
+                            });
+                            newMonthlyPrices[roomTypeName] = sanitizedMonthlyPrices;
+                        } else {
+                            // Create empty monthly price structure if it doesn't exist
+                            const emptyMonthlyPrices = {};
+                            months.forEach(month => {
+                                emptyMonthlyPrices[month] = {
+                                    adult: 0,
+                                    child: 0
+                                };
+                            });
+                            newMonthlyPrices[roomTypeName] = emptyMonthlyPrices;
+                        }
+
+                        // Initialize room images if they exist
+                        if (roomType.images && roomType.images.length > 0) {
+                            newRoomImages[roomTypeName] = roomType.images;
+                        }
+
+                        // Initialize room highlights if they exist
+                        if (roomType.highlights && roomType.highlights.length > 0) {
+                            newRoomHighlights[roomTypeName] = roomType.highlights;
+                        } else {
+                            newRoomHighlights[roomTypeName] = [];
+                        }
+
+                        // Initialize room details if they exist
+                        if (roomType.details) {
+                            newRoomDetails[roomTypeName] = {
+                                size: { 
+                                    value: roomType.details.size?.value || '', 
+                                    unit: roomType.details.size?.unit || 'sq m' 
+                                },
+                                view: roomType.details.view || '',
+                                sleeps: roomType.details.sleeps || 1,
+                                bedType: roomType.details.bedType || '',
+                                bathroom: roomType.details.bathroom || '',
+                                balcony: roomType.details.balcony || false,
+                                airConditioning: roomType.details.airConditioning || false,
+                                soundproofed: roomType.details.soundproofed || false,
+                                freeWifi: roomType.details.freeWifi || false,
+                                minibar: roomType.details.minibar || false,
+                                safe: roomType.details.safe || false,
+                                tv: roomType.details.tv || false,
+                                hairdryer: roomType.details.hairdryer || false,
+                                bathrobes: roomType.details.bathrobes || false,
+                                freeCots: roomType.details.freeCots || false,
+                                smokingAllowed: roomType.details.smokingAllowed || false,
+                                petFriendly: roomType.details.petFriendly || false,
+                                accessibleRoom: roomType.details.accessibleRoom || false
                             };
+                        } else {
+                            newRoomDetails[roomTypeName] = {
+                                size: { value: '', unit: 'sq m' },
+                                view: '',
+                                sleeps: 1,
+                                bedType: '',
+                                bathroom: '',
+                                balcony: false,
+                                airConditioning: false,
+                                soundproofed: false,
+                                freeWifi: false,
+                                minibar: false,
+                                safe: false,
+                                tv: false,
+                                hairdryer: false,
+                                bathrobes: false,
+                                freeCots: false,
+                                smokingAllowed: false,
+                                petFriendly: false,
+                                accessibleRoom: false
+                            };
+                        }
+                    } else {
+                        // Handle custom room types
+                        const customRoomTypeId = `CUSTOM_${Date.now()}_${loadedCustomRoomTypes.length}`;
+                        
+                        loadedCustomRoomTypes.push({
+                            id: customRoomTypeId,
+                            name: roomType.type
                         });
-                        newMonthlyPrices[roomTypeName] = emptyMonthlyPrices;
-                    }
 
-                    // Initialize room images if they exist
-                    if (roomType.images && roomType.images.length > 0) {
-                        newRoomImages[roomTypeName] = roomType.images;
-                    }
+                        newRoomTypePrices[customRoomTypeId] = roomType.pricePerNight.toString();
+                        newRoomTypeChildrenPrices[customRoomTypeId] = roomType.childrenPricePerNight?.toString() || "0";
 
-                    // Initialize room highlights if they exist
-                    if (roomType.highlights && roomType.highlights.length > 0) {
-                        newRoomHighlights[roomTypeName] = roomType.highlights;
-                    } else {
-                        newRoomHighlights[roomTypeName] = [];
-                    }
+                        // Initialize monthly prices
+                        if (roomType.monthlyPrices) {
+                            // Sanitize monthly prices to ensure no null values
+                            const sanitizedMonthlyPrices = {};
+                            months.forEach(month => {
+                                sanitizedMonthlyPrices[month] = {
+                                    adult: roomType.monthlyPrices[month]?.adult || 0,
+                                    child: roomType.monthlyPrices[month]?.child || 0
+                                };
+                            });
+                            newMonthlyPrices[customRoomTypeId] = sanitizedMonthlyPrices;
+                        } else {
+                            const emptyMonthlyPrices = {};
+                            months.forEach(month => {
+                                emptyMonthlyPrices[month] = {
+                                    adult: 0,
+                                    child: 0
+                                };
+                            });
+                            newMonthlyPrices[customRoomTypeId] = emptyMonthlyPrices;
+                        }
 
-                    // Initialize room details if they exist
-                    if (roomType.details) {
-                        newRoomDetails[roomTypeName] = roomType.details;
-                    } else {
-                        newRoomDetails[roomTypeName] = {
-                            size: { value: '', unit: 'sq m' },
-                            view: '',
-                            sleeps: 1,
-                            bedType: '',
-                            bathroom: '',
-                            balcony: false,
-                            airConditioning: false,
-                            soundproofed: false,
-                            freeWifi: false,
-                            minibar: false,
-                            safe: false,
-                            tv: false,
-                            hairdryer: false,
-                            bathrobes: false,
-                            freeCots: false,
-                            smokingAllowed: false,
-                            petFriendly: false,
-                            accessibleRoom: false
-                        };
-                    }
-                    
-                    if (roomTypeName === "CUSTOM") {
-                        hasCustom = true;
-                        customTypeName = roomType.type;
+                        // Initialize room images if they exist
+                        if (roomType.images && roomType.images.length > 0) {
+                            newRoomImages[customRoomTypeId] = roomType.images;
+                        }
+
+                        // Initialize room highlights if they exist
+                        if (roomType.highlights && roomType.highlights.length > 0) {
+                            newRoomHighlights[customRoomTypeId] = roomType.highlights;
+                        } else {
+                            newRoomHighlights[customRoomTypeId] = [];
+                        }
+
+                        // Initialize room details if they exist
+                        if (roomType.details) {
+                            newRoomDetails[customRoomTypeId] = {
+                                size: { 
+                                    value: roomType.details.size?.value || '', 
+                                    unit: roomType.details.size?.unit || 'sq m' 
+                                },
+                                view: roomType.details.view || '',
+                                sleeps: roomType.details.sleeps || 1,
+                                bedType: roomType.details.bedType || '',
+                                bathroom: roomType.details.bathroom || '',
+                                balcony: roomType.details.balcony || false,
+                                airConditioning: roomType.details.airConditioning || false,
+                                soundproofed: roomType.details.soundproofed || false,
+                                freeWifi: roomType.details.freeWifi || false,
+                                minibar: roomType.details.minibar || false,
+                                safe: roomType.details.safe || false,
+                                tv: roomType.details.tv || false,
+                                hairdryer: roomType.details.hairdryer || false,
+                                bathrobes: roomType.details.bathrobes || false,
+                                freeCots: roomType.details.freeCots || false,
+                                smokingAllowed: roomType.details.smokingAllowed || false,
+                                petFriendly: roomType.details.petFriendly || false,
+                                accessibleRoom: roomType.details.accessibleRoom || false
+                            };
+                        } else {
+                            newRoomDetails[customRoomTypeId] = {
+                                size: { value: '', unit: 'sq m' },
+                                view: '',
+                                sleeps: 1,
+                                bedType: '',
+                                bathroom: '',
+                                balcony: false,
+                                airConditioning: false,
+                                soundproofed: false,
+                                freeWifi: false,
+                                minibar: false,
+                                safe: false,
+                                tv: false,
+                                hairdryer: false,
+                                bathrobes: false,
+                                freeCots: false,
+                                smokingAllowed: false,
+                                petFriendly: false,
+                                accessibleRoom: false
+                            };
+                        }
+
+                        // Set CUSTOM checkbox to true if we have custom room types
+                        newSelectedRoomTypes["CUSTOM"] = true;
                     }
                 });
                 
@@ -274,10 +431,7 @@ export default function EditHotelPage() {
                 setRoomImages(newRoomImages);
                 setRoomHighlights(newRoomHighlights);
                 setRoomDetails(newRoomDetails);
-                
-                if (hasCustom) {
-                    setCustomRoomType(customTypeName);
-                }
+                setCustomRoomTypes(loadedCustomRoomTypes);
                 
                 const airportsResponse = await axios.get('/api/airports');
                 setAirports(airportsResponse.data);
@@ -305,6 +459,25 @@ export default function EditHotelPage() {
                 ...hotelData,
                 [name]: value
             });
+        }
+    };
+
+    // Handle slug input with validation
+    const handleSlugChange = (e) => {
+        const value = e.target.value;
+        const formattedSlug = formatSlugWhileTyping(value);
+        
+        setHotelData({
+            ...hotelData,
+            slug: formattedSlug,
+        });
+
+        // Validate slug and show error if invalid
+        const validation = validateSlug(formattedSlug);
+        if (!validation.isValid) {
+            setSlugError(validation.message);
+        } else {
+            setSlugError('');
         }
     };
 
@@ -478,15 +651,131 @@ export default function EditHotelPage() {
             [roomType]: {
                 ...monthlyPrices[roomType],
                 [month]: {
-                    ...monthlyPrices[roomType][month],
+                    ...(monthlyPrices[roomType] && monthlyPrices[roomType][month] ? monthlyPrices[roomType][month] : {}),
                     [priceType]: value === '' ? 0 : parseFloat(value)
                 }
             }
         });
     };
 
-    const handleCustomRoomTypeChange = (value) => {
-        setCustomRoomType(value);
+    const handleAddCustomRoomType = () => {
+        const newCustomRoomTypeId = `CUSTOM_${Date.now()}`;
+        
+        // Add the new custom room type to the list
+        setCustomRoomTypes([
+            ...customRoomTypes,
+            {
+                id: newCustomRoomTypeId,
+                name: ''
+            }
+        ]);
+
+        // Initialize states for the new custom room type
+        setRoomTypePrices({
+            ...roomTypePrices,
+            [newCustomRoomTypeId]: ""
+        });
+
+        setRoomTypeChildrenPrices({
+            ...roomTypeChildrenPrices,
+            [newCustomRoomTypeId]: ""
+        });
+
+        // Initialize monthly prices
+        const emptyMonthlyPrices = {};
+        months.forEach(month => {
+            emptyMonthlyPrices[month] = {
+                adult: 0,
+                child: 0
+            };
+        });
+
+        setMonthlyPrices({
+            ...monthlyPrices,
+            [newCustomRoomTypeId]: emptyMonthlyPrices
+        });
+
+        // Initialize room highlights and details
+        setRoomHighlights({
+            ...roomHighlights,
+            [newCustomRoomTypeId]: []
+        });
+        
+        setRoomDetails({
+            ...roomDetails,
+            [newCustomRoomTypeId]: {
+                size: { value: '', unit: 'sq m' },
+                view: '',
+                sleeps: 1,
+                bedType: '',
+                bathroom: '',
+                balcony: false,
+                airConditioning: false,
+                soundproofed: false,
+                freeWifi: false,
+                minibar: false,
+                safe: false,
+                tv: false,
+                hairdryer: false,
+                bathrobes: false,
+                freeCots: false,
+                smokingAllowed: false,
+                petFriendly: false,
+                accessibleRoom: false
+            }
+        });
+    };
+
+    const handleRemoveCustomRoomType = (index) => {
+        const roomTypeId = customRoomTypes[index].id;
+        
+        // Create a copy without the removed room type
+        const updatedCustomRoomTypes = [...customRoomTypes];
+        updatedCustomRoomTypes.splice(index, 1);
+        setCustomRoomTypes(updatedCustomRoomTypes);
+        
+        // Clean up all related state
+        const { [roomTypeId]: removedPrice, ...restPrices } = roomTypePrices;
+        setRoomTypePrices(restPrices);
+        
+        const { [roomTypeId]: removedChildrenPrice, ...restChildrenPrices } = roomTypeChildrenPrices;
+        setRoomTypeChildrenPrices(restChildrenPrices);
+        
+        const { [roomTypeId]: removedMonthlyPrices, ...restMonthlyPrices } = monthlyPrices;
+        setMonthlyPrices(restMonthlyPrices);
+        
+        const { [roomTypeId]: removedHighlights, ...restHighlights } = roomHighlights;
+        setRoomHighlights(restHighlights);
+        
+        const { [roomTypeId]: removedDetails, ...restDetails } = roomDetails;
+        setRoomDetails(restDetails);
+        
+        const { [roomTypeId]: removedImages, ...restImages } = roomImages;
+        setRoomImages(restImages);
+    };
+
+    const handleCustomRoomTypeNameChange = (index, value) => {
+        const updatedRoomTypes = [...customRoomTypes];
+        updatedRoomTypes[index].name = value;
+        setCustomRoomTypes(updatedRoomTypes);
+    };
+
+    const handleCustomRoomTypePriceChange = (index, value) => {
+        const roomTypeId = customRoomTypes[index].id;
+        
+        setRoomTypePrices({
+            ...roomTypePrices,
+            [roomTypeId]: value
+        });
+    };
+    
+    const handleCustomRoomTypeChildrenPriceChange = (index, value) => {
+        const roomTypeId = customRoomTypes[index].id;
+        
+        setRoomTypeChildrenPrices({
+            ...roomTypeChildrenPrices,
+            [roomTypeId]: value
+        });
     };
 
     // Handle amenities save
@@ -551,7 +840,7 @@ export default function EditHotelPage() {
             [roomType]: {
                 ...roomDetails[roomType],
                 size: {
-                    ...roomDetails[roomType]?.size,
+                    ...(roomDetails[roomType]?.size || { unit: 'sq m' }),
                     value: value
                 }
             }
@@ -561,15 +850,14 @@ export default function EditHotelPage() {
     const addRoomTypesToHotelData = () => {
         const roomTypes = [];
         
-        // Add all checked room types to the data
+        // Add all checked standard room types to the data
         Object.keys(selectedRoomTypes).forEach(roomType => {
-            if (selectedRoomTypes[roomType]) {
-                const typeName = roomType === "CUSTOM" ? customRoomType : roomType;
+            if (selectedRoomTypes[roomType] && roomType !== "CUSTOM") {
                 const pricePerNight = parseFloat(roomTypePrices[roomType]) || 0;
                 const childrenPricePerNight = parseFloat(roomTypeChildrenPrices[roomType]) || 0;
                 
                 const roomTypeData = {
-                    type: typeName,
+                    type: roomType,
                     pricePerNight: pricePerNight,
                     childrenPricePerNight: childrenPricePerNight
                 };
@@ -594,6 +882,39 @@ export default function EditHotelPage() {
                     roomTypeData.details = roomDetails[roomType];
                 }
                 
+                roomTypes.push(roomTypeData);
+            }
+        });
+
+        // Add custom room types
+        customRoomTypes.forEach(roomType => {
+            if (roomType.name && roomTypePrices[roomType.id]) {
+                const roomTypeData = {
+                    type: roomType.name,
+                    pricePerNight: parseFloat(roomTypePrices[roomType.id]) || 0,
+                    childrenPricePerNight: parseFloat(roomTypeChildrenPrices[roomType.id]) || 0
+                };
+
+                // Add monthly prices if they exist
+                if (monthlyPrices[roomType.id]) {
+                    roomTypeData.monthlyPrices = monthlyPrices[roomType.id];
+                }
+
+                // Add images if they exist
+                if (roomImages[roomType.id] && roomImages[roomType.id].length > 0) {
+                    roomTypeData.images = roomImages[roomType.id];
+                }
+
+                // Add highlights if they exist
+                if (roomHighlights[roomType.id] && roomHighlights[roomType.id].length > 0) {
+                    roomTypeData.highlights = roomHighlights[roomType.id];
+                }
+
+                // Add details if they exist
+                if (roomDetails[roomType.id]) {
+                    roomTypeData.details = roomDetails[roomType.id];
+                }
+
                 roomTypes.push(roomTypeData);
             }
         });
@@ -624,6 +945,28 @@ export default function EditHotelPage() {
     const handleHotelSubmit = async (e) => {
         e.preventDefault();
         
+        // Validate slug before submission
+        if (hotelData.slug && hotelData.slug.trim()) {
+            const validation = validateSlug(hotelData.slug);
+            if (!validation.isValid) {
+                toast.error(validation.message, {
+                    duration: 4000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
+                return;
+            }
+        }
+        
         const roomTypes = addRoomTypesToHotelData();
         
         if (roomTypes.roomTypes.length === 0) {
@@ -644,7 +987,12 @@ export default function EditHotelPage() {
         }
         
         try {
-            const response = await axios.put(`/api/hotels/${id}`, roomTypes);
+            const finalHotelData = {
+                ...roomTypes,
+                slug: hotelData.slug ? formatSlug(hotelData.slug) : '', // Final formatting
+            };
+            
+            const response = await axios.put(`/api/hotels/${id}`, finalHotelData);
             const updatedHotel = response.data;
             showSuccessMessage('Hotel updated successfully!');
             setTimeout(() => {
@@ -781,18 +1129,6 @@ export default function EditHotelPage() {
                                     
                                     {selectedRoomTypes[roomType] && (
                                         <div>
-                                            {roomType === "CUSTOM" && (
-                                                <div className="mb-3">
-                                                    <Label htmlFor="custom-room-type" value="Custom Room Type Name" className="mb-1.5" />
-                                                    <TextInput
-                                                        id="custom-room-type"
-                                                        placeholder="Enter room type name"
-                                                        value={customRoomType}
-                                                        onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
-                                                        required
-                                                    />
-                                                </div>
-                                            )}
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                                                 <div>
@@ -824,7 +1160,7 @@ export default function EditHotelPage() {
                                                 <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
                                                     <RoomImageUploader
                                                         onImagesUploaded={(images) => handleRoomImagesUploaded(roomType, images)}
-                                                        roomType={roomType === "CUSTOM" ? customRoomType || "Custom Room" : roomType}
+                                                        roomType={roomType}
                                                         maxImages={5}
                                                         existingImages={roomImages[roomType] || []}
                                                     />
@@ -899,18 +1235,18 @@ export default function EditHotelPage() {
                                                                     </div>
                                                                     <div>
                                                                         <Label value="Sleeps" className="mb-1 block text-sm" />
-                                                                        <Select
-                                                                            size="sm"
+                                                                        <CustomSelect
                                                                             value={roomDetails[roomType]?.sleeps || 1}
-                                                                            onChange={(e) => handleRoomDetailChange(roomType, 'sleeps', parseInt(e.target.value))}
-                                                                        >
-                                                                            <option value={1}>1 Guest</option>
-                                                                            <option value={2}>2 Guests</option>
-                                                                            <option value={3}>3 Guests</option>
-                                                                            <option value={4}>4 Guests</option>
-                                                                            <option value={5}>5 Guests</option>
-                                                                            <option value={6}>6 Guests</option>
-                                                                        </Select>
+                                                                            onChange={(value) => handleRoomDetailChange(roomType, 'sleeps', parseInt(value))}
+                                                                            options={[
+                                                                                { value: 1, label: '1 Guest' },
+                                                                                { value: 2, label: '2 Guests' },
+                                                                                { value: 3, label: '3 Guests' },
+                                                                                { value: 4, label: '4 Guests' },
+                                                                                { value: 5, label: '5 Guests' },
+                                                                                { value: 6, label: '6 Guests' }
+                                                                            ]}
+                                                                        />
                                                                     </div>
                                                                 </div>
 
@@ -1025,101 +1361,315 @@ export default function EditHotelPage() {
                                 </div>
                             ))}
                             
-                            <div className="flex items-center gap-3">
-                                <Checkbox
-                                    id="roomType-CUSTOM"
-                                    checked={selectedRoomTypes["CUSTOM"]}
-                                    onChange={() => handleRoomTypeCheckboxChange("CUSTOM")}
-                                />
-                                <Label htmlFor="roomType-CUSTOM">Custom Room Type</Label>
-                            </div>
-                            
-                            {selectedRoomTypes["CUSTOM"] && (
-                                <div className="flex flex-col w-full gap-3 mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-800 mx-auto">
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-                                        <Label className="text-sm w-40 m-0">Room Type Name:</Label>
-                                        <TextInput
-                                            className="flex-grow"
-                                            placeholder="Enter custom room type name"
-                                            value={customRoomType}
-                                            onChange={(e) => handleCustomRoomTypeChange(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                        <Label className="text-sm w-40 m-0">Adult Price per Night:</Label>
-                                        <TextInput
-                                            type="number"
-                                            className="flex-grow"
-                                            placeholder="Price per night"
-                                            value={roomTypePrices["CUSTOM"]}
-                                            onChange={(e) => handleRoomPriceChange("CUSTOM", e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                        <Label className="text-sm w-40 m-0">Children (6-12) Price:</Label>
-                                        <TextInput
-                                            type="number"
-                                            className="flex-grow"
-                                            placeholder="Additional fee"
-                                            value={roomTypeChildrenPrices["CUSTOM"]}
-                                            onChange={(e) => handleChildrenRoomPriceChange("CUSTOM", e.target.value)}
-                                        />
-                                    </div>
-                                    
-                                    {/* Monthly Pricing Accordion for Custom Room */}
-                                    <div className="mt-4">
-                                        <Accordion collapseAll>
-                                            <Accordion.Panel>
-                                                <Accordion.Title className="flex items-center">
-                                                    <HiCalendar className="mr-2" /> 
-                                                    Monthly Pricing Options
-                                                </Accordion.Title>
-                                                <Accordion.Content>
-                                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                                        Set specific prices for different months. If a month's price is 0, the base price will be used.
+                            <div>
+                                <h3 className="text-md font-medium mb-2 text-blue-600 dark:text-teal-400">Custom Room Types</h3>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Checkbox
+                                        id="roomType-CUSTOM"
+                                        checked={selectedRoomTypes["CUSTOM"]}
+                                        onChange={() => handleRoomTypeCheckboxChange("CUSTOM")}
+                                    />
+                                    <Label htmlFor="roomType-CUSTOM" className="font-medium text-sm">Add custom room type(s)</Label>
+                                </div>
+                                
+                                {selectedRoomTypes["CUSTOM"] && (
+                                    <div className="w-full mt-3">
+                                        {customRoomTypes.length === 0 && (
+                                            <div className="mb-4 p-4 border border-dashed border-purple-300 dark:border-purple-800 rounded-lg bg-purple-50 dark:bg-slate-900 flex flex-col items-center justify-center">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 text-center">No custom room types added yet</p>
+                                                <CustomButton
+                                                    onClick={handleAddCustomRoomType}
+                                                    variant="purple"
+                                                    size="xs"
+                                                    icon={HiPlus}
+                                                    title="Add a custom room type"
+                                                >
+                                                    Add Custom Room Type
+                                                </CustomButton>
+                                            </div>
+                                        )}
+                                        
+                                        {customRoomTypes.map((roomType, index) => (
+                                            <div 
+                                                key={roomType.id}
+                                                className="flex flex-col w-full gap-2 mb-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900 shadow-sm"
+                                            >
+                                                <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                                                    <h4 className="text-sm font-medium text-purple-600 dark:text-purple-400">Custom Room Type {index + 1}</h4>
+                                                    <CustomButton
+                                                        onClick={() => handleRemoveCustomRoomType(index)}
+                                                        variant="red"
+                                                        size="xs"
+                                                        icon={HiX}
+                                                        title="Remove this custom room type"
+                                                    />
+                                                </div>
+                                                
+                                                <div className="flex flex-col gap-2 w-full">
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label className="text-xs font-medium">Room Type Name:</Label>
+                                                        <TextInput
+                                                            className="shadow-sm text-sm"
+                                                            size="sm"
+                                                            placeholder="Enter custom room type name"
+                                                            value={roomType.name}
+                                                            onChange={(e) => handleCustomRoomTypeNameChange(index, e.target.value)}
+                                                            required
+                                                        />
                                                     </div>
                                                     
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                        {months.map((month, index) => (
-                                                            <div key={month} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                                <div className="font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                                                    {monthLabels[index]}
-                                                                </div>
-                                                                
-                                                                <div className="mb-2">
-                                                                    <Label htmlFor={`CUSTOM-${month}-adult`} value="Adult Price" size="sm" className="mb-1" />
-                                                                    <TextInput
-                                                                        id={`CUSTOM-${month}-adult`}
-                                                                        type="number"
-                                                                        size="sm"
-                                                                        placeholder="Adult price"
-                                                                        value={monthlyPrices["CUSTOM"][month]?.adult || ""}
-                                                                        onChange={(e) => handleMonthlyPriceChange("CUSTOM", month, 'adult', e.target.value)}
-                                                                    />
-                                                                </div>
-                                                                
-                                                                <div>
-                                                                    <Label htmlFor={`CUSTOM-${month}-child`} value="Child Price (6-12)" size="sm" className="mb-1" />
-                                                                    <TextInput
-                                                                        id={`CUSTOM-${month}-child`}
-                                                                        type="number"
-                                                                        size="sm"
-                                                                        placeholder="Child price"
-                                                                        value={monthlyPrices["CUSTOM"][month]?.child || ""}
-                                                                        onChange={(e) => handleMonthlyPriceChange("CUSTOM", month, 'child', e.target.value)}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label className="text-xs font-medium">Adult Price per Night:</Label>
+                                                        <TextInput
+                                                            type="number"
+                                                            className="shadow-sm text-sm"
+                                                            size="sm"
+                                                            placeholder="Price per night"
+                                                            value={roomTypePrices[roomType.id] || ''}
+                                                            onChange={(e) => handleCustomRoomTypePriceChange(index, e.target.value)}
+                                                            required
+                                                        />
                                                     </div>
-                                                </Accordion.Content>
-                                            </Accordion.Panel>
-                                        </Accordion>
+                                                    
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label className="text-xs font-medium">Children (6-12) Price:</Label>
+                                                        <TextInput
+                                                            type="number"
+                                                            className="shadow-sm text-sm"
+                                                            size="sm"
+                                                            placeholder="Additional fee"
+                                                            value={roomTypeChildrenPrices[roomType.id] || ''}
+                                                            onChange={(e) => handleCustomRoomTypeChildrenPriceChange(index, e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    {/* Room Images */}
+                                                    <div className="mt-3">
+                                                        <Label className="text-xs font-medium mb-2 block">Room Images</Label>
+                                                        <RoomImageUploader
+                                                            onImagesUploaded={(images) => handleRoomImagesUploaded(roomType.id, images)}
+                                                            roomType={roomType.name || `Custom Room ${index + 1}`}
+                                                            maxImages={5}
+                                                            existingImages={roomImages[roomType.id] || []}
+                                                        />
+                                                    </div>
+
+                                                    {/* Room Highlights */}
+                                                    <div className="mt-3">
+                                                        <Label className="text-xs font-medium mb-2 block">Room Highlights</Label>
+                                                        <div className="flex gap-2 mb-3">
+                                                            <TextInput
+                                                                placeholder="Add a highlight"
+                                                                value={highlightInputs[roomType.id] || ''}
+                                                                onChange={(e) => handleHighlightInputChange(roomType.id, e.target.value)}
+                                                                className="flex-1"
+                                                                size="sm"
+                                                            />
+                                                            <CustomButton 
+                                                                type="button"
+                                                                onClick={() => handleAddHighlight(roomType.id)}
+                                                                variant="purple"
+                                                                size="xs"
+                                                                icon={HiPlus}
+                                                                title="Add highlight to room"
+                                                            >
+                                                                Add
+                                                            </CustomButton>
+                                                        </div>
+                                                        
+                                                        {(roomHighlights[roomType.id] || []).length > 0 && (
+                                                            <div className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                                                <h5 className="text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">Added Highlights:</h5>
+                                                                <ul className="space-y-1">
+                                                                    {(roomHighlights[roomType.id] || []).map((highlight, highlightIndex) => (
+                                                                        <li key={highlightIndex} className="flex justify-between items-center p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800">
+                                                                            <span className="text-xs text-gray-800 dark:text-gray-200">• {highlight}</span>
+                                                                            <CustomButton
+                                                                                variant="red"
+                                                                                size="xs"
+                                                                                onClick={() => handleRemoveHighlight(roomType.id, highlightIndex)}
+                                                                                icon={HiX}
+                                                                                title="Remove highlight"
+                                                                            />
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Room Details & Amenities */}
+                                                    <div className="mt-3">
+                                                        <Accordion collapseAll className="border-none">
+                                                            <Accordion.Panel>
+                                                                <Accordion.Title className="text-xs font-medium p-2 bg-gray-100 dark:bg-slate-800 flex items-center">
+                                                                    <HiPlus className="mr-2" size={14} />
+                                                                    Room Details & Amenities
+                                                                </Accordion.Title>
+                                                                <Accordion.Content className="p-3 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
+                                                                    <div className="space-y-3">
+                                                                        {/* Basic Details */}
+                                                                        <div className="grid grid-cols-2 gap-2">
+                                                                            <div>
+                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Size (sq m)</Label>
+                                                                                <TextInput
+                                                                                    type="number"
+                                                                                    size="sm"
+                                                                                    placeholder="23"
+                                                                                    value={roomDetails[roomType.id]?.size?.value || ""}
+                                                                                    onChange={(e) => handleRoomSizeChange(roomType.id, e.target.value)}
+                                                                                    className="text-xs"
+                                                                                />
+                                                                            </div>
+                                                                            <div>
+                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Sleeps</Label>
+                                                                                <CustomSelect
+                                                                                    value={roomDetails[roomType.id]?.sleeps || 1}
+                                                                                    onChange={(value) => handleRoomDetailChange(roomType.id, 'sleeps', parseInt(value))}
+                                                                                    options={[
+                                                                                        { value: 1, label: '1 Guest' },
+                                                                                        { value: 2, label: '2 Guests' },
+                                                                                        { value: 3, label: '3 Guests' },
+                                                                                        { value: 4, label: '4 Guests' },
+                                                                                        { value: 5, label: '5 Guests' },
+                                                                                        { value: 6, label: '6 Guests' }
+                                                                                    ]}
+                                                                                    className="text-xs"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-2 gap-2">
+                                                                            <div>
+                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">View</Label>
+                                                                                <TextInput
+                                                                                    size="sm"
+                                                                                    placeholder="Sea view, City view, etc."
+                                                                                    value={roomDetails[roomType.id]?.view || ""}
+                                                                                    onChange={(e) => handleRoomDetailChange(roomType.id, 'view', e.target.value)}
+                                                                                    className="text-xs"
+                                                                                />
+                                                                            </div>
+                                                                            <div>
+                                                                                <Label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Bed Type</Label>
+                                                                                <TextInput
+                                                                                    size="sm"
+                                                                                    placeholder="1 Double Bed, Twin beds, etc."
+                                                                                    value={roomDetails[roomType.id]?.bedType || ""}
+                                                                                    onChange={(e) => handleRoomDetailChange(roomType.id, 'bedType', e.target.value)}
+                                                                                    className="text-xs"
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Amenities Checkboxes */}
+                                                                        <div>
+                                                                            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">Room Amenities</Label>
+                                                                            <div className="grid grid-cols-2 gap-1">
+                                                                                {[
+                                                                                    { key: 'balcony', label: 'Balcony' },
+                                                                                    { key: 'airConditioning', label: 'Air conditioning' },
+                                                                                    { key: 'soundproofed', label: 'Soundproofed' },
+                                                                                    { key: 'freeWifi', label: 'Free WiFi' },
+                                                                                    { key: 'minibar', label: 'Minibar' },
+                                                                                    { key: 'tv', label: 'LCD TV' },
+                                                                                    { key: 'hairdryer', label: 'Hairdryer' },
+                                                                                    { key: 'bathrobes', label: 'Bathrobes' },
+                                                                                    { key: 'freeCots', label: 'Free cots/infant beds' },
+                                                                                    { key: 'safe', label: 'Safe' }
+                                                                                ].map(({ key, label }) => (
+                                                                                    <div key={key} className="flex items-center gap-1">
+                                                                                        <Checkbox
+                                                                                            id={`${roomType.id}-${key}`}
+                                                                                            checked={roomDetails[roomType.id]?.[key] || false}
+                                                                                            onChange={(e) => handleRoomDetailChange(roomType.id, key, e.target.checked)}
+                                                                                            className="scale-75"
+                                                                                        />
+                                                                                        <Label htmlFor={`${roomType.id}-${key}`} className="text-xs text-gray-600 dark:text-gray-400">
+                                                                                            {label}
+                                                                                        </Label>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </Accordion.Content>
+                                                            </Accordion.Panel>
+                                                        </Accordion>
+                                                    </div>
+                                                    
+                                                    {/* Monthly pricing accordion for custom room types */}
+                                                    <div className="mt-2">
+                                                        <Accordion collapseAll className="border-none">
+                                                            <Accordion.Panel>
+                                                                <Accordion.Title className="text-xs font-medium p-2 bg-gray-100 dark:bg-slate-800 flex items-center">
+                                                                    <HiCalendar className="mr-2" size={14} />
+                                                                    Monthly Pricing Options
+                                                                </Accordion.Title>
+                                                                <Accordion.Content className="p-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                                                        Set different prices for specific months. If a month's price is 0, the base price will be used.
+                                                                    </p>
+                                                        
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                                        {months.map((month, monthIndex) => (
+                                                                            <div key={month} className="p-2 border border-gray-200 dark:border-gray-700 rounded-md">
+                                                                                <div className="text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                                                                                    {monthLabels[monthIndex]}
+                                                                                </div>
+                                                                                
+                                                                                <div className="mb-1">
+                                                                                    <Label htmlFor={`${roomType.id}-${month}-adult`} value="Adult" className="text-xs mb-0.5" />
+                                                                                    <TextInput
+                                                                                        id={`${roomType.id}-${month}-adult`}
+                                                                                        type="number"
+                                                                                        size="sm"
+                                                                                        placeholder="Adult price"
+                                                                                        value={monthlyPrices[roomType.id] && monthlyPrices[roomType.id][month] ? monthlyPrices[roomType.id][month].adult || "" : ""}
+                                                                                        onChange={(e) => handleMonthlyPriceChange(roomType.id, month, 'adult', e.target.value)}
+                                                                                        className="text-xs"
+                                                                                    />
+                                                                                </div>
+                                                                                
+                                                                                <div>
+                                                                                    <Label htmlFor={`${roomType.id}-${month}-child`} value="Child (6-12)" className="text-xs mb-0.5" />
+                                                                                    <TextInput
+                                                                                        id={`${roomType.id}-${month}-child`}
+                                                                                        type="number"
+                                                                                        size="sm"
+                                                                                        placeholder="Child price"
+                                                                                        value={monthlyPrices[roomType.id] && monthlyPrices[roomType.id][month] ? monthlyPrices[roomType.id][month].child || "" : ""}
+                                                                                        onChange={(e) => handleMonthlyPriceChange(roomType.id, month, 'child', e.target.value)}
+                                                                                        className="text-xs"
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </Accordion.Content>
+                                                            </Accordion.Panel>
+                                                        </Accordion>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        {customRoomTypes.length > 0 && (
+                                            <div className="flex justify-center mt-2 mb-2">
+                                                <CustomButton
+                                                    onClick={handleAddCustomRoomType}
+                                                    variant="purple"
+                                                    size="xs"
+                                                    icon={HiPlus}
+                                                    title="Add another custom room type"
+                                                >
+                                                    Add Another Custom Room Type
+                                                </CustomButton>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -1133,7 +1683,7 @@ export default function EditHotelPage() {
                                     id="breakfastPrice"
                                     type="number"
                                     name="breakfastPrice"
-                                    value={hotelData.breakfastPrice}
+                                    value={hotelData.breakfastPrice?.toString() || ''}
                                     onChange={handleHotelChange}
                                     placeholder="Price per room"
                                 />
@@ -1211,7 +1761,7 @@ export default function EditHotelPage() {
                                                             id={`vito-reception-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.vitoReceptionPrice}
+                                                            value={item.transportation.vitoReceptionPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'vitoReceptionPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1221,7 +1771,7 @@ export default function EditHotelPage() {
                                                             id={`vito-farewell-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.vitoFarewellPrice}
+                                                            value={item.transportation.vitoFarewellPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'vitoFarewellPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1231,7 +1781,7 @@ export default function EditHotelPage() {
                                                             id={`sprinter-reception-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.sprinterReceptionPrice}
+                                                            value={item.transportation.sprinterReceptionPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'sprinterReceptionPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1241,7 +1791,7 @@ export default function EditHotelPage() {
                                                             id={`sprinter-farewell-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.sprinterFarewellPrice}
+                                                            value={item.transportation.sprinterFarewellPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'sprinterFarewellPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1251,7 +1801,7 @@ export default function EditHotelPage() {
                                                             id={`bus-reception-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.busReceptionPrice}
+                                                            value={item.transportation.busReceptionPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'busReceptionPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1261,7 +1811,7 @@ export default function EditHotelPage() {
                                                             id={`bus-farewell-${index}`}
                                                             type="number"
                                                             size="sm"
-                                                            value={item.transportation.busFarewellPrice}
+                                                            value={item.transportation.busFarewellPrice?.toString() || ''}
                                                             onChange={(e) => handleTransportationPriceChange(index, 'busFarewellPrice', e.target.value)}
                                                         />
                                                     </div>
@@ -1290,8 +1840,8 @@ export default function EditHotelPage() {
                                     <TextInput
                                         id="vitoReceptionPrice"
                                         type="number"
-                                        value={hotelData.transportation.vitoReceptionPrice}
-                                        onChange={(e) => handleTransportationChange('vitoReceptionPrice', e.target.value)}
+                                    value={hotelData.transportation.vitoReceptionPrice?.toString() || ''}
+                                    onChange={(e) => handleTransportationChange('vitoReceptionPrice', e.target.value)}
                                     />
                                 </div>
                                 <div>
@@ -1301,8 +1851,8 @@ export default function EditHotelPage() {
                                     <TextInput
                                         id="vitoFarewellPrice"
                                         type="number"
-                                        value={hotelData.transportation.vitoFarewellPrice}
-                                        onChange={(e) => handleTransportationChange('vitoFarewellPrice', e.target.value)}
+                                    value={hotelData.transportation.vitoFarewellPrice?.toString() || ''}
+                                    onChange={(e) => handleTransportationChange('vitoFarewellPrice', e.target.value)}
                                     />
                                 </div>
                                 <div>
@@ -1312,8 +1862,8 @@ export default function EditHotelPage() {
                                     <TextInput
                                         id="sprinterReceptionPrice"
                                         type="number"
-                                        value={hotelData.transportation.sprinterReceptionPrice}
-                                        onChange={(e) => handleTransportationChange('sprinterReceptionPrice', e.target.value)}
+                                    value={hotelData.transportation.sprinterReceptionPrice?.toString() || ''}
+                                    onChange={(e) => handleTransportationChange('sprinterReceptionPrice', e.target.value)}
                                     />
                                 </div>
                                 <div>
@@ -1323,8 +1873,8 @@ export default function EditHotelPage() {
                                     <TextInput
                                         id="sprinterFarewellPrice"
                                         type="number"
-                                        value={hotelData.transportation.sprinterFarewellPrice}
-                                        onChange={(e) => handleTransportationChange('sprinterFarewellPrice', e.target.value)}
+                                    value={hotelData.transportation.sprinterFarewellPrice?.toString() || ''}
+                                    onChange={(e) => handleTransportationChange('sprinterFarewellPrice', e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -1367,6 +1917,27 @@ export default function EditHotelPage() {
                             maxImages={10}
                             existingImages={hotelData.images || []}
                         />
+                    </div>
+
+                    {/* Custom URL Slug */}
+                    <div>
+                        <div className="mb-2 block">
+                            <Label htmlFor="hotelSlug" value="Custom URL Slug (Optional)" className="text-sm font-medium text-gray-700 dark:text-gray-200" />
+                        </div>
+                        <TextInput
+                            id="hotelSlug"
+                            name="slug"
+                            value={hotelData.slug}
+                            onChange={handleSlugChange}
+                            placeholder="e.g., grand-hotel-istanbul"
+                            className={slugError ? 'border-red-500' : ''}
+                        />
+                        {slugError && (
+                            <p className="text-red-500 text-xs mt-1">{slugError}</p>
+                        )}
+                        <p className="text-gray-500 text-xs mt-1">
+                            Preview: <span className="font-mono">/hotels/{getSlugPreview(hotelData.slug, hotelData.name)}</span>
+                        </p>
                     </div>
                     
                     {/* Hotel Amenities & Services */}

@@ -24,6 +24,12 @@ router.get('/public', hotelController.getAllHotels);
 // Public route - get hotel by slug (must be before /:id route)
 router.get('/public/:slug', hotelController.getHotelBySlug);
 
+// Public route - increment hotel views
+router.post('/public/:slug/view', hotelController.incrementHotelViews);
+
+// Public route - get featured hotels
+router.get('/featured', hotelController.getFeaturedHotels);
+
 // Get hotel by ID
 router.get('/:id', hotelController.getHotelById);
 

@@ -369,14 +369,19 @@ const hotelSchema = new mongoose.Schema({
     faqs: [{
         question: { type: String, required: true },
         answer: { type: String, required: true }
-    }]
+    }],
+    views: {
+        type: Number,
+        default: 0
+    }
 }, {
     timestamps: true
 });
 
 // Generate slug from name before saving
 hotelSchema.pre('save', async function(next) {
-    if (this.isModified('name') || this.isNew) {
+    // Only auto-generate slug if no custom slug is provided and name is modified/new
+    if ((this.isModified('name') || this.isNew) && (!this.slug || this.slug.trim() === '')) {
         let baseSlug = this.name
             .toLowerCase()
             .trim()
@@ -428,6 +433,32 @@ hotelSchema.pre('save', async function(next) {
         
         this.slug = slug;
     }
+    
+    // If a custom slug is provided, validate and ensure uniqueness
+    if (this.isModified('slug') && this.slug && this.slug.trim() !== '') {
+        let slug = this.slug.toLowerCase().trim();
+        let counter = 1;
+        
+        // Check for existing slugs and append number if needed
+        while (true) {
+            const existingHotel = await this.constructor.findOne({
+                slug: slug,
+                _id: { $ne: this._id } // Exclude current hotel when updating
+            });
+            
+            if (!existingHotel) {
+                break;
+            }
+            
+            // Remove previous counter if exists, then add new one
+            const baseSlug = this.slug.replace(/-\d+$/, '');
+            slug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+        
+        this.slug = slug;
+    }
+    
     next();
 });
 

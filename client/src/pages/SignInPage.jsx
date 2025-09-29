@@ -162,7 +162,7 @@ export default function SignInPage() {
       // Trigger auth state update
       window.dispatchEvent(new Event('auth-change'));
       
-      navigate('/', { replace: true });
+      navigate('/home', { replace: true });
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.isPendingApproval) {
         toast.error('Your account is pending approval by an administrator.', {

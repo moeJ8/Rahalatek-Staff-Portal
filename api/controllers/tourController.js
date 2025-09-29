@@ -173,3 +173,37 @@ exports.getTourBySlug = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Increment tour views
+exports.incrementTourViews = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const tour = await Tour.findOneAndUpdate(
+      { slug: slug },
+      { $inc: { views: 1 } },
+      { new: true }
+    );
+    
+    if (!tour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+    
+    res.json({ success: true, views: tour.views });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get featured tours (sorted by views)
+exports.getFeaturedTours = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
+    const tours = await Tour.find({})
+      .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
+      .limit(limit);
+    
+    res.json(tours);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
