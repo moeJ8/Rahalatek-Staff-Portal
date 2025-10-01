@@ -23,7 +23,8 @@ const TourSelector = ({
   availableTours, 
   selectedTours, 
   onTourSelection, 
-  onTourDayAssignment
+  onTourDayAssignment,
+  hideDayAssignment = false
 }) => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,7 +132,7 @@ const TourSelector = ({
   return (
     <div>
       <div className="mb-2 block">
-        <Label value="Select Tours (Order determines day assignment)" className="dark:text-white" />
+        <Label value={hideDayAssignment ? "Select Tours" : "Select Tours (Order determines day assignment)"} className="dark:text-white" />
       </div>
       
       <Card className="dark:bg-slate-900">
@@ -149,71 +150,63 @@ const TourSelector = ({
           
           {/* Custom Tabs */}
           <div className="border-b border-gray-200 dark:border-gray-700">
-            <ul className="flex flex-wrap -mb-px justify-center">
-              <li className="mr-2">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-t-lg ${
-                    activeTab === 'all' 
-                      ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                      : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <span>All Tours</span>
-                  <span className="ml-2 bg-gray-200 dark:bg-slate-900 text-gray-800 dark:text-gray-300 text-xs font-medium px-2 py-0.5 rounded">
-                    {availableTours.length}
-                  </span>
-                </button>
-              </li>
-              <li className="mr-2">
-                <button
-                  onClick={() => setActiveTab('vip')}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-t-lg ${
-                    activeTab === 'vip' 
-                      ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                      : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <FaCrown className="mr-2 text-amber-500" />
-                  <span>VIP Tours</span>
-                  <span className="ml-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 text-xs font-medium px-2 py-0.5 rounded">
-                    {vipCount}
-                  </span>
-                </button>
-              </li>
-              <li className="mr-2">
-                <button
-                  onClick={() => setActiveTab('group')}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-t-lg ${
-                    activeTab === 'group' 
-                      ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                      : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <FaUsers className="mr-2 text-blue-500" />
-                  <span>Group Tours</span>
-                  <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-2 py-0.5 rounded">
-                    {groupCount}
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setActiveTab('selected')}
-                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-t-lg ${
-                    activeTab === 'selected' 
-                      ? 'text-green-600 border-b-2 border-green-600 active dark:text-green-500 dark:border-green-500' 
-                      : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <FaCheck className="mr-2 text-green-500" />
-                  <span>Selected</span>
-                  <span className="ml-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-medium px-2 py-0.5 rounded">
-                    {selectedCount}
-                  </span>
-                </button>
-              </li>
-            </ul>
+            <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:-mb-px sm:justify-center sm:gap-0">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
+                  activeTab === 'all' 
+                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
+                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <span>All</span>
+                <span className="ml-1 sm:ml-2 bg-gray-200 dark:bg-slate-900 text-gray-800 dark:text-gray-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
+                  {availableTours.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('vip')}
+                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
+                  activeTab === 'vip' 
+                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
+                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <FaCrown className="mr-1 sm:mr-2 text-amber-500" />
+                <span>VIP</span>
+                <span className="ml-1 sm:ml-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
+                  {vipCount}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('group')}
+                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
+                  activeTab === 'group' 
+                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
+                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <FaUsers className="mr-1 sm:mr-2 text-blue-500" />
+                <span>Group</span>
+                <span className="ml-1 sm:ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
+                  {groupCount}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('selected')}
+                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
+                  activeTab === 'selected' 
+                    ? 'text-green-600 border-b-2 border-green-600 active dark:text-green-500 dark:border-green-500' 
+                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <FaCheck className="mr-1 sm:mr-2 text-green-500" />
+                <span>Selected</span>
+                <span className="ml-1 sm:ml-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
+                  {selectedCount}
+                </span>
+              </button>
+            </div>
           </div>
           
           {/* No Results Message */}
@@ -241,100 +234,104 @@ const TourSelector = ({
                   const dayNumber = isSelected ? selectedTours.indexOf(tour._id) + 1 : null;
                   
                   return (
-                    <div key={tour._id} className="flex items-center pb-4 border-b dark:border-gray-700 last:border-b-0 last:pb-0 mb-2">
-                      <Checkbox
-                        id={tour._id}
-                        checked={isSelected}
-                        onChange={() => onTourSelection(tour._id)}
-                        className="mr-2"
-                      />
-                      {isSelected && (
-                        <div className="flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-6 h-6 mr-2 text-xs font-bold">
-                          {dayNumber}
-                        </div>
-                      )}
-                      <Label htmlFor={tour._id} className="flex-1">
-                        <div className="font-medium dark:text-white flex items-center flex-wrap">
-                          <span className="mr-2">{tour.name}</span>
-                          {tour.tourType === 'VIP' ? (
-                            <span 
-                              className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                              bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
-                              style={{ 
-                                color: '#7B5804', 
-                                fontWeight: 'bold',
-                                fontSize: '0.65rem',
-                                textShadow: '0 0 2px rgba(255,255,255,0.5)'
-                              }}
-                            >
-                              <FaCrown className="mr-1" style={{fontSize: '0.65rem'}} />VIP
-                            </span>
-                          ) : (
-                            <span 
-                              className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                              bg-blue-600 text-white"
-                              style={{ 
-                                fontSize: '0.65rem'
-                              }}
-                            >
-                              <FaUsers className="mr-1" style={{fontSize: '0.65rem'}} />Group
-                            </span>
-                          )}
-                          
-                          {/* Location Information - inline with badges */}
-                          {tour.city && (
-                            <>
-                              {inferCountryFromCity(tour.city) && (
+                    <div key={tour._id} className="flex flex-col sm:flex-row sm:items-center pb-4 border-b dark:border-gray-700 last:border-b-0 last:pb-0 mb-2 space-y-2 sm:space-y-0">
+                      <div className="flex items-center flex-1">
+                        <Checkbox
+                          id={tour._id}
+                          checked={isSelected}
+                          onChange={() => onTourSelection(tour._id)}
+                          className="mr-2"
+                        />
+                        {isSelected && !hideDayAssignment && (
+                          <div className="flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-6 h-6 mr-2 text-xs font-bold">
+                            {dayNumber}
+                          </div>
+                        )}
+                        <Label htmlFor={tour._id} className="flex-1">
+                          <div className="font-medium dark:text-white flex flex-col sm:flex-row sm:items-center sm:flex-wrap">
+                            <span className="mr-2 mb-1 sm:mb-0">{tour.name}</span>
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
+                              {tour.tourType === 'VIP' ? (
                                 <span 
-                                  className={`mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                  ${countryColors[inferCountryFromCity(tour.city)] || 'bg-gray-600'} text-white`}
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                  bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
+                                  style={{ 
+                                    color: '#7B5804', 
+                                    fontWeight: 'bold',
+                                    fontSize: '0.65rem',
+                                    textShadow: '0 0 2px rgba(255,255,255,0.5)'
+                                  }}
+                                >
+                                  <FaCrown className="mr-1" style={{fontSize: '0.65rem'}} />VIP
+                                </span>
+                              ) : (
+                                <span 
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                  bg-blue-600 text-white"
                                   style={{ 
                                     fontSize: '0.65rem'
                                   }}
                                 >
-                                  <FaGlobeAmericas className="mr-1" style={{fontSize: '0.65rem'}} />
-                                  {inferCountryFromCity(tour.city)}
+                                  <FaUsers className="mr-1" style={{fontSize: '0.65rem'}} />Group
                                 </span>
                               )}
-                              <span 
-                                className="mr-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                bg-green-600 text-white"
-                                style={{ 
-                                  fontSize: '0.65rem'
-                                }}
-                              >
-                                <FaMapMarkerAlt className="mr-1" style={{fontSize: '0.65rem'}} />
-                                {tour.city}
+                              
+                              {/* Location Information */}
+                              {tour.city && (
+                                <>
+                                  {inferCountryFromCity(tour.city) && (
+                                    <span 
+                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                      ${countryColors[inferCountryFromCity(tour.city)] || 'bg-gray-600'} text-white`}
+                                      style={{ 
+                                        fontSize: '0.65rem'
+                                      }}
+                                    >
+                                      <FaGlobeAmericas className="mr-1" style={{fontSize: '0.65rem'}} />
+                                      {inferCountryFromCity(tour.city)}
+                                    </span>
+                                  )}
+                                  <span 
+                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
+                                    bg-green-600 text-white"
+                                    style={{ 
+                                      fontSize: '0.65rem'
+                                    }}
+                                  >
+                                    <FaMapMarkerAlt className="mr-1" style={{fontSize: '0.65rem'}} />
+                                    {tour.city}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{tour.description}</div>
+                          <div className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 mt-1">
+                            ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'} • {tour.duration} hours
+                            {tour.tourType === 'VIP' && (
+                              <span className="ml-2">
+                                <FaCar className="inline mr-1" style={{fontSize: '0.7rem'}} />
+                                {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'})
                               </span>
-                            </>
-                          )}
-                        </div>
-                        
-                        <div className="text-sm text-gray-600 dark:text-gray-400">{tour.description}</div>
-                        <div className="text-sm text-blue-600 dark:text-blue-400">
-                          ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'} • {tour.duration} hours
-                          {tour.tourType === 'VIP' && (
-                            <span className="ml-2">
-                              <FaCar className="inline mr-1" style={{fontSize: '0.7rem'}} />
-                              {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'})
-                            </span>
-                          )}
-                        </div>
-                      </Label>
-                      {isSelected && (
-                        <div className="flex items-center ml-2">
+                            )}
+                          </div>
+                        </Label>
+                      </div>
+                      {isSelected && !hideDayAssignment && (
+                        <div className="flex items-center justify-start sm:justify-end sm:ml-2">
                           <div className="flex items-center">
                             <FaCalendarDay className="text-blue-500 mr-2" />
                             <Select
                               size="sm"
-                              value={dayNumber - 1}
+                              value={dayNumber}
                               onChange={(e) => onTourDayAssignment(tour._id, parseInt(e.target.value))}
                               className="!py-1"
-                              style={{ minWidth: '100px' }}
+                              style={{ minWidth: '80px' }}
                             >
                               {Array.from({ length: selectedTours.length }, (_, i) => (
-                                <option key={i} value={i}>
-                                  Day {i + 1}{i === dayNumber - 1 ? ' (current)' : ''}
+                                <option key={i + 1} value={i + 1}>
+                                  Day {i + 1}{i + 1 === dayNumber ? ' (current)' : ''}
                                 </option>
                               ))}
                             </Select>
@@ -348,19 +345,19 @@ const TourSelector = ({
             </div>
 
             <div 
-              className="flex items-center justify-center w-full h-10 bg-gray-200 dark:bg-slate-900 cursor-ns-resize hover:bg-gray-300 dark:hover:bg-slate-800 rounded-b-lg"
+              className="flex items-center justify-center w-full h-10 bg-gray-200 dark:bg-slate-900 cursor-ns-resize hover:bg-gray-300 dark:hover:bg-slate-800 rounded-b-lg touch-manipulation"
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
               style={{ touchAction: 'none' }}
             >
-              <FaArrowsAltV className="text-gray-500 dark:text-gray-300 mr-2" size={16} />
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-300">Drag to resize</span>
+              <FaArrowsAltV className="text-gray-500 dark:text-gray-300 mr-1 sm:mr-2" size={14} />
+              <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300">Drag to resize</span>
             </div>
           </div>
 
           {selectedTours.length > 0 && (
             <div className="text-center pt-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
                 {selectedTours.length} {selectedTours.length === 1 ? 'tour' : 'tours'} selected
               </span>
             </div>

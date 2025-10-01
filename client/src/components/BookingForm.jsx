@@ -23,7 +23,6 @@ import {
   getCountries, 
   getCitiesByCountry, 
   getCountryOptions,
-  getCityOptions
 } from '../utils/countryCities'
 
 export default function BookingForm() {

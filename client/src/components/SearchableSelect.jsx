@@ -42,6 +42,7 @@ const SearchableSelect = ({
 
   useEffect(() => {
     setFilteredOptions(options.filter(option => 
+      option && option.label && typeof option.label === 'string' && 
       option.label.toLowerCase().includes(searchTerm.toLowerCase())
     ));
   }, [searchTerm, options]);

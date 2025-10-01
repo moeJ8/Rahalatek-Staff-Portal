@@ -35,6 +35,7 @@ const GuestHotelsPage = React.lazy(() => import('./pages/GuestHotelsPage'))
 const GuestToursPage = React.lazy(() => import('./pages/GuestToursPage'))
 const GuestHomePage = React.lazy(() => import('./pages/Visitors/GuestHomePage'))
 const GuestCountryPage = React.lazy(() => import('./pages/Visitors/GuestCountryPage'))
+const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const GuestNotFoundPage = React.lazy(() => import('./pages/GuestNotFoundPage'))
 
@@ -92,7 +93,14 @@ function App() {
 
   return (
           <div className="bg-gray-50 dark:bg-slate-950 min-h-screen flex flex-col">
-      <Toaster position="bottom-center" />
+      <Toaster 
+        position="bottom-center" 
+        toastOptions={{
+          style: {
+            zIndex: 9999,
+          },
+        }}
+      />
       <BrowserRouter>
         <StayOnTop />
         <ConditionalScrollToTop />
@@ -146,6 +154,7 @@ function App() {
               {/* Public Routes - Accessible without authentication */}
               <Route path="/hotels/:slug" element={<PublicHotelPage />} />
               <Route path="/tours/:slug" element={<PublicTourPage />} />
+              <Route path="/packages/:slug" element={<PublicPackagePage />} />
               
               <Route path="*" element={user ? <NotFoundPage /> : <GuestNotFoundPage />} />
             </Routes>

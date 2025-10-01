@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiRefresh } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaGift, FaArchive, FaEnvelope, FaPalette } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaBox, FaArchive, FaEnvelope, FaPalette } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from '../UserBadge'
 import CustomButton from '../CustomButton'
@@ -31,6 +31,7 @@ const Dashboard = React.lazy(() => import('./Dashboard'))
 const Hotels = React.lazy(() => import('./Hotels'))
 const Airports = React.lazy(() => import('./Airports'))
 const Tours = React.lazy(() => import('./Tours'))
+const Packages = React.lazy(() => import('./Packages'))
 const Offices = React.lazy(() => import('./Offices'))
 const Users = React.lazy(() => import('./Users'))
 const UserRequests = React.lazy(() => import('./UserRequests'))
@@ -78,10 +79,10 @@ export default function AdminPanel() {
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
             const availableTabs = isAdmin 
-                ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                ? ['dashboard', 'hotels', 'tours', 'packages', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
                 : isContentManager
-                ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
-                : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
+                ? ['hotels', 'tours', 'packages', 'airports', 'offices'] // Content Managers can only access content management tabs
+                : ['dashboard', 'hotels', 'tours', 'packages', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
             
             if (availableTabs.includes(tabParam)) {
                 setActiveTab(tabParam);
@@ -125,7 +126,7 @@ export default function AdminPanel() {
             console.warn('Access denied: Only administrators can access user requests tab');
             return;
         }
-        if (isContentManager && !['hotels', 'tours', 'airports', 'offices', 'ui-management'].includes(tabName)) {
+        if (isContentManager && !['hotels', 'tours', 'airports', 'offices', 'packages', 'ui-management'].includes(tabName)) {
             console.warn('Access denied: Content managers can only access content management tabs');
             return;
         }
@@ -2400,9 +2401,9 @@ export default function AdminPanel() {
 
     return (
         <div className="w-full flex flex-col items-center">
-            {/* Mobile tabs - sticky at bottom for mobile only */}
+            {/* Mobile/Tablet tabs - sticky at bottom for mobile and tablet */}
             {!loading && !isNotificationsOnlyRoute && (
-                <div className="md:hidden w-full fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+                <div className="lg:hidden w-full fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
                     <div className="overflow-x-auto scrollbar-hide">
                         <div className="flex space-x-1 px-4 py-2 min-w-max" role="tablist" aria-label="Admin Sections">
                                 {!isContentManager && (
@@ -2455,6 +2456,24 @@ export default function AdminPanel() {
                                 >
                                     Tours
                                 </button>
+                                {(isAdmin || isContentManager) && (
+                                <button
+                                id="tab-packages-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'packages' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('packages')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'packages')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'packages'}
+                                    aria-controls="packages-panel"
+                                >
+                                    Packages
+                                </button>
+                                )}
                                 <button
                                 id="tab-airports-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2686,7 +2705,7 @@ export default function AdminPanel() {
                     <div className="flex flex-col md:flex-row w-full">
                         {/* Sidebar for desktop - Hide for notifications-only route */}
                             {!isNotificationsOnlyRoute && (
-                            <div className="hidden md:block w-64 bg-white dark:bg-slate-900 shadow-lg rounded-lg mr-4 h-fit sticky top-4">
+                            <div className="hidden lg:block w-64 bg-white dark:bg-slate-900 shadow-lg rounded-lg mr-4 h-fit sticky top-4">
                             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
@@ -2746,6 +2765,25 @@ export default function AdminPanel() {
                                     <FaMapMarkedAlt className="h-5 w-5 mr-3" />
                                         Tours
                                     </button>
+                                    {(isAdmin || isContentManager) && (
+                                    <button
+                                    id="tab-packages"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'packages' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('packages')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'packages')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'packages'}
+                                        aria-controls="packages-panel"
+                                    >
+                                    <FaBox className="h-5 w-5 mr-3" />
+                                        Packages
+                                    </button>
+                                    )}
                                     <button
                                     id="tab-airports"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -3013,6 +3051,14 @@ export default function AdminPanel() {
                                 <div id="tours-panel" role="tabpanel" aria-labelledby="tab-tours">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <Tours />
+                                    </Suspense>
+                                </div>
+                            )}
+                            
+                            {activeTab === 'packages' && (isAdmin || isContentManager) && (
+                                <div id="packages-panel" role="tabpanel" aria-labelledby="tab-packages">
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <Packages user={authUser} />
                                     </Suspense>
                                 </div>
                             )}

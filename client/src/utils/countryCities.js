@@ -86,11 +86,27 @@ export const getCountryOptions = () => {
   }));
 };
 
-export const getCityOptions = (country) => {
-  return getCitiesByCountry(country).map(city => ({
-    value: city,
-    label: city
-  }));
+export const getCityOptions = (countries) => {
+  // Handle both single country (string) and multiple countries (array)
+  if (typeof countries === 'string') {
+    return getCitiesByCountry(countries).map(city => ({
+      value: city,
+      label: city
+    }));
+  }
+  
+  // Handle array of countries
+  if (Array.isArray(countries) && countries.length > 0) {
+    const cities = countries.flatMap(country => getCitiesByCountry(country));
+    const uniqueCities = [...new Set(cities)].sort();
+    return uniqueCities.map(city => ({
+      value: city,
+      label: city
+    }));
+  }
+  
+  // Return empty array if no countries provided
+  return [];
 };
 
 // Get transfer cities based on hotel countries
