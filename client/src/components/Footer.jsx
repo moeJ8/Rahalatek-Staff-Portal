@@ -46,7 +46,7 @@ export default function Footer() {
                 href="https://www.instagram.com/rahalatek_?igsh=MTZjeWU3eHI3enlmaQ==" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-teal-400 hover:text-blue-500 dark:hover:text-teal-300 text-xl"
+                className="text-blue-600 dark:text-yellow-400 hover:text-blue-500 dark:hover:text-yellow-300 text-xl"
                 aria-label="Instagram"
               >
                 <FaInstagram />
@@ -55,7 +55,7 @@ export default function Footer() {
                 href="https://wa.me/905539241644" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-teal-400 hover:text-blue-500 dark:hover:text-teal-300 text-xl"
+                className="text-blue-600 dark:text-yellow-400 hover:text-blue-500 dark:hover:text-yellow-300 text-xl"
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp />
@@ -64,7 +64,7 @@ export default function Footer() {
                href="mailto:info@rahalatek.com"
                target="_blank"
                rel="noopener noreferrer"
-               className="text-blue-600 dark:text-teal-400 hover:text-blue-500 dark:hover:text-teal-300 text-xl"
+               className="text-blue-600 dark:text-yellow-400 hover:text-blue-500 dark:hover:text-yellow-300 text-xl"
                aria-label="Email"
                >
                 <FaEnvelope />
@@ -73,7 +73,7 @@ export default function Footer() {
                 href="https://rahalatek.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-teal-400 hover:text-blue-500 dark:hover:text-teal-300 text-xl"
+                className="text-blue-600 dark:text-yellow-400 hover:text-blue-500 dark:hover:text-yellow-300 text-xl"
                 aria-label="Website"
               >
                 <FaGlobe />
@@ -83,7 +83,7 @@ export default function Footer() {
             <div className="hidden md:flex gap-6 text-sm">
               <Link 
                 to={user ? "/home" : "/"} 
-                className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400"
+                className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
               >
                 Home
               </Link>
@@ -91,13 +91,13 @@ export default function Footer() {
                 <>
                   <Link 
                     to="/tours" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400"
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
                   >
                     Tours
                   </Link>
                   <Link 
                     to="/hotels" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400"
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
                   >
                     Hotels
                   </Link>
@@ -106,15 +106,21 @@ export default function Footer() {
                 <>
                   <Link 
                     to="/guest/tours" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400"
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
                   >
                     Tours
                   </Link>
                   <Link 
                     to="/guest/hotels" 
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-teal-400"
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
                   >
                     Hotels
+                  </Link>
+                  <Link 
+                    to="/guest/packages" 
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
+                  >
+                    Packages
                   </Link>
                 </>
               )}

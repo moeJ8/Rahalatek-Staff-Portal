@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import HeroCarousel from '../../components/Visitors/HeroCarousel';
 import Destinations from '../../components/Visitors/Destinations';
+import FeaturedPackages from '../../components/Visitors/FeaturedPackages';
 import FeaturedHotels from '../../components/Visitors/FeaturedHotels';
 import FeaturedTours from '../../components/Visitors/FeaturedTours';
 
@@ -47,6 +48,9 @@ export default function GuestHomePage() {
       
       {/* Discover our Destinations Section */}
       <Destinations />
+      
+      {/* Discover Our Programs Section */}
+      <FeaturedPackages />
       
       {/* Featured Tours Section */}
       <FeaturedTours />

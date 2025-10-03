@@ -3,10 +3,10 @@ import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem } from 'reac
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
-import RahalatekLoader from '../components/RahalatekLoader';
-import Search from '../components/Search';
-import Select from '../components/Select';
-import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../../components/RahalatekLoader';
+import Search from '../../components/Search';
+import Select from '../../components/Select';
+import CustomButton from '../../components/CustomButton';
 import axios from 'axios';
 
 const GuestToursPage = () => {
@@ -234,14 +234,6 @@ const GuestToursPage = () => {
     navigate(`/tours/${tour.slug}`);
   };
 
-  const truncateDescription = (description, screenType) => {
-    if (!description) return '';
-    // Adjust truncation based on screen size
-    const maxLength = screenType === 'mobile' ? 80 : screenType === 'tablet' ? 100 : 120;
-    if (description.length <= maxLength) return description;
-    return description.substring(0, maxLength).trim() + '...';
-  };
-
   const getCountryCode = (country) => {
     const codes = {
       'Turkey': 'TR',
@@ -272,7 +264,7 @@ const GuestToursPage = () => {
 
     return (
       <div 
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col relative"
         onClick={() => handleTourClick(tour)}
       >
         {/* Tour Image */}
@@ -282,27 +274,33 @@ const GuestToursPage = () => {
             alt={tour.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-black/60 backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 z-10">
-            <div className="flex items-center space-x-1 text-white">
-              {tour.tourType === 'VIP' ? (
-                <FaCrown className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-              ) : (
-                <FaUsers className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
-              )}
-              <span className="text-xs sm:text-sm font-medium">{tour.tourType}</span>
-            </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+          
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full px-3 py-1.5 shadow-md">
+            {tour.tourType === 'VIP' ? (
+              <FaCrown className="w-4 h-4 text-yellow-400" />
+            ) : (
+              <FaUsers className="w-4 h-4 text-blue-400" />
+            )}
+            <span className="text-sm font-medium">{tour.tourType}</span>
+          </div>
+
+          {/* Tour Name - Inside image at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.name) ? 'text-right' : 'text-left'
+            }`}>
+              {tour.name}
+            </h3>
           </div>
         </div>
 
         {/* Tour Details */}
-        <div className="p-3 sm:p-4 md:p-6">
-          {/* Tour Name */}
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
-            {tour.name}
-          </h3>
+        <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
 
           {/* Location and Duration */}
-          <div className="flex items-center justify-between text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+          <div className="flex items-center justify-between text-gray-600 dark:text-gray-400 mb-2">
             <div className="flex items-center space-x-1.5 sm:space-x-2">
               <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-red-500 dark:text-red-500" />
               <span className="text-xs sm:text-sm truncate">
@@ -319,14 +317,14 @@ const GuestToursPage = () => {
               )}
             </div>
             <div className="flex items-center space-x-1">
-              <FaClock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-blue-500 dark:text-teal-400" />
+              <FaClock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-blue-500 dark:text-yellow-400" />
               <span className="text-xs sm:text-sm">{tour.duration}h</span>
             </div>
           </div>
 
           {/* Highlights */}
           {tour.highlights && tour.highlights.length > 0 && (
-            <div className="mb-3 sm:mb-4">
+            <div className="mb-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -335,7 +333,7 @@ const GuestToursPage = () => {
                 className="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <div className="flex items-center space-x-1">
-                  <FaGem className="text-blue-500 dark:text-teal-400 w-3 h-3" />
+                  <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
                   <span className="text-xs sm:text-sm font-medium">Highlights:</span>
                 </div>
                 {expandedHighlights[tour._id] ? (
@@ -350,7 +348,7 @@ const GuestToursPage = () => {
                 <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-1">
                   {tour.highlights.map((highlight, index) => (
                     <div key={index} className="flex items-start space-x-2 text-xs">
-                      <span className="text-blue-500 dark:text-teal-400 mt-0.5">•</span>
+                      <span className="text-blue-500 dark:text-yellow-400 mt-0.5">•</span>
                       <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{highlight}</span>
                     </div>
                   ))}
@@ -361,13 +359,15 @@ const GuestToursPage = () => {
 
           {/* Description */}
           {tour.description && (
-            <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
-              {truncateDescription(tour.description, screenType)}
+            <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-2 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.description) ? 'text-right' : 'text-left'
+            }`}>
+              {tour.description}
             </p>
           )}
 
           {/* Price Display */}
-          <div className="mb-3 sm:mb-4">
+          <div className="mt-auto">
             <div className="text-right">
               {tour.totalPrice && Number(tour.totalPrice) > 0 ? (
                 <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
@@ -378,19 +378,6 @@ const GuestToursPage = () => {
                   Contact for pricing
                 </span>
               )}
-            </div>
-          </div>
-
-          {/* View Tour Button */}
-          <div className="flex items-center justify-between">
-            <span className="text-blue-600 dark:text-teal-400 hover:text-blue-800 dark:hover:text-teal-200 text-xs sm:text-sm font-medium flex items-center group-hover:underline">
-              View Tour
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-            <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
-              <span className="text-xs">{tour.tourType} Tour</span>
             </div>
           </div>
         </div>

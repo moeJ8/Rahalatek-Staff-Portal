@@ -59,9 +59,9 @@ const CustomModal = ({
           </div>
           
           {/* Body */}
-          <div className="max-h-[70vh] overflow-visible">
-            <CustomScrollbar className="overflow-visible">
-              <div className="p-4 space-y-4 relative">
+          <div className="flex-1 overflow-hidden">
+            <CustomScrollbar className="h-full">
+              <div className="p-4 space-y-4">
                 {children}
               </div>
             </CustomScrollbar>

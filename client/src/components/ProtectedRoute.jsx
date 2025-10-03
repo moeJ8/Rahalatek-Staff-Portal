@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import GuestNotFoundPage from '../pages/GuestNotFoundPage';
+import GuestNotFoundPage from '../pages/Visitors/GuestNotFoundPage';
 
 export default function ProtectedRoute({ requireAdmin, requireFullAdmin, requireContentManager }) {
   const token = localStorage.getItem('token');

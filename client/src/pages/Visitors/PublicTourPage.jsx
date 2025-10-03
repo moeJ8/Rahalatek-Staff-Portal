@@ -5,11 +5,11 @@ import {
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
-import ImageGallery from '../components/ImageGallery';
-import RahalatekLoader from '../components/RahalatekLoader';
-import OtherToursCarousel from '../components/OtherToursCarousel';
+import ImageGallery from '../../components/ImageGallery';
+import RahalatekLoader from '../../components/RahalatekLoader';
+import OtherToursCarousel from '../../components/OtherToursCarousel';
 import GuestNotFoundPage from './GuestNotFoundPage';
-import NotFoundPage from './NotFoundPage';
+import NotFoundPage from '../NotFoundPage';
 
 const PublicTourPage = () => {
   const { slug } = useParams();
@@ -129,7 +129,7 @@ const PublicTourPage = () => {
               <span className="text-sm sm:text-base">{tour.city}, {tour.country}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 px-2 py-1 rounded text-xs sm:text-sm font-medium">
+              <span className="text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 px-2 py-1 rounded text-xs sm:text-sm font-medium">
                 {tour.tourType} Tour
               </span>
               <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
@@ -152,41 +152,41 @@ const PublicTourPage = () => {
           <div className="flex justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0">
             <button 
               onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Overview
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {tour.highlights && tour.highlights.length > 0 && (
               <button 
                 onClick={() => document.getElementById('highlights')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 Highlights
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
             <button 
               onClick={() => document.getElementById('details')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Information
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             <button 
               onClick={() => document.getElementById('policies')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Policies
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {tour.faqs && tour.faqs.length > 0 && (
               <button 
                 onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 FAQs
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
           </div>
@@ -216,7 +216,7 @@ const PublicTourPage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
               {tour.highlights.map((highlight, index) => (
                 <div key={index} className="flex items-start space-x-3 sm:space-x-4">
-                  <FaCheck className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0" />
+                  <FaCheck className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0" />
                   <span className="text-gray-800 dark:text-gray-200 text-sm sm:text-base">{highlight}</span>
                 </div>
               ))}
@@ -234,11 +234,11 @@ const PublicTourPage = () => {
           {/* Tour Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <div className="flex items-center space-x-4 sm:space-x-6">
-              <div className="bg-blue-100 dark:bg-teal-900/30 p-3 rounded-lg">
+              <div className="bg-blue-100 dark:bg-yellow-900/30 p-3 rounded-lg">
                 {tour.tourType === 'VIP' ? (
-                  <FaCrown className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-teal-400" />
+                  <FaCrown className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-yellow-400" />
                 ) : (
-                  <FaUsers className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-teal-400" />
+                  <FaUsers className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-yellow-400" />
                 )}
               </div>
               <div>
@@ -248,8 +248,8 @@ const PublicTourPage = () => {
             </div>
 
             <div className="flex items-center space-x-4 sm:space-x-6">
-              <div className="bg-blue-100 dark:bg-teal-900/30 p-3 rounded-lg">
-                <FaClock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-teal-400" />
+              <div className="bg-blue-100 dark:bg-yellow-900/30 p-3 rounded-lg">
+                <FaClock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-yellow-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Duration</h4>
@@ -260,8 +260,8 @@ const PublicTourPage = () => {
             </div>
 
             <div className="flex items-center space-x-4 sm:space-x-6">
-              <div className="bg-blue-100 dark:bg-teal-900/30 p-3 rounded-lg">
-                <FaMapMarkerAlt className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-teal-400" />
+              <div className="bg-blue-100 dark:bg-yellow-900/30 p-3 rounded-lg">
+                <FaMapMarkerAlt className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-yellow-400" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Location</h4>
@@ -271,8 +271,8 @@ const PublicTourPage = () => {
 
             {tour.tourType === 'VIP' && (
               <div className="flex items-center space-x-4 sm:space-x-6">
-                <div className="bg-blue-100 dark:bg-teal-900/30 p-3 rounded-lg">
-                  <FaCar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-teal-400" />
+                <div className="bg-blue-100 dark:bg-yellow-900/30 p-3 rounded-lg">
+                  <FaCar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-900 dark:text-yellow-400" />
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Vehicle</h4>
@@ -298,14 +298,14 @@ const PublicTourPage = () => {
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">Children Policy</h3>
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-start space-x-3">
-                <FaChild className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
+                <FaChild className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Children under 3 years</p>
                   <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">{tour.childrenPolicies?.under3 || 'Free'}</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
-                <FaChild className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
+                <FaChild className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white text-sm sm:text-base">Children 3+ years</p>
                   <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">{tour.childrenPolicies?.above3 || 'Adult price'}</p>
@@ -321,7 +321,7 @@ const PublicTourPage = () => {
               <div className="space-y-2 sm:space-y-3">
                 {tour.policies.map((policy, index) => (
                   <div key={index} className="flex items-start space-x-3">
-                    <FaCheckCircle className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
+                    <FaCheckCircle className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 mr-2 sm:mr-3 flex-shrink-0" />
                     <span className="text-gray-800 dark:text-gray-200 text-sm sm:text-base">{policy}</span>
                   </div>
                 ))}
@@ -351,8 +351,8 @@ const PublicTourPage = () => {
                 key={index}
                 className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                   activeFaqIndex === index 
-                    ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-teal-400' 
-                    : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-teal-400'
+                    ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
+                    : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
                 }`}
               >
                 <button
@@ -362,14 +362,14 @@ const PublicTourPage = () => {
                 >
                   <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
                     activeFaqIndex === index 
-                      ? 'text-blue-700 dark:text-teal-300' 
+                      ? 'text-blue-700 dark:text-yellow-300' 
                       : 'text-gray-800 dark:text-gray-100'
                   }`}>
                     {faq.question}
                   </h3>
                   <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                     activeFaqIndex === index 
-                      ? 'bg-blue-100 dark:bg-teal-900/30 text-blue-600 dark:text-teal-400' 
+                      ? 'bg-blue-100 dark:bg-yellow-900/30 text-blue-600 dark:text-yellow-400' 
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                   }`}>
                     {activeFaqIndex === index ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}

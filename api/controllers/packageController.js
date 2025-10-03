@@ -340,7 +340,6 @@ exports.togglePackageStatus = async (req, res) => {
         });
     }
 };
-
 // Get package statistics
 exports.getPackageStats = async (req, res) => {
     try {
@@ -473,7 +472,7 @@ exports.getFeaturedPackages = async (req, res) => {
             .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
             .limit(limit)
             .populate('hotels.hotelId', 'name stars images')
-            .populate('tours.tourId', 'name tourType price images');
+            .populate('tours.tourId', 'name city country tourType duration price totalPrice images');
         
         res.status(200).json({
             success: true,
@@ -488,3 +487,4 @@ exports.getFeaturedPackages = async (req, res) => {
         });
     }
 };
+

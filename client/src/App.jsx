@@ -29,15 +29,16 @@ const OfficeDetailPage = React.lazy(() => import('./pages/OfficeDetailPage'))
 const ProfilePage = React.lazy(() => import('./pages/ProfilePage'))
 const AttendancePage = React.lazy(() => import('./pages/AttendancePage'))
 const EmailVerificationPage = React.lazy(() => import('./pages/EmailVerificationPage'))
-const PublicHotelPage = React.lazy(() => import('./pages/PublicHotelPage'))
-const PublicTourPage = React.lazy(() => import('./pages/PublicTourPage'))
-const GuestHotelsPage = React.lazy(() => import('./pages/GuestHotelsPage'))
-const GuestToursPage = React.lazy(() => import('./pages/GuestToursPage'))
+const PublicHotelPage = React.lazy(() => import('./pages/Visitors/PublicHotelPage'))
+const PublicTourPage = React.lazy(() => import('./pages/Visitors/PublicTourPage'))
+const GuestHotelsPage = React.lazy(() => import('./pages/Visitors/GuestHotelsPage'))
+const GuestToursPage = React.lazy(() => import('./pages/Visitors/GuestToursPage'))
 const GuestHomePage = React.lazy(() => import('./pages/Visitors/GuestHomePage'))
 const GuestCountryPage = React.lazy(() => import('./pages/Visitors/GuestCountryPage'))
+const PublicPackagesPage = React.lazy(() => import('./pages/Visitors/PublicPackagesPage'))
 const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
-const GuestNotFoundPage = React.lazy(() => import('./pages/GuestNotFoundPage'))
+const GuestNotFoundPage = React.lazy(() => import('./pages/Visitors/GuestNotFoundPage'))
 
 // Component to conditionally render ScrollToTop based on current route
 const ConditionalScrollToTop = () => {
@@ -148,6 +149,7 @@ function App() {
                 <Route path="/" element={<GuestHomePage />} />
                 <Route path="/guest/hotels" element={<GuestHotelsPage />} />
                 <Route path="/guest/tours" element={<GuestToursPage />} />
+                <Route path="/guest/packages" element={<PublicPackagesPage />} />
                 <Route path="/country/:country" element={<GuestCountryPage />} />
               </Route>
               

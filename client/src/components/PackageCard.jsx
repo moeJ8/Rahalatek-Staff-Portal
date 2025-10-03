@@ -402,21 +402,15 @@ const PackageCard = ({
         isOpen={showHotelsModal}
         onClose={() => setShowHotelsModal(false)}
         title="Package Hotels"
-        size="lg"
+        subtitle={`${pkg.hotels.length} hotel${pkg.hotels.length !== 1 ? 's' : ''} included`}
+        maxWidth="md:max-w-2xl"
       >
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FaBed className="text-blue-600 dark:text-teal-400 w-5 h-5" />
-            <h3 className="text-lg font-semibold dark:text-white">
-              {pkg.hotels.length} Hotel{pkg.hotels.length !== 1 ? 's' : ''} in this Package
-            </h3>
-          </div>
-          
+        <div className="space-y-3">
           {pkg.hotels.map((hotel, index) => (
-            <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm">
                     {hotel.hotelId?.name || `Hotel ${index + 1}`}
                   </h4>
                   <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
@@ -482,23 +476,17 @@ const PackageCard = ({
         isOpen={showToursModal}
         onClose={() => setShowToursModal(false)}
         title="Package Tours"
-        size="lg"
+        subtitle={`${pkg.tours?.length || 0} tour${(pkg.tours?.length || 0) !== 1 ? 's' : ''} included`}
+        maxWidth="md:max-w-2xl"
       >
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <FaUsers className="text-blue-600 dark:text-teal-400 w-5 h-5" />
-            <h3 className="text-lg font-semibold dark:text-white">
-              {pkg.tours?.length || 0} Tour{(pkg.tours?.length || 0) !== 1 ? 's' : ''} in this Package
-            </h3>
-          </div>
-          
+        <div className="space-y-3">
           {pkg.tours && pkg.tours.length > 0 ? (
             pkg.tours.map((tour, index) => (
-              <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-gray-900 dark:text-white">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
                         {tour.tourId?.name || `Tour ${index + 1}`}
                       </h4>
                       {tour.tourId?.tourType === 'VIP' ? (

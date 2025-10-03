@@ -2632,6 +2632,168 @@ This is an automated reminder from Rahalatek.
 Sent At: ${currentTime}`;
     }
 
+    /**
+     * Send contact form email to admin
+     */
+    async sendContactFormEmail(contactData) {
+        try {
+            const { name, email, subject, message, packageName, packageSlug } = contactData;
+
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+            
+            const packageInfo = packageName ? `
+                <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 12px; margin: 16px 0; border-radius: 4px;">
+                    <p style="margin: 0; color: #1e40af; font-weight: 600;">📦 Package Inquiry</p>
+                    <p style="margin: 4px 0 0 0; color: #1e3a8a;">Package: ${packageName}</p>
+                    ${packageSlug ? `<p style="margin: 4px 0 0 0; color: #1e3a8a; font-size: 12px;">URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/packages/${packageSlug}</p>` : ''}
+                </div>
+            ` : '';
+
+            const mailOptions = {
+                from: {
+                    name: 'Rahalatek Contact Form',
+                    address: process.env.EMAIL_FROM || process.env.EMAIL_USER
+                },
+                to: adminEmail,
+                replyTo: {
+                    name: name,
+                    address: email
+                },
+                subject: `${name}: ${subject}`,
+                html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body {
+                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                                line-height: 1.6;
+                                color: #333;
+                                max-width: 600px;
+                                margin: 0 auto;
+                                padding: 20px;
+                            }
+                            .header {
+                                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                                color: white;
+                                padding: 30px;
+                                border-radius: 8px 8px 0 0;
+                                text-align: center;
+                            }
+                            .content {
+                                background: #ffffff;
+                                padding: 30px;
+                                border: 1px solid #e5e7eb;
+                                border-top: none;
+                            }
+                            .info-row {
+                                margin: 12px 0;
+                                padding: 12px;
+                                background: #f9fafb;
+                                border-radius: 6px;
+                            }
+                            .label {
+                                font-weight: 600;
+                                color: #374151;
+                                display: block;
+                                margin-bottom: 4px;
+                            }
+                            .value {
+                                color: #1f2937;
+                            }
+                            .message-box {
+                                background: #f3f4f6;
+                                border-left: 4px solid #eab308;
+                                padding: 16px;
+                                margin: 20px 0;
+                                border-radius: 4px;
+                            }
+                            .footer {
+                                text-align: center;
+                                margin-top: 30px;
+                                padding-top: 20px;
+                                border-top: 1px solid #e5e7eb;
+                                color: #6b7280;
+                                font-size: 14px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1 style="margin: 0; font-size: 24px;">📧 New Contact Form Submission</h1>
+                        </div>
+                        
+                        <div class="content">
+                            ${packageInfo}
+                            
+                            <div class="info-row">
+                                <span class="label">👤 Name:</span>
+                                <span class="value">${name}</span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <span class="label">📧 Email:</span>
+                                <span class="value"><a href="mailto:${email}" style="color: #3b82f6;">${email}</a></span>
+                            </div>
+                            
+                            <div class="info-row">
+                                <span class="label">📌 Subject:</span>
+                                <span class="value">${subject}</span>
+                            </div>
+                            
+                            <div class="message-box">
+                                <span class="label">💬 Message:</span>
+                                <div class="value" style="white-space: pre-wrap; margin-top: 8px;">${message}</div>
+                            </div>
+                            
+                            <div style="margin-top: 24px; padding: 16px; background: #eff6ff; border-radius: 8px; text-align: center;">
+                                <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                    💡 Click "Reply" to respond directly to <strong>${email}</strong>
+                                </p>
+                            </div>
+                            
+                            <div class="footer">
+                                <p style="margin: 0;">Received on ${new Date().toLocaleString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</p>
+                                <p style="margin: 8px 0 0 0;">Rahalatek Contact Management System</p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `,
+                text: `
+New Contact Form Submission
+
+${packageName ? `Package Inquiry: ${packageName}\n` : ''}
+Name: ${name}
+Email: ${email}
+Subject: ${subject}
+
+Message:
+${message}
+
+---
+Reply to this email to respond directly to the sender.
+Received: ${new Date().toLocaleString()}
+Rahalatek Contact Management System
+                `
+            };
+
+            const result = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Contact form email sent successfully');
+            return result;
+        } catch (error) {
+            console.error('❌ Error sending contact form email:', error);
+            throw error;
+        }
+    }
+
 }
 
 module.exports = new EmailService();

@@ -15,14 +15,14 @@ import {
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import ImageGallery from '../components/ImageGallery';
-import RahalatekLoader from '../components/RahalatekLoader';
-import HotelRoomsCarousel from '../components/HotelRoomsCarousel';
-import OtherHotelsCarousel from '../components/OtherHotelsCarousel';
-import ModalScrollbar from '../components/ModalScrollbar';
-import CustomModal from '../components/CustomModal';
+import ImageGallery from '../../components/ImageGallery';
+import RahalatekLoader from '../../components/RahalatekLoader';
+import HotelRoomsCarousel from '../../components/HotelRoomsCarousel';
+import OtherHotelsCarousel from '../../components/OtherHotelsCarousel';
+import ModalScrollbar from '../../components/ModalScrollbar';
+import CustomModal from '../../components/CustomModal';
 import GuestNotFoundPage from './GuestNotFoundPage';
-import NotFoundPage from './NotFoundPage';
+import NotFoundPage from '../NotFoundPage';
 
 const PublicHotelPage = () => {
   const { slug } = useParams();
@@ -160,188 +160,188 @@ const PublicHotelPage = () => {
   const getAmenityIcon = (amenityKey) => {
     const iconMap = {
       // Top Family-Friendly Amenities
-      gameRoom: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      toysGames: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      waterslide: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      waterslideFacility: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      waterslideFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      kidsClub: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeChildrensClub: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeChildrensClubFamily: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      kidsPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      childrensPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      childrensPoolFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      babysitting: <FaBaby className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      inRoomBabysitting: <FaBaby className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      tennisCourt: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      outdoorTennisCourts: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      tennisLessons: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      soundproofRooms: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      soundproofed: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      soundproofedRooms: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      groceryConvenienceStore: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      groceryConvenienceStoreFamily: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      groceryConvenienceStoreConvenience: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      gameRoom: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      toysGames: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      waterslide: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      waterslideFacility: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      waterslideFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      kidsClub: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeChildrensClub: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeChildrensClubFamily: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      kidsPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      childrensPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      childrensPoolFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      babysitting: <FaBaby className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      inRoomBabysitting: <FaBaby className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      tennisCourt: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      outdoorTennisCourts: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      tennisLessons: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      soundproofRooms: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      soundproofed: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      soundproofedRooms: <FaVolumeDown className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      groceryConvenienceStore: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      groceryConvenienceStoreFamily: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      groceryConvenienceStoreConvenience: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
 
       // Popular Amenities  
-      bar: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      barsLounges: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      beachBar: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      poolsideBars: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      pool: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      outdoorPools: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      outdoorPoolsFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      indoorPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      indoorPoolFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      allInclusive: <FaCheckCircle className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      breakfastIncluded: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      buffetBreakfast: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      coffeeTeaCommonAreas: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      gym: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      gymFacility: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      fitnessClasses: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      roomService: <FaConciergeBell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      laundry: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      laundryFacilities: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      laundryFacilitiesConvenience: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      dryCleaningLaundry: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      housekeeping: <FaSoap className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      housekeepingDaily: <FaSoap className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      frontDesk24h: <FaBell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      frontDesk24hConvenience: <FaBell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      spa: <FaSpa className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      fullServiceSpa: <FaSpa className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      saunaFacility: <FaFan className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      steamRoom: <FaSnowflake className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      airConditioning: <FaSnowflake className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      parkingIncluded: <FaParking className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeSelfParking: <FaParking className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeWiFi: <FaWifi className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeWiFiPublicAreas: <FaWifi className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      restaurant: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      restaurants: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      snackBarDeli: <FaStore className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      snackBarDeliFamily: <FaStore className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      bar: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      barsLounges: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      beachBar: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      poolsideBars: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      pool: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      outdoorPools: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      outdoorPoolsFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      indoorPool: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      indoorPoolFamily: <FaWater className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      allInclusive: <FaCheckCircle className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      breakfastIncluded: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      buffetBreakfast: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      coffeeTeaCommonAreas: <FaCoffee className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      gym: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      gymFacility: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      fitnessClasses: <FaDumbbell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      roomService: <FaConciergeBell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      laundry: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      laundryFacilities: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      laundryFacilitiesConvenience: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      dryCleaningLaundry: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      housekeeping: <FaSoap className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      housekeepingDaily: <FaSoap className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      frontDesk24h: <FaBell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      frontDesk24hConvenience: <FaBell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      spa: <FaSpa className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      fullServiceSpa: <FaSpa className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      saunaFacility: <FaFan className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      steamRoom: <FaSnowflake className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      airConditioning: <FaSnowflake className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      parkingIncluded: <FaParking className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeSelfParking: <FaParking className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeWiFi: <FaWifi className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeWiFiPublicAreas: <FaWifi className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      restaurant: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      restaurants: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      snackBarDeli: <FaStore className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      snackBarDeliFamily: <FaStore className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
 
       // Business Services
-      businessCenter24h: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      conferenceSpace: <FaHandshake className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      computerStation: <FaDesktop className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      coworkingSpace: <FaUsers className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      meetingRoom: <FaUsers className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      businessCenter24h: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      conferenceSpace: <FaHandshake className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      computerStation: <FaDesktop className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      coworkingSpace: <FaUsers className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      meetingRoom: <FaUsers className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
 
       // Parking and Transportation
-      airportShuttle24h: <FaPlane className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      accessibleAirportShuttle: <FaPlane className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      airportShuttle24h: <FaPlane className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      accessibleAirportShuttle: <FaPlane className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
 
       // Additional amenities with consistent blue/teal colors
-      arcadeGameRoom: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      arcadeGameRoomFamily: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      games: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      childrensGames: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      beachVolleyball: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      billiardsPoolTable: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      bowlingAlley: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      bowlingAlleyFamily: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      concertsLiveShows: <FaMusic className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      eveningEntertainment: <FaTheaterMasks className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeBicycleRentals: <FaBicycle className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      karaoke: <FaMicrophone className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      nightclub: <FaMusic className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      parasailing: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      playground: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      playgroundFamily: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      racquetballSquash: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      sailing: <FaShip className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      scubaDiving: <FaFish className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      shopping: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      tableTennis: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      waterSkiing: <FaFish className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      windsurfing: <FaShip className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      yogaClasses: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      arcadeGameRoom: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      arcadeGameRoomFamily: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      games: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      childrensGames: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      beachVolleyball: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      billiardsPoolTable: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      bowlingAlley: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      bowlingAlleyFamily: <FaGamepad className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      concertsLiveShows: <FaMusic className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      eveningEntertainment: <FaTheaterMasks className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeBicycleRentals: <FaBicycle className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      karaoke: <FaMicrophone className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      nightclub: <FaMusic className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      parasailing: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      playground: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      playgroundFamily: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      racquetballSquash: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      sailing: <FaShip className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      scubaDiving: <FaFish className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      shopping: <FaShoppingCart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      tableTennis: <FaVolleyballBall className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      waterSkiing: <FaFish className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      windsurfing: <FaShip className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      yogaClasses: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
       
       // Family & Convenience
-      childrensToys: <FaChild className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeSupervisedActivities: <FaUsers className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      stroller: <FaBaby className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      giftShopNewsstand: <FaGift className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      hairSalon: <FaCut className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      lockers: <FaKey className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      safeFrontDesk: <FaKey className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      childrensToys: <FaChild className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeSupervisedActivities: <FaUsers className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      stroller: <FaBaby className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      giftShopNewsstand: <FaGift className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      hairSalon: <FaCut className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      lockers: <FaKey className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      safeFrontDesk: <FaKey className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
       
       // Guest Services
-      changeOfBedsheets: <FaBed className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      changeOfTowels: <FaBath className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      conciergeServices: <FaConciergeBell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      multilingualStaff: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      porterBellhop: <FaSuitcase className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      proposalRomancePackages: <FaHeart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      weddingServices: <FaRing className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      tourTicketAssistance: <FaTicketAlt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      changeOfBedsheets: <FaBed className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      changeOfTowels: <FaBath className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      conciergeServices: <FaConciergeBell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      multilingualStaff: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      porterBellhop: <FaSuitcase className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      proposalRomancePackages: <FaHeart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      weddingServices: <FaRing className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      tourTicketAssistance: <FaTicketAlt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
       
       // Outdoor & Accessibility
-      beachLoungers: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      beachTowels: <FaBath className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      beachUmbrellas: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      garden: <FaTree className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      onTheBay: <FaShip className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      onTheBeach: <FaSun className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      outdoorEntertainmentArea: <FaMusic className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      outdoorFurniture: <FaTree className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      poolLoungers: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      poolUmbrellas: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      terrace: <FaTree className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      accessibleRoom: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      elevator: <FaUsers className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      poolHoist: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      wellLitPath: <FaSun className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      wheelchairAccessible: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      wheelchairAccessiblePath: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      wheelchairAccessibleWashroom: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      wheelchairAccessibleDesk: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      beachLoungers: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      beachTowels: <FaBath className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      beachUmbrellas: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      garden: <FaTree className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      onTheBay: <FaShip className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      onTheBeach: <FaSun className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      outdoorEntertainmentArea: <FaMusic className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      outdoorFurniture: <FaTree className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      poolLoungers: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      poolUmbrellas: <FaUmbrella className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      terrace: <FaTree className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      accessibleRoom: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      elevator: <FaUsers className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      poolHoist: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      wellLitPath: <FaSun className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      wheelchairAccessible: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      wheelchairAccessiblePath: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      wheelchairAccessibleWashroom: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      wheelchairAccessibleDesk: <FaWheelchair className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
       
       // Spa & Room Amenities
-      bodyScrubs: <FaHands className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      bodyWraps: <FaHands className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      facials: <FaSpa className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      manicuresPedicures: <FaCut className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      massage: <FaHands className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      saunaService: <FaFan className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      spaOpenDaily: <FaSpa className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      turkishBath: <FaBath className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      balcony: <FaTree className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      minibar: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      safe: <FaKey className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      tv: <FaTv className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      hairdryer: <FaFan className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      bathrobes: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      freeCots: <FaBed className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      smokingAllowed: <FaFan className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      petFriendly: <FaHeart className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      bodyScrubs: <FaHands className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      bodyWraps: <FaHands className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      facials: <FaSpa className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      manicuresPedicures: <FaCut className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      massage: <FaHands className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      saunaService: <FaFan className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      spaOpenDaily: <FaSpa className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      turkishBath: <FaBath className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      balcony: <FaTree className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      minibar: <FaWineGlass className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      safe: <FaKey className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      tv: <FaTv className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      hairdryer: <FaFan className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      bathrobes: <FaTshirt className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      freeCots: <FaBed className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      smokingAllowed: <FaFan className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      petFriendly: <FaHeart className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
       
       // Languages & Miscellaneous
-      dutch: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      english: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      french: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      german: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      russian: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      turkish: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      twoFloors: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      ledLighting80Percent: <FaSun className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      locallySourcedFood80Percent: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      banquetHall: <FaUsers className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      builtIn1999: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      designatedSmokingAreas: <FaFan className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      mediterraneanArchitecture: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      vegetarianBreakfast: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      vegetarianDining: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      italian: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      buffetMeals: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      seafood: <FaFish className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
-      sevenTwentyFour: <FaBell className="w-5 h-5 text-blue-500 dark:text-teal-400" />,
+      dutch: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      english: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      french: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      german: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      russian: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      turkish: <FaLanguage className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      twoFloors: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      ledLighting80Percent: <FaSun className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      locallySourcedFood80Percent: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      banquetHall: <FaUsers className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      builtIn1999: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      designatedSmokingAreas: <FaFan className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      mediterraneanArchitecture: <FaBuilding className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      vegetarianBreakfast: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      vegetarianDining: <FaLeaf className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      italian: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      buffetMeals: <FaUtensilSpoon className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      seafood: <FaFish className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
+      sevenTwentyFour: <FaBell className="w-5 h-5 text-blue-500 dark:text-yellow-400" />,
 
       // Generic icon for any unmatched amenities
-      default: <FaCheckCircle className="w-5 h-5 text-blue-500 dark:text-teal-400" />
+      default: <FaCheckCircle className="w-5 h-5 text-blue-500 dark:text-yellow-400" />
     };
     
     return iconMap[amenityKey] || iconMap.default;
@@ -392,26 +392,26 @@ const PublicHotelPage = () => {
           <div className="flex justify-start sm:justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0">
             <button 
               onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Overview
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.roomTypes && hotel.roomTypes.length > 0 && (
               <button 
                 onClick={() => document.getElementById('rooms')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 Rooms
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
             <button 
               onClick={() => document.getElementById('amenities')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Amenities
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.transportation && (
               hotel.transportation.vitoReceptionPrice > 0 || 
@@ -423,35 +423,35 @@ const PublicHotelPage = () => {
             ) && (
               <button 
                 onClick={() => document.getElementById('transportation')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 Transportation
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
             {hotel.locationDescription && (
               <button 
                 onClick={() => document.getElementById('location')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 Location
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
             <button 
               onClick={() => document.getElementById('policies')?.scrollIntoView({ behavior: 'smooth' })}
-              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+              className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
               Policies
-              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.faqs && hotel.faqs.length > 0 && (
               <button 
                 onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
+                className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
                 FAQs
-                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 w-0 group-hover:w-full"></span>
+                <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
           </div>
@@ -496,7 +496,7 @@ const PublicHotelPage = () => {
             {allAmenities.length > 9 && (
               <button 
                 onClick={() => setShowAmenitiesModal(true)}
-                className="text-blue-600 dark:text-teal-400 hover:underline font-medium"
+                className="text-blue-600 dark:text-yellow-400 hover:underline font-medium"
               >
                 See all {allAmenities.length} amenities
               </button>
@@ -505,7 +505,7 @@ const PublicHotelPage = () => {
             {allAmenities.length <= 9 && allAmenities.length > 0 && (
               <button 
                 onClick={() => setShowAmenitiesModal(true)}
-                className="text-blue-600 dark:text-teal-400 hover:underline font-medium"
+                className="text-blue-600 dark:text-yellow-400 hover:underline font-medium"
               >
                 See all
               </button>
@@ -551,7 +551,7 @@ const PublicHotelPage = () => {
             {(hotel.transportation.vitoReceptionPrice > 0 || hotel.transportation.vitoFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaCar className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <FaCar className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Vito</h4>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">2-8 passengers</p>
@@ -576,7 +576,7 @@ const PublicHotelPage = () => {
             {(hotel.transportation.sprinterReceptionPrice > 0 || hotel.transportation.sprinterFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaShuttleVan className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <FaShuttleVan className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Sprinter</h4>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">9-16 passengers</p>
@@ -601,7 +601,7 @@ const PublicHotelPage = () => {
             {(hotel.transportation.busReceptionPrice > 0 || hotel.transportation.busFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaBus className="text-blue-600 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <FaBus className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Bus</h4>
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">17+ passengers</p>
@@ -646,7 +646,7 @@ const PublicHotelPage = () => {
           {hotel.childrenPolicies && (
             <div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-                <FaChild className="mr-2 sm:mr-3 text-blue-500 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+                <FaChild className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
                 Children Policy
               </h3>
               <div className="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-100">
@@ -660,7 +660,7 @@ const PublicHotelPage = () => {
           {/* Breakfast Policy */}
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-              <FaCoffee className="mr-2 sm:mr-3 text-blue-500 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+              <FaCoffee className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
               Breakfast Policy
             </h3>
             <div className="text-sm sm:text-base text-gray-800 dark:text-gray-100">
@@ -678,7 +678,7 @@ const PublicHotelPage = () => {
           {/* General Policies */}
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-              <FaUsers className="mr-2 sm:mr-3 text-blue-500 dark:text-teal-400 w-4 h-4 sm:w-5 sm:h-5" />
+              <FaUsers className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
               General Policies
             </h3>
             <div className="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-100">
@@ -711,8 +711,8 @@ const PublicHotelPage = () => {
                 key={index}
                 className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                   activeFaqIndex === index 
-                    ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-teal-400' 
-                    : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-teal-400'
+                    ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
+                    : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
                 }`}
               >
                 <button
@@ -722,14 +722,14 @@ const PublicHotelPage = () => {
                 >
                   <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
                     activeFaqIndex === index 
-                      ? 'text-blue-700 dark:text-teal-300' 
+                      ? 'text-blue-700 dark:text-yellow-300' 
                       : 'text-gray-800 dark:text-gray-100'
                   }`}>
                     {faq.question}
                   </h3>
                   <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                     activeFaqIndex === index 
-                      ? 'bg-blue-100 dark:bg-teal-900/30 text-blue-600 dark:text-teal-400' 
+                      ? 'bg-blue-100 dark:bg-yellow-900/30 text-blue-600 dark:text-yellow-400' 
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                   }`}>
                     {activeFaqIndex === index ? <HiChevronUp size={20} /> : <HiChevronDown size={20} />}

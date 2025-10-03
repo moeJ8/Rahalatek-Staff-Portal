@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaHome, FaSearch, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
-import CustomButton from '../components/CustomButton';
+import CustomButton from '../../components/CustomButton';
 
 export default function GuestNotFoundPage({ 
   title = "Page Not Found",

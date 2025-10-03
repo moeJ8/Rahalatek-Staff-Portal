@@ -82,8 +82,8 @@ export default function PackageHotelCard({
     return (
         <Card className="dark:bg-slate-900 mb-4">
             <div className="flex justify-between items-start mb-4">
-                <h4 className="font-medium dark:text-white text-lg">Hotel #{index + 1}</h4>
-                <div className="flex gap-2">
+                <h4 className="font-medium dark:text-white text-base md:text-lg">Hotel #{index + 1}</h4>
+                <div className="flex gap-1 sm:gap-2">
                     <CustomButton
                         onClick={() => setIsEditing(!isEditing)}
                         variant="blue"
@@ -103,12 +103,12 @@ export default function PackageHotelCard({
                 </div>
             </div>
 
-            <div className={`flex flex-col gap-4 ${isEditing ? 'lg:flex-row' : 'items-center'}`}>
+            <div className={`flex flex-col gap-4 ${isEditing ? 'md:flex-row' : 'items-center'}`}>
                 {/* Hotel Card Display */}
-                <div className={isEditing ? 'lg:w-2/3' : 'w-full max-w-2xl mx-auto'}>
+                <div className={isEditing ? 'md:w-2/3 w-full' : 'w-full max-w-2xl mx-auto'}>
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
                         {/* Hotel Image */}
-                        <div className="relative h-48 overflow-hidden">
+                        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden">
                             <img
                                 src={imageUrl}
                                 alt={hotelData?.name}
@@ -122,9 +122,9 @@ export default function PackageHotelCard({
                         </div>
                         
                         {/* Hotel Details */}
-                        <div className="p-4">
+                        <div className="p-3 md:p-4">
                             {/* Hotel Name */}
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                            <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white mb-2">
                                 {hotelData?.name}
                             </h3>
 
@@ -149,17 +149,17 @@ export default function PackageHotelCard({
                                 <div className="mb-3">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center">
-                                            <FaBed className="text-blue-500 dark:text-teal-400 w-4 h-4 mr-2" />
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Room Types:</span>
+                                            <FaBed className="text-blue-500 dark:text-teal-400 w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Room Types:</span>
                                         </div>
                                         <div className="flex items-center text-xs bg-blue-500 dark:bg-teal-500 text-white py-1 px-2 rounded-full">
-                                            <FaCalendarAlt className="mr-1" size={10} />
-                                            <span>{getMonthName(new Date())?.charAt(0).toUpperCase() + getMonthName(new Date())?.slice(1)} pricing</span>
+                                            <FaCalendarAlt className="mr-1" size={8} />
+                                            <span className="text-xs">{getMonthName(new Date())?.charAt(0).toUpperCase() + getMonthName(new Date())?.slice(1)} pricing</span>
                                         </div>
                                     </div>
                                     
                                     {/* Show first 2 room types */}
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {hotelData.roomTypes.slice(0, 2).map((roomType, index) => {
                                             const currentDate = new Date();
                                             const currentMonthPrice = getRoomPriceForMonth(roomType, currentDate, false);
@@ -168,7 +168,7 @@ export default function PackageHotelCard({
                                             const displayChildPrice = currentMonthChildPrice > 0 ? currentMonthChildPrice : roomType.childrenPricePerNight;
                                             
                                             return (
-                                                <div key={index} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
+                                                <div key={index} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-600">
                                                     <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate mb-1">
                                                         {roomType.type.replace(" ROOM", "").replace(" SUITE", "")}
                                                     </div>
@@ -208,7 +208,7 @@ export default function PackageHotelCard({
                                             {/* Expanded Room Types */}
                                             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedRoomTypes ? 'max-h-screen opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                                                 <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-2">
-                                                    <div className="grid grid-cols-2 gap-2">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                         {hotelData.roomTypes.slice(2).map((roomType, index) => {
                                                             const currentDate = new Date();
                                                             const currentMonthPrice = getRoomPriceForMonth(roomType, currentDate, false);
@@ -217,7 +217,7 @@ export default function PackageHotelCard({
                                                             const displayChildPrice = currentMonthChildPrice > 0 ? currentMonthChildPrice : roomType.childrenPricePerNight;
                                                             
                                                             return (
-                                                                <div key={index + 2} className="bg-gray-100 dark:bg-slate-700 rounded-lg p-2 border border-gray-200 dark:border-gray-600">
+                                                                <div key={index + 2} className="bg-gray-100 dark:bg-slate-700 rounded-lg p-2 sm:p-3 border border-gray-200 dark:border-gray-600">
                                                                     <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate mb-1">
                                                                         {roomType.type.replace(" ROOM", "").replace(" SUITE", "")}
                                                                     </div>
@@ -320,8 +320,8 @@ export default function PackageHotelCard({
 
                 {/* Hotel Configuration */}
                 {isEditing && (
-                    <div className="lg:w-1/3">
-                        <div className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                    <div className="md:w-1/3 w-full">
+                        <div className="bg-white dark:bg-slate-900 rounded-lg p-3 md:p-4 border border-gray-200 dark:border-gray-700">
                             <h5 className="font-medium dark:text-white mb-4">Edit Configuration</h5>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-1 gap-4">

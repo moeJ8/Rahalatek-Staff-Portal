@@ -9,7 +9,7 @@ import Searchbar from './Searchbar';
 import UserCalendar from './UserCalendar';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
-  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, 
+  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox,
   FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout 
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
@@ -294,12 +294,12 @@ export default function Header() {
                   to="/" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isActive('/') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
                   Home
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                     isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
@@ -307,12 +307,12 @@ export default function Header() {
                   to="/guest/hotels" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isActive('/guest/hotels') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
                   Hotels
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                     isActive('/guest/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
@@ -320,13 +320,26 @@ export default function Header() {
                   to="/guest/tours" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isActive('/guest/tours') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
                   Tours
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                     isActive('/guest/tours') ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
+                </Link>
+                <Link 
+                  to="/guest/packages" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isActive('/guest/packages') 
+                      ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
+                  }`}
+                >
+                  Packages
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
+                    isActive('/guest/packages') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
                 <CustomDarkModeToggle />
@@ -575,8 +588,8 @@ export default function Header() {
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
                     }`}
                   >
                     <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
@@ -588,8 +601,8 @@ export default function Header() {
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/guest/hotels') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
                     }`}
                   >
                     <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
@@ -601,12 +614,25 @@ export default function Header() {
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isActive('/guest/tours') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
                     }`}
                   >
                     <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-xs font-medium text-center">Tours</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/guest/packages"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/guest/packages') 
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaBox className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Packages</span>
                   </Link>
                 </div>
                 

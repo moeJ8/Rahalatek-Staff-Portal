@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Custom scrollbar styles as a component
-const CustomScrollbar = ({ children, className = '', maxHeight = "70vh" }) => {
+const CustomScrollbar = ({ children, className = '', maxHeight = "70vh", style = {} }) => {
   const scrollbarStyles = `
     .custom-scrollbar::-webkit-scrollbar {
       width: 8px;
@@ -42,7 +42,7 @@ const CustomScrollbar = ({ children, className = '', maxHeight = "70vh" }) => {
       <style>{scrollbarStyles}</style>
       <div
         className={`custom-scrollbar ${className.includes('overflow-visible') ? 'overflow-visible' : 'overflow-auto'} ${className}`}
-        style={{ maxHeight }}
+        style={{ maxHeight, ...style }}
       >
         {children}
       </div>

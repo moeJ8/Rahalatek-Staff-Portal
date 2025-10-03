@@ -131,7 +131,7 @@ const FeaturedHotels = () => {
 
     return (
       <div 
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
         onClick={() => handleHotelClick(hotel)}
       >
         {/* Hotel Image */}
@@ -141,24 +141,30 @@ const FeaturedHotels = () => {
             alt={hotel.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 z-10">
-            <div className="flex items-center space-x-1">
-              {renderStars(hotel.stars)}
-            </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+          
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white rounded-full px-3 py-1.5 shadow-md">
+            {renderStars(hotel.stars)}
+          </div>
+
+          {/* Hotel Name - Inside image at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(hotel.name) ? 'text-right' : 'text-left'
+            }`}>
+              {hotel.name}
+            </h3>
           </div>
         </div>
 
         {/* Hotel Details */}
-        <div className="p-4">
-          {/* Hotel Name */}
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
-            {hotel.name}
-          </h3>
+        <div className="p-3 sm:p-4 md:p-6">
 
           {/* Location */}
-          <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 mb-3">
-            <FaMapMarkerAlt className="w-4 h-4 flex-shrink-0 text-red-500" />
-            <span className="text-sm truncate">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+            <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-red-500 dark:text-red-500" />
+            <span className="text-xs sm:text-sm truncate">
               {hotel.city}{hotel.country ? `, ${hotel.country}` : ''}
             </span>
             {hotel.country && getCountryCode(hotel.country) && (
@@ -166,7 +172,7 @@ const FeaturedHotels = () => {
                 code={getCountryCode(hotel.country)} 
                 height="16" 
                 width="20"
-                className="flex-shrink-0 rounded-sm"
+                className="flex-shrink-0 rounded-sm inline-block ml-1 mt-1"
                 style={{ maxWidth: '20px', maxHeight: '16px' }}
               />
             )}
@@ -174,24 +180,10 @@ const FeaturedHotels = () => {
 
           {/* Description */}
           {hotel.description && (
-            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4 line-clamp-3">
+            <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
               {truncateDescription(hotel.description)}
             </p>
           )}
-
-          {/* View Hotel Button */}
-          <div className="flex items-center justify-between">
-            <span className="text-blue-600 dark:text-teal-400 hover:text-blue-800 dark:hover:text-teal-200 text-sm font-medium flex items-center group-hover:underline">
-              View Hotel
-              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-            <div className="flex items-center space-x-1 text-yellow-400">
-              <FaStar className="w-3 h-3" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">{hotel.stars} Star</span>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -259,7 +251,7 @@ const FeaturedHotels = () => {
               {totalSlides > 1 && (
                 <button
                   onClick={prevSlide}
-                  className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-500 ease-in-out text-blue-600 bg-yellow-50 border-2 border-yellow-200 hover:bg-yellow-100 hover:border-yellow-300 hover:text-blue-700 dark:text-teal-300 dark:bg-teal-900/30 dark:border-teal-700 dark:hover:bg-teal-900/50 dark:hover:text-white dark:hover:border-teal-500 backdrop-blur-lg rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-teal-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 mr-2 sm:mr-3 md:mr-4"
+                  className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-300 ease-in-out bg-blue-600 hover:bg-blue-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-yellow-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 mr-2 sm:mr-3 md:mr-4"
                   aria-label="Previous hotels"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,7 +297,7 @@ const FeaturedHotels = () => {
               {totalSlides > 1 && (
                 <button
                   onClick={nextSlide}
-                  className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-500 ease-in-out text-blue-600 bg-yellow-50 border-2 border-yellow-200 hover:bg-yellow-100 hover:border-yellow-300 hover:text-blue-700 dark:text-teal-300 dark:bg-teal-900/30 dark:border-teal-700 dark:hover:bg-teal-900/50 dark:hover:text-white dark:hover:border-teal-500 backdrop-blur-lg rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-teal-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 ml-2 sm:ml-3 md:ml-4"
+                  className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-300 ease-in-out bg-blue-600 hover:bg-blue-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-yellow-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 ml-2 sm:ml-3 md:ml-4"
                   aria-label="Next hotels"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,8 +316,8 @@ const FeaturedHotels = () => {
                     onClick={() => goToSlide(index)}
                     className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                       index === currentSlide
-                        ? 'bg-blue-600 dark:bg-teal-400 scale-125'
-                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                        ? 'bg-blue-600 dark:bg-yellow-400 scale-125'
+                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-400 dark:hover:bg-yellow-500'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />

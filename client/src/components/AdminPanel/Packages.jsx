@@ -3,6 +3,7 @@ import { Card, Label, Alert, Badge } from 'flowbite-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaSave, FaTimes, FaSpinner, FaChevronDown, FaChevronUp, FaFilter, FaSyncAlt } from 'react-icons/fa';
+import { HiTrash, HiPlus } from 'react-icons/hi';
 import Search from '../Search';
 
 
@@ -132,6 +133,7 @@ export default function Packages({ user }) {
             includes: pkg.includes || [],
             excludes: pkg.excludes || [],
             images: pkg.images || [],
+            faqs: pkg.faqs || [],
             targetAudience: Array.isArray(pkg.targetAudience) ? pkg.targetAudience : (pkg.targetAudience ? [pkg.targetAudience] : ['Family']),
             pricing: {
                 ...pkg.pricing,
@@ -411,6 +413,7 @@ export default function Packages({ user }) {
             },
             targetAudience: ['Family'],
             images: [],
+            faqs: [],
             isActive: true
         };
     }
@@ -1076,7 +1079,7 @@ export default function Packages({ user }) {
                 isLoading={formLoading}
                 submitText="Create Package"
                 submitIcon={formLoading ? FaSpinner : FaSave}
-                bodyMaxHeight="max-h-[75vh]"
+                bodyMaxHeight="max-h-[65vh] lg:max-h-[85vh]"
                 stepValidation={getStepValidation()}
                 stepMissingFields={getStepMissingFields()}
             >
@@ -1099,6 +1102,16 @@ export default function Packages({ user }) {
                     airports={airports}
                     handleSlugChange={handleSlugChange}
                     slugError={slugError}
+                    handleAddFaq={() => addArrayItem('faqs', { question: '', answer: '' })}
+                    handleRemoveFaq={(index) => removeArrayItem('faqs', index)}
+                    handleFaqChange={(index, field, value) => {
+                        const updatedFaqs = [...formData.faqs];
+                        updatedFaqs[index] = {
+                            ...updatedFaqs[index],
+                            [field]: value
+                        };
+                        handleInputChange('faqs', updatedFaqs);
+                    }}
                 />
             </MultiStepModal>
 
@@ -1117,7 +1130,7 @@ export default function Packages({ user }) {
                 isLoading={formLoading}
                 submitText="Update Package"
                 submitIcon={formLoading ? FaSpinner : FaSave}
-                bodyMaxHeight="max-h-[75vh]"
+                bodyMaxHeight="max-h-[65vh] lg:max-h-[85vh]"
                 stepValidation={getStepValidation()}
                 stepMissingFields={getStepMissingFields()}
             >
@@ -1140,6 +1153,16 @@ export default function Packages({ user }) {
                     airports={airports}
                     handleSlugChange={handleSlugChange}
                     slugError={slugError}
+                    handleAddFaq={() => addArrayItem('faqs', { question: '', answer: '' })}
+                    handleRemoveFaq={(index) => removeArrayItem('faqs', index)}
+                    handleFaqChange={(index, field, value) => {
+                        const updatedFaqs = [...formData.faqs];
+                        updatedFaqs[index] = {
+                            ...updatedFaqs[index],
+                            [field]: value
+                        };
+                        handleInputChange('faqs', updatedFaqs);
+                    }}
                 />
             </MultiStepModal>
 
@@ -1176,7 +1199,10 @@ function PackageFormSteps({
     tours,
     airports,
     handleSlugChange,
-    slugError
+    slugError,
+    handleAddFaq,
+    handleRemoveFaq,
+    handleFaqChange
 }) {
     // Collapsed days state
     const [collapsedDays, setCollapsedDays] = useState(new Set());
@@ -1284,9 +1310,8 @@ function PackageFormSteps({
             {/* Step 2: Hotels Selection */}
             {currentStep === 2 && (
                 <div className="space-y-6">
-                    <Card className="dark:bg-slate-900">
-                        <h3 className="text-lg font-semibold dark:text-white mb-4">Hotels Selection</h3>
-                        <div className="mb-4">
+                    <h3 className="text-lg font-semibold dark:text-white mb-4">Hotels Selection</h3>
+                    <div className="mb-3 md:mb-4">
                             <Label value="Add Hotel" className="dark:text-white" />
                             <SearchableSelect
                                 options={hotels
@@ -1310,7 +1335,7 @@ function PackageFormSteps({
                         </div>
 
                         {formData.hotels.length > 0 ? (
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-3 md:space-y-4">
                                 {formData.hotels.map((hotelConfig, index) => {
                                     const hotel = hotels.find(h => h._id === hotelConfig.hotelId);
                                     return hotel ? (
@@ -1331,7 +1356,6 @@ function PackageFormSteps({
                                 <p>No hotels added yet. Select cities and add hotels to your package.</p>
                             </div>
                         )}
-                    </Card>
                 </div>
             )}
 
@@ -1946,6 +1970,65 @@ function PackageFormSteps({
                                 maxImages={8}
                                 existingImages={formData.images || []}
                             />
+                        </div>
+                    </Card>
+
+                    {/* Package FAQs */}
+                    <Card className="dark:bg-slate-900">
+                        <h3 className="text-lg font-semibold dark:text-white mb-4">Package FAQs</h3>
+                        <div>
+                            <Label htmlFor="faqs" value="Frequently Asked Questions" className="mb-3 block" />
+                            <div className="space-y-4">
+                                {(formData.faqs || []).map((faq, index) => (
+                                    <div key={index} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h4 className="font-medium text-gray-900 dark:text-white">FAQ #{index + 1}</h4>
+                                            <CustomButton 
+                                                variant="red"
+                                                size="xs"
+                                                onClick={() => handleRemoveFaq(index)}
+                                                icon={HiTrash}
+                                                title="Remove FAQ"
+                                            >
+                                                Remove
+                                            </CustomButton>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div>
+                                                <TextInput
+                                                    label="Question"
+                                                    value={faq.question}
+                                                    onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                                                    placeholder="Enter FAQ question"
+                                                    required
+                                                />
+                                            </div>
+                                            
+                                            <div>
+                                                <TextInput
+                                                    label="Answer"
+                                                    as="textarea"
+                                                    rows={3}
+                                                    value={faq.answer}
+                                                    onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                                                    placeholder="Enter FAQ answer"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                <CustomButton
+                                    variant="blue"
+                                    size="sm"
+                                    onClick={handleAddFaq}
+                                    icon={HiPlus}
+                                >
+                                    Add FAQ
+                                </CustomButton>
+                            </div>
                         </div>
                     </Card>
 

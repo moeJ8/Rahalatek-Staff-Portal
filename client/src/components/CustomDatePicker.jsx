@@ -23,7 +23,22 @@ const CustomDatePicker = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isTouchDevice && isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Date formatting functions
   const formatDateForDisplay = (isoDate) => {
@@ -74,6 +89,8 @@ const CustomDatePicker = ({
   }, []);
 
   const handleDisplayDateChange = (e) => {
+    if (isMobile) return; // Prevent input changes on mobile
+    
     const newDisplayDate = e.target.value;
     setDisplayDate(newDisplayDate);
     
@@ -83,6 +100,27 @@ const CustomDatePicker = ({
       if (newIsoDate && onChange) {
         onChange(newIsoDate);
       }
+    }
+  };
+
+  const handleInputClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isMobile) {
+      // Prevent focus and keyboard on mobile
+      e.target.blur();
+      handleToggle();
+    } else {
+      handleToggle();
+    }
+  };
+
+  const handleInputFocus = (e) => {
+    if (isMobile) {
+      // Prevent focus on mobile to avoid keyboard
+      e.target.blur();
+      handleToggle();
     }
   };
 
@@ -237,9 +275,11 @@ const CustomDatePicker = ({
               type="text"
               value={displayDate}
               onChange={handleDisplayDateChange}
-              onClick={handleToggle}
+              onClick={handleInputClick}
+              onFocus={handleInputFocus}
               placeholder={placeholder}
               required={required}
+              readOnly={isMobile}
               className="w-full bg-transparent border-0 pl-4 pr-12 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0 cursor-pointer"
             />
             <div 

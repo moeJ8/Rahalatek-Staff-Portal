@@ -176,7 +176,11 @@ const packageSchema = new mongoose.Schema({
     views: {
         type: Number,
         default: 0
-    }
+    },
+    faqs: [{
+        question: { type: String, required: true },
+        answer: { type: String, required: true }
+    }]
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

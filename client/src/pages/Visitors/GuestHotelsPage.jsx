@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaStar, FaMapMarkerAlt, FaFilter } from 'react-icons/fa';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
-import RahalatekLoader from '../components/RahalatekLoader';
-import Search from '../components/Search';
-import Select from '../components/Select';
-import CustomButton from '../components/CustomButton';
+import RahalatekLoader from '../../components/RahalatekLoader';
+import Search from '../../components/Search';
+import Select from '../../components/Select';
+import CustomButton from '../../components/CustomButton';
 import axios from 'axios';
 
 const GuestHotelsPage = () => {
@@ -222,19 +222,25 @@ const GuestHotelsPage = () => {
             alt={hotel.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-2 sm:top-3 md:top-4 left-2 sm:left-3 md:left-4 bg-black/60 backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 z-10">
-            <div className="flex items-center space-x-0.5 sm:space-x-1">
-              {renderStars(hotel.stars)}
-            </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+          
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white rounded-full px-3 py-1.5 shadow-md">
+            {renderStars(hotel.stars)}
+          </div>
+
+          {/* Hotel Name - Inside image at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(hotel.name) ? 'text-right' : 'text-left'
+            }`}>
+              {hotel.name}
+            </h3>
           </div>
         </div>
 
         {/* Hotel Details */}
         <div className="p-3 sm:p-4 md:p-6">
-          {/* Hotel Name */}
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
-            {hotel.name}
-          </h3>
 
           {/* Location */}
           <div className="flex items-center space-x-1.5 sm:space-x-2 text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
@@ -255,24 +261,10 @@ const GuestHotelsPage = () => {
 
           {/* Description */}
           {hotel.description && (
-            <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
+            <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
               {truncateDescription(hotel.description, screenType)}
             </p>
           )}
-
-          {/* View Hotel Button */}
-          <div className="flex items-center justify-between">
-            <span className="text-blue-600 dark:text-teal-400 hover:text-blue-800 dark:hover:text-teal-200 text-xs sm:text-sm font-medium flex items-center group-hover:underline">
-              View Hotel
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-            <div className="flex items-center space-x-0.5 sm:space-x-1 text-yellow-400">
-              <FaStar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">{hotel.stars} Star</span>
-            </div>
-          </div>
         </div>
       </div>
     );

@@ -89,7 +89,8 @@ const CustomButton = ({
       rippleTealToBlue: "relative text-white bg-teal-500 border-0 shadow-lg overflow-hidden ripple-btn",
       ripplePurpleToRed: "relative text-white bg-purple-600 border-0 shadow-lg overflow-hidden ripple-btn",
       rippleBlueToTeal: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn",
-      rippleBlueToYellowTeal: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn"
+      rippleBlueToYellowTeal: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn",
+      rippleBlueToYellow: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn"
     };
 
     return `${baseClasses} ${shapeClasses[shape]} ${sizeClasses[size]} ${variantClasses[variant]}`;
@@ -120,6 +121,7 @@ const CustomButton = ({
               variant === 'ripplePurpleToRed' ? 'bg-red-500' :
               variant === 'rippleBlueToTeal' ? 'bg-teal-500' :
               variant === 'rippleBlueToYellowTeal' ? 'bg-yellow-400 dark:bg-teal-500' :
+              variant === 'rippleBlueToYellow' ? 'bg-yellow-400' :
               'bg-teal-500'
             }`}
             style={{
