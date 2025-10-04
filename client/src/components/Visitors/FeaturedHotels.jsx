@@ -150,7 +150,7 @@ const FeaturedHotels = () => {
 
           {/* Hotel Name - Inside image at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
               /[\u0600-\u06FF\u0750-\u077F]/.test(hotel.name) ? 'text-right' : 'text-left'
             }`}>
               {hotel.name}
@@ -222,11 +222,11 @@ const FeaturedHotels = () => {
   }
 
   return (
-    <section className="py-6 bg-white dark:bg-slate-950">
+    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="relative text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
             Featured Hotels
           </h2>
           {/* View All Button - Desktop Only in Header */}
@@ -316,8 +316,8 @@ const FeaturedHotels = () => {
                     onClick={() => goToSlide(index)}
                     className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                       index === currentSlide
-                        ? 'bg-blue-600 dark:bg-yellow-400 scale-125'
-                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-400 dark:hover:bg-yellow-500'
+                        ? 'bg-yellow-400 dark:bg-blue-500 scale-125'
+                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-500 dark:hover:bg-blue-400'
                     }`}
                     aria-label={`Go to slide ${index + 1}`}
                   />

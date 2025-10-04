@@ -2,15 +2,19 @@ import React from 'react';
 import PackageImagesCarousel from '../PackageImagesCarousel';
 
 const PackageDayCard = ({ day, tourData, onCardClick }) => {
-    const tourImages = tourData?.images?.map(img => ({
+    // Don't show tour images for arrival days
+    const shouldShowImages = tourData && !day.isArrivalDay;
+    const tourImages = shouldShowImages ? (tourData?.images?.map(img => ({
         url: img.url,
         altText: img.altText || `${tourData.name} - Tour image`
-    })) || [];
+    })) || []) : [];
 
     return (
         <div 
-            className="relative bg-white/30 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group cursor-pointer"
-            onClick={() => tourData && onCardClick(tourData.slug)}
+            className={`relative bg-white/30 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group ${
+                tourData && !day.isArrivalDay ? 'cursor-pointer' : 'cursor-default'
+            }`}
+            onClick={() => tourData && !day.isArrivalDay && onCardClick(tourData.slug)}
         >
             {/* Day number badge - TOP LEFT CORNER */}
             <div className="absolute top-0 left-0 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-yellow-500 dark:to-yellow-600 rounded-tl-xl rounded-br-xl px-4 py-2.5 z-10">
@@ -22,20 +26,20 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
             
             <div className="flex flex-col lg:flex-row">
                 {/* Left side - content */}
-                <div className={`flex-1 p-6 ${tourData ? 'pt-6' : 'pt-16'}`}>
+                <div className={`flex-1 p-6 ${(tourData && !day.isArrivalDay) ? 'pt-6' : 'pt-16'}`}>
                     {/* Title first */}
                     <h3 className={`text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300 ${
-                        tourData ? 'group-hover:text-blue-600 dark:group-hover:text-yellow-400' : ''
+                        tourData && !day.isArrivalDay ? 'group-hover:text-blue-600 dark:group-hover:text-yellow-400' : ''
                     } ${
                         /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) 
                             ? 'text-right' 
-                            : tourData ? 'text-left ml-12' : 'text-left'
+                            : (tourData && !day.isArrivalDay) ? 'text-left ml-12' : 'text-left'
                     }`}>
                         {day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim()}
                     </h3>
                     
                     {/* Location and duration below title */}
-                    {tourData && (
+                    {tourData && !day.isArrivalDay && (
                         <div className={`flex items-center gap-2 text-sm text-blue-600 dark:text-yellow-400 font-semibold mb-4 ${
                             /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) ? 'justify-end' : 'justify-start ml-12'
                         }`}>
@@ -59,7 +63,7 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     )}
                     
                     {/* Tour detailed description */}
-                    {tourData?.detailedDescription && (
+                    {tourData?.detailedDescription && !day.isArrivalDay && (
                         <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2 ${
                             /[\u0600-\u06FF\u0750-\u077F]/.test(tourData.detailedDescription) ? 'text-right' : 'text-left'
                         }`}>

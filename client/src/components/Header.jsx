@@ -9,7 +9,7 @@ import Searchbar from './Searchbar';
 import UserCalendar from './UserCalendar';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
-  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox,
+  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope,
   FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout 
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
@@ -342,6 +342,19 @@ export default function Header() {
                     isActive('/guest/packages') ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </Link>
+                <Link 
+                  to="/guest/contact" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isActive('/guest/contact') 
+                      ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
+                  }`}
+                >
+                  Contact
+                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
+                    isActive('/guest/contact') ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
+                </Link>
                 <CustomDarkModeToggle />
                 {!isPublicPage() && (
                   <CustomButton 
@@ -633,6 +646,19 @@ export default function Header() {
                   >
                     <FaBox className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-xs font-medium text-center">Packages</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/guest/contact"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isActive('/guest/contact') 
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaEnvelope className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Contact</span>
                   </Link>
                 </div>
                 

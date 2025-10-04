@@ -4,6 +4,7 @@ import Destinations from '../../components/Visitors/Destinations';
 import FeaturedPackages from '../../components/Visitors/FeaturedPackages';
 import FeaturedHotels from '../../components/Visitors/FeaturedHotels';
 import FeaturedTours from '../../components/Visitors/FeaturedTours';
+import PartnersSection from '../../components/PartnersSection';
 
 export default function GuestHomePage() {
   useEffect(() => {
@@ -57,6 +58,9 @@ export default function GuestHomePage() {
       
       {/* Featured Hotels Section */}
       <FeaturedHotels />
+      
+      {/* Partners Section */}
+      <PartnersSection />
     </div>
   );
 }

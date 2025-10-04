@@ -231,7 +231,7 @@ const GuestHotelsPage = () => {
 
           {/* Hotel Name - Inside image at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
               /[\u0600-\u06FF\u0750-\u077F]/.test(hotel.name) ? 'text-right' : 'text-left'
             }`}>
               {hotel.name}

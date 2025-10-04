@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import StayOnTop from './components/StayOnTop'
 import ScrollToTop from './components/ScrollToTop'
 import RahalatekLoader from './components/RahalatekLoader'
+import FloatingContactButtons from './components/FloatingContactButtons'
 
 // Lazy load all page components
 const AdminPage = React.lazy(() => import('./pages/AdminPage'))
@@ -37,6 +38,7 @@ const GuestHomePage = React.lazy(() => import('./pages/Visitors/GuestHomePage'))
 const GuestCountryPage = React.lazy(() => import('./pages/Visitors/GuestCountryPage'))
 const PublicPackagesPage = React.lazy(() => import('./pages/Visitors/PublicPackagesPage'))
 const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
+const ContactUsPage = React.lazy(() => import('./pages/Visitors/ContactUsPage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const GuestNotFoundPage = React.lazy(() => import('./pages/Visitors/GuestNotFoundPage'))
 
@@ -50,6 +52,25 @@ const ConditionalScrollToTop = () => {
       className={isOfficeDetailPage ? 'md:hidden' : ''} 
     />
   );
+};
+
+// Component to conditionally render FloatingContactButtons on guest/public pages
+const ConditionalFloatingContact = () => {
+  const location = useLocation();
+  
+  // Show on guest pages and public detail pages, hide on authenticated pages
+  const isGuestPage = location.pathname === '/' || 
+                      location.pathname === '/signin' ||
+                      location.pathname === '/guest/contact' ||
+                      location.pathname.startsWith('/guest/') ||
+                      location.pathname.startsWith('/hotels/') ||
+                      location.pathname.startsWith('/tours/') ||
+                      location.pathname.startsWith('/packages/') ||
+                      location.pathname.startsWith('/country/');
+  
+  if (!isGuestPage) return null;
+  
+  return <FloatingContactButtons />;
 };
 
 function App() {
@@ -105,6 +126,7 @@ function App() {
       <BrowserRouter>
         <StayOnTop />
         <ConditionalScrollToTop />
+        <ConditionalFloatingContact />
         <Header />
         
         <main className="flex-grow">
@@ -150,6 +172,7 @@ function App() {
                 <Route path="/guest/hotels" element={<GuestHotelsPage />} />
                 <Route path="/guest/tours" element={<GuestToursPage />} />
                 <Route path="/guest/packages" element={<PublicPackagesPage />} />
+                <Route path="/guest/contact" element={<ContactUsPage />} />
                 <Route path="/country/:country" element={<GuestCountryPage />} />
               </Route>
               

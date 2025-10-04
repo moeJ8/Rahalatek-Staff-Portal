@@ -112,6 +112,53 @@ export default function Packages({ user }) {
     const handleEditPackage = (pkg) => {
         setSelectedPackage(pkg);
         
+        // Check if package has arrival day (by flag or by title pattern)
+        const hasArrivalDay = (pkg.dailyItinerary || []).some(day => 
+            day.isArrivalDay || (day.day === 1 && day.title && day.title.includes('Arrival'))
+        );
+        
+        // Transform tours with proper day assignments
+        const transformedTours = (pkg.tours || []).map(tour => ({
+            ...tour,
+            tourId: typeof tour.tourId === 'object' ? tour.tourId._id : tour.tourId,
+            day: tour.day || null
+        }));
+        
+        // Transform daily itinerary with tour info populated
+        const transformedItinerary = (pkg.dailyItinerary || []).map(day => {
+            // Check if this is arrival day (by flag or by title)
+            const isArrival = day.isArrivalDay || (day.day === 1 && day.title && day.title.includes('Arrival'));
+            
+            // Find tour assigned to this day
+            const assignedTour = pkg.tours?.find(t => t.day === day.day);
+            
+            if (assignedTour && !isArrival) {
+                const tourId = typeof assignedTour.tourId === 'object' ? assignedTour.tourId._id : assignedTour.tourId;
+                const tourData = typeof assignedTour.tourId === 'object' ? assignedTour.tourId : tours.find(t => t._id === tourId);
+                
+                if (tourData) {
+                    return {
+                        ...day,
+                        isArrivalDay: isArrival, // Ensure the flag is set
+                        tourInfo: {
+                            tourId: tourData._id || tourId,
+                            name: tourData.name,
+                            city: tourData.city,
+                            duration: tourData.duration,
+                            price: tourData.price || tourData.totalPrice || 0,
+                            tourType: tourData.tourType
+                        }
+                    };
+                }
+            }
+            
+            // Ensure arrival day flag is set properly
+            return {
+                ...day,
+                isArrivalDay: isArrival
+            };
+        });
+        
         // Transform the populated data back to the form format
         const transformedData = {
             ...pkg,
@@ -124,14 +171,12 @@ export default function Packages({ user }) {
                 checkIn: hotel.checkIn ? new Date(hotel.checkIn).toISOString().split('T')[0] : '',
                 checkOut: hotel.checkOut ? new Date(hotel.checkOut).toISOString().split('T')[0] : ''
             })),
-            tours: (pkg.tours || []).map(tour => ({
-                ...tour,
-                tourId: typeof tour.tourId === 'object' ? tour.tourId._id : tour.tourId
-            })),
+            tours: transformedTours,
             transfers: pkg.transfers || [],
-            dailyItinerary: pkg.dailyItinerary || [],
+            dailyItinerary: transformedItinerary,
             includes: pkg.includes || [],
             excludes: pkg.excludes || [],
+            includeArrivalDay: hasArrivalDay, // Explicitly set arrival day checkbox
             images: pkg.images || [],
             faqs: pkg.faqs || [],
             targetAudience: Array.isArray(pkg.targetAudience) ? pkg.targetAudience : (pkg.targetAudience ? [pkg.targetAudience] : ['Family']),
@@ -619,22 +664,45 @@ export default function Packages({ user }) {
 
     // Daily itinerary management
     const handleAddDayItinerary = () => {
-        const newDay = {
-            day: formData.dailyItinerary.length + 1,
-            title: '',
-            description: '',
-            activities: [''],
-            meals: {
-                breakfast: false,
-                lunch: false,
-                dinner: false
+        setFormData(prev => {
+            const newDayNumber = prev.dailyItinerary.length + 1;
+            
+            // Check if there's already a tour assigned to this day number
+            const assignedTour = prev.tours.find(tour => tour.day === newDayNumber);
+            let tourInfo = undefined;
+            
+            if (assignedTour) {
+                const tourData = tours.find(t => t._id === assignedTour.tourId);
+                if (tourData) {
+                    tourInfo = {
+                        tourId: tourData._id,
+                        name: tourData.name,
+                        city: tourData.city,
+                        duration: tourData.duration,
+                        price: tourData.price,
+                        tourType: tourData.tourType
+                    };
+                }
             }
-        };
-        
-        setFormData(prev => ({
-            ...prev,
-            dailyItinerary: [...prev.dailyItinerary, newDay]
-        }));
+            
+            const newDay = {
+                day: newDayNumber,
+                title: tourInfo ? `Day ${newDayNumber} - ${tourInfo.name}` : '',
+                description: tourInfo ? tours.find(t => t._id === assignedTour.tourId)?.description || '' : '',
+                activities: tourInfo ? tours.find(t => t._id === assignedTour.tourId)?.highlights || [''] : [''],
+                meals: {
+                    breakfast: false,
+                    lunch: false,
+                    dinner: false
+                },
+                tourInfo: tourInfo
+            };
+            
+            return {
+                ...prev,
+                dailyItinerary: [...prev.dailyItinerary, newDay]
+            };
+        });
     };
 
     const handleDayItineraryChange = (index, field, value) => {
@@ -1444,7 +1512,7 @@ function PackageFormSteps({
                     <Card className="dark:bg-slate-900">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4">
                             <h3 className="text-base sm:text-lg font-semibold dark:text-white">Daily Itinerary</h3>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
                                 <CustomCheckbox
                                     id="includeArrivalDay"
                                     label="Include Day 1 as Arrival & Transfer"
@@ -1530,6 +1598,9 @@ function PackageFormSteps({
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-medium dark:text-white">Day {day.day}</h4>
+                                        {day.isArrivalDay && (
+                                            <Badge color="info" size="sm">Arrival Day</Badge>
+                                        )}
                                         <button
                                             onClick={() => toggleDayCollapse(index)}
                                             className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -1541,13 +1612,15 @@ function PackageFormSteps({
                                             )}
                                         </button>
                                     </div>
-                                    <CustomButton
-                                        onClick={() => removeArrayItem('dailyItinerary', index)}
-                                        variant="red"
-                                        size="sm"
-                                        shape="circular"
-                                        icon={FaTimes}
-                                    />
+                                    {!day.isArrivalDay && (
+                                        <CustomButton
+                                            onClick={() => removeArrayItem('dailyItinerary', index)}
+                                            variant="red"
+                                            size="sm"
+                                            shape="circular"
+                                            icon={FaTimes}
+                                        />
+                                    )}
                                 </div>
                                 
                                 {/* Collapsible content */}
@@ -1594,6 +1667,7 @@ function PackageFormSteps({
                                             <Label value="Assign Tour to this Day" className="dark:text-white" />
                                             <div className="flex flex-col sm:flex-row gap-2">
                                                 <Select
+                                                    key={`day-${day.day}-${formData.tours.length}-${formData.tours.filter(t => t.day === null || t.day === day.day).length}`}
                                                     value={day.tourInfo?.tourId || ''}
                                                     onChange={(selectedTourId) => {
                                                         if (selectedTourId) {

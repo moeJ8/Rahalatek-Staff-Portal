@@ -128,15 +128,15 @@ const Destinations = () => {
   };
 
   return (
-    <section className="py-12 bg-white dark:bg-slate-950">
+    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="text-center mb-6 sm:mb-8 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
             Discover our Destinations
           </h2>
-          <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400">
-            <FaMapMarkerAlt className="w-4 h-4" />
+          <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+            <FaMapMarkerAlt className="hidden sm:block w-4 h-4" />
             <p>Explore amazing countries and create unforgettable memories</p>
           </div>
         </div>

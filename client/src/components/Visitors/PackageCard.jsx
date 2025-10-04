@@ -58,7 +58,7 @@ const PackageCard = ({ pkg, onClick }) => {
 
                         {/* Package Name - Inside image at bottom */}
                         <div className="absolute bottom-0 left-0 right-0 p-4">
-                            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-blue-400 dark:group-hover:text-yellow-400 transition-colors duration-300 ${
+                            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
                                 /[\u0600-\u06FF\u0750-\u077F]/.test(pkg.name) ? 'text-right' : 'text-left'
                             }`}>
                                 {pkg.name}
@@ -137,7 +137,7 @@ const PackageCard = ({ pkg, onClick }) => {
                                 }}
                             >
                                 <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover/hotel:text-blue-600 dark:group-hover/hotel:text-yellow-500 uppercase tracking-wide transition-colors duration-200">
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover/hotel:text-yellow-500 dark:group-hover/hotel:text-blue-600 uppercase tracking-wide transition-colors duration-200">
                                         Hotels
                                     </span>
                                     {(() => {
@@ -189,7 +189,7 @@ const PackageCard = ({ pkg, onClick }) => {
                                 }}
                             >
                                 <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover/tour:text-blue-600 dark:group-hover/tour:text-yellow-500 uppercase tracking-wide transition-colors duration-200">
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 group-hover/tour:text-yellow-500 dark:group-hover/tour:text-blue-600 uppercase tracking-wide transition-colors duration-200">
                                         Tours
                                     </span>
                                     {pkg.tours && pkg.tours.length > 0 && (
