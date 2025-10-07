@@ -214,8 +214,10 @@ export default function Header() {
             <Link to={user ? "/home" : "/"} className="flex items-center">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"} 
-                alt="Logo" 
+                alt="Rahalatek Logo" 
                 className="h-11 object-contain"
+                loading="eager"
+                decoding="async"
               />
             </Link>
             

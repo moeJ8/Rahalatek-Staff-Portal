@@ -63,6 +63,143 @@ export default function PublicPackagePage() {
         }
     }, [slug, navigate]);
 
+    // SEO Meta Tags
+    useEffect(() => {
+        if (!packageData) return;
+
+        // Set page title
+        document.title = `${packageData.name} | Rahalatek`;
+        
+        // Create description from package data
+        const description = packageData.description 
+            ? packageData.description.substring(0, 155) + '...'
+            : `Discover ${packageData.name} - ${packageData.duration} days tour package in Turkey. Book your unforgettable journey with Rahalatek.`;
+
+        // Update meta description
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+            metaDescription.setAttribute('content', description);
+        }
+
+        // Update keywords
+        const metaKeywords = document.querySelector('meta[name="keywords"]');
+        if (metaKeywords) {
+            const keywords = [
+                packageData.name,
+                'Turkey tour package',
+                'tour package Turkey',
+                packageData.destination?.name,
+                `${packageData.duration} days tour`,
+                'guided tour',
+                'travel package',
+                'Turkey travel',
+                'tourism package',
+                'Rahalatek tours'
+            ].filter(Boolean).join(', ');
+            metaKeywords.setAttribute('content', keywords);
+        }
+
+        // Update Open Graph
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) {
+            ogTitle.setAttribute('content', `${packageData.name} - Tour Package | Rahalatek`);
+        }
+
+        const ogDescription = document.querySelector('meta[property="og:description"]');
+        if (ogDescription) {
+            ogDescription.setAttribute('content', description);
+        }
+
+        const ogImage = document.querySelector('meta[property="og:image"]');
+        if (ogImage && packageData.images?.[0]) {
+            ogImage.setAttribute('content', packageData.images[0]);
+        }
+
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) {
+            ogUrl.setAttribute('content', window.location.href);
+        }
+
+        // Update Twitter Card
+        const twitterCard = document.querySelector('meta[name="twitter:card"]');
+        if (twitterCard) {
+            twitterCard.setAttribute('content', 'summary_large_image');
+        }
+
+        const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+        if (twitterTitle) {
+            twitterTitle.setAttribute('content', `${packageData.name} - Tour Package | Rahalatek`);
+        }
+
+        const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+        if (twitterDescription) {
+            twitterDescription.setAttribute('content', description);
+        }
+
+        const twitterImage = document.querySelector('meta[name="twitter:image"]');
+        if (twitterImage && packageData.images?.[0]) {
+            twitterImage.setAttribute('content', packageData.images[0]);
+        }
+
+        // Add canonical URL
+        let canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical) {
+            canonical = document.createElement('link');
+            canonical.rel = 'canonical';
+            document.head.appendChild(canonical);
+        }
+        canonical.href = window.location.href;
+
+        // Add structured data for SEO
+        const structuredData = {
+            "@context": "https://schema.org",
+            "@type": "TouristTrip",
+            "name": packageData.name,
+            "description": packageData.description || description,
+            "image": packageData.images || [],
+            "touristType": "International",
+            "itinerary": {
+                "@type": "ItemList",
+                "numberOfItems": packageData.duration,
+                "itemListElement": packageData.dailyItinerary?.map((day, index) => ({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "name": `Day ${day.dayNumber}: ${day.title}`,
+                    "description": day.description
+                })) || []
+            },
+            "provider": {
+                "@type": "TravelAgency",
+                "name": "Rahalatek",
+                "telephone": "+905010684657",
+                "url": window.location.origin
+            },
+            "offers": {
+                "@type": "Offer",
+                "price": packageData.adultPrice,
+                "priceCurrency": "USD",
+                "availability": packageData.isActive ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "validFrom": new Date().toISOString()
+            },
+            "duration": `P${packageData.duration}D`,
+            "touristDestination": packageData.destination?.name || "Turkey"
+        };
+
+        let script = document.querySelector('script[type="application/ld+json"]');
+        if (!script) {
+            script = document.createElement('script');
+            script.type = 'application/ld+json';
+            document.head.appendChild(script);
+        }
+        script.textContent = JSON.stringify(structuredData);
+
+        // Cleanup function
+        return () => {
+            // Reset to default on unmount
+            document.title = 'Rahalatek';
+        };
+    }, [packageData]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">

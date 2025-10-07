@@ -67,7 +67,7 @@ const FloatingContactButtons = () => {
                   className="group relative"
                 >
                   {/* Label (appears on hover) - Absolutely positioned - Hidden on mobile */}
-                  <div className="hidden sm:block absolute right-full mr-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-900 dark:bg-gray-700 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
+                   <div className="hidden sm:block absolute left-full ml-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/80 dark:bg-gray-800/95 text-white text-sm px-3 py-2 rounded-lg shadow-lg whitespace-nowrap pointer-events-none backdrop-blur-sm">
                     {contact.label}
                   </div>
 

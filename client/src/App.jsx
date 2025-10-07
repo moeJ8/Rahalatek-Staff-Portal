@@ -34,8 +34,13 @@ const PublicHotelPage = React.lazy(() => import('./pages/Visitors/PublicHotelPag
 const PublicTourPage = React.lazy(() => import('./pages/Visitors/PublicTourPage'))
 const GuestHotelsPage = React.lazy(() => import('./pages/Visitors/GuestHotelsPage'))
 const GuestToursPage = React.lazy(() => import('./pages/Visitors/GuestToursPage'))
+const TourismPage = React.lazy(() => import('./pages/Visitors/TourismPage'))
+const HotelBookingPage = React.lazy(() => import('./pages/Visitors/HotelBookingPage'))
+const AirportServicePage = React.lazy(() => import('./pages/Visitors/AirportServicePage'))
+const LuxurySuitesPage = React.lazy(() => import('./pages/Visitors/LuxurySuitesPage'))
 const GuestHomePage = React.lazy(() => import('./pages/Visitors/GuestHomePage'))
 const GuestCountryPage = React.lazy(() => import('./pages/Visitors/GuestCountryPage'))
+const GuestCityPage = React.lazy(() => import('./pages/Visitors/GuestCityPage'))
 const PublicPackagesPage = React.lazy(() => import('./pages/Visitors/PublicPackagesPage'))
 const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
 const ContactUsPage = React.lazy(() => import('./pages/Visitors/ContactUsPage'))
@@ -62,11 +67,16 @@ const ConditionalFloatingContact = () => {
   const isGuestPage = location.pathname === '/' || 
                       location.pathname === '/signin' ||
                       location.pathname === '/guest/contact' ||
+                      location.pathname === '/tourism' ||
+                      location.pathname === '/hotel-booking' ||
+                      location.pathname === '/airport-service' ||
+                      location.pathname === '/luxury-suites' ||
                       location.pathname.startsWith('/guest/') ||
                       location.pathname.startsWith('/hotels/') ||
                       location.pathname.startsWith('/tours/') ||
                       location.pathname.startsWith('/packages/') ||
-                      location.pathname.startsWith('/country/');
+                      location.pathname.startsWith('/country/') ||
+                      location.pathname.includes('/city/');
   
   if (!isGuestPage) return null;
   
@@ -171,9 +181,14 @@ function App() {
                 <Route path="/" element={<GuestHomePage />} />
                 <Route path="/guest/hotels" element={<GuestHotelsPage />} />
                 <Route path="/guest/tours" element={<GuestToursPage />} />
+                <Route path="/tourism" element={<TourismPage />} />
+                <Route path="/hotel-booking" element={<HotelBookingPage />} />
+                <Route path="/airport-service" element={<AirportServicePage />} />
+                <Route path="/luxury-suites" element={<LuxurySuitesPage />} />
                 <Route path="/guest/packages" element={<PublicPackagesPage />} />
                 <Route path="/guest/contact" element={<ContactUsPage />} />
                 <Route path="/country/:country" element={<GuestCountryPage />} />
+                <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
               </Route>
               
               {/* Public Routes - Accessible without authentication */}

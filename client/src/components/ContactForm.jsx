@@ -198,7 +198,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         type="text"
                         value={formData.subject}
                         onChange={handleChange}
-                        placeholder="Project inquiry, collaboration, etc."
+                        placeholder="Tour inquiry, booking request, travel consultation, etc."
                         className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.subject ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200`}
                     />
                 </div>
@@ -214,7 +214,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
-                        placeholder="Tell me about your project or what you'd like to discuss..."
+                        placeholder="Tell us about your travel plans, tour preferences, or any questions you have about our services..."
                         rows={6}
                         className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.message ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200 resize-none`}
                     />
