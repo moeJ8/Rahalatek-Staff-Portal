@@ -1,8 +1,26 @@
 import React from 'react';
 
 // Custom scrollbar styles as a component
-const CustomScrollbar = ({ children, className = '', maxHeight = "70vh", style = {} }) => {
-  const scrollbarStyles = `
+const CustomScrollbar = ({ children, className = '', maxHeight = "70vh", style = {}, variant = "default" }) => {
+  const scrollbarStyles = variant === "glass" ? `
+    .glass-scrollbar::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .glass-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .glass-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+    
+    .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  ` : `
     .custom-scrollbar::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -37,11 +55,13 @@ const CustomScrollbar = ({ children, className = '', maxHeight = "70vh", style =
     }
   `;
 
+  const scrollbarClass = variant === "glass" ? "glass-scrollbar" : "custom-scrollbar";
+
   return (
     <>
       <style>{scrollbarStyles}</style>
       <div
-        className={`custom-scrollbar ${className.includes('overflow-visible') ? 'overflow-visible' : 'overflow-auto'} ${className}`}
+        className={`${scrollbarClass} ${className.includes('overflow-visible') ? 'overflow-visible' : 'overflow-auto'} ${className}`}
         style={{ maxHeight, ...style }}
       >
         {children}

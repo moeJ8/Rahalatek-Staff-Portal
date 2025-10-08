@@ -1,9 +1,26 @@
 const Hotel = require('../models/Hotel');
-const { invalidateDashboardCache } = require('../utils/redis');
+const { 
+    invalidateDashboardCache,
+    invalidatePublicCache,
+    featuredHotelsCache,
+    hotelDetailsCache,
+    allHotelsCache
+} = require('../utils/redis');
 
 exports.getAllHotels = async (req, res) => {
     try {
         const { country, city } = req.query;
+        
+        // Only cache when no filters (full list)
+        if (!country && !city) {
+            // Check Redis cache first
+            const cachedHotels = await allHotelsCache.get();
+            if (cachedHotels) {
+                console.log('✅ Serving all hotels from Redis cache');
+                return res.json(cachedHotels);
+            }
+        }
+        
         let query = {};
         
         // Filter by country if provided
@@ -16,8 +33,15 @@ exports.getAllHotels = async (req, res) => {
             query.city = city;
         }
         
+        console.log('🏨 Fetching hotels from database...');
         // Sort by updatedAt in descending order (newest first)
         const hotels = await Hotel.find(query).sort({ updatedAt: -1 });
+        
+        // Cache the result only if no filters (full list)
+        if (!country && !city) {
+            await allHotelsCache.set(hotels);
+        }
+        
         res.json(hotels);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -50,6 +74,7 @@ exports.addHotel = async (req, res) => {
         
         // Invalidate dashboard cache since hotel count changed
         await invalidateDashboardCache('Hotel added');
+        await invalidatePublicCache('hotels', newHotel.slug, 'Hotel added');
         
         res.status(201).json(newHotel);
     } catch (err) {
@@ -107,9 +132,25 @@ exports.incrementHotelViews = async (req, res) => {
 exports.getFeaturedHotels = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
+        
+        // Check Redis cache first (only for default limit)
+        if (limit === 9) {
+            const cachedHotels = await featuredHotelsCache.get();
+            if (cachedHotels) {
+                console.log('✅ Serving featured hotels from Redis cache');
+                return res.json(cachedHotels);
+            }
+        }
+
+        console.log('🏨 Fetching fresh featured hotels...');
         const hotels = await Hotel.find({})
             .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
             .limit(limit);
+        
+        // Cache the result (only for default limit)
+        if (limit === 9) {
+            await featuredHotelsCache.set(hotels);
+        }
         
         res.json(hotels);
     } catch (err) {
@@ -197,6 +238,7 @@ exports.updateHotel = async (req, res) => {
         
         // Invalidate dashboard cache since hotel data changed
         await invalidateDashboardCache('Hotel updated');
+        await invalidatePublicCache('hotels', updatedHotel.slug, 'Hotel updated');
         
         res.json(updatedHotel);
     } catch (err) {
@@ -221,6 +263,7 @@ exports.deleteHotel = async (req, res) => {
         
         // Invalidate dashboard cache since hotel count changed
         await invalidateDashboardCache('Hotel deleted');
+        await invalidatePublicCache('hotels', hotel.slug, 'Hotel deleted');
         
         res.json({ message: 'Hotel deleted successfully' });
     } catch (err) {

@@ -1,7 +1,12 @@
 const Package = require('../models/Package');
 const Hotel = require('../models/Hotel');
 const Tour = require('../models/Tour');
-const { invalidateDashboardCache } = require('../utils/redis');
+const { 
+    invalidateDashboardCache, 
+    invalidatePublicCache,
+    featuredPackagesCache,
+    packageDetailsCache 
+} = require('../utils/redis');
 
 // Create a new package
 exports.createPackage = async (req, res) => {
@@ -68,6 +73,7 @@ exports.createPackage = async (req, res) => {
 
         // Smart cache invalidation
         await invalidateDashboardCache('New package created');
+        await invalidatePublicCache('packages', package.slug, 'New package created');
 
         res.status(201).json({
             success: true,
@@ -244,6 +250,7 @@ exports.updatePackage = async (req, res) => {
 
         // Smart cache invalidation
         await invalidateDashboardCache('Package updated');
+        await invalidatePublicCache('packages', updatedPackage.slug, 'Package updated');
 
         res.status(200).json({
             success: true,
@@ -284,6 +291,7 @@ exports.deletePackage = async (req, res) => {
 
         // Smart cache invalidation
         await invalidateDashboardCache('Package deleted');
+        await invalidatePublicCache('packages', package.slug, 'Package deleted');
 
         res.status(200).json({
             success: true,
@@ -406,6 +414,18 @@ exports.getPackageStats = async (req, res) => {
 exports.getPackageBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
+        
+        // Check Redis cache first
+        const cachedPackage = await packageDetailsCache.get(slug);
+        if (cachedPackage) {
+            console.log(`✅ Serving package ${slug} from Redis cache`);
+            return res.status(200).json({
+                success: true,
+                data: cachedPackage
+            });
+        }
+
+        console.log(`📦 Fetching fresh package data for ${slug}...`);
         const package = await Package.findOne({ slug: slug })
             .populate('hotels.hotelId')
             .populate('tours.tourId')
@@ -418,6 +438,9 @@ exports.getPackageBySlug = async (req, res) => {
                 message: 'Package not found' 
             });
         }
+        
+        // Cache the result
+        await packageDetailsCache.set(slug, package);
         
         res.status(200).json({
             success: true,
@@ -468,11 +491,30 @@ exports.incrementPackageViews = async (req, res) => {
 exports.getFeaturedPackages = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel
+        
+        // Check Redis cache first (only for default limit to keep cache simple)
+        if (limit === 9) {
+            const cachedPackages = await featuredPackagesCache.get();
+            if (cachedPackages) {
+                console.log('✅ Serving featured packages from Redis cache');
+                return res.status(200).json({
+                    success: true,
+                    data: cachedPackages
+                });
+            }
+        }
+
+        console.log('📦 Fetching fresh featured packages...');
         const packages = await Package.find({ isActive: true })
             .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
             .limit(limit)
             .populate('hotels.hotelId', 'name stars images')
             .populate('tours.tourId', 'name city country tourType duration price totalPrice images');
+        
+        // Cache the result (only for default limit)
+        if (limit === 9) {
+            await featuredPackagesCache.set(packages);
+        }
         
         res.status(200).json({
             success: true,

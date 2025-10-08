@@ -143,6 +143,10 @@ const voucherSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    privateNote: {
+        type: String,
+        default: ''
+    },
     totalAmount: {
         type: Number,
         required: true

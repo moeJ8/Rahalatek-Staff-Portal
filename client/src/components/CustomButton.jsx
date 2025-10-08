@@ -120,7 +120,7 @@ const CustomButton = ({
               variant === 'rippleTealToBlue' ? 'bg-blue-600' :
               variant === 'ripplePurpleToRed' ? 'bg-red-500' :
               variant === 'rippleBlueToTeal' ? 'bg-teal-500' :
-              variant === 'rippleBlueToYellowTeal' ? 'bg-yellow-400 dark:bg-teal-500' :
+              variant === 'rippleBlueToYellowTeal' ? 'bg-yellow-400' :
               variant === 'rippleBlueToYellow' ? 'bg-yellow-400' :
               'bg-teal-500'
             }`}

@@ -8,6 +8,7 @@ import Search from '../../components/Search';
 import Select from '../../components/Select';
 import CustomButton from '../../components/CustomButton';
 import axios from 'axios';
+import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const GuestToursPage = () => {
   const [tours, setTours] = useState([]);
@@ -260,7 +261,7 @@ const GuestToursPage = () => {
   const TourCard = ({ tour }) => {
     // Get primary image or first image
     const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
-    const imageUrl = primaryImage?.url || 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Tour+Image';
+    const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
 
     return (
       <div 

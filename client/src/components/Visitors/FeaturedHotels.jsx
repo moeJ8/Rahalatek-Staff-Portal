@@ -5,6 +5,7 @@ import Flag from 'react-world-flags';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
 import axios from 'axios';
+import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const FeaturedHotels = () => {
   const [hotels, setHotels] = useState([]);
@@ -127,7 +128,7 @@ const FeaturedHotels = () => {
   const HotelCard = ({ hotel }) => {
     // Get primary image or first image
     const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
-    const imageUrl = primaryImage?.url || 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Hotel+Image';
+    const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.hotel;
 
     return (
       <div 

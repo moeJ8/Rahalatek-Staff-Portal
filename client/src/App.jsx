@@ -83,6 +83,16 @@ const ConditionalFloatingContact = () => {
   return <FloatingContactButtons />;
 };
 
+// Component to conditionally render Footer (hide on sign-in page)
+const ConditionalFooter = () => {
+  const location = useLocation();
+  
+  // Hide footer on sign-in page
+  if (location.pathname === '/signin') return null;
+  
+  return <Footer />;
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -140,12 +150,12 @@ function App() {
         <Header />
         
         <main className="flex-grow">
-          <Suspense fallback={
-            <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
-              <RahalatekLoader size="xl" />
-            </div>
-          }>
-            <Routes>
+            <Suspense fallback={
+              <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
+                <RahalatekLoader size="xl" />
+              </div>
+            }>
+              <Routes>
               <Route path="/signin" element={user ? <Navigate to="/home" /> : <SignInPage />} />
               <Route path="/verify-email" element={<EmailVerificationPage />} />
               
@@ -176,22 +186,18 @@ function App() {
                 <Route path="/profile/:userId" element={<ProfilePage />} />
               </Route>
               
-              {/* Guest Only Routes - Only accessible to non-authenticated users */}
-              <Route element={<GuestOnlyRoute />}>
-                <Route path="/" element={<GuestHomePage />} />
-                <Route path="/guest/hotels" element={<GuestHotelsPage />} />
-                <Route path="/guest/tours" element={<GuestToursPage />} />
-                <Route path="/tourism" element={<TourismPage />} />
-                <Route path="/hotel-booking" element={<HotelBookingPage />} />
-                <Route path="/airport-service" element={<AirportServicePage />} />
-                <Route path="/luxury-suites" element={<LuxurySuitesPage />} />
-                <Route path="/guest/packages" element={<PublicPackagesPage />} />
-                <Route path="/guest/contact" element={<ContactUsPage />} />
-                <Route path="/country/:country" element={<GuestCountryPage />} />
-                <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
-              </Route>
-              
-              {/* Public Routes - Accessible without authentication */}
+              {/* Public Routes - Accessible to everyone (authenticated or not) */}
+              <Route path="/" element={<GuestHomePage />} />
+              <Route path="/guest/hotels" element={<GuestHotelsPage />} />
+              <Route path="/guest/tours" element={<GuestToursPage />} />
+              <Route path="/tourism" element={<TourismPage />} />
+              <Route path="/hotel-booking" element={<HotelBookingPage />} />
+              <Route path="/airport-service" element={<AirportServicePage />} />
+              <Route path="/luxury-suites" element={<LuxurySuitesPage />} />
+              <Route path="/guest/packages" element={<PublicPackagesPage />} />
+              <Route path="/guest/contact" element={<ContactUsPage />} />
+              <Route path="/country/:country" element={<GuestCountryPage />} />
+              <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
               <Route path="/hotels/:slug" element={<PublicHotelPage />} />
               <Route path="/tours/:slug" element={<PublicTourPage />} />
               <Route path="/packages/:slug" element={<PublicPackagePage />} />
@@ -201,7 +207,7 @@ function App() {
           </Suspense>
         </main>
         
-        <Footer />
+        <ConditionalFooter />
       </BrowserRouter>
     </div>
   )

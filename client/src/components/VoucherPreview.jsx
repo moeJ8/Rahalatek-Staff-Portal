@@ -1806,6 +1806,16 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           </div>
         )}
         
+        {/* Private Note - Only visible in preview, NOT in downloads */}
+        {voucherData.privateNote && (
+          <div className="mb-6">
+            <div>
+              <span className="font-semibold text-orange-800">🔒 Private Note:</span>{' '}
+              <span className="text-orange-900 font-bold">{voucherData.privateNote}</span>
+            </div>
+          </div>
+        )}
+        
         {/* Contact Info */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="flex items-center gap-2" style={{ display: showContact ? 'flex' : 'none' }}>

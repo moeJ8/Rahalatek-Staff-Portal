@@ -6,6 +6,7 @@ import Flag from 'react-world-flags';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
 import axios from 'axios';
+import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const FeaturedTours = () => {
   const [tours, setTours] = useState([]);
@@ -116,7 +117,7 @@ const FeaturedTours = () => {
   const TourCard = ({ tour }) => {
     // Get primary image or first image
     const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
-    const imageUrl = primaryImage?.url || 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Tour+Image';
+    const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
 
     return (
       <div 

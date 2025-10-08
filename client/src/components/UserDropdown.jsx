@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
-import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane } from 'react-icons/fa';
+import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane, FaHome, FaBox, FaEnvelope, FaGlobe } from 'react-icons/fa';
 import UserBadge from './UserBadge';
 
 export default function UserDropdown({ user, onLogout, onCalendarClick }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [publicPagesOpen, setPublicPagesOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -59,6 +61,35 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     onLogout();
   };
 
+  const togglePublicPages = () => {
+    setPublicPagesOpen(!publicPagesOpen);
+  };
+
+  const handleGuestHomeClick = () => {
+    setDropdownOpen(false);
+    navigate('/');
+  };
+
+  const handleGuestHotelsClick = () => {
+    setDropdownOpen(false);
+    navigate('/guest/hotels');
+  };
+
+  const handleGuestToursClick = () => {
+    setDropdownOpen(false);
+    navigate('/guest/tours');
+  };
+
+  const handleGuestPackagesClick = () => {
+    setDropdownOpen(false);
+    navigate('/guest/packages');
+  };
+
+  const handleGuestContactClick = () => {
+    setDropdownOpen(false);
+    navigate('/guest/contact');
+  };
+
   const getUserRole = () => {
     if (user?.isAdmin) return { text: 'Admin', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
     if (user?.isAccountant) return { text: 'Accountant', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
@@ -73,11 +104,20 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     return '/normalUserAvatar.png';
   };
 
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const isPublicPageActive = () => {
+    const publicPaths = ['/', '/guest/hotels', '/guest/tours', '/guest/packages', '/guest/contact'];
+    return publicPaths.includes(location.pathname);
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 active:bg-white dark:active:bg-slate-900 active:border-gray-300 dark:active:border-gray-600 "
+        className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 active:bg-white dark:active:bg-slate-900 active:border-gray-300 dark:active:border-gray-600 w-64"
       >
         <div className="w-7 h-7 rounded-full overflow-hidden shadow-sm">
           <img 
@@ -98,8 +138,13 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
       </button>
 
       {/* Dropdown Menu */}
-      {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
+      <div 
+        className={`absolute right-0 mt-2 w-64 bg-gray-50 dark:bg-slate-950 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1 transition-all duration-200 ease-in-out origin-top-right ${
+          dropdownOpen 
+            ? 'opacity-100 scale-100 translate-y-0' 
+            : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+        }`}
+      >
           {/* User Info Header */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3">
@@ -128,33 +173,49 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
           <div className="py-1">
             <button
               onClick={handleProfileClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+              className={`flex items-center w-full px-4 py-2 text-sm transition-colors duration-200 ${
+                isActive('/profile') 
+                  ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+              }`}
             >
-              <HiUser className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              <HiUser className={`w-4 h-4 mr-3 ${isActive('/profile') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
               Profile
             </button>
 
             <button
               onClick={handleHotelsClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+              className={`flex items-center w-full px-4 py-2 text-sm transition-colors duration-200 ${
+                isActive('/hotels') 
+                  ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+              }`}
             >
-              <FaHotel className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              <FaHotel className={`w-4 h-4 mr-3 ${isActive('/hotels') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
               Hotels
             </button>
 
             <button
               onClick={handleToursClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+              className={`flex items-center w-full px-4 py-2 text-sm transition-colors duration-200 ${
+                isActive('/tours') 
+                  ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+              }`}
             >
-              <FaPlane className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              <FaPlane className={`w-4 h-4 mr-3 ${isActive('/tours') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
               Tours
             </button>
 
             <button
               onClick={handleAttendanceClick}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors duration-200"
+              className={`flex items-center w-full px-4 py-2 text-sm transition-colors duration-200 ${
+                isActive('/attendance') 
+                  ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+              }`}
             >
-              <FaQrcode className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
+              <FaQrcode className={`w-4 h-4 mr-3 ${isActive('/attendance') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
               My Attendance
             </button>
 
@@ -165,6 +226,103 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
               <FaCalendarAlt className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
               My Calendar
             </button>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+            {/* Public Pages Collapsible Section */}
+            <div>
+              <button
+                onClick={togglePublicPages}
+                className={`flex items-center justify-between w-full px-4 py-2 text-sm transition-colors duration-200 ${
+                  isPublicPageActive() 
+                    ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center">
+                  <FaGlobe className={`w-4 h-4 mr-3 ${isPublicPageActive() ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                  Public Pages
+                </div>
+                <HiChevronDown 
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    publicPagesOpen ? 'rotate-180' : ''
+                  } ${isPublicPageActive() ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} 
+                />
+              </button>
+
+              {/* Collapsible Public Pages Content */}
+              <div 
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  publicPagesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="bg-gray-50 dark:bg-slate-950 py-1">
+                  <button
+                    onClick={handleGuestHomeClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaHome className={`w-3 h-3 mr-3 ${isActive('/') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Home
+                  </button>
+
+                  <button
+                    onClick={handleGuestHotelsClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/guest/hotels') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaHotel className={`w-3 h-3 mr-3 ${isActive('/guest/hotels') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Hotels
+                  </button>
+
+                  <button
+                    onClick={handleGuestToursClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/guest/tours') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaPlane className={`w-3 h-3 mr-3 ${isActive('/guest/tours') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Tours
+                  </button>
+
+                  <button
+                    onClick={handleGuestPackagesClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/guest/packages') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaBox className={`w-3 h-3 mr-3 ${isActive('/guest/packages') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Packages
+                  </button>
+
+                  <button
+                    onClick={handleGuestContactClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/guest/contact') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaEnvelope className={`w-3 h-3 mr-3 ${isActive('/guest/contact') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Contact
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
             
             <button
               onClick={handleLogoutClick}
@@ -175,7 +333,6 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
             </button>
           </div>
         </div>
-      )}
     </div>
   );
 } 

@@ -1,10 +1,27 @@
 const Tour = require('../models/Tour');
-const { invalidateDashboardCache } = require('../utils/redis');
+const { 
+    invalidateDashboardCache,
+    invalidatePublicCache,
+    featuredToursCache,
+    tourDetailsCache,
+    allToursCache
+} = require('../utils/redis');
 
 // Get all tours
 exports.getAllTours = async (req, res) => {
   try {
     const { country, city } = req.query;
+    
+    // Only cache when no filters (full list)
+    if (!country && !city) {
+      // Check Redis cache first
+      const cachedTours = await allToursCache.get();
+      if (cachedTours) {
+        console.log('✅ Serving all tours from Redis cache');
+        return res.status(200).json(cachedTours);
+      }
+    }
+    
     let query = {};
     
     // Filter by country if provided
@@ -17,8 +34,15 @@ exports.getAllTours = async (req, res) => {
       query.city = city;
     }
     
+    console.log('🗺️ Fetching tours from database...');
     // Sort by updatedAt in descending order (newest first)
     const tours = await Tour.find(query).sort({ updatedAt: -1 });
+    
+    // Cache the result only if no filters (full list)
+    if (!country && !city) {
+      await allToursCache.set(tours);
+    }
+    
     res.status(200).json(tours);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -96,6 +120,7 @@ exports.addTour = async (req, res) => {
     
     // Invalidate dashboard cache since tour count changed
     await invalidateDashboardCache('Tour added');
+    await invalidatePublicCache('tours', savedTour.slug, 'Tour added');
     
     res.status(201).json(savedTour);
   } catch (error) {
@@ -127,6 +152,7 @@ exports.updateTour = async (req, res) => {
     
     // Invalidate dashboard cache since tour data changed
     await invalidateDashboardCache('Tour updated');
+    await invalidatePublicCache('tours', updatedTour.slug, 'Tour updated');
     
     res.status(200).json(updatedTour);
   } catch (error) {
@@ -151,6 +177,7 @@ exports.deleteTour = async (req, res) => {
     
     // Invalidate dashboard cache since tour count changed
     await invalidateDashboardCache('Tour deleted');
+    await invalidatePublicCache('tours', tour.slug, 'Tour deleted');
     
     res.status(200).json({ message: 'Tour deleted successfully' });
   } catch (error) {
@@ -198,9 +225,25 @@ exports.incrementTourViews = async (req, res) => {
 exports.getFeaturedTours = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
+    
+    // Check Redis cache first (only for default limit)
+    if (limit === 9) {
+        const cachedTours = await featuredToursCache.get();
+        if (cachedTours) {
+            console.log('✅ Serving featured tours from Redis cache');
+            return res.json(cachedTours);
+        }
+    }
+
+    console.log('🗺️ Fetching fresh featured tours...');
     const tours = await Tour.find({})
       .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
       .limit(limit);
+    
+    // Cache the result (only for default limit)
+    if (limit === 9) {
+        await featuredToursCache.set(tours);
+    }
     
     res.json(tours);
   } catch (error) {

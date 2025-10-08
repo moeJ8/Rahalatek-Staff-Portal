@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toggleDarkMode } from '../redux/themeSlice';
 import { FaSun, FaMoon } from 'react-icons/fa';
 
-export default function CustomDarkModeToggle() {
+export default function CustomDarkModeToggle({ variant = "default" }) {
   const dispatch = useDispatch();
   const darkMode = useSelector((state) => state.theme.darkMode);
   
@@ -13,7 +13,11 @@ export default function CustomDarkModeToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+      className={`p-2 rounded-lg focus:outline-none ${
+        variant === "light" 
+          ? "text-white hover:bg-white/10" 
+          : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+      }`}
       aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
       {darkMode ? (

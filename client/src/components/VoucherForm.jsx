@@ -103,6 +103,7 @@ export default function VoucherForm({ onSuccess }) {
       }
     },
     note: '',
+    privateNote: '',
     totalAmount: 0,
     currency: 'USD',
     advancedPayment: false,
@@ -238,6 +239,7 @@ export default function VoucherForm({ onSuccess }) {
           }
         },
         note: voucherToDuplicate.note || '',
+        privateNote: voucherToDuplicate.privateNote || '',
         totalAmount: voucherToDuplicate.totalAmount || 0,
         currency: voucherToDuplicate.currency || 'USD',
         advancedPayment: voucherToDuplicate.advancedPayment || false,
@@ -1248,6 +1250,7 @@ export default function VoucherForm({ onSuccess }) {
           }
         },
         note: formData.note,
+        privateNote: formData.privateNote,
         advancedPayment: formData.advancedPayment,
         advancedAmount: formData.advancedPayment ? Number(formData.advancedAmount) : 0,
         remainingAmount: formData.advancedPayment ? Number(formData.remainingAmount) : 0
@@ -2750,6 +2753,21 @@ export default function VoucherForm({ onSuccess }) {
                           placeholder="Add any additional notes..."
                           rows={3}
                           className="w-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-600/50 rounded-lg px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-400 dark:focus:border-blue-500 shadow-sm hover:bg-white/90 dark:hover:bg-gray-800/90 hover:shadow-md transition-all duration-200 resize-vertical"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <div>
+                        <Label htmlFor="privateNote" value="Private Note (Internal Only)" className="mb-2 block" />
+                        <textarea
+                          id="privateNote"
+                          name="privateNote"
+                          value={formData.privateNote}
+                          onChange={handleInputChange}
+                          placeholder="Add private notes (visible in preview only, not in downloads)..."
+                          rows={3}
+                          className="w-full bg-amber-50/80 dark:bg-amber-900/20 backdrop-blur-sm border border-amber-300/50 dark:border-amber-600/50 rounded-lg px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-200 placeholder-amber-600 dark:placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 dark:focus:ring-amber-400/50 focus:border-amber-400 dark:focus:border-amber-500 shadow-sm hover:bg-amber-100/90 dark:hover:bg-amber-900/30 hover:shadow-md transition-all duration-200 resize-vertical"
                         />
                       </div>
                     </div>
