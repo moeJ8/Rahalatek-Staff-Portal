@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
-import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane, FaHome, FaBox, FaEnvelope, FaGlobe } from 'react-icons/fa';
+import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane, FaHome, FaBox, FaEnvelope, FaGlobe, FaInfoCircle } from 'react-icons/fa';
 import UserBadge from './UserBadge';
 
 export default function UserDropdown({ user, onLogout, onCalendarClick }) {
@@ -70,6 +70,11 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     navigate('/');
   };
 
+  const handleGuestAboutClick = () => {
+    setDropdownOpen(false);
+    navigate('/about');
+  };
+
   const handleGuestHotelsClick = () => {
     setDropdownOpen(false);
     navigate('/guest/hotels');
@@ -82,12 +87,12 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
 
   const handleGuestPackagesClick = () => {
     setDropdownOpen(false);
-    navigate('/guest/packages');
+    navigate('/packages');
   };
 
   const handleGuestContactClick = () => {
     setDropdownOpen(false);
-    navigate('/guest/contact');
+    navigate('/contact');
   };
 
   const getUserRole = () => {
@@ -109,7 +114,7 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
   };
 
   const isPublicPageActive = () => {
-    const publicPaths = ['/', '/guest/hotels', '/guest/tours', '/guest/packages', '/guest/contact'];
+    const publicPaths = ['/', '/about', '/guest/hotels', '/guest/tours', '/packages', '/contact'];
     return publicPaths.includes(location.pathname);
   };
 
@@ -297,25 +302,37 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
                   <button
                     onClick={handleGuestPackagesClick}
                     className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
-                      isActive('/guest/packages') 
+                      isActive('/packages') 
                         ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <FaBox className={`w-3 h-3 mr-3 ${isActive('/guest/packages') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    <FaBox className={`w-3 h-3 mr-3 ${isActive('/packages') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
                     Packages
                   </button>
 
                   <button
                     onClick={handleGuestContactClick}
                     className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
-                      isActive('/guest/contact') 
+                      isActive('/contact') 
                         ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <FaEnvelope className={`w-3 h-3 mr-3 ${isActive('/guest/contact') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    <FaEnvelope className={`w-3 h-3 mr-3 ${isActive('/contact') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
                     Contact
+                  </button>
+
+                  <button
+                    onClick={handleGuestAboutClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/about') 
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaInfoCircle className={`w-3 h-3 mr-3 ${isActive('/about') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    About Us
                   </button>
                 </div>
               </div>

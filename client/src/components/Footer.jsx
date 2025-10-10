@@ -117,7 +117,7 @@ export default function Footer() {
                     Hotels
                   </Link>
                   <Link 
-                    to="/guest/packages" 
+                    to="/packages" 
                     className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-yellow-400"
                   >
                     Packages

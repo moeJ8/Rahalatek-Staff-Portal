@@ -289,8 +289,12 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
               <div className="absolute inset-0 bg-black/40"></div>
               
               {/* Content */}
-              <div className={`absolute inset-0 flex items-center ${getTextPositionClasses(slide.textPosition)} p-4 sm:p-6 md:p-10 lg:p-20`}>
-                <div className={`max-w-4xl ${getTextColorClasses(slide.textColor)} z-10`}>
+              <div className={`absolute inset-0 flex items-center ${
+                slide.textPosition === 'left' ? 'justify-start' :
+                slide.textPosition === 'right' ? 'justify-end' :
+                'justify-center'
+              } p-4 sm:p-6 md:p-10 lg:p-20`}>
+                <div className={`max-w-4xl ${getTextColorClasses(slide.textColor)} z-10 ${getTextPositionClasses(slide.textPosition)}`}>
                   {/* Title */}
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-3 md:mb-4 lg:mb-6 leading-tight">
                     {slide.title}
@@ -305,14 +309,22 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
                   
                   {/* Description */}
                   {slide.description && (
-                    <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 lg:mb-10 opacity-80 max-w-2xl leading-relaxed">
+                    <p className={`text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 lg:mb-10 opacity-80 leading-relaxed ${
+                      slide.textPosition === 'center' ? 'mx-auto max-w-2xl' :
+                      slide.textPosition === 'right' ? 'ml-auto max-w-2xl' :
+                      'max-w-2xl'
+                    }`}>
                       {slide.description}
                     </p>
                   )}
                   
                   {/* Button */}
                   {slide.button?.text && slide.button?.link && (
-                    <div className="flex justify-center">
+                    <div className={`flex ${
+                      slide.textPosition === 'left' ? 'justify-start' :
+                      slide.textPosition === 'right' ? 'justify-end' :
+                      'justify-center'
+                    }`}>
                       <CustomButton
                         as="a"
                         href={slide.button.link}

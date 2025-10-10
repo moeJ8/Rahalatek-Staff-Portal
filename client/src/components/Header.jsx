@@ -9,7 +9,7 @@ import Searchbar from './Searchbar';
 import UserCalendar from './UserCalendar';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
-  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope,
+  FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope, FaInfoCircle,
   FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout 
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
@@ -20,6 +20,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mobileMenuExpanded, setMobileMenuExpanded] = useState(false);
+  const [mobilePublicPagesOpen, setMobilePublicPagesOpen] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [hoveredIndicator, setHoveredIndicator] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -98,6 +99,7 @@ export default function Header() {
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
     setMobileMenuExpanded(false);
+    setMobilePublicPagesOpen(false);
   };
 
   // Check if current page is a public page where sign-in should be hidden
@@ -350,11 +352,11 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to="/guest/packages" 
+                  to="/packages" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/guest/packages') 
+                      : isActive('/packages') 
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -362,16 +364,16 @@ export default function Header() {
                   Packages
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/guest/packages') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/packages') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/guest/contact" 
+                  to="/contact" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/guest/contact') 
+                      : isActive('/contact') 
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -379,7 +381,24 @@ export default function Header() {
                   Contact
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/guest/contact') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/contact') ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}></span>
+                  )}
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isSignInPage
+                      ? 'text-white hover:text-white/80 hover:bg-white/10'
+                      : isActive('/about') 
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
+                  }`}
+                >
+                  About Us
+                  {!isSignInPage && (
+                    <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
+                      isActive('/about') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
@@ -435,8 +454,11 @@ export default function Header() {
         </div>
         
         {/* Mobile Menu Dropdown - 3x3 Grid */}
-        {mobileMenuOpen && (
-          <div className="xl:hidden mt-4 py-4 border-t dark:border-gray-700">
+        <div className={`xl:hidden overflow-hidden transition-all duration-300 ease-in-out border-t dark:border-gray-700 ${
+          mobileMenuOpen 
+            ? 'max-h-[1000px] opacity-100 mt-4 py-4' 
+            : 'max-h-0 opacity-0 mt-0 py-0 border-transparent'
+        }`}>
             {user ? (
               <>
                 {/* 3x3 Grid for Authenticated Users */}
@@ -595,6 +617,106 @@ export default function Header() {
                   </button>
                 </div>
                 
+                {/* Collapsible Public Pages Section */}
+                <div className="mt-4 px-2">
+                  <button
+                    onClick={() => setMobilePublicPagesOpen(!mobilePublicPagesOpen)}
+                    className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <span className="text-sm font-medium mr-2">Public Pages</span>
+                    {mobilePublicPagesOpen ? (
+                      <HiChevronUp className="text-lg transition-transform duration-200" />
+                    ) : (
+                      <HiChevronDown className="text-lg transition-transform duration-200" />
+                    )}
+                  </button>
+                  
+                  {/* Expanded Public Pages */}
+                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                    mobilePublicPagesOpen ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Link 
+                        to="/"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaHome className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Home</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/guest/hotels"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/guest/hotels') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaHotel className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Hotels</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/guest/tours"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/guest/tours') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaRoute className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Tours</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/packages"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/packages') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaBox className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Packages</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/contact"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/contact') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaEnvelope className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Contact</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/about"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/about') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaInfoCircle className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">About</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+                
                 {/* Collapsible More Options Section */}
                 <div className="mt-4 px-2">
                   <button
@@ -635,10 +757,12 @@ export default function Header() {
                     onClick={handleLogout}
                     variant="red"
                     size="lg"
-                    className="w-full flex items-center justify-center gap-3"
+                    className="w-full"
                   >
-                    <FaLogout className="text-lg" />
-                    <span>Logout ({user.username})</span>
+                    <div className="flex items-center justify-center gap-2">
+                      <FaLogout className="text-lg" />
+                      <span>Logout ({user.username})</span>
+                    </div>
                   </CustomButton>
                 </div>
               </>
@@ -692,12 +816,12 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/guest/packages"
+                    to="/packages"
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
                         ? 'text-white hover:bg-white/10'
-                        : isActive('/guest/packages') 
+                        : isActive('/packages') 
                           ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
                     }`}
@@ -707,18 +831,33 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/guest/contact"
+                    to="/contact"
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
                         ? 'text-white hover:bg-white/10'
-                        : isActive('/guest/contact') 
+                        : isActive('/contact') 
                           ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
                     }`}
                   >
                     <FaEnvelope className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-xs font-medium text-center">Contact</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/about"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isSignInPage
+                        ? 'text-white hover:bg-white/10'
+                        : isActive('/about') 
+                          ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaInfoCircle className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">About Us</span>
                   </Link>
                 </div>
                 
@@ -765,17 +904,18 @@ export default function Header() {
                       onClick={closeMobileMenu}
                       variant="rippleBlueToYellowTeal"
                       size="lg"
-                      className="w-full flex items-center justify-center gap-3"
+                      className="w-full"
                     >
-                      <FaSignInAlt className="text-lg" />
-                      <span>Sign In</span>
+                      <div className="flex items-center justify-center gap-2">
+                        <FaSignInAlt className="text-lg" />
+                        <span>Sign In</span>
+                      </div>
                     </CustomButton>
                   </div>
                 )}
               </>
             )}
-          </div>
-        )}
+        </div>
       </div>
 
       {/* User Calendar Modal */}

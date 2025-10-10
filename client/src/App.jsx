@@ -44,6 +44,7 @@ const GuestCityPage = React.lazy(() => import('./pages/Visitors/GuestCityPage'))
 const PublicPackagesPage = React.lazy(() => import('./pages/Visitors/PublicPackagesPage'))
 const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
 const ContactUsPage = React.lazy(() => import('./pages/Visitors/ContactUsPage'))
+const AboutUsPage = React.lazy(() => import('./pages/Visitors/AboutUsPage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const GuestNotFoundPage = React.lazy(() => import('./pages/Visitors/GuestNotFoundPage'))
 
@@ -66,7 +67,8 @@ const ConditionalFloatingContact = () => {
   // Show on guest pages and public detail pages, hide on authenticated pages
   const isGuestPage = location.pathname === '/' || 
                       location.pathname === '/signin' ||
-                      location.pathname === '/guest/contact' ||
+                      location.pathname === '/contact' ||
+                      location.pathname === '/about' ||
                       location.pathname === '/tourism' ||
                       location.pathname === '/hotel-booking' ||
                       location.pathname === '/airport-service' ||
@@ -194,8 +196,9 @@ function App() {
               <Route path="/hotel-booking" element={<HotelBookingPage />} />
               <Route path="/airport-service" element={<AirportServicePage />} />
               <Route path="/luxury-suites" element={<LuxurySuitesPage />} />
-              <Route path="/guest/packages" element={<PublicPackagesPage />} />
-              <Route path="/guest/contact" element={<ContactUsPage />} />
+              <Route path="/packages" element={<PublicPackagesPage />} />
+              <Route path="/contact" element={<ContactUsPage />} />
+              <Route path="/about" element={<AboutUsPage />} />
               <Route path="/country/:country" element={<GuestCountryPage />} />
               <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
               <Route path="/hotels/:slug" element={<PublicHotelPage />} />

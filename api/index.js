@@ -30,6 +30,7 @@ const carouselRoutes = require('./routes/carouselRoutes');
 const destinationRoutes = require('./routes/destinationRoutes');
 const packageRoutes = require('./routes/packageRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const aboutHeroRoutes = require('./routes/aboutHeroRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const SchedulerService = require('./services/schedulerService');
@@ -90,6 +91,7 @@ app.use('/api/carousel', carouselRoutes);
 app.use('/api/destinations', destinationRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/about-hero', aboutHeroRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

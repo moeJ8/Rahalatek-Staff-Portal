@@ -147,9 +147,11 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
     };
 
     return (
-        <div className="bg-white dark:bg-slate-950 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-200 dark:border-slate-800">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Send Us a Message</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm sm:text-base">Have questions? We'd love to hear from you!</p>
+        <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
+            <div className="relative bg-white dark:bg-slate-950 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-200 dark:border-slate-800">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Send Us a Message</h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm sm:text-base">Have questions? We'd love to hear from you!</p>
             
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 {/* Name Field */}
@@ -234,6 +236,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                     </CustomButton>
                 </div>
             </form>
+            </div>
         </div>
     );
 }

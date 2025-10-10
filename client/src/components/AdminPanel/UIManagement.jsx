@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Modal, Alert, Spinner } from 'flowbite-react';
 import CustomModal from '../CustomModal';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaArrowUp, FaArrowDown, FaSave, FaTimes, FaImages, FaPalette, FaCog } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaArrowUp, FaArrowDown, FaSave, FaTimes, FaImages, FaPalette, FaCog, FaInfoCircle } from 'react-icons/fa';
 import CustomButton from '../CustomButton';
 import TextInput from '../TextInput';
 import CustomSelect from '../Select';
@@ -10,7 +10,7 @@ import RahalatekLoader from '../RahalatekLoader';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import ImageUploader from '../ImageUploader';
 import CustomTable from '../CustomTable';
-import ModalScrollbar from '../ModalScrollbar';
+import AboutHeroManagement from './AboutHeroManagement';
 import toast from 'react-hot-toast';
 
 // Carousel Management Component
@@ -361,102 +361,206 @@ const CarouselManagement = () => {
         </Alert>
       )}
 
-      {/* Slides Table */}
-      <CustomTable
-        headers={[
-          'Preview',
-          'Content', 
-          'Button',
-          'Status',
-          'Order',
-          'Created',
-          'Actions'
-        ]}
-        data={slides}
-        emptyMessage="No carousel slides found. Create your first slide to get started."
-        emptyIcon={FaImages}
-        renderRow={(slide) => (
-          <>
-            <Table.Cell>
-              <img
-                src={slide.image.url}
-                alt={slide.title}
-                className="w-20 h-12 object-cover rounded border"
-              />
-            </Table.Cell>
-            <Table.Cell>
-              <div className="max-w-xs">
-                <div className="font-medium text-gray-900 dark:text-white text-sm">
-                  {slide.title}
-                </div>
-                {slide.subtitle && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {slide.subtitle}
-                  </div>
-                )}
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Text: {slide.textPosition} / {slide.textColor}
-                </div>
-              </div>
-            </Table.Cell>
-            <Table.Cell>
-              <div className="text-sm">
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {slide.button?.text}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {slide.button?.variant}
-                </div>
-              </div>
-            </Table.Cell>
-            <Table.Cell>
-              <button
-                onClick={() => toggleSlideStatus(slide)}
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                  slide.isActive
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                }`}
+      {slides.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-12 text-center">
+          <FaImages className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">
+            No carousel slides found. Create your first slide to get started.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block">
+            <CustomTable
+              headers={[
+                'Preview',
+                'Content', 
+                'Button',
+                'Status',
+                'Order',
+                'Created',
+                'Actions'
+              ]}
+              data={slides}
+              emptyMessage="No carousel slides found. Create your first slide to get started."
+              emptyIcon={FaImages}
+              renderRow={(slide) => (
+                <>
+                  <Table.Cell>
+                    <img
+                      src={slide.image.url}
+                      alt={slide.title}
+                      className="w-20 h-12 object-cover rounded border"
+                    />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="max-w-xs">
+                      <div className="font-medium text-gray-900 dark:text-white text-sm">
+                        {slide.title}
+                      </div>
+                      {slide.subtitle && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {slide.subtitle}
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Text: {slide.textPosition} / {slide.textColor}
+                      </div>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {slide.button?.text}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {slide.button?.variant}
+                      </div>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <button
+                      onClick={() => toggleSlideStatus(slide)}
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                        slide.isActive
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {slide.isActive ? <FaEye className="w-3 h-3 mr-1" /> : <FaEyeSlash className="w-3 h-3 mr-1" />}
+                      {slide.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span className="font-mono text-sm">{slide.order}</span>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="text-sm">
+                      <div className="text-gray-900 dark:text-white">
+                        {new Date(slide.createdAt).toLocaleDateString()}
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        by {slide.createdBy?.username}
+                      </div>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <CustomButton
+                        onClick={() => openModal(slide)}
+                        variant="purple"
+                        size="xs"
+                        icon={FaEdit}
+                      />
+                      <CustomButton
+                        onClick={() => {
+                          setSlideToDelete(slide);
+                          setDeleteModalOpen(true);
+                        }}
+                        variant="red"
+                        size="xs"
+                        icon={FaTrash}
+                      />
+                    </div>
+                  </Table.Cell>
+                </>
+              )}
+            />
+          </div>
+
+          {/* Mobile/Tablet Cards View */}
+          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+            {slides.map((slide, index) => (
+              <div
+                key={slide._id}
+                className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
-                {slide.isActive ? <FaEye className="w-3 h-3 mr-1" /> : <FaEyeSlash className="w-3 h-3 mr-1" />}
-                {slide.isActive ? 'Active' : 'Inactive'}
-              </button>
-            </Table.Cell>
-            <Table.Cell>
-              <span className="font-mono text-sm">{slide.order}</span>
-            </Table.Cell>
-            <Table.Cell>
-              <div className="text-sm">
-                <div className="text-gray-900 dark:text-white">
-                  {new Date(slide.createdAt).toLocaleDateString()}
-                </div>
-                <div className="text-gray-500 dark:text-gray-400">
-                  by {slide.createdBy?.username}
+                <div className="space-y-3">
+                  {/* Image and Title */}
+                  <div className="flex gap-3">
+                    <img
+                      src={slide.image.url}
+                      alt={slide.title}
+                      className="w-24 h-16 object-cover rounded flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                        {slide.title}
+                      </h3>
+                      {slide.subtitle && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                          {slide.subtitle}
+                        </p>
+                      )}
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Text: {slide.textPosition} / {slide.textColor}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Button Info and Badges */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleSlideStatus(slide)}
+                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                            slide.isActive
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          {slide.isActive ? <FaEye className="w-3 h-3" /> : <FaEyeSlash className="w-3 h-3" />}
+                          {slide.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                          Order: {slide.order}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">Button:</span> {slide.button?.text}
+                    </div>
+                  </div>
+
+                  {/* Meta Info */}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 pb-2 border-b border-gray-200 dark:border-slate-700">
+                    Created {new Date(slide.createdAt).toLocaleDateString()} by {slide.createdBy?.username}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <CustomButton
+                      onClick={() => openModal(slide)}
+                      variant="purple"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <FaEdit className="mr-1" />
+                      Edit
+                    </CustomButton>
+                    <CustomButton
+                      onClick={() => {
+                        setSlideToDelete(slide);
+                        setDeleteModalOpen(true);
+                      }}
+                      variant="red"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <FaTrash className="mr-1" />
+                      Delete
+                    </CustomButton>
+                  </div>
                 </div>
               </div>
-            </Table.Cell>
-            <Table.Cell>
-              <div className="flex items-center gap-2">
-                <CustomButton
-                  onClick={() => openModal(slide)}
-                  variant="purple"
-                  size="xs"
-                  icon={FaEdit}
-                />
-                <CustomButton
-                  onClick={() => {
-                    setSlideToDelete(slide);
-                    setDeleteModalOpen(true);
-                  }}
-                  variant="red"
-                  size="xs"
-                  icon={FaTrash}
-                />
-              </div>
-            </Table.Cell>
-          </>
-        )}
-      />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Create/Edit Modal */}
       <CustomModal
@@ -464,11 +568,10 @@ const CarouselManagement = () => {
         onClose={closeModal}
         title={editingSlide ? 'Edit Carousel Slide' : 'Create Carousel Slide'}
         subtitle="Configure the carousel slide content and display settings"
-        maxWidth="md:max-w-4xl"
+        maxWidth="md:max-w-5xl"
         className="carousel-slide-modal"
       >
-        <ModalScrollbar maxHeight="480px">
-          <div className="space-y-6 pb-6">
+        <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Content Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -492,9 +595,13 @@ const CarouselManagement = () => {
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Enter slide description (optional)"
-                isTextarea
+                maxLength={500}
+                as="textarea"
                 rows={3}
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {formData.description.length}/500 characters
+              </p>
 
               {/* Image Upload */}
               <div>
@@ -603,29 +710,138 @@ const CarouselManagement = () => {
                   onChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                 />
               </div>
+            </form>
 
-              {/* Footer with Buttons */}
-              <div className="border-t border-gray-200 dark:border-gray-600 pt-6 mt-6">
-                <div className="flex justify-end gap-3">
-                  <CustomButton
-                    onClick={closeModal}
-                    variant="gray"
-                    disabled={submitting}
-                  >
-                    Cancel
-                  </CustomButton>
-                  <CustomButton
-                    onClick={handleSubmit}
-                    variant="teal"
-                    loading={submitting}
-                  >
-                    {editingSlide ? 'Update Slide' : 'Create Slide'}
-                  </CustomButton>
+            {/* Live Preview Section */}
+            <div className="mt-4 md:mt-6 space-y-2 md:space-y-3 border-t dark:border-gray-700 pt-3 md:pt-4">
+              <div className="flex items-center justify-between mb-1 md:mb-2">
+                <h3 className="text-sm md:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-1 md:gap-2">
+                  <FaEye className="text-blue-500 dark:text-teal-400 w-3 h-3 md:w-4 md:h-4" />
+                  <span className="hidden sm:inline">Live Preview</span>
+                  <span className="sm:hidden">Preview</span>
+                </h3>
+              </div>
+              
+              {/* Container with scale transform for true miniature preview */}
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded md:rounded-lg border border-blue-200 dark:border-teal-600 md:border-2 shadow md:shadow-lg bg-gray-900">
+                <div className="absolute inset-0" style={{ transform: 'scale(0.65)', transformOrigin: 'center center', width: '154%', height: '154%', left: '-27%', top: '-27%' }}>
+                  {/* Background Image */}
+                  {formData.images.length > 0 ? (
+                    <img
+                      src={formData.images[0].url}
+                      alt={formData.title || 'Preview'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                      <div className="text-center text-gray-600 dark:text-gray-400">
+                        <FaImages className="w-32 h-32 mx-auto mb-4 opacity-50" />
+                        <p className="text-2xl font-medium">Upload an image to see preview</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-black/40"></div>
+
+                  {/* Content - Exact match to HeroCarousel */}
+                  <div className={`absolute inset-0 flex items-center ${
+                    formData.textPosition === 'left' ? 'justify-start' :
+                    formData.textPosition === 'right' ? 'justify-end' :
+                    'justify-center'
+                  } p-4 sm:p-6 md:p-10 lg:p-20`}>
+                    <div className={`max-w-4xl ${formData.textColor === 'dark' ? 'text-gray-900' : 'text-white'} z-10 ${
+                      formData.textPosition === 'left' ? 'text-left' :
+                      formData.textPosition === 'right' ? 'text-right' :
+                      'text-center'
+                    }`}>
+                      {/* Title - Slightly smaller on mobile */}
+                      <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-3 md:mb-4 lg:mb-6 leading-tight">
+                        {formData.title || 'Your Slide Title'}
+                      </h1>
+
+                      {/* Subtitle - Slightly smaller on mobile */}
+                      {(formData.subtitle || !formData.title) && (
+                        <h2 className="text-sm sm:text-lg md:text-xl lg:text-3xl font-medium mb-3 sm:mb-4 md:mb-6 lg:mb-8 opacity-90">
+                          {formData.subtitle || 'Your slide subtitle here'}
+                        </h2>
+                      )}
+
+                      {/* Description - Slightly smaller on mobile */}
+                      {(formData.description || !formData.title) && (
+                        <p className={`text-xs sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 md:mb-8 lg:mb-10 opacity-80 leading-relaxed ${
+                          formData.textPosition === 'center' ? 'mx-auto max-w-2xl' :
+                          formData.textPosition === 'right' ? 'ml-auto max-w-2xl' :
+                          'max-w-2xl'
+                        }`}>
+                          {formData.description || 'Your slide description will appear here. This is a preview of how your content will look on the homepage carousel.'}
+                        </p>
+                      )}
+
+                      {/* Button Preview - Exact match */}
+                      {(formData.button.text || !formData.title) && (
+                        <div className={`flex ${
+                          formData.textPosition === 'left' ? 'justify-start' :
+                          formData.textPosition === 'right' ? 'justify-end' :
+                          'justify-center'
+                        }`}>
+                          <CustomButton
+                            variant={formData.button.variant || 'blueToTeal'}
+                            size="lg"
+                            className="pointer-events-none shadow-2xl px-4 py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 text-sm sm:text-base"
+                          >
+                            {formData.button.text || 'Button Text'}
+                          </CustomButton>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </form>
+
+              {/* Preview Info */}
+              <div className="grid grid-cols-2 gap-1.5 md:gap-2">
+                <div className="bg-blue-50 dark:bg-slate-800 p-1.5 md:p-2 rounded border border-blue-200 dark:border-slate-600 text-center">
+                  <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 block">Position</span>
+                  <span className="text-xs md:text-sm text-gray-900 dark:text-white font-semibold capitalize">{formData.textPosition}</span>
+                </div>
+                <div className="bg-purple-50 dark:bg-slate-800 p-1.5 md:p-2 rounded border border-purple-200 dark:border-slate-600 text-center">
+                  <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 block">Color</span>
+                  <span className="text-xs md:text-sm text-gray-900 dark:text-white font-semibold capitalize">{formData.textColor}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700 mt-4">
+              <CustomButton
+                type="button"
+                onClick={closeModal}
+                variant="gray"
+                disabled={submitting}
+              >
+                <FaTimes className="mr-2" />
+                Cancel
+              </CustomButton>
+              <CustomButton
+                onClick={handleSubmit}
+                variant="rippleBlueToTeal"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <RahalatekLoader size="sm" className="mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FaSave className="mr-2" />
+                    {editingSlide ? 'Update Slide' : 'Create Slide'}
+                  </>
+                )}
+              </CustomButton>
+            </div>
           </div>
-        </ModalScrollbar>
       </CustomModal>
 
       {/* Delete Confirmation Modal */}
@@ -660,7 +876,7 @@ export default function UIManagement() {
         </p>
       </div>
 
-      {/* Custom Tabs Navigation - Only Carousel Tab */}
+      {/* Custom Tabs Navigation */}
       <div className="flex justify-center mb-6">
         <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-t-lg overflow-hidden shadow-sm w-full sm:w-auto">
           <div className="flex gap-0 w-full">
@@ -675,6 +891,17 @@ export default function UIManagement() {
               <FaImages className="w-4 h-4" />
               <span>Carousel</span>
             </button>
+            <button
+              onClick={() => setActiveTab('about')}
+              className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                activeTab === 'about'
+                  ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+              }`}
+            >
+              <FaInfoCircle className="w-4 h-4" />
+              <span>About</span>
+            </button>
           </div>
         </div>
       </div>
@@ -683,6 +910,12 @@ export default function UIManagement() {
       {activeTab === 'carousel' && (
         <div>
           <CarouselManagement />
+        </div>
+      )}
+      
+      {activeTab === 'about' && (
+        <div>
+          <AboutHeroManagement />
         </div>
       )}
     </div>

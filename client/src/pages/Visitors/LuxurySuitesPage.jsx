@@ -720,10 +720,12 @@ export default function LuxurySuitesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Email Card */}
-            <a
-              href="mailto:info@rahalatek.com"
-              className="bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 group"
-            >
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 rounded-xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
+              <a
+                href="mailto:info@rahalatek.com"
+                className="relative flex flex-col bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300"
+              >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-500 dark:bg-blue-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
                   <FaEnvelope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -735,15 +737,18 @@ export default function LuxurySuitesPage() {
                   info@rahalatek.com
                 </p>
               </div>
-            </a>
+              </a>
+            </div>
 
             {/* WhatsApp Card */}
-            <a
-              href="https://wa.me/905010684657"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 group"
-            >
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400 rounded-xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
+              <a
+                href="https://wa.me/905010684657"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative flex flex-col bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-green-500 dark:hover:border-green-400 transition-all duration-300"
+              >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-500 dark:bg-green-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
                   <FaWhatsapp className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -755,15 +760,18 @@ export default function LuxurySuitesPage() {
                   WhatsApp
                 </p>
               </div>
-            </a>
+              </a>
+            </div>
 
             {/* Instagram Card */}
-            <a
-              href="https://www.instagram.com/rahalatek_/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-pink-500 dark:hover:border-pink-400 transition-all duration-300 group"
-            >
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 dark:from-purple-600 dark:via-pink-600 dark:to-orange-500 rounded-xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
+              <a
+                href="https://www.instagram.com/rahalatek_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative flex flex-col bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-pink-500 dark:hover:border-pink-400 transition-all duration-300"
+              >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
                   <FaInstagram className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -775,13 +783,16 @@ export default function LuxurySuitesPage() {
                   Instagram
                 </p>
               </div>
-            </a>
+              </a>
+            </div>
 
             {/* Phone Card */}
-            <a
-              href="tel:+905010684657"
-              className="bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-yellow-500 dark:hover:border-yellow-400 transition-all duration-300 group"
-            >
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-yellow-500 dark:from-blue-400 dark:to-yellow-400 rounded-xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
+              <a
+                href="tel:+905010684657"
+                className="relative flex flex-col bg-white dark:bg-slate-950 rounded-xl p-6 sm:p-8 shadow-lg border border-gray-200 dark:border-slate-700 hover:shadow-xl hover:border-yellow-500 dark:hover:border-yellow-400 transition-all duration-300"
+              >
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-500 dark:bg-yellow-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
                   <FaPhone className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
@@ -793,7 +804,8 @@ export default function LuxurySuitesPage() {
                   +905010684657
                 </p>
               </div>
-            </a>
+              </a>
+            </div>
           </div>
         </div>
       </section>
