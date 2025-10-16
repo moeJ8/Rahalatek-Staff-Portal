@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "nodemon api/index.js",
     "start": "node api/index.js",
-    "client-install": "cd client && npm install",
+    "client-install": "cd client && npm install --legacy-peer-deps",
     "client-build": "cd client && npm run build",
     "build": "npm install && npm run client-install && npm run client-build && npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer",
     "postinstall": "npx puppeteer browsers install chrome --path /opt/render/.cache/puppeteer || npx puppeteer browsers install chrome || node scripts/setup-chrome.js",
