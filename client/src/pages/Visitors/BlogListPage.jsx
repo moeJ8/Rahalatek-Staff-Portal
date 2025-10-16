@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { FaFilter, FaSearch, FaTags, FaCalendarAlt, FaUser, FaBook, FaEye, FaClock, FaCrown, FaChevronLeft, FaChevronRight, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import RahalatekLoader from '../../components/RahalatekLoader';
@@ -320,9 +321,77 @@ export default function BlogListPage() {
     );
   }
 
+  // Generate dynamic meta content based on filters
+  const getMetaTitle = () => {
+    if (selectedCategory) {
+      return `${selectedCategory} Travel Blog Posts | Rahalatek`;
+    }
+    if (selectedTag) {
+      return `${selectedTag} Travel Articles | Rahalatek Blog`;
+    }
+    if (searchTerm) {
+      return `Search Results for "${searchTerm}" | Rahalatek Blog`;
+    }
+    return 'Rahalatek | Blog Posts';
+  };
+
+  const getMetaDescription = () => {
+    if (selectedCategory) {
+      return `Discover the best ${selectedCategory} travel experiences, tips, and guides. Expert insights from Rahalatek's travel specialists to help you plan your perfect ${selectedCategory} adventure.`;
+    }
+    if (selectedTag) {
+      return `Explore ${selectedTag} travel content, guides, and tips. Find everything you need to know about ${selectedTag} from Rahalatek's travel experts.`;
+    }
+    if (searchTerm) {
+      return `Search results for "${searchTerm}" in our travel blog. Find the latest travel tips, destination guides, and expert advice from Rahalatek.`;
+    }
+    return 'Explore our comprehensive travel blog featuring expert tips, destination guides, and travel insights. Discover amazing places, culture, food, and adventure travel advice from Rahalatek\'s travel specialists.';
+  };
+
+  const getMetaKeywords = () => {
+    const baseKeywords = ['travel blog', 'travel tips', 'destination guides', 'travel advice', 'Rahalatek', 'tourism blog'];
+    
+    if (selectedCategory) {
+      return [...baseKeywords, selectedCategory.toLowerCase(), `${selectedCategory} travel`, `${selectedCategory} guide`];
+    }
+    if (selectedTag) {
+      return [...baseKeywords, selectedTag.toLowerCase(), `${selectedTag} travel`];
+    }
+    if (searchTerm) {
+      return [...baseKeywords, searchTerm.toLowerCase(), 'travel search'];
+    }
+    
+    return [...baseKeywords, 'travel destinations', 'travel experiences', 'cultural travel', 'adventure travel', 'luxury travel', 'budget travel'];
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
+    <>
+      {/* SEO Meta Tags */}
+      <Helmet>
+        <title>{getMetaTitle()}</title>
+        <meta name="description" content={getMetaDescription()} />
+        <meta name="keywords" content={getMetaKeywords().join(', ')} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content={getMetaTitle()} />
+        <meta property="og:description" content={getMetaDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${window.location.origin}/blog`} />
+        <meta property="og:image" content={`${window.location.origin}/last-logo-3.png`} />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={getMetaTitle()} />
+        <meta name="twitter:description" content={getMetaDescription()} />
+        <meta name="twitter:image" content={`${window.location.origin}/last-logo-3.png`} />
+        
+        {/* Additional SEO */}
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href={`${window.location.origin}/blog`} />
+      </Helmet>
+
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -777,6 +846,7 @@ export default function BlogListPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
