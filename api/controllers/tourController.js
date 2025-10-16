@@ -109,9 +109,9 @@ exports.getTourById = async (req, res) => {
 exports.addTour = async (req, res) => {
   try {
     // Check if user is authorized to add tours
-    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager && !req.user.isPublisher) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators, accountants, and content managers can add tours.' 
+        message: 'Access denied. Only administrators, accountants, content managers, and publishers can add tours.' 
       });
     }
 
@@ -132,9 +132,9 @@ exports.addTour = async (req, res) => {
 exports.updateTour = async (req, res) => {
   try {
     // Check if user is authorized to update tours
-    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+    if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager && !req.user.isPublisher) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators, accountants, and content managers can update tours.' 
+        message: 'Access denied. Only administrators, accountants, content managers, and publishers can update tours.' 
       });
     }
 
@@ -164,9 +164,9 @@ exports.updateTour = async (req, res) => {
 exports.deleteTour = async (req, res) => {
   try {
     // Check if user is authorized to delete tours
-    if (!req.user.isAdmin && !req.user.isContentManager) {
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
       return res.status(403).json({ 
-        message: 'Access denied. Only administrators and content managers can delete tours.' 
+        message: 'Access denied. Only administrators, content managers, and publishers can delete tours.' 
       });
     }
 

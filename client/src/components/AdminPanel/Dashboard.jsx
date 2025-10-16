@@ -1003,11 +1003,12 @@ export default function Dashboard() {
                                 <CustomScrollbar maxHeight="500px">
                                     <div className="space-y-2 sm:space-y-3">
                                         {analytics.recentActivity.users.sort((a, b) => {
-                                            // Sort by role priority: Admin (4) > Accountant (3) > Content Manager (2) > User (1)
+                                            // Sort by role priority: Admin (5) > Accountant (4) > Content Manager (3) > Publisher (2) > User (1)
                                             const getRolePriority = (user) => {
-                                                if (user.isAdmin) return 4;
-                                                if (user.isAccountant) return 3;
-                                                if (user.isContentManager) return 2;
+                                                if (user.isAdmin) return 5;
+                                                if (user.isAccountant) return 4;
+                                                if (user.isContentManager) return 3;
+                                                if (user.isPublisher) return 2;
                                                 return 1;
                                             };
                                             return getRolePriority(b) - getRolePriority(a);
@@ -1028,6 +1029,11 @@ export default function Dashboard() {
                                                     role: 'Manager', 
                                                     mobileRole: 'Mgr',
                                                     color: 'bg-yellow-500 text-white border border-yellow-600 shadow-md' 
+                                                };
+                                                if (user.isPublisher) return { 
+                                                    role: 'Publisher', 
+                                                    mobileRole: 'Pub',
+                                                    color: 'bg-purple-600 text-white border border-purple-700 shadow-md' 
                                                 };
                                                 return { 
                                                     role: 'User', 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Label, Alert, Badge } from 'flowbite-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { FaPlus, FaSave, FaTimes, FaSpinner, FaChevronDown, FaChevronUp, FaFilter, FaSyncAlt } from 'react-icons/fa';
+import { FaPlus, FaSave, FaTimes, FaSpinner, FaChevronDown, FaChevronUp, FaFilter, FaSyncAlt, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import { HiTrash, HiPlus } from 'react-icons/hi';
 import Search from '../Search';
 
@@ -40,6 +40,10 @@ export default function Packages({ user }) {
         isActive: '',
         createdBy: ''
     });
+    
+    // Pagination states
+    const [page, setPage] = useState(1);
+    const [screenType, setScreenType] = useState('desktop');
     
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -404,6 +408,31 @@ export default function Packages({ user }) {
     };
 
     // Filter packages based on search and filters
+    // Screen size detection and items per page
+    const getItemsPerPage = (type) => {
+        switch(type) {
+            case 'mobile':
+                return 3;
+            case 'tablet':
+                return 6;
+            case 'desktop':
+            default:
+                return 9;
+        }
+    };
+
+    const updateScreenSize = () => {
+        const width = window.innerWidth;
+        
+        if (width < 768) {
+            setScreenType('mobile');
+        } else if (width < 1024) {
+            setScreenType('tablet');
+        } else {
+            setScreenType('desktop');
+        }
+    };
+
     const filteredPackages = (packages || []).filter(pkg => {
         const searchTerm = filters.search?.toLowerCase() || '';
         
@@ -437,6 +466,13 @@ export default function Packages({ user }) {
         return matchesSearch && matchesCountry && matchesCity && matchesStatus && matchesCreatedBy;
     });
 
+    // Pagination logic
+    const itemsPerPage = getItemsPerPage(screenType);
+    const totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedPackages = filteredPackages.slice(startIndex, endIndex);
+
     function getInitialFormData() {
         return {
             name: '',
@@ -462,6 +498,18 @@ export default function Packages({ user }) {
             isActive: true
         };
     }
+
+    // Screen size detection
+    useEffect(() => {
+        updateScreenSize();
+        window.addEventListener('resize', updateScreenSize);
+        return () => window.removeEventListener('resize', updateScreenSize);
+    }, []);
+
+    // Reset to page 1 when screen type or filters change
+    useEffect(() => {
+        setPage(1);
+    }, [screenType, filters]);
 
     // Fetch initial data (only for creation, no package listing)
     useEffect(() => {
@@ -1089,7 +1137,7 @@ export default function Packages({ user }) {
             </div>
 
             {/* Package Cards Grid */}
-            {filteredPackages.length === 0 ? (
+            {paginatedPackages.length === 0 ? (
                 <Card className="dark:bg-slate-900 text-center py-12">
                     <div className="max-w-md mx-auto">
                         <div className="mb-4">
@@ -1117,19 +1165,85 @@ export default function Packages({ user }) {
                     </div>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {filteredPackages.map((pkg) => (
-                        <PackageCard
-                            key={pkg._id}
-                            package={pkg}
-                            user={user}
-                            onView={handleViewPackage}
-                            onEdit={handleEditPackage}
-                            onDelete={handleDeletePackage}
-                            onToggleStatus={handleTogglePackageStatus}
-                        />
-                    ))}
-                </div>
+                <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        {paginatedPackages.map((pkg) => (
+                            <PackageCard
+                                key={pkg._id}
+                                package={pkg}
+                                user={user}
+                                onView={handleViewPackage}
+                                onEdit={handleEditPackage}
+                                onDelete={handleDeletePackage}
+                                onToggleStatus={handleTogglePackageStatus}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+                            {/* Previous Button */}
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                                    page === 1
+                                        ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                                        : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                                }`}
+                                aria-label="Previous page"
+                            >
+                                <FaAngleLeft className="w-4 h-4" />
+                            </button>
+
+                            {/* Page Numbers - Sliding Window */}
+                            {(() => {
+                                const pages = [];
+                                const showPages = 5;
+                                let startPage = Math.max(1, page - Math.floor(showPages / 2));
+                                let endPage = Math.min(totalPages, startPage + showPages - 1);
+                                
+                                if (endPage - startPage < showPages - 1) {
+                                    startPage = Math.max(1, endPage - showPages + 1);
+                                }
+
+                                // Generate page number buttons (sliding window - no ellipsis)
+                                for (let i = startPage; i <= endPage; i++) {
+                                    pages.push(
+                                        <button
+                                            key={i}
+                                            onClick={() => setPage(i)}
+                                            className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                                                i === page
+                                                    ? 'bg-blue-500 dark:bg-teal-500 text-white border-blue-500 dark:border-teal-500 scale-110 shadow-lg'
+                                                    : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-blue-500 hover:text-white dark:hover:bg-teal-500 dark:hover:text-white hover:border-blue-500 dark:hover:border-teal-500 hover:scale-110 shadow-sm hover:shadow-md'
+                                            }`}
+                                        >
+                                            {i}
+                                        </button>
+                                    );
+                                }
+
+                                return pages;
+                            })()}
+
+                            {/* Next Button */}
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                                    page === totalPages
+                                        ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                                        : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                                }`}
+                                aria-label="Next page"
+                            >
+                                <FaAngleRight className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Create Package Modal */}

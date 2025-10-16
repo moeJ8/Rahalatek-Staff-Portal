@@ -50,7 +50,8 @@ const carouselSlideSchema = new mongoose.Schema({
       enum: [
         'blueToTeal', 'greenToBlue', 'purpleToPink', 'pinkToOrange',
         'rippleWhiteToTeal', 'rippleBlackToBlue', 'rippleGrayToGreen', 
-        'rippleGrayToBlue', 'rippleTealToBlue', 'ripplePurpleToRed', 'rippleBlueToTeal'
+        'rippleGrayToBlue', 'rippleTealToBlue', 'ripplePurpleToRed', 'rippleBlueToTeal',
+        'rippleBlueToYellowTeal'
       ],
       default: 'blueToTeal'
     },

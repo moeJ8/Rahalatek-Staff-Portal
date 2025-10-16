@@ -45,6 +45,8 @@ const PublicPackagesPage = React.lazy(() => import('./pages/Visitors/PublicPacka
 const PublicPackagePage = React.lazy(() => import('./pages/Visitors/PublicPackagePage'))
 const ContactUsPage = React.lazy(() => import('./pages/Visitors/ContactUsPage'))
 const AboutUsPage = React.lazy(() => import('./pages/Visitors/AboutUsPage'))
+const BlogListPage = React.lazy(() => import('./pages/Visitors/BlogListPage'))
+const BlogDetailPage = React.lazy(() => import('./pages/Visitors/BlogDetailPage'))
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 const GuestNotFoundPage = React.lazy(() => import('./pages/Visitors/GuestNotFoundPage'))
 
@@ -78,6 +80,7 @@ const ConditionalFloatingContact = () => {
                       location.pathname.startsWith('/tours/') ||
                       location.pathname.startsWith('/packages/') ||
                       location.pathname.startsWith('/country/') ||
+                      location.pathname.startsWith('/blog') ||
                       location.pathname.includes('/city/');
   
   if (!isGuestPage) return null;
@@ -158,11 +161,11 @@ function App() {
               </div>
             }>
               <Routes>
-              <Route path="/signin" element={user ? <Navigate to="/home" /> : <SignInPage />} />
+              <Route path="/signin" element={user ? <Navigate to={user.isPublisher ? "/dashboard" : "/home"} /> : <SignInPage />} />
               <Route path="/verify-email" element={<EmailVerificationPage />} />
               
-              {/* Protected Routes - Admin and Accountant access */}
-              <Route element={<ProtectedRoute requireAdmin={true} />}>
+              {/* Protected Routes - Admin, Accountant, ContentManager, and Publisher access */}
+              <Route element={<ProtectedRoute requirePublisher={true} />}>
                 <Route path="/dashboard" element={<AdminPage />} />
                 <Route path="/dashboard/edit-tour/:id" element={<EditTourPage />} />
                 <Route path="/dashboard/edit-hotel/:id" element={<EditHotelPage />} />
@@ -171,7 +174,8 @@ function App() {
                 <Route path="/client/:clientName" element={<OfficeDetailPage />} />
               </Route>
               
-              <Route element={<ProtectedRoute requireAdmin={false} />}>
+              {/* Internal system routes - NOT for Publishers */}
+              <Route element={<ProtectedRoute requireAdmin={true} />}>
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/booking" element={<BookingPage />} />
                 <Route path="/vouchers" element={<VouchersPage />} />
@@ -179,13 +183,17 @@ function App() {
                 <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
                 <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />
                 <Route path="/vouchers/trash" element={<TrashPage />} />
-                <Route path="/tours" element={<ToursPage />} />
-                <Route path="/hotels" element={<HotelsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/notifications/manage" element={<AdminPage />} />
-                <Route path="/attendance" element={<AttendancePage />} />
+              </Route>
+              
+              {/* Routes accessible to all authenticated users (including Publishers and normal users) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/tours" element={<ToursPage />} />
+                <Route path="/hotels" element={<HotelsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/profile/:userId" element={<ProfilePage />} />
+                <Route path="/attendance" element={<AttendancePage />} />
               </Route>
               
               {/* Public Routes - Accessible to everyone (authenticated or not) */}
@@ -199,6 +207,8 @@ function App() {
               <Route path="/packages" element={<PublicPackagesPage />} />
               <Route path="/contact" element={<ContactUsPage />} />
               <Route path="/about" element={<AboutUsPage />} />
+              <Route path="/blog" element={<BlogListPage />} />
+              <Route path="/blog/:slug" element={<BlogDetailPage />} />
               <Route path="/country/:country" element={<GuestCountryPage />} />
               <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
               <Route path="/hotels/:slug" element={<PublicHotelPage />} />

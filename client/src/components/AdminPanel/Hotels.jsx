@@ -14,7 +14,7 @@ import ImageUploader from '../ImageUploader'
 import RoomImageUploader from '../RoomImageUploader'
 import HotelAmenitiesModal from '../HotelAmenitiesModal'
 import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
-import { validateSlug, formatSlug, formatSlugWhileTyping, getSlugPreview } from '../../utils/slugValidation'
+import { validateSlug, formatSlug, formatSlugWhileTyping } from '../../utils/slugValidation'
 
 
 
@@ -1947,7 +1947,7 @@ export default function Hotels() {
                                                 <p className="text-red-500 text-xs mt-1">{slugError}</p>
                                             )}
                                             <p className="text-gray-500 text-xs mt-1">
-                                                Preview: <span className="font-mono">/hotels/{getSlugPreview(hotelData.slug, hotelData.name)}</span>
+                                                Preview: <span className="font-mono">/hotels/{hotelData.slug && hotelData.slug.trim() ? formatSlug(hotelData.slug) : hotelData.name && hotelData.name.trim() ? formatSlug(hotelData.name) + ' (auto-generated)' : 'hotel-name (auto-generated)'}</span>
                                             </p>
                                         </div>
 

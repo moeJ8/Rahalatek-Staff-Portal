@@ -11,7 +11,7 @@ import CustomModal from '../CustomModal'
 import SearchableSelect from '../SearchableSelect'
 import ImageUploader from '../ImageUploader'
 import { getCountries, getCitiesByCountry } from '../../utils/countryCities'
-import { validateSlug, formatSlug, formatSlugWhileTyping, getSlugPreview } from '../../utils/slugValidation'
+import { validateSlug, formatSlug, formatSlugWhileTyping } from '../../utils/slugValidation'
 
 export default function Tours() {
     
@@ -677,7 +677,7 @@ export default function Tours() {
                             <p className="text-red-500 text-xs mt-1">{slugError}</p>
                         )}
                         <p className="text-gray-500 text-xs mt-1">
-                            Preview: <span className="font-mono">/tours/{getSlugPreview(tourData.slug, tourData.name)}</span>
+                            Preview: <span className="font-mono">/tours/{tourData.slug && tourData.slug.trim() ? formatSlug(tourData.slug) : tourData.name && tourData.name.trim() ? formatSlug(tourData.name) + ' (auto-generated)' : 'tour-name (auto-generated)'}</span>
                         </p>
                     </div>
                     

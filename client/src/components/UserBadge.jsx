@@ -14,6 +14,10 @@ export default function UserBadge({ user, size = 'sm' }) {
       text: 'Manager', 
       classes: 'bg-yellow-500 text-white border border-yellow-600 shadow-md'
     };
+    if (user?.isPublisher) return {
+      text: 'Publisher', 
+      classes: 'bg-purple-600 text-white border border-purple-700 shadow-md'
+    };
     return {
       text: 'User',
       classes: 'bg-gray-500 text-white border border-gray-600 shadow-md'

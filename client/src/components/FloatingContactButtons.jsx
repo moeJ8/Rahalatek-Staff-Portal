@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaWhatsapp, FaInstagram, FaEnvelope, FaTimes, FaComments } from 'react-icons/fa';
+import { FaWhatsapp, FaInstagram, FaEnvelope, FaTimes, FaComments, FaYoutube } from 'react-icons/fa';
 
 const FloatingContactButtons = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,6 +20,14 @@ const FloatingContactButtons = () => {
       href: 'https://www.instagram.com/rahalatek_/',
       bgColor: 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400',
       hoverColor: 'hover:from-purple-600 hover:via-pink-600 hover:to-orange-500',
+    },
+    {
+      id: 'youtube',
+      icon: FaYoutube,
+      label: 'YouTube',
+      href: 'https://www.youtube.com/@rahalatek',
+      bgColor: 'bg-red-600',
+      hoverColor: 'hover:bg-red-700',
     },
     {
       id: 'email',

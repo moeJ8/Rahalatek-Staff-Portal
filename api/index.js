@@ -31,6 +31,7 @@ const destinationRoutes = require('./routes/destinationRoutes');
 const packageRoutes = require('./routes/packageRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const aboutHeroRoutes = require('./routes/aboutHeroRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const SchedulerService = require('./services/schedulerService');
@@ -39,7 +40,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true })); 
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
@@ -92,6 +94,7 @@ app.use('/api/destinations', destinationRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/about-hero', aboutHeroRoutes);
+app.use('/api/blogs', blogRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

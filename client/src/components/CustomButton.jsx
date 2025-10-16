@@ -39,8 +39,11 @@ const CustomButton = ({
     };
 
     const variantClasses = {
-      // Red variant - for delete actions
+      // Red variant - for delete actions (soft)
       red: "text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:text-red-700 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300",
+      
+      // Red filled variant - for prominent delete/clear actions
+      redFilled: "text-white bg-red-600 hover:bg-red-700 border-0 shadow-md hover:shadow-lg dark:bg-red-600 dark:hover:bg-red-700",
       
       // Blue variant - for admin actions
       blue: "text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300",
@@ -90,7 +93,8 @@ const CustomButton = ({
       ripplePurpleToRed: "relative text-white bg-purple-600 border-0 shadow-lg overflow-hidden ripple-btn",
       rippleBlueToTeal: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn",
       rippleBlueToYellowTeal: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn",
-      rippleBlueToYellow: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn"
+      rippleBlueToYellow: "relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden ripple-btn",
+      rippleRedToDarkRed: "relative text-white bg-red-600 border-0 shadow-lg overflow-hidden ripple-btn"
     };
 
     return `${baseClasses} ${shapeClasses[shape]} ${sizeClasses[size]} ${variantClasses[variant]}`;
@@ -122,11 +126,12 @@ const CustomButton = ({
               variant === 'rippleBlueToTeal' ? 'bg-teal-500' :
               variant === 'rippleBlueToYellowTeal' ? 'bg-yellow-400' :
               variant === 'rippleBlueToYellow' ? 'bg-yellow-400' :
+              variant === 'rippleRedToDarkRed' ? 'bg-red-800' :
               'bg-teal-500'
             }`}
             style={{
-              width: isHovered ? '14rem' : '0',
-              height: isHovered ? '14rem' : '0',
+              width: isHovered ? '30rem' : '0',
+              height: isHovered ? '30rem' : '0',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)'

@@ -6,11 +6,12 @@ import CustomButton from './CustomButton';
 import UserDropdown from './UserDropdown';
 import NotificationDropdown from './NotificationDropdown';
 import Searchbar from './Searchbar';
+import PublicSearchbar from './PublicSearchbar';
 import UserCalendar from './UserCalendar';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
   FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope, FaInfoCircle,
-  FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout 
+  FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout, FaBlog 
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
@@ -219,7 +220,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-20">
-            <Link to={user ? "/home" : "/"} className="flex items-center">
+            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : "/"} className="flex items-center">
               <img 
                 src={isSignInPage ? "/logodark.png" : (darkMode ? "/logodark.png" : "/Logolight.png")} 
                 alt="Rahalatek Logo" 
@@ -229,8 +230,16 @@ export default function Header() {
               />
             </Link>
             
-            {/* Search Bar - Left side, only for admin/accountant */}
-            {user && (user?.isAdmin || user?.isAccountant) && <Searchbar />}
+            {/* Search Bar - Left side (Desktop only - xl and above) */}
+            <div className="hidden xl:block">
+              {user ? (
+                // Authenticated users: Search offices, clients & users (admin/accountant only - NOT publishers)
+                (user?.isAdmin || user?.isAccountant) && !user?.isPublisher && <Searchbar />
+              ) : (
+                // Guest users: Search hotels, tours, packages & blogs
+                !isSignInPage && <PublicSearchbar />
+              )}
+            </div>
           </div>
           
           {/* Desktop Navigation */}
@@ -238,64 +247,90 @@ export default function Header() {
             
             {user ? (
               <>
-                <Link 
-                  to="/home" 
-                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/home') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                  }`}
-                >
-                  Home
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/home') ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}></span>
-                </Link>
-                <Link 
-                  to="/booking" 
-                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/booking') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                  }`}
-                >
-                  Booking
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/booking') ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}></span>
-                </Link>
-                <Link 
-                  to="/vouchers" 
-                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                    isActive('/vouchers') 
-                      ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                  }`}
-                >
-                  Vouchers
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                    isActive('/vouchers') ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}></span>
-                </Link>
-                {(user?.isAdmin || user?.isAccountant || user?.isContentManager) && (
-                  <Link 
-                    to="/dashboard" 
-                    className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                      isActive('/dashboard') 
-                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
-                    }`}
-                  >
-                    Dashboard
-                    <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                      isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
-                    }`}></span>
-                  </Link>
+                {/* Publishers only see Dashboard link */}
+                {user.isPublisher ? (
+                  <>
+                    <Link 
+                      to="/dashboard" 
+                      className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                        isActive('/dashboard') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      }`}
+                    >
+                      Dashboard
+                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                        isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}></span>
+                    </Link>
+                    <CustomDarkModeToggle />
+                    <NotificationDropdown />
+                    {renderAttendanceIndicators()}
+                    <UserDropdown user={user} onLogout={handleLogout} onCalendarClick={handleCalendarClick} />
+                  </>
+                ) : (
+                  <>
+                    {/* Regular users see all navigation */}
+                    <Link 
+                      to="/home" 
+                      className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                        isActive('/home') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      }`}
+                    >
+                      Home
+                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                        isActive('/home') ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}></span>
+                    </Link>
+                    <Link 
+                      to="/booking" 
+                      className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                        isActive('/booking') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      }`}
+                    >
+                      Booking
+                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                        isActive('/booking') ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}></span>
+                    </Link>
+                    <Link 
+                      to="/vouchers" 
+                      className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                        isActive('/vouchers') 
+                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                      }`}
+                    >
+                      Vouchers
+                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                        isActive('/vouchers') ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}></span>
+                    </Link>
+                    {(user?.isAdmin || user?.isAccountant || user?.isContentManager) && (
+                      <Link 
+                        to="/dashboard" 
+                        className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                          isActive('/dashboard') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
+                        }`}
+                      >
+                        Dashboard
+                        <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
+                          isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
+                        }`}></span>
+                      </Link>
+                    )}
+                    <CustomDarkModeToggle />
+                    <NotificationDropdown />
+                    {renderAttendanceIndicators()}
+                    <UserDropdown user={user} onLogout={handleLogout} onCalendarClick={handleCalendarClick} />
+                  </>
                 )}
-                <CustomDarkModeToggle />
-                <NotificationDropdown />
-                {renderAttendanceIndicators()}
-                <UserDropdown user={user} onLogout={handleLogout} onCalendarClick={handleCalendarClick} />
               </>
             ) : (
               <>
@@ -369,6 +404,23 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
+                  to="/blog" 
+                  className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
+                    isSignInPage
+                      ? 'text-white hover:text-white/80 hover:bg-white/10'
+                      : isActive('/blog') || location.pathname.startsWith('/blog/')
+                        ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
+                  }`}
+                >
+                  Blog
+                  {!isSignInPage && (
+                    <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
+                      isActive('/blog') || location.pathname.startsWith('/blog/') ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}></span>
+                  )}
+                </Link>
+                <Link 
                   to="/contact" 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
@@ -421,6 +473,9 @@ export default function Header() {
           
           {/* Mobile Burger Menu Button */}
           <div className="xl:hidden flex items-center gap-2">
+            {/* Search for guests and users with permission */}
+            {!user && !isSignInPage && <PublicSearchbar />}
+            {user && (user?.isAdmin || user?.isAccountant) && !user?.isPublisher && <Searchbar />}
             {user && <NotificationDropdown />}
             {user && renderAttendanceIndicators()}
             <button 
@@ -461,23 +516,267 @@ export default function Header() {
         }`}>
             {user ? (
               <>
-                {/* 3x3 Grid for Authenticated Users */}
-                <div className="grid grid-cols-3 gap-4 px-2">
-                  {/* Row 1 */}
-                  <Link 
-                    to="/home"
-                    onClick={closeMobileMenu}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                      isSignInPage
-                        ? 'text-white hover:bg-white/10'
-                        : isActive('/home') 
-                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                    }`}
-                  >
-                    <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Home</span>
-                  </Link>
+                {/* Publishers get a menu without Home, Booking, and Vouchers */}
+                {user.isPublisher ? (
+                  <>
+                    {/* 2x3 Grid for Publishers */}
+                    <div className="grid grid-cols-3 gap-4 px-2">
+                      {/* Row 1 */}
+                      <Link 
+                        to="/dashboard"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/dashboard') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaChartLine className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Dashboard</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/hotels"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/hotels') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Hotels</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/tours"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/tours') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Tours</span>
+                      </Link>
+                      
+                      {/* Row 2 */}
+                      <Link 
+                        to="/profile"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/profile') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Profile</span>
+                      </Link>
+                      
+                      <Link 
+                        to="/attendance"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/attendance') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Attendance</span>
+                      </Link>
+                      
+                      <button 
+                        onClick={() => {
+                          closeMobileMenu();
+                          handleCalendarClick();
+                        }}
+                        className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md"
+                      >
+                        <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Calendar</span>
+                      </button>
+                    </div>
+                    
+                    {/* Collapsible Public Pages Section */}
+                    <div className="mt-4 px-2">
+                      <button
+                        onClick={() => setMobilePublicPagesOpen(!mobilePublicPagesOpen)}
+                        className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <span className="text-sm font-medium mr-2">Public Pages</span>
+                        {mobilePublicPagesOpen ? (
+                          <HiChevronUp className="text-lg transition-transform duration-200" />
+                        ) : (
+                          <HiChevronDown className="text-lg transition-transform duration-200" />
+                        )}
+                      </button>
+                      
+                      {/* Expanded Public Pages */}
+                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                        mobilePublicPagesOpen ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                      }`}>
+                        <div className="grid grid-cols-3 gap-3">
+                          <Link 
+                            to="/"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaHome className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Home</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/guest/hotels"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/guest/hotels') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaHotel className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Hotels</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/guest/tours"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/guest/tours') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaRoute className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Tours</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/packages"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/packages') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaBox className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Packages</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/blog"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/blog') || location.pathname.startsWith('/blog/')
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaBlog className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Blog</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/contact"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/contact') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaEnvelope className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">Contact</span>
+                          </Link>
+                          
+                          <Link 
+                            to="/about"
+                            onClick={closeMobileMenu}
+                            className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                              isActive('/about') 
+                                ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                            }`}
+                          >
+                            <FaInfoCircle className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                            <span className="text-[10px] font-medium text-center">About</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Collapsible More Options Section */}
+                    <div className="mt-4 px-2">
+                      <button
+                        onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
+                        className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <span className="text-sm font-medium mr-2">More</span>
+                        {mobileMenuExpanded ? (
+                          <HiChevronUp className="text-lg transition-transform duration-200" />
+                        ) : (
+                          <HiChevronDown className="text-lg transition-transform duration-200" />
+                        )}
+                      </button>
+                      
+                      {/* Expanded Options */}
+                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                        mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                      }`}>
+                        <div className="flex justify-center">
+                          {/* Theme Toggle */}
+                          <div className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md">
+                            <div className="transform group-hover:scale-110 transition-transform duration-200">
+                              <CustomDarkModeToggle />
+                            </div>
+                            <span className="text-xs font-medium text-center mt-1">Theme</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Logout Button - Below Everything */}
+                    <div className="mt-6 px-2">
+                      <CustomButton
+                        onClick={handleLogout}
+                        variant="red"
+                        size="lg"
+                        className="w-full"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <FaLogout className="text-lg" />
+                          <span>Logout ({user.username})</span>
+                        </div>
+                      </CustomButton>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* 3x3 Grid for Regular Authenticated Users */}
+                    <div className="grid grid-cols-3 gap-4 px-2">
+                      {/* Row 1 */}
+                      <Link 
+                        to="/home"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isSignInPage
+                            ? 'text-white hover:bg-white/10'
+                            : isActive('/home') 
+                              ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Home</span>
+                      </Link>
                   
                   <Link 
                     to="/booking"
@@ -569,56 +868,56 @@ export default function Header() {
                       <span className="text-xs font-medium text-center">Profile</span>
                     </Link>
                   )}
-                  
-                  {/* Row 3 */}
-                  {(user.isAdmin || user.isAccountant) && (
-                    <Link 
-                      to="/profile"
-                      onClick={closeMobileMenu}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                        isActive('/profile') 
-                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                      }`}
-                    >
-                      <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-xs font-medium text-center">Profile</span>
-                    </Link>
-                  )}
-                  
-                  <Link 
-                    to="/attendance"
-                    onClick={closeMobileMenu}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                      isSignInPage
-                        ? 'text-white hover:bg-white/10'
-                        : isActive('/attendance') 
-                          ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                    }`}
-                  >
-                    <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Attendance</span>
-                  </Link>
-                  
-                  <button 
-                    onClick={() => {
-                      closeMobileMenu();
-                      handleCalendarClick();
-                    }}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                      isSignInPage
-                        ? 'text-white hover:bg-white/10'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                    }`}
-                  >
-                    <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Calendar</span>
-                  </button>
-                </div>
-                
-                {/* Collapsible Public Pages Section */}
-                <div className="mt-4 px-2">
+                      
+                      {/* Row 3 */}
+                      {(user.isAdmin || user.isAccountant) && (
+                        <Link 
+                          to="/profile"
+                          onClick={closeMobileMenu}
+                          className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                            isActive('/profile') 
+                              ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                          }`}
+                        >
+                          <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                          <span className="text-xs font-medium text-center">Profile</span>
+                        </Link>
+                      )}
+                      
+                      <Link 
+                        to="/attendance"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isSignInPage
+                            ? 'text-white hover:bg-white/10'
+                            : isActive('/attendance') 
+                              ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Attendance</span>
+                      </Link>
+                      
+                      <button 
+                        onClick={() => {
+                          closeMobileMenu();
+                          handleCalendarClick();
+                        }}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isSignInPage
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">Calendar</span>
+                      </button>
+                    </div>
+                    
+                    {/* Collapsible Public Pages Section */}
+                    <div className="mt-4 px-2">
                   <button
                     onClick={() => setMobilePublicPagesOpen(!mobilePublicPagesOpen)}
                     className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -689,6 +988,19 @@ export default function Header() {
                       </Link>
                       
                       <Link 
+                        to="/blog"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
+                          isActive('/blog') || location.pathname.startsWith('/blog/')
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaBlog className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-[10px] font-medium text-center">Blog</span>
+                      </Link>
+                      
+                      <Link 
                         to="/contact"
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
@@ -714,11 +1026,11 @@ export default function Header() {
                         <span className="text-[10px] font-medium text-center">About</span>
                       </Link>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Collapsible More Options Section */}
-                <div className="mt-4 px-2">
+                      </div>
+                    </div>
+                    
+                    {/* Collapsible More Options Section */}
+                    <div className="mt-4 px-2">
                   <button
                     onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
                     className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -748,23 +1060,25 @@ export default function Header() {
                         <span className="text-xs font-medium text-center mt-1">Theme</span>
                       </div>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Logout Button - Below Grid */}
-                <div className="mt-6 px-2">
-                  <CustomButton
-                    onClick={handleLogout}
-                    variant="red"
-                    size="lg"
-                    className="w-full"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <FaLogout className="text-lg" />
-                      <span>Logout ({user.username})</span>
+                      </div>
                     </div>
-                  </CustomButton>
-                </div>
+                    
+                    {/* Logout Button - Below Grid */}
+                    <div className="mt-6 px-2">
+                      <CustomButton
+                        onClick={handleLogout}
+                        variant="red"
+                        size="lg"
+                        className="w-full"
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          <FaLogout className="text-lg" />
+                          <span>Logout ({user.username})</span>
+                        </div>
+                      </CustomButton>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <>
@@ -828,6 +1142,21 @@ export default function Header() {
                   >
                     <FaBox className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-xs font-medium text-center">Packages</span>
+                  </Link>
+                  
+                  <Link 
+                    to="/blog"
+                    onClick={closeMobileMenu}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isSignInPage
+                        ? 'text-white hover:bg-white/10'
+                        : isActive('/blog') || location.pathname.startsWith('/blog/')
+                          ? 'text-blue-600 dark:text-yellow-400 bg-blue-50 dark:bg-yellow-900/20 shadow-md' 
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}
+                  >
+                    <FaBlog className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium text-center">Blog</span>
                   </Link>
                   
                   <Link 

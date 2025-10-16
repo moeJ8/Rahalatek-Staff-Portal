@@ -3,7 +3,7 @@ import axios from 'axios'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Checkbox, Card, Label, Table, Select, Accordion, Modal, Textarea } from 'flowbite-react'
 import { HiPlus, HiX, HiTrash, HiRefresh } from 'react-icons/hi'
-import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaBox, FaArchive, FaEnvelope, FaPalette } from 'react-icons/fa'
+import { FaPlaneDeparture, FaMapMarkedAlt, FaBell, FaCalendarDay, FaBuilding, FaDollarSign, FaFileInvoiceDollar, FaUser, FaChartLine, FaEdit, FaCheck, FaTimes, FaCoins, FaCog, FaBox, FaArchive, FaEnvelope, FaPalette, FaBlog, FaGift } from 'react-icons/fa'
 import toast from 'react-hot-toast'
 import UserBadge from '../UserBadge'
 import CustomButton from '../CustomButton'
@@ -36,6 +36,7 @@ const Offices = React.lazy(() => import('./Offices'))
 const Users = React.lazy(() => import('./Users'))
 const UserRequests = React.lazy(() => import('./UserRequests'))
 const UIManagement = React.lazy(() => import('./UIManagement'))
+const BlogManagement = React.lazy(() => import('./BlogManagement'))
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function AdminPanel() {
@@ -47,6 +48,7 @@ export default function AdminPanel() {
     const isAdmin = authUser.isAdmin || false;
     const isAccountant = authUser.isAccountant || false;
     const isContentManager = authUser.isContentManager || false;
+    const isPublisher = authUser.isPublisher || false;
     const isNotificationsOnlyRoute = window.location.pathname === '/notifications/manage';
     
     const getInitialTab = () => {
@@ -61,14 +63,16 @@ export default function AdminPanel() {
             // Filter available tabs based on user role
             const availableTabs = isAdmin 
             ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+            : isPublisher
+            ? ['blog', 'hotels', 'tours', 'packages', 'ui-management'] // Publishers can only access content publishing tabs - Blog first
             : isContentManager
-            ? ['hotels', 'tours', 'airports', 'offices'] // Content Managers can only access content management tabs
+            ? ['hotels', 'tours', 'airports', 'offices', 'blog'] // Content Managers can only access content management tabs
             : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications']; // Accountants can access users tab but not requests, scheduler is admin-only
             if (availableTabs.includes(tabParam)) {
                 return tabParam;
             }
         }
-        return isContentManager ? 'hotels' : 'dashboard';
+        return isPublisher ? 'blog' : (isContentManager ? 'hotels' : 'dashboard');
     };
 
     const [activeTab, setActiveTab] = useState(getInitialTab);
@@ -79,15 +83,17 @@ export default function AdminPanel() {
             const params = new URLSearchParams(window.location.search);
             const tabParam = params.get('tab');
             const availableTabs = isAdmin 
-                ? ['dashboard', 'hotels', 'tours', 'packages', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler']
+                ? ['dashboard', 'hotels', 'tours', 'packages', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler', 'blog']
+                : isPublisher
+                ? ['blog', 'hotels', 'tours', 'packages', 'ui-management'] // Publishers can only access content publishing tabs - Blog first
                 : isContentManager
-                ? ['hotels', 'tours', 'packages', 'airports', 'offices'] // Content Managers can only access content management tabs
+                ? ['hotels', 'tours', 'packages', 'airports', 'offices', 'blog'] // Content Managers can only access content management tabs
                 : ['dashboard', 'hotels', 'tours', 'packages', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
             
             if (availableTabs.includes(tabParam)) {
                 setActiveTab(tabParam);
             } else {
-                setActiveTab(isContentManager ? 'hotels' : 'dashboard');
+                setActiveTab(isPublisher ? 'blog' : (isContentManager ? 'hotels' : 'dashboard'));
             }
         };
 
@@ -97,12 +103,14 @@ export default function AdminPanel() {
         // Also listen for programmatic navigation by checking URL changes
         const checkUrlChange = () => {
             const params = new URLSearchParams(window.location.search);
-            const tabParam = params.get('tab') || (isContentManager ? 'hotels' : 'dashboard');
+            const tabParam = params.get('tab') || (isPublisher ? 'blog' : (isContentManager ? 'hotels' : 'dashboard'));
             if (tabParam !== activeTab) {
                 const availableTabs = isAdmin 
-                    ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler', 'ui-management']
+                    ? ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'requests', 'notifications', 'scheduler', 'ui-management', 'blog']
+                    : isPublisher
+                    ? ['blog', 'hotels', 'tours', 'packages', 'ui-management'] // Publishers can only access content publishing tabs - Blog first
                     : isContentManager
-                    ? ['hotels', 'tours', 'airports', 'offices', 'ui-management'] // Content Managers can only access content management tabs
+                    ? ['hotels', 'tours', 'airports', 'offices', 'ui-management', 'blog'] // Content Managers can only access content management tabs
                     : ['dashboard', 'hotels', 'tours', 'airports', 'offices', 'office-vouchers', 'financials', 'debts', 'salaries', 'attendance', 'users', 'notifications'];
                 
                 if (availableTabs.includes(tabParam)) {
@@ -118,7 +126,7 @@ export default function AdminPanel() {
             window.removeEventListener('popstate', handlePopState);
             clearInterval(interval);
         };
-    }, [activeTab, isAdmin, isContentManager]);
+    }, [activeTab, isAdmin, isContentManager, isPublisher]);
 
     const handleTabChange = (tabName) => {
         // Prevent unauthorized access to restricted tabs
@@ -126,7 +134,11 @@ export default function AdminPanel() {
             console.warn('Access denied: Only administrators can access user requests tab');
             return;
         }
-        if (isContentManager && !['hotels', 'tours', 'airports', 'offices', 'packages', 'ui-management'].includes(tabName)) {
+        if (isPublisher && !['hotels', 'tours', 'packages', 'blog', 'ui-management'].includes(tabName)) {
+            console.warn('Access denied: Publishers can only access content publishing tabs');
+            return;
+        }
+        if (isContentManager && !['hotels', 'tours', 'airports', 'offices', 'packages', 'ui-management', 'blog'].includes(tabName)) {
             console.warn('Access denied: Content managers can only access content management tabs');
             return;
         }
@@ -2406,7 +2418,7 @@ export default function AdminPanel() {
                 <div className="lg:hidden w-full fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
                     <div className="overflow-x-auto scrollbar-hide">
                         <div className="flex space-x-1 px-4 py-2 min-w-max" role="tablist" aria-label="Admin Sections">
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-dashboard-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2456,7 +2468,7 @@ export default function AdminPanel() {
                                 >
                                     Tours
                                 </button>
-                                {(isAdmin || isContentManager) && (
+                                {(isAdmin || isContentManager || isPublisher) && (
                                 <button
                                 id="tab-packages-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2474,6 +2486,25 @@ export default function AdminPanel() {
                                     Packages
                                 </button>
                                 )}
+                                {(isAdmin || isContentManager || isPublisher) && (
+                                <button
+                                id="tab-blog-mobile"
+                                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                        activeTab === 'blog' 
+                                        ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-slate-700 dark:text-teal-400' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700 dark:hover:text-white'
+                                    }`}
+                                    onClick={() => handleTabChange('blog')}
+                                    onKeyDown={(e) => handleTabKeyDown(e, 'blog')}
+                                    tabIndex={0}
+                                    role="tab"
+                                    aria-selected={activeTab === 'blog'}
+                                    aria-controls="blog-panel"
+                                >
+                                    Blog
+                                </button>
+                                )}
+                                {!isPublisher && (
                                 <button
                                 id="tab-airports-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2490,6 +2521,8 @@ export default function AdminPanel() {
                                 >
                                     Airports
                                 </button>
+                                )}
+                                {!isPublisher && (
                                 <button
                                 id="tab-offices-mobile"
                                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2506,7 +2539,8 @@ export default function AdminPanel() {
                                 >
                                     Offices
                                 </button>
-                                {!isContentManager && (
+                                )}
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-office-vouchers-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2524,7 +2558,7 @@ export default function AdminPanel() {
                                         Office Vouchers
                                     </button>
                                 )}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-financials-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2542,7 +2576,7 @@ export default function AdminPanel() {
                                         Financials
                                     </button>
                                 )}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-debts-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2560,7 +2594,7 @@ export default function AdminPanel() {
                                     Debts
                                     </button>
                                 )}
-                                {(isAdmin || isAccountant) && !isContentManager && (
+                                {(isAdmin || isAccountant) && !isContentManager && !isPublisher && (
                                     <button
                                     id="tab-salaries-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2578,7 +2612,7 @@ export default function AdminPanel() {
                                         Salaries & Bonuses
                                     </button>
                                 )}
-                                {(isAdmin || isAccountant) && (
+                                {(isAdmin || isAccountant) && !isPublisher && (
                                     <button
                                     id="tab-attendance-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2596,7 +2630,7 @@ export default function AdminPanel() {
                                         Attendance
                                     </button>
                                 )}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-users-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2632,7 +2666,7 @@ export default function AdminPanel() {
                                     User Requests
                                     </button>
                                 )}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-notifications-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2671,8 +2705,8 @@ export default function AdminPanel() {
                                     </button>
                                 )}
                                 
-                                {/* Show UI Management tab to admin and content managers */}
-                                {(isAdmin || isContentManager) && (
+                                {/* Show UI Management tab to admin, content managers, and publishers */}
+                                {(isAdmin || isContentManager || isPublisher) && (
                                     <button
                                     id="tab-ui-management-mobile"
                                     className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -2710,7 +2744,7 @@ export default function AdminPanel() {
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Management</h3>
                             </div>
                             <nav className="p-2" role="tablist" aria-label="Admin Sections">
-                                    {!isContentManager && (
+                                    {!isContentManager && !isPublisher && (
                                         <button
                                         id="tab-dashboard"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2728,6 +2762,26 @@ export default function AdminPanel() {
                                         <FaChartLine className="h-5 w-5 mr-3" />
                                             Dashboard
                                         </button>
+                                    )}
+                                    {/* Blog tab first for publishers */}
+                                    {isPublisher && (
+                                    <button
+                                    id="tab-blog"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'blog' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('blog')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'blog')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'blog'}
+                                        aria-controls="blog-panel"
+                                    >
+                                    <FaBlog className="h-5 w-5 mr-3" />
+                                        Blog
+                                    </button>
                                     )}
                                     <button
                                     id="tab-hotels"
@@ -2765,7 +2819,7 @@ export default function AdminPanel() {
                                     <FaMapMarkedAlt className="h-5 w-5 mr-3" />
                                         Tours
                                     </button>
-                                    {(isAdmin || isContentManager) && (
+                                    {(isAdmin || isContentManager || isPublisher) && (
                                     <button
                                     id="tab-packages"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2784,6 +2838,27 @@ export default function AdminPanel() {
                                         Packages
                                     </button>
                                     )}
+                                    {/* Blog tab for non-publishers (publishers get it first) */}
+                                    {(isAdmin || isContentManager) && !isPublisher && (
+                                    <button
+                                    id="tab-blog"
+                                    className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
+                                        activeTab === 'blog' 
+                                            ? 'bg-blue-50 text-blue-600 font-medium dark:bg-slate-800 dark:text-teal-400' 
+                                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800'
+                                    }`}
+                                        onClick={() => handleTabChange('blog')}
+                                        onKeyDown={(e) => handleTabKeyDown(e, 'blog')}
+                                        tabIndex={0}
+                                        role="tab"
+                                        aria-selected={activeTab === 'blog'}
+                                        aria-controls="blog-panel"
+                                    >
+                                    <FaBlog className="h-5 w-5 mr-3" />
+                                        Blog
+                                    </button>
+                                    )}
+                                    {!isPublisher && (
                                     <button
                                     id="tab-airports"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2801,6 +2876,8 @@ export default function AdminPanel() {
                                     <FaPlaneDeparture className="h-5 w-5 mr-3" />
                                         Airports
                                     </button>
+                                    )}
+                                    {!isPublisher && (
                                     <button
                                     id="tab-offices"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2818,7 +2895,8 @@ export default function AdminPanel() {
                                     <FaBuilding className="h-5 w-5 mr-3" />
                                         Offices
                                     </button>
-                                    {!isContentManager && (
+                                    )}
+                                    {!isContentManager && !isPublisher && (
                                         <button
                                         id="tab-office-vouchers"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2839,7 +2917,7 @@ export default function AdminPanel() {
                                             Office Vouchers
                                         </button>
                                     )}
-                                    {!isContentManager && (
+                                    {!isContentManager && !isPublisher && (
                                         <button
                                         id="tab-financials"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2858,7 +2936,7 @@ export default function AdminPanel() {
                                             Financials
                                         </button>
                                     )}
-                                    {!isContentManager && (
+                                    {!isContentManager && !isPublisher && (
                                         <button
                                         id="tab-debts"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2877,7 +2955,7 @@ export default function AdminPanel() {
                                         Debt Management
                                         </button>
                                     )}
-                                    {(isAdmin || isAccountant) && (
+                                    {(isAdmin || isAccountant) && !isPublisher && (
                                         <button
                                         id="tab-salaries"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2897,7 +2975,7 @@ export default function AdminPanel() {
                                         </button>
                                     )}
                                 
-                                    {(isAdmin || isAccountant) && (
+                                    {(isAdmin || isAccountant) && !isPublisher && (
                                         <button
                                         id="tab-attendance"
                                         className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2918,7 +2996,7 @@ export default function AdminPanel() {
                                     )}
                                 
                                 {/* Show Users tab to admins and accountants only, not content managers */}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-users"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -2964,7 +3042,7 @@ export default function AdminPanel() {
                                     )}
                                 
                                 {/* Show Notifications tab to admins and accountants only, not content managers */}
-                                {!isContentManager && (
+                                {!isContentManager && !isPublisher && (
                                     <button
                                     id="tab-notifications"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -3005,8 +3083,8 @@ export default function AdminPanel() {
                                     </button>
                                 )}
 
-                                {/* Show UI Management tab to admin and content managers */}
-                                {(isAdmin || isContentManager) && (
+                                {/* Show UI Management tab to admin, content managers, and publishers */}
+                                {(isAdmin || isContentManager || isPublisher) && (
                                     <button
                                     id="tab-ui-management"
                                     className={`flex items-center w-full px-4 py-3 mb-2 text-left rounded-lg transition-colors ${
@@ -3033,7 +3111,7 @@ export default function AdminPanel() {
                         <div className="flex-1">
                             
                             {/* Tab panels */}
-                            {activeTab === 'dashboard' && !isContentManager && (
+                            {activeTab === 'dashboard' && !isContentManager && !isPublisher && (
                                 <div id="dashboard-panel" role="tabpanel" aria-labelledby="tab-dashboard">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <Dashboard />
@@ -3055,15 +3133,23 @@ export default function AdminPanel() {
                                 </div>
                             )}
                             
-                            {activeTab === 'packages' && (isAdmin || isContentManager) && (
+                            {activeTab === 'packages' && (isAdmin || isContentManager || isPublisher) && (
                                 <div id="packages-panel" role="tabpanel" aria-labelledby="tab-packages">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <Packages user={authUser} />
                                     </Suspense>
                                 </div>
                             )}
+                            
+                            {activeTab === 'blog' && (isAdmin || isContentManager || isPublisher) && (
+                                <div id="blog-panel" role="tabpanel" aria-labelledby="tab-blog">
+                                    <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
+                                        <BlogManagement user={authUser} />
+                                    </Suspense>
+                                </div>
+                            )}
 
-                            {activeTab === 'airports' && (
+                            {activeTab === 'airports' && !isPublisher && (
                                 <div id="airports-panel" role="tabpanel" aria-labelledby="tab-airports">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <Airports />
@@ -3071,7 +3157,7 @@ export default function AdminPanel() {
                                 </div>
                             )}
 
-                            {activeTab === 'offices' && (
+                            {activeTab === 'offices' && !isPublisher && (
                                 <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                     <Offices />
                                 </Suspense>
@@ -6096,8 +6182,8 @@ export default function AdminPanel() {
                                 </Suspense>
                             )}
 
-                            {/* UI Management Panel - Admin and Content Manager */}
-                            {activeTab === 'ui-management' && (isAdmin || isContentManager) && (
+                            {/* UI Management Panel - Admin, Content Manager, and Publisher */}
+                            {activeTab === 'ui-management' && (isAdmin || isContentManager || isPublisher) && (
                                 <div id="ui-management-panel" role="tabpanel" aria-labelledby="tab-ui-management">
                                     <Suspense fallback={<div className="flex justify-center items-center py-12"><RahalatekLoader size="md" /></div>}>
                                         <UIManagement />

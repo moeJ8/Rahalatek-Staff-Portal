@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
-import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane, FaHome, FaBox, FaEnvelope, FaGlobe, FaInfoCircle } from 'react-icons/fa';
+import { FaQrcode, FaCalendarAlt, FaHotel, FaPlane, FaHome, FaBox, FaEnvelope, FaGlobe, FaInfoCircle, FaBlog } from 'react-icons/fa';
 import UserBadge from './UserBadge';
 
 export default function UserDropdown({ user, onLogout, onCalendarClick }) {
@@ -90,6 +90,11 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     navigate('/packages');
   };
 
+  const handleGuestBlogClick = () => {
+    setDropdownOpen(false);
+    navigate('/blog');
+  };
+
   const handleGuestContactClick = () => {
     setDropdownOpen(false);
     navigate('/contact');
@@ -99,6 +104,7 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     if (user?.isAdmin) return { text: 'Admin', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' };
     if (user?.isAccountant) return { text: 'Accountant', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
     if (user?.isContentManager) return { text: 'Content Manager', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
+    if (user?.isPublisher) return { text: 'Publisher', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
     return { text: 'User', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
   };
 
@@ -106,6 +112,7 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
     if (user?.isAdmin) return '/adminAvatar.png';
     if (user?.isAccountant) return '/accountantAvatar.png';
     if (user?.isContentManager) return '/accountantAvatar.png'; // Use accountant avatar for now
+    if (user?.isPublisher) return '/accountantAvatar.png'; // Use accountant avatar for now
     return '/normalUserAvatar.png';
   };
 
@@ -114,15 +121,15 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
   };
 
   const isPublicPageActive = () => {
-    const publicPaths = ['/', '/about', '/guest/hotels', '/guest/tours', '/packages', '/contact'];
-    return publicPaths.includes(location.pathname);
+    const publicPaths = ['/', '/about', '/guest/hotels', '/guest/tours', '/packages', '/blog', '/contact'];
+    return publicPaths.includes(location.pathname) || location.pathname.startsWith('/blog/');
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-slate-950 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 active:bg-white dark:active:bg-slate-900 active:border-gray-300 dark:active:border-gray-600 w-64"
+        className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-slate-950 backdrop-blur-sm border border-gray-200/50 dark:border-slate-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-300 dark:focus:border-teal-600 active:bg-white dark:active:bg-slate-800 transition-all duration-200 shadow-sm hover:shadow-md w-64"
       >
         <div className="w-7 h-7 rounded-full overflow-hidden shadow-sm">
           <img 
@@ -136,24 +143,24 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
           <UserBadge user={user} size="xs" />
         </div>
         <HiChevronDown 
-          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
-            dropdownOpen ? 'rotate-180' : ''
+          className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-all duration-200 ${
+            dropdownOpen ? 'rotate-180 text-teal-600 dark:text-teal-400' : ''
           }`} 
         />
       </button>
 
       {/* Dropdown Menu */}
       <div 
-        className={`absolute right-0 mt-2 w-64 bg-gray-50 dark:bg-slate-950 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1 transition-all duration-200 ease-in-out origin-top-right ${
+        className={`absolute right-0 mt-3 w-64 bg-gray-50 dark:bg-slate-950 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-slate-700/50 z-50 py-1 transition-all duration-200 ease-in-out origin-top-right ${
           dropdownOpen 
             ? 'opacity-100 scale-100 translate-y-0' 
             : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
         }`}
       >
           {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+          <div className="px-5 py-4 bg-gradient-to-r from-teal-50/80 to-cyan-50/80 dark:from-teal-900/10 dark:to-cyan-900/10 border-b border-gray-200/50 dark:border-slate-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm flex-shrink-0">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-sm flex-shrink-0 border-2 border-white dark:border-slate-800">
                 <img 
                   src={getAvatarImage()} 
                   alt={`${getUserRole().text} Avatar`}
@@ -167,7 +174,7 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
                   </span>
                   <UserBadge user={user} size="sm" />
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-600 dark:text-gray-400">
                   {user.email || 'Rahalatek'}
                 </span>
               </div>
@@ -309,6 +316,18 @@ export default function UserDropdown({ user, onLogout, onCalendarClick }) {
                   >
                     <FaBox className={`w-3 h-3 mr-3 ${isActive('/packages') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
                     Packages
+                  </button>
+
+                  <button
+                    onClick={handleGuestBlogClick}
+                    className={`flex items-center w-full px-4 py-2 pl-11 text-sm transition-colors duration-200 ${
+                      isActive('/blog') || location.pathname.startsWith('/blog/')
+                        ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/30 font-semibold' 
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FaBlog className={`w-3 h-3 mr-3 ${isActive('/blog') || location.pathname.startsWith('/blog/') ? 'text-blue-600 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`} />
+                    Blog
                   </button>
 
                   <button

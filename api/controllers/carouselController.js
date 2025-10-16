@@ -15,9 +15,9 @@ exports.getActiveSlides = async (req, res) => {
 // Get all slides for admin management
 exports.getAllSlides = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const slides = await CarouselSlide.getAllSlidesForAdmin();
@@ -31,9 +31,9 @@ exports.getAllSlides = async (req, res) => {
 // Get single slide by ID
 exports.getSlideById = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const slide = await CarouselSlide.findById(req.params.id)
@@ -54,9 +54,9 @@ exports.getSlideById = async (req, res) => {
 // Create new slide
 exports.createSlide = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const slideData = {
@@ -90,9 +90,9 @@ exports.createSlide = async (req, res) => {
 // Update slide
 exports.updateSlide = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const updateData = {
@@ -130,9 +130,9 @@ exports.updateSlide = async (req, res) => {
 // Delete slide
 exports.deleteSlide = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const slide = await CarouselSlide.findById(req.params.id);
@@ -163,9 +163,9 @@ exports.deleteSlide = async (req, res) => {
 // Toggle slide active status
 exports.toggleSlideStatus = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const { isActive } = req.body;
@@ -197,9 +197,9 @@ exports.toggleSlideStatus = async (req, res) => {
 // Reorder slides
 exports.reorderSlides = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const { slideOrders } = req.body; // Array of { id, order }

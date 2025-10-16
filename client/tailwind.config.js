@@ -9,7 +9,12 @@ export default {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Jost', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        arabic: ['Cairo', 'Traditional Arabic', 'Arabic Typesetting', 'sans-serif'],
+      },
+    },
   },
   plugins: [flowbite.plugin()], 
 };

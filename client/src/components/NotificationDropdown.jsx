@@ -453,18 +453,34 @@ const NotificationDropdown = () => {
       </button>
 
       {/* Dropdown Menu */}
-      {showDropdown && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full mt-2 w-72 sm:w-96 lg:w-[28rem] max-w-[calc(100vw-1rem)] max-h-[60vh] sm:max-h-[600px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+      <div className={`fixed left-1/2 -translate-x-1/2 top-20 sm:absolute sm:left-auto sm:right-0 sm:translate-x-0 sm:top-full mt-3 w-72 sm:w-96 lg:w-[28rem] max-w-[calc(100vw-1rem)] max-h-[70vh] sm:max-h-[680px] 
+          bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl
+          border border-gray-200/50 dark:border-slate-700/50 
+          rounded-2xl shadow-2xl 
+          z-50 overflow-hidden flex flex-col
+          transition-all duration-200 ease-in-out origin-top-right ${
+            showDropdown 
+              ? 'opacity-100 scale-100 translate-y-0' 
+              : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+          }`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-3 bg-teal-50 dark:bg-teal-900/20">
-            <h3 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <FaBell className="w-4 h-4 mr-2 text-teal-600 dark:text-teal-400" />
-              <span>Notifications</span>
+          <div className="flex items-center justify-between px-5 py-4 
+            bg-gradient-to-r from-teal-50/80 to-cyan-50/80 dark:from-teal-900/10 dark:to-cyan-900/10
+            border-b border-gray-200/50 dark:border-slate-700/50">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-teal-500/10 dark:bg-teal-500/10">
+                <FaBell className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              </div>
+              Notifications
             </h3>
             
             {unreadCount > 0 && (
-              <span className="inline-flex items-center px-1.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-900/20 dark:border-red-800">
-                {unreadCount} <span className="hidden sm:inline ml-1">unread</span>
+              <span className="inline-flex items-center px-3 py-1.5 text-xs font-semibold 
+                text-red-600 dark:text-red-400 
+                bg-red-50 dark:bg-red-900/20 
+                border border-red-200/60 dark:border-red-800/60 
+                rounded-full">
+                {unreadCount} unread
               </span>
             )}
           </div>
@@ -551,20 +567,22 @@ const NotificationDropdown = () => {
           </div>
 
           {/* Notifications List */}
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <CustomScrollbar maxHeight="480px" className="h-full">
               {loading ? (
-                <div className="flex items-center justify-center px-4 py-8">
-                  <Spinner size="md" className="text-teal-600" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading notifications...</span>
+                <div className="flex items-center justify-center px-4 py-12">
+                  <div className="w-6 h-6 border-2 border-teal-600 dark:border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 font-medium">Loading notifications...</span>
                 </div>
               ) : filteredNotifications.length === 0 ? (
-                <div className="px-4 py-8 text-center">
-                  <FaBell className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-500 dark:text-gray-400">
+                <div className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
+                    <FaBell className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium">
                     {notifications.length === 0 ? 'No notifications yet' : `No ${activeFilter === 'all' ? '' : activeFilter} notifications`}
                   </p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     {notifications.length === 0 
                       ? "You'll receive notifications for upcoming arrivals and role changes"
                       : `Try switching to a different filter to see more notifications`
@@ -572,34 +590,43 @@ const NotificationDropdown = () => {
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-200 dark:divide-slate-700">
+                <div className="p-2 pb-4">
                   {filteredNotifications.map((notification) => (
                     <div
                       key={notification._id}
-                                              className={`px-3 sm:px-4 py-2 sm:py-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors duration-150 ${
-                          !isRead(notification) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
-                        }`}
-                        style={{
-                          borderLeft: !isRead(notification) ? '4px solid rgb(20 184 166)' : 'none'
-                        }}
+                      className={`px-3 py-3 mb-1.5 rounded-xl
+                        hover:bg-gradient-to-r hover:from-teal-50/50 hover:to-cyan-50/50 
+                        dark:hover:from-teal-900/10 dark:hover:to-cyan-900/10
+                        transition-all duration-200 cursor-pointer group
+                        border border-transparent hover:border-teal-200/30 dark:hover:border-teal-700/30
+                        ${!isRead(notification) ? 'bg-teal-50/30 dark:bg-teal-900/10 border-teal-200/40 dark:border-teal-700/40' : ''}`}
+                      style={{
+                        borderLeft: !isRead(notification) ? '4px solid rgb(20 184 166)' : 'none'
+                      }}
                     >
-                      <div className="flex items-start space-x-2 sm:space-x-3">
-                        {/* Icon */}
-                        <div className="flex-shrink-0 mt-1">
-                          {getNotificationIcon(notification.type, notification.priority)}
+                      <div className="flex items-start gap-3">
+                        {/* Icon with enhanced styling */}
+                        <div className="flex-shrink-0 group-hover:scale-105 group-hover:rotate-1 transition-all duration-200">
+                          <div className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-lg">
+                            {getNotificationIcon(notification.type, notification.priority)}
+                          </div>
                         </div>
                         
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <p className={`text-xs sm:text-sm font-medium ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                                  {notification.title}
-                                </p>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
                                 {getPriorityBadge(notification.priority, notification.type)}
                               </div>
-                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+                              
+                              <p className={`text-sm font-semibold ${!isRead(notification) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'} 
+                                group-hover:text-teal-600 dark:group-hover:text-teal-400 
+                                transition-colors line-clamp-2`}>
+                                {notification.title}
+                              </p>
+                              
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                                 {parseMessageWithClickableVouchers(notification.message, notification.metadata, notification.type)}
                               </p>
                               
@@ -626,25 +653,34 @@ const NotificationDropdown = () => {
                               )}
                             </div>
                             
-                            {/* Actions */}
-                            <div className="flex items-center space-x-1 ml-1 sm:ml-2">
+                            {/* Arrow indicator */}
+                            <div className="flex-shrink-0 text-gray-400 group-hover:text-teal-500 dark:group-hover:text-teal-400 
+                              group-hover:translate-x-1 transition-all duration-200">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          {/* Footer */}
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDate(notification.createdAt)}
+                              </span>
                               {!isRead(notification) && (
                                 <button
-                                  onClick={() => markAsRead(notification._id)}
-                                  className="p-1 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    markAsRead(notification._id);
+                                  }}
+                                  className="p-1 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-700"
                                   title="Mark as read"
                                 >
                                   <FaCheck className="w-3 h-3" />
                                 </button>
                               )}
                             </div>
-                          </div>
-                          
-                          {/* Footer */}
-                          <div className="flex items-center justify-between mt-1 sm:mt-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(notification.createdAt)}
-                            </span>
                             
                             {/* Link to voucher if available */}
                             {notification.relatedVoucher && (
@@ -707,20 +743,19 @@ const NotificationDropdown = () => {
           </div>
 
           {/* Footer with view all */}
-          <div className="flex-shrink-0 px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800">
+          <div className="flex-shrink-0 px-4 py-2 border-t border-gray-200/50 dark:border-slate-700/50 bg-gray-50/80 dark:bg-slate-800/80 backdrop-blur-sm">
             <Link
               to="/notifications"
-              className="flex items-center justify-center w-full text-sm sm:text-base text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors duration-200"
+              className="flex items-center justify-center w-full text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 font-medium transition-colors duration-200 py-1.5"
               onClick={() => setShowDropdown(false)}
             >
               View all
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
         </div>
-      )}
     </div>
   );
 };

@@ -149,8 +149,9 @@ exports.getDashboardAnalytics = async (req, res) => {
             .limit(10),
             
             User.find({ isApproved: true })
-            .limit(10)
-            .select('username email isApproved isAdmin isAccountant isContentManager salaryAmount salaryCurrency createdAt')
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .select('username email isApproved isAdmin isAccountant isContentManager isPublisher salaryAmount salaryCurrency createdAt')
         ]);
 
         // Removed unused financial calculations for performance

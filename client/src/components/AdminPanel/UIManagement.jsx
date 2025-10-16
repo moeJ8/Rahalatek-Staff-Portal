@@ -55,7 +55,8 @@ const CarouselManagement = () => {
     { value: 'rippleGrayToBlue', label: 'Ripple: Gray to Blue' },
     { value: 'rippleTealToBlue', label: 'Ripple: Teal to Blue' },
     { value: 'ripplePurpleToRed', label: 'Ripple: Purple to Red' },
-    { value: 'rippleBlueToTeal', label: 'Ripple: Blue to Teal' }
+    { value: 'rippleBlueToTeal', label: 'Ripple: Blue to Teal' },
+    { value: 'rippleBlueToYellowTeal', label: 'Ripple: Blue to Yellow' }
   ];
 
   // Fetch slides
@@ -826,19 +827,10 @@ const CarouselManagement = () => {
               <CustomButton
                 onClick={handleSubmit}
                 variant="rippleBlueToTeal"
-                disabled={submitting}
+                loading={submitting}
               >
-                {submitting ? (
-                  <>
-                    <RahalatekLoader size="sm" className="mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <FaSave className="mr-2" />
-                    {editingSlide ? 'Update Slide' : 'Create Slide'}
-                  </>
-                )}
+                {!submitting && <FaSave className="mr-2" />}
+                {editingSlide ? 'Update Slide' : 'Create Slide'}
               </CustomButton>
             </div>
           </div>

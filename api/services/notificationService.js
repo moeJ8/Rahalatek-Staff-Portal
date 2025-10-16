@@ -209,6 +209,7 @@ class NotificationService {
                 if (role.isAdmin) return 'Admin';
                 if (role.isAccountant) return 'Accountant';
                 if (role.isContentManager) return 'Content Manager';
+                if (role.isPublisher) return 'Publisher';
                 return 'User';
             };
 
@@ -218,7 +219,7 @@ class NotificationService {
 
             let priority = 'medium';
             if (newRole.isAdmin && !oldRole.isAdmin) priority = 'high';
-            if (!newRole.isAdmin && !newRole.isAccountant && !newRole.isContentManager && (oldRole.isAdmin || oldRole.isAccountant || oldRole.isContentManager)) {
+            if (!newRole.isAdmin && !newRole.isAccountant && !newRole.isContentManager && !newRole.isPublisher && (oldRole.isAdmin || oldRole.isAccountant || oldRole.isContentManager || oldRole.isPublisher)) {
                 priority = 'high';
             }
 

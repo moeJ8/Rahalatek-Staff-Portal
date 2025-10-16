@@ -51,9 +51,9 @@ exports.getAllHotels = async (req, res) => {
 exports.addHotel = async (req, res) => {
     try {
         // Check if user is authorized to add hotels
-        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({ 
-                message: 'Access denied. Only administrators, accountants, and content managers can add hotels.' 
+                message: 'Access denied. Only administrators, accountants, content managers, and publishers can add hotels.' 
             });
         }
 
@@ -206,9 +206,9 @@ exports.getHotelById = async (req, res) => {
 exports.updateHotel = async (req, res) => {
     try {
         // Check if user is authorized to update hotels
-        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager) {
+        if (!req.user.isAdmin && !req.user.isAccountant && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({ 
-                message: 'Access denied. Only administrators, accountants, and content managers can update hotels.' 
+                message: 'Access denied. Only administrators, accountants, content managers, and publishers can update hotels.' 
             });
         }
 
@@ -250,9 +250,9 @@ exports.updateHotel = async (req, res) => {
 exports.deleteHotel = async (req, res) => {
     try {
         // Check if user is authorized to delete hotels
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({ 
-                message: 'Access denied. Only administrators and content managers can delete hotels.' 
+                message: 'Access denied. Only administrators, content managers, and publishers can delete hotels.' 
             });
         }
 

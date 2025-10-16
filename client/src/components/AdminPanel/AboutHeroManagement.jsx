@@ -112,13 +112,27 @@ const AboutHeroManagement = () => {
     try {
       // Validation
       if (!formData.title.trim()) {
-        toast.error('Title is required');
+        toast.error('Title is required', {
+          duration: 4000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
         setSubmitting(false);
         return;
       }
 
       if (formData.images.length === 0) {
-        toast.error('Please upload an image');
+        toast.error('Please upload an image', {
+          duration: 4000,
+          style: {
+            background: '#f44336',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        });
         setSubmitting(false);
         return;
       }
@@ -154,9 +168,21 @@ const AboutHeroManagement = () => {
         throw new Error(errorData.message || 'Failed to save about hero');
       }
 
-      const data = await response.json();
+      await response.json();
       
-      toast.success(data.message || `About hero ${editingHero ? 'updated' : 'created'} successfully`);
+      toast.success(
+        editingHero 
+          ? 'About hero updated successfully!' 
+          : 'About hero created successfully!',
+        {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        }
+      );
       
       // Refresh heroes list
       await fetchHeroes();
@@ -165,7 +191,14 @@ const AboutHeroManagement = () => {
       closeModal();
     } catch (err) {
       console.error('Error saving about hero:', err);
-      toast.error(err.message || 'Failed to save about hero');
+      toast.error(err.message || 'Failed to save about hero', {
+        duration: 4000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
     } finally {
       setSubmitting(false);
     }
@@ -190,8 +223,15 @@ const AboutHeroManagement = () => {
         throw new Error(errorData.message || 'Failed to delete about hero');
       }
 
-      const data = await response.json();
-      toast.success(data.message || 'About hero deleted successfully');
+      await response.json();
+      toast.success('About hero deleted successfully!', {
+        duration: 3000,
+        style: {
+          background: '#4CAF50',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
       
       // Refresh heroes list
       await fetchHeroes();
@@ -201,7 +241,14 @@ const AboutHeroManagement = () => {
       setHeroToDelete(null);
     } catch (err) {
       console.error('Error deleting about hero:', err);
-      toast.error(err.message || 'Failed to delete about hero');
+      toast.error('Failed to delete about hero', {
+        duration: 4000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
     } finally {
       setDeleting(false);
     }
@@ -225,14 +272,31 @@ const AboutHeroManagement = () => {
         throw new Error(errorData.message || 'Failed to update status');
       }
 
-      const data = await response.json();
-      toast.success(data.message || 'Status updated successfully');
+      await response.json();
+      toast.success(
+        `Hero ${!hero.isActive ? 'activated' : 'deactivated'} successfully!`,
+        {
+          duration: 3000,
+          style: {
+            background: '#4CAF50',
+            color: '#fff',
+            fontWeight: '500'
+          }
+        }
+      );
       
       // Refresh heroes list
       await fetchHeroes();
     } catch (err) {
       console.error('Error toggling status:', err);
-      toast.error(err.message || 'Failed to update status');
+      toast.error('Failed to update hero status', {
+        duration: 4000,
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontWeight: '500'
+        }
+      });
     }
   };
 
@@ -295,23 +359,19 @@ const AboutHeroManagement = () => {
         <div className="flex items-center gap-2">
           <CustomButton
             onClick={() => openModal(hero)}
-            variant="blue"
-            size="sm"
-          >
-            <FaEdit className="mr-1" />
-            Edit
-          </CustomButton>
+            variant="purple"
+            size="xs"
+            icon={FaEdit}
+          />
           <CustomButton
             onClick={() => {
               setHeroToDelete(hero);
               setDeleteModalOpen(true);
             }}
             variant="red"
-            size="sm"
-          >
-            <FaTrash className="mr-1" />
-            Delete
-          </CustomButton>
+            size="xs"
+            icon={FaTrash}
+          />
         </div>
       </Table.Cell>
     </>
@@ -427,7 +487,7 @@ const AboutHeroManagement = () => {
                     <div className="flex gap-2 pt-3 border-t border-gray-200 dark:border-slate-700">
                       <CustomButton
                         onClick={() => openModal(hero)}
-                        variant="blue"
+                        variant="purple"
                         size="sm"
                         className="flex-1"
                       >
@@ -643,19 +703,10 @@ const AboutHeroManagement = () => {
             <CustomButton
               onClick={handleSubmit}
               variant="rippleBlueToTeal"
-              disabled={submitting}
+              loading={submitting}
             >
-              {submitting ? (
-                <>
-                  <RahalatekLoader size="sm" className="mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <FaSave className="mr-2" />
-                  {editingHero ? 'Update Hero' : 'Create Hero'}
-                </>
-              )}
+              {!submitting && <FaSave className="mr-2" />}
+              {editingHero ? 'Update Hero' : 'Create Hero'}
             </CustomButton>
             </div>
           </div>

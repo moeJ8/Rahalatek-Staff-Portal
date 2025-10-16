@@ -31,7 +31,7 @@ exports.checkAndFixSchema = async () => {
 // Register a new user
 exports.register = async (req, res) => {
     try {
-        const { username, email, phoneNumber, countryCode, password, isAdmin, isAccountant, securityQuestion, securityAnswer } = req.body;
+        const { username, email, phoneNumber, countryCode, password, isAdmin, isAccountant, isPublisher, securityQuestion, securityAnswer } = req.body;
         
         // Check if user already exists
         const existingUser = await User.findOne({ username });
@@ -56,6 +56,7 @@ exports.register = async (req, res) => {
             password,
             isAdmin: isAdmin || false,
             isAccountant: isAccountant || false,
+            isPublisher: isPublisher || false,
             isApproved: false, // By default, users are not approved
             securityQuestion,
             securityAnswer
@@ -68,7 +69,7 @@ exports.register = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager, isPublisher: user.isPublisher },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -81,6 +82,7 @@ exports.register = async (req, res) => {
                 isAdmin: user.isAdmin,
                 isAccountant: user.isAccountant,
                 isContentManager: user.isContentManager,
+                isPublisher: user.isPublisher,
                 isApproved: user.isApproved,
                 message: 'Account created successfully. Please wait for admin approval to login.'
             }
@@ -121,7 +123,7 @@ exports.login = async (req, res) => {
         
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager },
+            { userId: user._id, isAdmin: user.isAdmin, isAccountant: user.isAccountant, isContentManager: user.isContentManager, isPublisher: user.isPublisher },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
@@ -134,6 +136,7 @@ exports.login = async (req, res) => {
                 isAdmin: user.isAdmin,
                 isAccountant: user.isAccountant,
                 isContentManager: user.isContentManager,
+                isPublisher: user.isPublisher,
                 isApproved: user.isApproved
             }
         });
@@ -167,7 +170,7 @@ exports.updateUserRole = async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
         
-        const { userId, isAdmin, isAccountant, isContentManager } = req.body;
+        const { userId, isAdmin, isAccountant, isContentManager, isPublisher } = req.body;
         
         // Make sure you can't modify your own admin status
         if (userId === req.user.userId) {
@@ -184,7 +187,8 @@ exports.updateUserRole = async (req, res) => {
         const oldRole = {
             isAdmin: oldUser.isAdmin || false,
             isAccountant: oldUser.isAccountant || false,
-            isContentManager: oldUser.isContentManager || false
+            isContentManager: oldUser.isContentManager || false,
+            isPublisher: oldUser.isPublisher || false
         };
         
         // Find and update the user
@@ -195,6 +199,7 @@ exports.updateUserRole = async (req, res) => {
             if (isAdmin) {
                 updateData.isAccountant = false;
                 updateData.isContentManager = false;
+                updateData.isPublisher = false;
             }
         }
         if (isAccountant !== undefined) {
@@ -203,6 +208,7 @@ exports.updateUserRole = async (req, res) => {
             if (isAccountant) {
                 updateData.isAdmin = false;
                 updateData.isContentManager = false;
+                updateData.isPublisher = false;
             }
         }
         if (isContentManager !== undefined) {
@@ -211,6 +217,16 @@ exports.updateUserRole = async (req, res) => {
             if (isContentManager) {
                 updateData.isAdmin = false;
                 updateData.isAccountant = false;
+                updateData.isPublisher = false;
+            }
+        }
+        if (isPublisher !== undefined) {
+            updateData.isPublisher = isPublisher;
+            // When setting publisher status, clear other roles
+            if (isPublisher) {
+                updateData.isAdmin = false;
+                updateData.isAccountant = false;
+                updateData.isContentManager = false;
             }
         }
         
@@ -228,13 +244,15 @@ exports.updateUserRole = async (req, res) => {
         const newRole = {
             isAdmin: user.isAdmin || false,
             isAccountant: user.isAccountant || false,
-            isContentManager: user.isContentManager || false
+            isContentManager: user.isContentManager || false,
+            isPublisher: user.isPublisher || false
         };
         
         // Check if role actually changed
         const roleChanged = oldRole.isAdmin !== newRole.isAdmin || 
                            oldRole.isAccountant !== newRole.isAccountant ||
-                           oldRole.isContentManager !== newRole.isContentManager;
+                           oldRole.isContentManager !== newRole.isContentManager ||
+                           oldRole.isPublisher !== newRole.isPublisher;
         
         // Create notification if role changed
         if (roleChanged) {

@@ -33,9 +33,9 @@ exports.getActiveHero = async (req, res) => {
 // Get all heroes for admin management
 exports.getAllHeroes = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const heroes = await AboutHero.getAllHeroesForAdmin();
@@ -49,9 +49,9 @@ exports.getAllHeroes = async (req, res) => {
 // Get single hero by ID
 exports.getHeroById = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const hero = await AboutHero.findById(req.params.id)
@@ -72,9 +72,9 @@ exports.getHeroById = async (req, res) => {
 // Create new hero
 exports.createHero = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     // If this hero is being set as active, deactivate all others
@@ -113,9 +113,9 @@ exports.createHero = async (req, res) => {
 // Update hero
 exports.updateHero = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     // If this hero is being set as active, deactivate all others
@@ -161,9 +161,9 @@ exports.updateHero = async (req, res) => {
 // Delete hero
 exports.deleteHero = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const hero = await AboutHero.findById(req.params.id);
@@ -194,9 +194,9 @@ exports.deleteHero = async (req, res) => {
 // Toggle hero active status
 exports.toggleHeroStatus = async (req, res) => {
   try {
-    // Check if user is admin or content manager
-    if (!req.user.isAdmin && !req.user.isContentManager) {
-      return res.status(403).json({ message: 'Access denied. Admin or Content Manager privileges required.' });
+    // Check if user is admin, content manager, or publisher
+    if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
+      return res.status(403).json({ message: 'Access denied. Admin, Content Manager, or Publisher privileges required.' });
     }
 
     const { isActive } = req.body;

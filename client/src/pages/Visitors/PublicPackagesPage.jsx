@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaFilter } from 'react-icons/fa';
+import { FaFilter, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
@@ -21,6 +21,7 @@ const PublicPackagesPage = () => {
   const [targetAudienceFilter, setTargetAudienceFilter] = useState('');
   const [availableCountries, setAvailableCountries] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
+  const [page, setPage] = useState(1);
   const navigate = useNavigate();
 
   // Check screen size for responsive behavior
@@ -36,11 +37,36 @@ const PublicPackagesPage = () => {
     }
   };
 
+  // Items per page based on screen type
+  const getItemsPerPage = (type) => {
+    switch(type) {
+      case 'mobile':
+        return 3;
+      case 'tablet':
+        return 6;
+      case 'desktop':
+      default:
+        return 9;
+    }
+  };
+
+  // Pagination logic
+  const itemsPerPage = getItemsPerPage(screenType);
+  const totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPackages = filteredPackages.slice(startIndex, endIndex);
+
   useEffect(() => {
     updateScreenSize();
     window.addEventListener('resize', updateScreenSize);
     return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
+
+  // Reset to page 1 when screen type or filters change
+  useEffect(() => {
+    setPage(1);
+  }, [screenType, searchTerm, countryFilter, cityFilter, durationFilter, targetAudienceFilter]);
 
   // Set page title and meta tags (dynamically based on filters)
   useEffect(() => {
@@ -342,13 +368,13 @@ const PublicPackagesPage = () => {
             
             <div className="w-full">
               <CustomButton 
-                variant="red" 
+                variant="rippleRedToDarkRed" 
                 onClick={resetFilters}
                 disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !targetAudienceFilter}
                 className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
-                Clean Filters
+                Clear Filters
               </CustomButton>
             </div>
           </div>
@@ -364,22 +390,88 @@ const PublicPackagesPage = () => {
         </div>
 
         {/* Packages Grid */}
-        {filteredPackages.length > 0 ? (
-          <div className={`grid gap-4 sm:gap-6 ${
-            screenType === 'mobile' 
-              ? 'grid-cols-1' 
-              : screenType === 'tablet'
-              ? 'grid-cols-2'
-              : 'grid-cols-3'
-          }`}>
-            {filteredPackages.map((pkg) => (
-              <PackageCard 
-                key={pkg._id} 
-                pkg={pkg}
-                onClick={() => handlePackageClick(pkg)}
-              />
-            ))}
-          </div>
+        {paginatedPackages.length > 0 ? (
+          <>
+            <div className={`grid gap-4 sm:gap-6 ${
+              screenType === 'mobile' 
+                ? 'grid-cols-1' 
+                : screenType === 'tablet'
+                ? 'grid-cols-2'
+                : 'grid-cols-3'
+            }`}>
+              {paginatedPackages.map((pkg) => (
+                <PackageCard 
+                  key={pkg._id} 
+                  pkg={pkg}
+                  onClick={() => handlePackageClick(pkg)}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+                {/* Previous Button */}
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                    page === 1
+                      ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                      : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <FaAngleLeft className="w-4 h-4" />
+                </button>
+
+                {/* Page Numbers - Sliding Window */}
+                {(() => {
+                  const pages = [];
+                  const showPages = 5;
+                  let startPage = Math.max(1, page - Math.floor(showPages / 2));
+                  let endPage = Math.min(totalPages, startPage + showPages - 1);
+                  
+                  if (endPage - startPage < showPages - 1) {
+                    startPage = Math.max(1, endPage - showPages + 1);
+                  }
+
+                  // Generate page number buttons (sliding window - no ellipsis)
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        onClick={() => setPage(i)}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                          i === page
+                            ? 'bg-blue-500 dark:bg-yellow-600 text-white dark:text-gray-900 border-blue-500 dark:border-yellow-600 scale-110 shadow-lg'
+                            : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-blue-500 hover:text-white dark:hover:bg-yellow-600 dark:hover:text-gray-900 hover:border-blue-500 dark:hover:border-yellow-600 hover:scale-110 shadow-sm hover:shadow-md'
+                        }`}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+
+                  return pages;
+                })()}
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                    page === totalPages
+                      ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                      : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                  }`}
+                  aria-label="Next page"
+                >
+                  <FaAngleRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Packages Available</h3>

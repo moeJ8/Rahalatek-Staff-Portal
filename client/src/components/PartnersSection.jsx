@@ -89,7 +89,7 @@ const PartnersSection = () => {
   }, []);
 
   return (
-    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950">
+    <section className="py-6 sm:py-8 md:py-12">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 sm:mb-8">

@@ -5,6 +5,7 @@ import ServicesSection from '../../components/Visitors/ServicesSection';
 import FeaturedPackages from '../../components/Visitors/FeaturedPackages';
 import FeaturedHotels from '../../components/Visitors/FeaturedHotels';
 import FeaturedTours from '../../components/Visitors/FeaturedTours';
+import RecentPosts from '../../components/Visitors/RecentPosts';
 import PartnersSection from '../../components/PartnersSection';
 
 export default function GuestHomePage() {
@@ -183,6 +184,9 @@ export default function GuestHomePage() {
       
       {/* Featured Hotels Section */}
       <FeaturedHotels />
+      
+      {/* Recent Blog Posts Section */}
+      <RecentPosts />
       
       {/* Partners Section */}
       <PartnersSection />

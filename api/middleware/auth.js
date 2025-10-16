@@ -24,7 +24,8 @@ exports.verifyToken = (req, res, next) => {
             userId: decoded.userId,
             isAdmin: decoded.isAdmin,
             isAccountant: decoded.isAccountant,
-            isContentManager: decoded.isContentManager
+            isContentManager: decoded.isContentManager,
+            isPublisher: decoded.isPublisher
         };
         
         next();

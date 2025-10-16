@@ -1,0 +1,1005 @@
+/* Quill editor custom styles */
+.ql-container {
+  font-size: 16px;
+}
+
+.ql-editor {
+  min-height: 400px;
+}
+
+/* Toolbar tooltips */
+.ql-toolbar button,
+.ql-toolbar .ql-picker-label {
+  position: relative;
+}
+
+.ql-toolbar button[title]:hover::after,
+.ql-toolbar .ql-picker-label[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .ql-toolbar button[title]:hover::after,
+.dark .ql-toolbar .ql-picker-label[title]:hover::after {
+  background: rgba(2, 6, 23, 0.3);
+  color: #ffffff;
+  border-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Image alignment in Quill editor */
+.ql-editor img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
+.ql-align-center {
+  text-align: center;
+}
+
+.ql-align-right {
+  text-align: right;
+}
+
+.ql-align-left {
+  text-align: left;
+}
+
+.ql-align-justify {
+  text-align: justify;
+}
+
+/* Centered images */
+.ql-editor .ql-align-center img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Right-aligned images */
+.ql-editor .ql-align-right img {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Left-aligned images */
+.ql-editor .ql-align-left img {
+  display: block;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* Custom scrollbar for Quill editor - matches CustomScrollbar component */
+.ql-editor::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ql-editor::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.ql-editor::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.ql-editor::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode styles for Quill */
+.dark .ql-snow .ql-stroke {
+  stroke: #e5e7eb;
+}
+
+.dark .ql-snow .ql-fill {
+  fill: #e5e7eb;
+}
+
+.dark .ql-snow .ql-picker-label {
+  color: #e5e7eb;
+}
+
+.dark .ql-toolbar.ql-snow {
+  background-color: #1e293b;
+  border-color: #475569;
+}
+
+.dark .ql-container.ql-snow {
+  background-color: #0f172a;
+  border-color: #475569;
+}
+
+.dark .ql-editor {
+  color: #e5e7eb;
+}
+
+.dark .ql-editor.ql-blank::before {
+  color: #94a3b8;
+}
+
+/* Dark mode scrollbar for Quill editor - matches CustomScrollbar component */
+.dark .ql-editor::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .ql-editor::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .ql-editor::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Blog content display styles (for rendered Quill HTML) */
+
+/* Preserve Quill inline styles - inline styles should take precedence */
+
+.prose .ql-align-center {
+  text-align: center !important;
+}
+
+.prose .ql-align-right {
+  text-align: right !important;
+}
+
+.prose .ql-align-left {
+  text-align: left !important;
+}
+
+.prose .ql-align-justify {
+  text-align: justify !important;
+}
+
+.prose sub {
+  vertical-align: sub !important;
+  font-size: smaller !important;
+}
+
+.prose sup {
+  vertical-align: super !important;
+  font-size: smaller !important;
+}
+
+.prose .ql-indent-1 {
+  padding-left: 3em !important;
+}
+
+.prose .ql-indent-2 {
+  padding-left: 6em !important;
+}
+
+.prose .ql-indent-3 {
+  padding-left: 9em !important;
+}
+
+.prose .ql-indent-4 {
+  padding-left: 12em !important;
+}
+
+.prose .ql-indent-5 {
+  padding-left: 15em !important;
+}
+
+.prose .ql-indent-6 {
+  padding-left: 18em !important;
+}
+
+.prose .ql-indent-7 {
+  padding-left: 21em !important;
+}
+
+.prose .ql-indent-8 {
+  padding-left: 24em !important;
+}
+
+/* Video embeds */
+.prose iframe {
+  max-width: 100%;
+  margin: 1.5rem auto;
+  display: block;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Light mode */
+.prose p:not([style*="color:"]) {
+  color: #1f2937;
+}
+
+.prose p {
+  font-size: 1rem !important;
+  line-height: 1.75 !important;
+}
+
+.prose h1:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h1 {
+  font-size: 2.25rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.prose h2:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h2 {
+  font-size: 1.875rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+.prose h3:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.prose h4:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose h5:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h5 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose h6:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose h6 {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose strong:not([style*="color:"]) {
+  color: #111827;
+}
+
+.prose strong {
+  font-weight: 700 !important;
+}
+
+.prose em:not([style*="color:"]) {
+  color: #374151;
+}
+
+.prose em {
+  font-style: italic !important;
+}
+
+.prose a:not([style*="color:"]) {
+  color: #2563eb;
+}
+
+.prose ul:not([style*="color:"]),
+.prose ol:not([style*="color:"]) {
+  color: #1f2937;
+}
+
+.prose ul,
+.prose ol {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 2rem !important;
+  list-style-position: outside !important;
+}
+
+.prose ul {
+  list-style-type: disc !important;
+}
+
+.prose ol {
+  list-style-type: decimal !important;
+}
+
+.prose li:not([style*="color:"]) {
+  color: #1f2937;
+}
+
+.prose li {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  display: list-item !important;
+}
+
+.prose li::marker {
+  color: #6b7280 !important;
+}
+
+/* Nested lists */
+.prose ul ul {
+  list-style-type: circle !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose ul ul ul {
+  list-style-type: square !important;
+}
+
+.prose ol ol {
+  list-style-type: lower-alpha !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.prose ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.prose blockquote:not([style*="color:"]) {
+  color: #374151;
+}
+
+.prose blockquote {
+  border-left-color: #2563eb !important;
+}
+
+.prose code:not([style*="color:"]) {
+  color: #2563eb;
+}
+
+.prose code {
+  background-color: #f3f4f6 !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875em !important;
+}
+
+.prose pre {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin: 1rem 0 !important;
+}
+
+.prose pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+.prose sub,
+.prose sup {
+  font-size: 0.75em !important;
+}
+
+/* Dark mode for blog content */
+.dark .prose p:not([style*="color:"]) {
+  color: #e5e7eb;
+}
+
+.dark .prose p {
+  font-size: 1rem !important;
+  line-height: 1.75 !important;
+}
+
+.dark .prose h1:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h1 {
+  font-size: 2.25rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.dark .prose h2:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h2 {
+  font-size: 1.875rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+.dark .prose h3:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.dark .prose h4:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark .prose h5:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h5 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark .prose h6:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose h6 {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark .prose strong:not([style*="color:"]) {
+  color: #ffffff;
+}
+
+.dark .prose strong {
+  font-weight: 700 !important;
+}
+
+.dark .prose em:not([style*="color:"]) {
+  color: #d1d5db;
+}
+
+.dark .prose em {
+  font-style: italic !important;
+}
+
+.dark .prose a:not([style*="color:"]) {
+  color: #fbbf24;
+}
+
+.dark .prose a:hover {
+  color: #f59e0b !important;
+}
+
+.dark .prose ul:not([style*="color:"]),
+.dark .prose ol:not([style*="color:"]) {
+  color: #e5e7eb;
+}
+
+.dark .prose ul,
+.dark .prose ol {
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding-left: 2rem !important;
+  list-style-position: outside !important;
+}
+
+.dark .prose ul {
+  list-style-type: disc !important;
+}
+
+.dark .prose ol {
+  list-style-type: decimal !important;
+}
+
+.dark .prose li:not([style*="color:"]) {
+  color: #e5e7eb;
+}
+
+.dark .prose li {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  display: list-item !important;
+}
+
+.dark .prose li::marker {
+  color: #9ca3af !important;
+}
+
+/* Nested lists - dark mode */
+.dark .prose ul ul {
+  list-style-type: circle !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark .prose ul ul ul {
+  list-style-type: square !important;
+}
+
+.dark .prose ol ol {
+  list-style-type: lower-alpha !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.dark .prose ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+.dark .prose blockquote:not([style*="color:"]) {
+  color: #d1d5db;
+}
+
+.dark .prose blockquote {
+  border-left-color: #fbbf24 !important;
+}
+
+.dark .prose code:not([style*="color:"]) {
+  color: #fbbf24;
+}
+
+.dark .prose code {
+  background-color: #1f2937 !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875em !important;
+}
+
+.dark .prose pre {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin: 1rem 0 !important;
+}
+
+.dark .prose pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+.dark .prose sub,
+.dark .prose sup {
+  font-size: 0.75em !important;
+}
+
+.dark .prose hr {
+  border-color: #374151 !important;
+}
+
+.dark .prose table {
+  color: #e5e7eb !important;
+}
+
+.dark .prose thead {
+  color: #ffffff !important;
+  border-bottom-color: #4b5563 !important;
+}
+
+.dark .prose tbody tr {
+  border-bottom-color: #374151 !important;
+}
+
+/* Video embed styling */
+.prose iframe,
+.ql-editor iframe {
+  max-width: 100%;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.prose .ql-video,
+.ql-editor .ql-video {
+  width: 100%;
+  height: 400px;
+}
+
+/* Image alignment in blog content display */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+}
+
+.prose .ql-align-center {
+  text-align: center;
+}
+
+.prose .ql-align-right {
+  text-align: right;
+}
+
+.prose .ql-align-left {
+  text-align: left;
+}
+
+.prose .ql-align-center img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prose .ql-align-right img {
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.prose .ql-align-left img {
+  display: block;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* RTL Support */
+[dir="rtl"] .ql-editor {
+  text-align: right;
+}
+
+/* RTL blockquote styling */
+[dir="rtl"] .ql-editor blockquote,
+[dir="rtl"].prose blockquote {
+  border-left: none !important;
+  border-right: 4px solid #2563eb !important;
+  padding-left: 0 !important;
+  padding-right: 1rem !important;
+}
+
+[dir="rtl"].dark .prose blockquote {
+  border-right-color: #fbbf24 !important;
+}
+
+/* RTL list styling */
+[dir="rtl"] .ql-editor ul,
+[dir="rtl"] .ql-editor ol,
+[dir="rtl"].prose ul,
+[dir="rtl"].prose ol {
+  padding-left: 0 !important;
+  padding-right: 2.5rem !important;
+  list-style-position: outside !important;
+}
+
+[dir="rtl"].prose ul {
+  list-style-type: disc !important;
+}
+
+[dir="rtl"].prose ol {
+  list-style-type: decimal !important;
+}
+
+[dir="rtl"].prose li {
+  display: list-item !important;
+}
+
+/* RTL indent styling */
+[dir="rtl"].prose .ql-indent-1 {
+  padding-left: 0 !important;
+  padding-right: 3em !important;
+}
+
+[dir="rtl"].prose .ql-indent-2 {
+  padding-left: 0 !important;
+  padding-right: 6em !important;
+}
+
+[dir="rtl"].prose .ql-indent-3 {
+  padding-left: 0 !important;
+  padding-right: 9em !important;
+}
+
+[dir="rtl"].prose .ql-indent-4 {
+  padding-left: 0 !important;
+  padding-right: 12em !important;
+}
+
+[dir="rtl"].prose .ql-indent-5 {
+  padding-left: 0 !important;
+  padding-right: 15em !important;
+}
+
+[dir="rtl"].prose .ql-indent-6 {
+  padding-left: 0 !important;
+  padding-right: 18em !important;
+}
+
+[dir="rtl"].prose .ql-indent-7 {
+  padding-left: 0 !important;
+  padding-right: 21em !important;
+}
+
+[dir="rtl"].prose .ql-indent-8 {
+  padding-left: 0 !important;
+  padding-right: 24em !important;
+}
+
+/* Responsive heading sizes for mobile */
+@media (max-width: 640px) {
+  .prose h1,
+  .dark .prose h1 {
+    font-size: 1.875rem !important;
+  }
+
+  .prose h2,
+  .dark .prose h2 {
+    font-size: 1.5rem !important;
+  }
+
+  .prose h3,
+  .dark .prose h3 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* CRITICAL FIX: Quill uses data-list attributes to differentiate list types */
+/* Quill puts both bullet and ordered lists in <ol> tags! */
+
+/* Bullet lists (marked with data-list="bullet") */
+.prose ol li[data-list="bullet"],
+.prose ul li[data-list="bullet"] {
+  list-style-type: disc !important;
+  display: list-item !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Ordered lists (marked with data-list="ordered") */
+.prose ol li[data-list="ordered"],
+.prose ul li[data-list="ordered"] {
+  list-style-type: decimal !important;
+  display: list-item !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Nested bullet lists */
+.prose ol li[data-list="bullet"] ol li[data-list="bullet"],
+.prose ul li[data-list="bullet"] ol li[data-list="bullet"] {
+  list-style-type: circle !important;
+}
+
+.prose ol li[data-list="bullet"] ol li[data-list="bullet"] ol li[data-list="bullet"],
+.prose ul li[data-list="bullet"] ol li[data-list="bullet"] ol li[data-list="bullet"] {
+  list-style-type: square !important;
+}
+
+/* Nested ordered lists */
+.prose ol li[data-list="ordered"] ol li[data-list="ordered"],
+.prose ul li[data-list="ordered"] ol li[data-list="ordered"] {
+  list-style-type: lower-alpha !important;
+}
+
+.prose ol li[data-list="ordered"] ol li[data-list="ordered"] ol li[data-list="ordered"],
+.prose ul li[data-list="ordered"] ol li[data-list="ordered"] ol li[data-list="ordered"] {
+  list-style-type: lower-roman !important;
+}
+
+/* List containers */
+.prose ol,
+.prose ul {
+  padding-left: 2rem !important;
+  margin: 1rem 0 !important;
+  list-style-position: outside !important;
+}
+
+/* Nested lists containers */
+.prose ol ol,
+.prose ol ul,
+.prose ul ol,
+.prose ul ul {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Hide the Quill UI spans */
+.prose .ql-ui {
+  display: none !important;
+}
+
+/* Dark mode */
+.dark .prose ol li[data-list="bullet"],
+.dark .prose ul li[data-list="bullet"] {
+  list-style-type: disc !important;
+}
+
+.dark .prose ol li[data-list="ordered"],
+.dark .prose ul li[data-list="ordered"] {
+  list-style-type: decimal !important;
+}
+
+/* Dark mode nested lists */
+.dark .prose ol li[data-list="bullet"] ol li[data-list="bullet"],
+.dark .prose ul li[data-list="bullet"] ol li[data-list="bullet"] {
+  list-style-type: circle !important;
+}
+
+.dark .prose ol li[data-list="ordered"] ol li[data-list="ordered"],
+.dark .prose ul li[data-list="ordered"] ol li[data-list="ordered"] {
+  list-style-type: lower-alpha !important;
+}
+
+/* ================================================
+   DYNAMIC FONT SWITCHING - ARABIC VS LATIN
+   ================================================ */
+
+/* Default font for Latin text (Jost) */
+.ql-editor,
+.prose {
+  font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Apply Cairo font to RTL (Arabic) content */
+[dir="rtl"],
+[dir="rtl"] *,
+[dir="rtl"] .ql-editor,
+[dir="rtl"].prose,
+[dir="rtl"] .prose {
+  font-family: 'Cairo', 'Traditional Arabic', 'Arabic Typesetting', sans-serif;
+}
+
+/* Apply Cairo to specific elements with Arabic language attribute */
+.ql-editor p:lang(ar),
+.ql-editor h1:lang(ar),
+.ql-editor h2:lang(ar),
+.ql-editor h3:lang(ar),
+.ql-editor li:lang(ar),
+.prose p:lang(ar),
+.prose h1:lang(ar),
+.prose h2:lang(ar),
+.prose h3:lang(ar),
+.prose li:lang(ar) {
+  font-family: 'Cairo', 'Traditional Arabic', 'Arabic Typesetting', sans-serif;
+  line-height: 1.7;
+}
+
+/* Better line height for Arabic text */
+[dir="rtl"] .ql-editor,
+[dir="rtl"] .prose {
+  line-height: 1.7;
+}
+
+/* Keep Latin font for LTR content */
+.prose p,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6,
+.prose li,
+.prose blockquote {
+  font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Force Cairo for all RTL content in blog display */
+[dir="rtl"].prose p,
+[dir="rtl"].prose h1,
+[dir="rtl"].prose h2,
+[dir="rtl"].prose h3,
+[dir="rtl"].prose h4,
+[dir="rtl"].prose h5,
+[dir="rtl"].prose h6,
+[dir="rtl"].prose li,
+[dir="rtl"].prose blockquote,
+[dir="rtl"].prose span,
+[dir="rtl"].prose strong,
+[dir="rtl"].prose em {
+  font-family: 'Cairo', 'Traditional Arabic', 'Arabic Typesetting', sans-serif !important;
+}
+
+/* ================================================
+   RTL LAYOUT ADJUSTMENTS
+   ================================================ */
+
+/* RTL excerpt/blockquote border - right instead of left */
+[dir="rtl"] .border-l-4 {
+  border-left-width: 0 !important;
+  border-right-width: 4px !important;
+}
+
+/* RTL padding adjustments */
+[dir="rtl"] .pl-4 {
+  padding-left: 0 !important;
+  padding-right: 1rem !important;
+}
+
+[dir="rtl"] .pl-6 {
+  padding-left: 0 !important;
+  padding-right: 1.5rem !important;
+}
+
+/* RTL rounded corners */
+[dir="rtl"] .rounded-r-lg {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-top-left-radius: 0.5rem !important;
+  border-bottom-left-radius: 0.5rem !important;
+}
+
+/* RTL blockquote border */
+[dir="rtl"] .prose blockquote {
+  border-left-width: 0 !important;
+  border-right-width: 4px !important;
+  padding-left: 0 !important;
+  padding-right: 1rem !important;
+}
+
+/* ================================================
+   HIGH QUALITY IMAGE RENDERING
+   ================================================ */
+
+/* Force highest quality image rendering for all blog images */
+.prose img,
+img[class*="blog"],
+img[class*="main"],
+img[class*="hero"] {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /* Prevent subpixel antialiasing issues */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Smooth rendering for photos when zoomed */
+.group img,
+button img {
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+}

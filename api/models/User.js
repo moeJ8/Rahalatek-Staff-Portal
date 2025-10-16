@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isPublisher: {
+        type: Boolean,
+        default: false
+    },
     isApproved: {  // Add this field for admin approval
         type: Boolean,
         default: false

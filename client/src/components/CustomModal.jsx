@@ -9,7 +9,7 @@ const CustomModal = ({
   subtitle, 
   children, 
   className = "",
-  maxWidth = "md:max-w-lg" // Allow customization of max width
+  maxWidth = "md:max-w-lg"
 }) => {
   const [modalEnter, setModalEnter] = useState(false);
 
@@ -31,7 +31,7 @@ const CustomModal = ({
   if (!isOpen) return null;
 
   const modalContent = (
-    <div className={`fixed top-0 right-0 left-0 z-[9999] h-screen overflow-y-auto overflow-x-hidden md:inset-0 ${modalEnter ? 'backdrop-blur-md' : 'backdrop-blur-0'} transition-all duration-300 flex items-center justify-center bg-gray-900 bg-opacity-50`}>
+    <div className={`fixed top-0 right-0 left-0 z-[9998] h-screen overflow-y-auto overflow-x-hidden md:inset-0 ${modalEnter ? 'backdrop-blur-md' : 'backdrop-blur-0'} transition-all duration-300 flex items-center justify-center bg-gray-900 bg-opacity-50`}>
       <div className={`relative w-full p-4 max-w-md ${maxWidth} ${className}`}>
         <div className={`relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[85vh] transform transition-all duration-300 overflow-visible ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* Header */}

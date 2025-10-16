@@ -37,11 +37,11 @@ exports.createPackage = async (req, res) => {
             });
         }
 
-        // Only admins and content managers can create packages
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        // Only admins, content managers, and publishers can create packages
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({
                 success: false,
-                message: 'Only administrators and content managers can create packages'
+                message: 'Only administrators, content managers, and publishers can create packages'
             });
         }
 
@@ -218,11 +218,11 @@ exports.updatePackage = async (req, res) => {
     try {
         const packageId = req.params.id;
         
-        // Only admins and content managers can update packages
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        // Only admins, content managers, and publishers can update packages
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({
                 success: false,
-                message: 'Only administrators and content managers can update packages'
+                message: 'Only administrators, content managers, and publishers can update packages'
             });
         }
 
@@ -271,11 +271,11 @@ exports.deletePackage = async (req, res) => {
     try {
         const packageId = req.params.id;
         
-        // Only admins and content managers can delete packages
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        // Only admins, content managers, and publishers can delete packages
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({
                 success: false,
-                message: 'Only administrators and content managers can delete packages'
+                message: 'Only administrators, content managers, and publishers can delete packages'
             });
         }
 
@@ -312,11 +312,11 @@ exports.togglePackageStatus = async (req, res) => {
     try {
         const packageId = req.params.id;
         
-        // Only admins and content managers can toggle status
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        // Only admins, content managers, and publishers can toggle status
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({
                 success: false,
-                message: 'Only administrators and content managers can toggle package status'
+                message: 'Only administrators, content managers, and publishers can toggle package status'
             });
         }
 
@@ -351,11 +351,11 @@ exports.togglePackageStatus = async (req, res) => {
 // Get package statistics
 exports.getPackageStats = async (req, res) => {
     try {
-        // Only admins and content managers can view stats
-        if (!req.user.isAdmin && !req.user.isContentManager) {
+        // Only admins, content managers, and publishers can view stats
+        if (!req.user.isAdmin && !req.user.isContentManager && !req.user.isPublisher) {
             return res.status(403).json({
                 success: false,
-                message: 'Only administrators and content managers can view package statistics'
+                message: 'Only administrators, content managers, and publishers can view package statistics'
             });
         }
 

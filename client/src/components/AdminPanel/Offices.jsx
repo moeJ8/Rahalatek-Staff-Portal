@@ -273,25 +273,25 @@ export default function Offices() {
                                     {/* Desktop Layout: flex with actions on right */}
                                     <div className="hidden md:flex">
                                         {/* Left side - Office info and contact details */}
-                                        <div className="flex-1 pr-3">
+                                        <div className="flex-1 pr-3 min-w-0">
                                             {/* Office name and location */}
                                             <div className="mb-3">
                                                 <h4 className="font-semibold text-base md:text-lg text-slate-900 dark:text-white truncate" title={office.name}>
                                                     {office.name}
                                                 </h4>
-                                                <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 flex items-center min-w-0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     </svg>
-                                                    {office.location}
+                                                    <span className="truncate" title={office.location}>{office.location}</span>
                                                 </p>
                                             </div>
                                             
                                             {/* Contact details */}
                                             <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                                                <div className="flex items-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="flex items-center min-w-0">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                     </svg>
                                                     <span className="text-slate-700 dark:text-slate-300 truncate" title={office.email}>
@@ -320,7 +320,7 @@ export default function Offices() {
                                         </div>
                                         
                                         {/* Right side - Action buttons (Desktop) */}
-                                        <div className="flex flex-col space-y-1 md:space-y-2">
+                                        <div className="flex flex-col space-y-1 md:space-y-2 flex-shrink-0">
                                             <CustomButton
                                                 variant="green"
                                                 size="xs"
