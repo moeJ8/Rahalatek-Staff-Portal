@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Label, Alert, Badge } from 'flowbite-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -40,10 +40,13 @@ export default function Packages({ user }) {
         isActive: '',
         createdBy: ''
     });
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     
     // Pagination states
     const [page, setPage] = useState(1);
     const [screenType, setScreenType] = useState('desktop');
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalPackages, setTotalPackages] = useState(0);
     
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -409,7 +412,7 @@ export default function Packages({ user }) {
 
     // Filter packages based on search and filters
     // Screen size detection and items per page
-    const getItemsPerPage = (type) => {
+    const getItemsPerPage = useCallback((type) => {
         switch(type) {
             case 'mobile':
                 return 3;
@@ -419,9 +422,9 @@ export default function Packages({ user }) {
             default:
                 return 9;
         }
-    };
+    }, []);
 
-    const updateScreenSize = () => {
+    const updateScreenSize = useCallback(() => {
         const width = window.innerWidth;
         
         if (width < 768) {
@@ -431,47 +434,10 @@ export default function Packages({ user }) {
         } else {
             setScreenType('desktop');
         }
-    };
+    }, []);
 
-    const filteredPackages = (packages || []).filter(pkg => {
-        const searchTerm = filters.search?.toLowerCase() || '';
-        
-        const matchesSearch = !filters.search || 
-            pkg.name?.toLowerCase().includes(searchTerm) ||
-            pkg.description?.toLowerCase().includes(searchTerm) ||
-            pkg.countries?.some(country => country.toLowerCase().includes(searchTerm)) ||
-            pkg.cities?.some(city => city.toLowerCase().includes(searchTerm)) ||
-            // Search in hotel names (populated data)
-            pkg.hotels?.some(hotel => hotel.hotelId?.name?.toLowerCase().includes(searchTerm)) ||
-            // Search in tour names (populated data)
-            pkg.tours?.some(tour => tour.tourId?.name?.toLowerCase().includes(searchTerm)) ||
-            // Search in hotel cities (populated data)
-            pkg.hotels?.some(hotel => hotel.hotelId?.city?.toLowerCase().includes(searchTerm)) ||
-            // Search in tour cities (populated data)
-            pkg.tours?.some(tour => tour.tourId?.city?.toLowerCase().includes(searchTerm));
-
-        const matchesCountry = !filters.country || 
-            pkg.countries?.includes(filters.country);
-
-        const matchesCity = !filters.city || 
-            pkg.cities?.includes(filters.city);
-
-        const matchesStatus = filters.isActive === '' || 
-            pkg.isActive?.toString() === filters.isActive;
-
-        const matchesCreatedBy = !filters.createdBy || 
-            pkg.createdBy?._id === filters.createdBy || 
-            pkg.createdBy?.id === filters.createdBy;
-
-        return matchesSearch && matchesCountry && matchesCity && matchesStatus && matchesCreatedBy;
-    });
-
-    // Pagination logic
-    const itemsPerPage = getItemsPerPage(screenType);
-    const totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedPackages = filteredPackages.slice(startIndex, endIndex);
+    // No more client-side filtering - everything is server-side now
+    const displayedPackages = packages;
 
     function getInitialFormData() {
         return {
@@ -499,19 +465,27 @@ export default function Packages({ user }) {
         };
     }
 
+    // Debounce search term (300ms delay for faster response)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(filters.search);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [filters.search]);
+
+    // Reset to page 1 when screen type or filters change
+    useEffect(() => {
+        setPage(1);
+    }, [screenType, debouncedSearchTerm, filters.country, filters.city, filters.isActive, filters.createdBy]);
+
     // Screen size detection
     useEffect(() => {
         updateScreenSize();
         window.addEventListener('resize', updateScreenSize);
         return () => window.removeEventListener('resize', updateScreenSize);
-    }, []);
+    }, [updateScreenSize]);
 
-    // Reset to page 1 when screen type or filters change
-    useEffect(() => {
-        setPage(1);
-    }, [screenType, filters]);
-
-    // Fetch initial data (only for creation, no package listing)
+    // Fetch initial data (hotels, tours, airports only)
     useEffect(() => {
         fetchInitialData();
     }, []);
@@ -519,24 +493,19 @@ export default function Packages({ user }) {
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const [packagesRes, hotelsRes, toursRes, airportsRes] = await Promise.all([
-                axios.get('/api/packages', {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                }).catch(err => {
-                    console.warn('Failed to fetch packages:', err);
-                    return { data: [] };
-                }),
+            // Only fetch hotels, tours, airports for creation forms
+            const [hotelsRes, toursRes, airportsRes] = await Promise.all([
                 axios.get('/api/hotels'),
                 axios.get('/api/tours'),
                 axios.get('/api/airports')
             ]);
 
-            // Handle both paginated and non-paginated responses
-            const packagesData = packagesRes.data?.data || packagesRes.data;
-            setPackages(Array.isArray(packagesData) ? packagesData : []);
             setHotels(hotelsRes.data || []);
             setTours(toursRes.data || []);
             setAirports(airportsRes.data || []);
+            
+            // Fetch packages with server-side pagination
+            await fetchPackages();
         } catch (error) {
             console.error('Error fetching data:', error);
             setError('Failed to load data. Please try again.');
@@ -554,55 +523,48 @@ export default function Packages({ user }) {
                     secondary: '#ef4444',
                 },
             });
-            // Ensure packages is always an array even on error
-            setPackages([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchPackages = async () => {
+    const fetchPackages = useCallback(async () => {
         try {
-            const packagesRes = await axios.get('/api/packages', {
+            // Build query params
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: getItemsPerPage(screenType).toString()
+            });
+            
+            if (filters.country) params.append('country', filters.country);
+            if (filters.city) params.append('city', filters.city);
+            if (filters.isActive !== '') params.append('isActive', filters.isActive);
+            if (filters.createdBy) params.append('createdBy', filters.createdBy);
+            if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+            
+            const packagesRes = await axios.get(`/api/packages?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
 
-            // Handle both paginated and non-paginated responses
-            const packagesData = packagesRes.data?.data || packagesRes.data;
-            setPackages(Array.isArray(packagesData) ? packagesData : []);
+            if (packagesRes.data.success) {
+                // Server-side paginated response
+                setPackages(packagesRes.data.data.packages);
+                setTotalPages(packagesRes.data.data.pagination.totalPages);
+                setTotalPackages(packagesRes.data.data.pagination.totalPackages);
+            }
             
-            toast.success('Packages refreshed successfully', {
-                duration: 3000,
-                style: {
-                    background: '#4CAF50',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#4CAF50',
-                },
-            });
         } catch (error) {
-            console.error('Error refreshing packages:', error);
-            toast.error('Failed to refresh packages', {
-                duration: 3000,
-                style: {
-                    background: '#ef4444',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    padding: '16px',
-                },
-                iconTheme: {
-                    primary: '#fff',
-                    secondary: '#ef4444',
-                },
-            });
+            console.error('Error fetching packages:', error);
+            setError('Failed to load packages. Please try again.');
         }
-    };
+    }, [page, screenType, filters.country, filters.city, filters.isActive, filters.createdBy, debouncedSearchTerm, getItemsPerPage]);
+
+    // Fetch packages when dependencies change
+    useEffect(() => {
+        if (page > 0) { // Only fetch if page is set
+            fetchPackages();
+        }
+    }, [fetchPackages]);
 
     // Form handlers
     const handleInputChange = (field, value) => {
@@ -1137,7 +1099,7 @@ export default function Packages({ user }) {
             </div>
 
             {/* Package Cards Grid */}
-            {paginatedPackages.length === 0 ? (
+            {displayedPackages.length === 0 ? (
                 <Card className="dark:bg-slate-900 text-center py-12">
                     <div className="max-w-md mx-auto">
                         <div className="mb-4">
@@ -1167,7 +1129,7 @@ export default function Packages({ user }) {
             ) : (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        {paginatedPackages.map((pkg) => (
+                        {displayedPackages.map((pkg) => (
                             <PackageCard
                                 key={pkg._id}
                                 package={pkg}

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
-import { FaFilter, FaSearch, FaTags, FaCalendarAlt, FaUser, FaBook, FaEye, FaClock, FaCrown, FaChevronLeft, FaChevronRight, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { FaFilter, FaSearch, FaTags, FaCalendarAlt, FaUser, FaBook, FaEye, FaClock, FaCrown, FaChevronLeft, FaChevronRight, FaAngleLeft, FaAngleRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import CustomButton from '../../components/CustomButton';
 import CustomCheckbox from '../../components/CustomCheckbox';
@@ -15,7 +15,6 @@ export default function BlogListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [blogs, setBlogs] = useState([]);
-  const [filteredBlogs, setFilteredBlogs] = useState([]);
   const [featuredBlogs, setFeaturedBlogs] = useState([]);
   const [recentBlogs, setRecentBlogs] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -23,19 +22,24 @@ export default function BlogListPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
   const [sortByPopular, setSortByPopular] = useState(true);
   const [screenType, setScreenType] = useState('desktop');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
   const [currentFeaturedSlide, setCurrentFeaturedSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isRecentOpen, setIsRecentOpen] = useState(false);
   const carouselRef = useRef(null);
 
   // Screen size detection and items per page
-  const getItemsPerPage = (type) => {
+  const getItemsPerPage = useCallback((type) => {
     switch(type) {
       case 'mobile':
         return 3;
@@ -45,9 +49,9 @@ export default function BlogListPage() {
       default:
         return 9;
     }
-  };
+  }, []);
 
-  const updateScreenSize = () => {
+  const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
     
     if (width < 768) {
@@ -57,55 +61,64 @@ export default function BlogListPage() {
     } else {
       setScreenType('desktop');
     }
-  };
+  }, []);
 
+  // Debounce search term (300ms delay for faster response)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to page 1 when screen type, filters, or sorting changes
+  useEffect(() => {
+    setPage(1);
+  }, [screenType, debouncedSearchTerm, selectedCategory, selectedTag, sortByPopular]);
+
+  // Screen size detection
   useEffect(() => {
     updateScreenSize();
     window.addEventListener('resize', updateScreenSize);
     return () => window.removeEventListener('resize', updateScreenSize);
-  }, []);
-
-  // Reset to page 1 when screen type changes
-  useEffect(() => {
-    setPage(1);
-  }, [screenType]);
-
-  // Sort blogs when sortByPopular changes
-  useEffect(() => {
-    if (blogs.length > 0) {
-      const sorted = sortByPopular 
-        ? [...blogs].sort((a, b) => (b.views || 0) - (a.views || 0))
-        : [...blogs].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-      setFilteredBlogs(sorted);
-      setPage(1); // Reset to first page when sorting changes
-    }
-  }, [sortByPopular, blogs]);
+  }, [updateScreenSize]);
 
   const fetchBlogs = useCallback(async () => {
     try {
-      setLoading(true);
+      // Only show loading on initial page load
+      if (page === 1 && !selectedCategory && !selectedTag && !debouncedSearchTerm && blogs.length === 0) {
+        setLoading(true);
+      }
+      
       const params = new URLSearchParams({
-        page: '1',
-        limit: '100' // Fetch more blogs to handle client-side pagination
+        page: page.toString(),
+        limit: getItemsPerPage(screenType).toString()
       });
 
       if (selectedCategory) params.append('category', selectedCategory);
       if (selectedTag) params.append('tag', selectedTag);
-      if (searchTerm) params.append('search', searchTerm);
+      if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+      if (sortByPopular) params.append('sortBy', 'popular');
 
       const response = await axios.get(`/api/blogs/published?${params.toString()}`);
 
       if (response.data.success) {
         const blogsData = response.data.data.docs || [];
         setBlogs(blogsData);
-        setFilteredBlogs(blogsData);
+        setTotalPages(response.data.data.totalPages);
+        setTotalBlogs(response.data.data.totalDocs);
       }
     } catch (error) {
       console.error('Error fetching blogs:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, selectedTag, searchTerm]);
+  }, [page, screenType, selectedCategory, selectedTag, debouncedSearchTerm, sortByPopular, getItemsPerPage, blogs.length]);
+
+  // Fetch blogs when dependencies change
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
 
   const fetchFeaturedBlogs = useCallback(async () => {
     try {
@@ -151,44 +164,43 @@ export default function BlogListPage() {
     }
   }, []);
 
-  // Fetch all blog data when filters change
+  // Fetch filter options and other data on mount
   useEffect(() => {
-    fetchBlogs();
     fetchFeaturedBlogs();
     fetchRecentBlogs();
     fetchCategories();
     fetchTags();
-  }, [fetchBlogs, fetchFeaturedBlogs, fetchRecentBlogs, fetchCategories, fetchTags]);
+  }, [fetchFeaturedBlogs, fetchRecentBlogs, fetchCategories, fetchTags]);
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
     setPage(1);
-  };
+  }, []);
 
-  const handleCategoryFilter = (e) => {
+  const handleCategoryFilter = useCallback((e) => {
     const value = e.target.value;
     setSelectedCategory(value);
     setSelectedTag('');
     setPage(1);
     setSearchParams(value ? { category: value } : {});
-  };
+  }, [setSearchParams]);
 
-  const handleTagFilter = (e) => {
+  const handleTagFilter = useCallback((e) => {
     const value = e.target.value;
     setSelectedTag(value);
     setSelectedCategory('');
     setPage(1);
     setSearchParams(value ? { tag: value } : {});
-  };
+  }, [setSearchParams]);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSelectedCategory('');
     setSelectedTag('');
     setSearchTerm('');
     setSortByPopular(true);
     setPage(1);
     setSearchParams({});
-  };
+  }, [setSearchParams]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -306,12 +318,8 @@ export default function BlogListPage() {
     };
   }, []);
 
-  // Pagination logic
-  const itemsPerPage = getItemsPerPage(screenType);
-  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedBlogs = filteredBlogs.slice(startIndex, endIndex);
+  // No more client-side pagination - everything is server-side now
+  const displayedBlogs = blogs;
 
   if (loading && blogs.length === 0) {
     return (
@@ -391,7 +399,7 @@ export default function BlogListPage() {
       </Helmet>
 
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
+        <div className="max-w-8xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -400,18 +408,64 @@ export default function BlogListPage() {
 
         </div>
 
+        {/* Mobile Filter Toggle Buttons */}
+        <div className="lg:hidden mb-4 space-y-3">
+          {/* Filters Toggle */}
+          <button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Filters
+              </span>
+              {(searchTerm || selectedCategory || selectedTag) && (
+                <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
+                  Active
+                </span>
+              )}
+            </div>
+            {isFiltersOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+
+          {/* Recent Posts & Tags Toggle */}
+          <button
+            onClick={() => setIsRecentOpen(!isRecentOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Recent Posts & Tags
+              </span>
+            </div>
+            {isRecentOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+        </div>
+
         {/* Main Layout with Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Sidebar - Filters, Recent Posts, Tags */}
           <div className="lg:col-span-1 order-1">
             <div className="lg:sticky lg:top-24">
-              {/* Glowing Effect Wrapper */}
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
-                {/* Single Card Container */}
-                <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
-                <CustomScrollbar maxHeight="calc(100vh - 120px)">
-                  <div className="p-3 sm:p-4">
+              {/* Desktop: Single Card with All Content */}
+              <div className="hidden lg:block">
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
                 
                 {/* Search and Filters Section */}
                 <div className="mb-4">
@@ -483,11 +537,7 @@ export default function BlogListPage() {
           
           {/* Results count */}
                   <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
-            {(searchTerm || selectedCategory || selectedTag) ? (
-                      <>Showing {filteredBlogs.length} result{filteredBlogs.length !== 1 ? 's' : ''}</>
-            ) : (
-                      <>{filteredBlogs.length} blog{filteredBlogs.length !== 1 ? 's' : ''} total</>
-            )}
+            Showing page {page} of {totalPages} ({totalBlogs} blogs total)
           </div>
         </div>
 
@@ -497,45 +547,45 @@ export default function BlogListPage() {
                 )}
 
                 {/* Recent Posts Section */}
-              {recentBlogs.length > 0 && (
+                {recentBlogs.length > 0 && (
                   <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Posts</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {recentBlogs.map((blog) => (
-                      <div
-                        key={blog._id}
-                        onClick={() => navigate(`/blog/${blog.slug}`)}
-                        className="flex gap-3 group cursor-pointer"
-                      >
-                        {blog.mainImage && (
-                          <img
-                            src={blog.mainImage.url}
-                            alt={blog.title}
-                            className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
-                          />
-                        )}
-                        <div className="flex-1 min-w-0 flex flex-col">
-                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
-                            {blog.title}
-                          </h4>
-                          {blog.category && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                              {blog.category}
-                            </p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Posts</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {recentBlogs.map((blog) => (
+                        <div
+                          key={blog._id}
+                          onClick={() => navigate(`/blog/${blog.slug}`)}
+                          className="flex gap-3 group cursor-pointer"
+                        >
+                          {blog.mainImage && (
+                            <img
+                              src={blog.mainImage.url}
+                              alt={blog.title}
+                              className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                            />
                           )}
-                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
-                            <FaCalendarAlt className="w-3 h-3" />
-                            <span>{formatDate(blog.publishedAt)}</span>
+                          <div className="flex-1 min-w-0 flex flex-col">
+                            <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                              {blog.title}
+                            </h4>
+                            {blog.category && (
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                {blog.category}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                              <FaCalendarAlt className="w-3 h-3" />
+                              <span>{formatDate(blog.publishedAt)}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
                 {/* Divider */}
                 {tags.length > 0 && recentBlogs.length > 0 && (
@@ -543,34 +593,217 @@ export default function BlogListPage() {
                 )}
 
                 {/* Tags Cloud Section */}
-              {tags.length > 0 && (
+                {tags.length > 0 && (
                   <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <FaTags className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Popular Tags</h3>
+                    <div className="flex items-center gap-2 mb-3">
+                      <FaTags className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Popular Tags</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.slice(0, 6).map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => handleTagFilter({ target: { value: tag } })}
+                          className={`group relative px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-300 hover:scale-105 ${
+                            selectedTag === tag
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-500 dark:from-yellow-600 dark:to-orange-500 text-white shadow-md shadow-blue-500/30 dark:shadow-yellow-500/30 ring-1 ring-blue-400 dark:ring-yellow-400'
+                              : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-600 text-gray-700 dark:text-gray-200 hover:from-blue-50 hover:to-blue-100 dark:hover:from-slate-600 dark:hover:to-slate-500 shadow-sm hover:shadow-md border border-gray-300 dark:border-slate-600'
+                          }`}
+                        >
+                          <span className="relative z-10 flex items-center gap-0.5">
+                            <FaTags className={`w-2 h-2 ${selectedTag === tag ? 'opacity-80' : 'opacity-60 group-hover:opacity-100'} transition-opacity`} />
+                            {tag}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.slice(0, 6).map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => handleTagFilter({ target: { value: tag } })}
-                        className={`group relative px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-300 hover:scale-105 ${
-                          selectedTag === tag
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-500 dark:from-yellow-600 dark:to-orange-500 text-white shadow-md shadow-blue-500/30 dark:shadow-yellow-500/30 ring-1 ring-blue-400 dark:ring-yellow-400'
-                            : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-600 text-gray-700 dark:text-gray-200 hover:from-blue-50 hover:to-blue-100 dark:hover:from-slate-600 dark:hover:to-slate-500 shadow-sm hover:shadow-md border border-gray-300 dark:border-slate-600'
-                        }`}
-                      >
-                        <span className="relative z-10 flex items-center gap-0.5">
-                          <FaTags className={`w-2 h-2 ${selectedTag === tag ? 'opacity-80' : 'opacity-60 group-hover:opacity-100'} transition-opacity`} />
-                          {tag}
-                        </span>
-                      </button>
-                    ))}
+                )}
+                      </div>
+                    </CustomScrollbar>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Mobile: Separate Collapsible Filters Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isFiltersOpen ? 'max-h-[600px] opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                
+                {/* Search and Filters Section */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+            </div>
+
+          {/* Search Bar */}
+          <div className="mb-3">
+            <Search
+                      placeholder="Search blogs..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="w-full"
+              showClearButton={true}
+            />
+          </div>
+          
+                  {/* Category Filter */}
+                  <div className="mb-3">
+              <SearchableSelect 
+                value={selectedCategory}
+                onChange={handleCategoryFilter}
+                      placeholder="All Categories"
+                      label="Category"
+                options={[
+                  { value: '', label: 'All Categories' },
+                  ...categories.map(category => ({ value: category, label: category }))
+                ]}
+              />
+            </div>
+
+                  {/* Tag Filter */}
+                  <div className="mb-3">
+              <SearchableSelect 
+                value={selectedTag}
+                onChange={handleTagFilter}
+                      placeholder="All Tags"
+                      label="Tag"
+                options={[
+                  { value: '', label: 'All Tags' },
+                  ...tags.map(tag => ({ value: tag, label: `#${tag}` }))
+                ]}
+                disabled={tags.length === 0}
+              />
+            </div>
+            
+                  {/* Sort by Popular Checkbox */}
+                  <div className="mb-3">
+                    <CustomCheckbox
+                      id="sort-by-popular-mobile"
+                      label="Most Popular Posts"
+                      checked={sortByPopular}
+                      onChange={setSortByPopular}
+                    />
                   </div>
-                </CustomScrollbar>
+            
+                  {/* Reset Button */}
+              <CustomButton 
+                variant="rippleRedToDarkRed" 
+                onClick={resetFilters}
+                disabled={!searchTerm && !selectedCategory && !selectedTag}
+                    className="w-full"
+                icon={FaFilter}
+              >
+                    Clear Filters
+              </CustomButton>
+          
+          {/* Results count */}
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
+            Showing page {page} of {totalPages} ({totalBlogs} blogs total)
+          </div>
+        </div>
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile: Separate Collapsible Recent Posts & Tags Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isRecentOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+
+                        {/* Recent Posts Section */}
+                        {recentBlogs.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Posts</h3>
+                            </div>
+                            <div className="space-y-3">
+                              {recentBlogs.map((blog) => (
+                                <div
+                                  key={blog._id}
+                                  onClick={() => navigate(`/blog/${blog.slug}`)}
+                                  className="flex gap-3 group cursor-pointer"
+                                >
+                                  {blog.mainImage && (
+                                    <img
+                                      src={blog.mainImage.url}
+                                      alt={blog.title}
+                                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0 flex flex-col">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                                      {blog.title}
+                                    </h4>
+                                    {blog.category && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                        {blog.category}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                                      <FaCalendarAlt className="w-3 h-3" />
+                                      <span>{formatDate(blog.publishedAt)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Divider */}
+                        {tags.length > 0 && recentBlogs.length > 0 && (
+                          <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                        )}
+
+                        {/* Tags Cloud Section */}
+                        {tags.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <FaTags className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Popular Tags</h3>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {tags.slice(0, 6).map((tag) => (
+                                <button
+                                  key={tag}
+                                  onClick={() => handleTagFilter({ target: { value: tag } })}
+                                  className={`group relative px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-300 hover:scale-105 ${
+                                    selectedTag === tag
+                                      ? 'bg-gradient-to-r from-blue-600 to-blue-500 dark:from-yellow-600 dark:to-orange-500 text-white shadow-md shadow-blue-500/30 dark:shadow-yellow-500/30 ring-1 ring-blue-400 dark:ring-yellow-400'
+                                      : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-600 text-gray-700 dark:text-gray-200 hover:from-blue-50 hover:to-blue-100 dark:hover:from-slate-600 dark:hover:to-slate-500 shadow-sm hover:shadow-md border border-gray-300 dark:border-slate-600'
+                                  }`}
+                                >
+                                  <span className="relative z-10 flex items-center gap-0.5">
+                                    <FaTags className={`w-2 h-2 ${selectedTag === tag ? 'opacity-80' : 'opacity-60 group-hover:opacity-100'} transition-opacity`} />
+                                    {tag}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CustomScrollbar>
+                  </div>
                 </div>
               </div>
             </div>
@@ -742,7 +975,7 @@ export default function BlogListPage() {
             )}
 
             {/* Blog Grid */}
-            {paginatedBlogs.length === 0 ? (
+            {displayedBlogs.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 rounded-xl p-12 shadow-md border border-gray-200 dark:border-gray-700 text-center">
                 <FaSearch className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -771,7 +1004,7 @@ export default function BlogListPage() {
                     ? 'grid-cols-2'
                     : 'grid-cols-3'
                 }`}>
-                  {paginatedBlogs.map((blog) => (
+                  {displayedBlogs.map((blog) => (
                     <PublicBlogCard key={blog._id} blog={blog} />
                   ))}
                 </div>

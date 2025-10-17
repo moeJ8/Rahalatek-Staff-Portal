@@ -7,43 +7,72 @@ const {
     allToursCache
 } = require('../utils/redis');
 
-// Get all tours
+// Get all tours (with optional pagination and search)
 exports.getAllTours = async (req, res) => {
   try {
-    const { country, city } = req.query;
-    
-    // Only cache when no filters (full list)
-    if (!country && !city) {
-      // Check Redis cache first
-      const cachedTours = await allToursCache.get();
-      if (cachedTours) {
-        console.log('✅ Serving all tours from Redis cache');
-        return res.status(200).json(cachedTours);
-      }
-    }
+    const { country, city, search, tourType, page, limit } = req.query;
     
     let query = {};
+    if (country) query.country = country;
+    if (city) query.city = city;
+    if (tourType) query.tourType = tourType;
     
-    // Filter by country if provided
-    if (country) {
-      query.country = country;
+    // Search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { city: searchRegex },
+        { country: searchRegex },
+        { description: searchRegex },
+        { highlights: searchRegex }
+      ];
     }
     
-    // Filter by city if provided
-    if (city) {
-      query.city = city;
+    // If NO pagination, return all tours (backward compatible)
+    if (!page && !limit) {
+      if (!country && !city && !search && !tourType) {
+        const cachedTours = await allToursCache.get();
+        if (cachedTours) {
+          console.log('✅ Serving all tours from Redis cache');
+          return res.status(200).json(cachedTours);
+        }
+      }
+      
+      console.log('🗺️ Fetching all tours from database...');
+      const tours = await Tour.find(query).sort({ updatedAt: -1 });
+      
+      if (!country && !city && !search && !tourType) {
+        await allToursCache.set(tours);
+      }
+      
+      return res.status(200).json(tours);
     }
     
-    console.log('🗺️ Fetching tours from database...');
-    // Sort by updatedAt in descending order (newest first)
-    const tours = await Tour.find(query).sort({ updatedAt: -1 });
+    // PAGINATION MODE
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 9;
+    const skip = (pageNum - 1) * limitNum;
     
-    // Cache the result only if no filters (full list)
-    if (!country && !city) {
-      await allToursCache.set(tours);
-    }
+    const [tours, totalTours] = await Promise.all([
+      Tour.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum),
+      Tour.countDocuments(query)
+    ]);
     
-    res.status(200).json(tours);
+    res.status(200).json({
+      success: true,
+      data: {
+        tours,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalTours / limitNum),
+          totalTours,
+          toursPerPage: limitNum,
+          hasNextPage: pageNum < Math.ceil(totalTours / limitNum),
+          hasPrevPage: pageNum > 1
+        }
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

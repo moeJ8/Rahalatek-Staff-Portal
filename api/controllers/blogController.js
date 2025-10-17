@@ -1,81 +1,155 @@
 const Blog = require('../models/Blog');
-const { invalidateDashboardCache } = require('../utils/redis');
+const { invalidateDashboardCache, allBlogsCache } = require('../utils/redis');
 
 // Get all blogs with pagination and filters (Admin/Content Manager)
 exports.getAllBlogs = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, status, category, author, search } = req.query;
-        
-        const query = {};
-        
-        if (status) query.status = status;
-        if (category) query.category = category;
-        if (author) query.author = author;
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { excerpt: { $regex: search, $options: 'i' } },
-                { tags: { $regex: search, $options: 'i' } }
-            ];
-        }
-        
-        const options = {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            sort: { createdAt: -1 },
-            populate: { path: 'author', select: 'username email' }
-        };
-        
-        const blogs = await Blog.paginate(query, options);
-        
-        res.status(200).json({
-            success: true,
-            data: blogs
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch blogs',
-            error: error.message
-        });
+  try {
+    const { status, category, author, featured, search, page, limit } = req.query;
+    
+    let query = {};
+    if (status) query.status = status;
+    if (category) query.category = category;
+    if (author) query.author = author;
+    if (featured) query.isFeatured = featured === 'true';
+    
+    // Search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { excerpt: searchRegex },
+        { tags: searchRegex }
+      ];
     }
+    
+    // If NO pagination, return all blogs (backward compatible)
+    if (!page && !limit) {
+      if (!status && !category && !author && !featured && !search) {
+        const cachedBlogs = await allBlogsCache.get();
+        if (cachedBlogs) {
+          console.log('✅ Serving all blogs from Redis cache');
+          return res.status(200).json(cachedBlogs);
+        }
+      }
+      
+      console.log('📝 Fetching all blogs from database...');
+      const blogs = await Blog.find(query).sort({ createdAt: -1 })
+        .populate('author', 'username email');
+      
+      if (!status && !category && !author && !featured && !search) {
+        await allBlogsCache.set(blogs);
+      }
+      
+      return res.status(200).json(blogs);
+    }
+    
+    // PAGINATION MODE
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 9;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Handle sorting
+    let sortOptions = { createdAt: -1 }; // Default sort
+    const sortBy = req.query.sortBy;
+    if (sortBy === 'popular') {
+      sortOptions = { views: -1, createdAt: -1 };
+    }
+    
+    const [blogs, totalBlogs] = await Promise.all([
+      Blog.find(query).sort(sortOptions).skip(skip).limit(limitNum)
+        .populate('author', 'username email'),
+      Blog.countDocuments(query)
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        blogs,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalBlogs / limitNum),
+          totalBlogs,
+          blogsPerPage: limitNum,
+          hasNextPage: pageNum < Math.ceil(totalBlogs / limitNum),
+          hasPrevPage: pageNum > 1
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // Get published blogs (Public)
 exports.getPublishedBlogs = async (req, res) => {
-    try {
-        const { page = 1, limit = 10, category, tag, search } = req.query;
-        
-        const filters = {};
-        
-        if (category) filters.category = category;
-        if (tag) filters.tags = tag;
-        if (search) {
-            filters.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { excerpt: { $regex: search, $options: 'i' } },
-                { tags: { $regex: search, $options: 'i' } }
-            ];
-        }
-        
-        const options = {
-            page: parseInt(page),
-            limit: parseInt(limit)
-        };
-        
-        const blogs = await Blog.getPublishedBlogs(filters, options);
-        
-        res.status(200).json({
-            success: true,
-            data: blogs
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch published blogs',
-            error: error.message
-        });
+  try {
+    const { category, tag, search, page, limit } = req.query;
+    
+    let query = { status: 'published' };
+    if (category) query.category = category;
+    if (tag) query.tags = tag;
+    
+    // Search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { title: searchRegex },
+        { excerpt: searchRegex },
+        { tags: searchRegex }
+      ];
     }
+    
+    // If NO pagination, return all published blogs (backward compatible)
+    if (!page && !limit) {
+      console.log('📝 Fetching all published blogs from database...');
+      const blogs = await Blog.find(query).sort({ publishedAt: -1, createdAt: -1 });
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          docs: blogs,
+          totalDocs: blogs.length,
+          totalPages: 1,
+          page: 1,
+          limit: blogs.length
+        }
+      });
+    }
+    
+    // PAGINATION MODE
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 9;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Handle sorting
+    let sortOptions = { publishedAt: -1, createdAt: -1 }; // Default sort
+    const sortBy = req.query.sortBy;
+    if (sortBy === 'popular') {
+      sortOptions = { views: -1, publishedAt: -1 };
+    } else if (sortBy === 'recent') {
+      sortOptions = { publishedAt: -1, createdAt: -1 };
+    }
+    
+    const [blogs, totalBlogs] = await Promise.all([
+      Blog.find(query).sort(sortOptions).skip(skip).limit(limitNum),
+      Blog.countDocuments(query)
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        docs: blogs,
+        totalDocs: totalBlogs,
+        totalPages: Math.ceil(totalBlogs / limitNum),
+        page: pageNum,
+        limit: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalBlogs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // Get blog by slug (Public - does NOT increment views)

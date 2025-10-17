@@ -7,45 +7,74 @@ const {
     allHotelsCache
 } = require('../utils/redis');
 
+// Get all hotels (with optional pagination and search)
 exports.getAllHotels = async (req, res) => {
-    try {
-        const { country, city } = req.query;
-        
-        // Only cache when no filters (full list)
-        if (!country && !city) {
-            // Check Redis cache first
-            const cachedHotels = await allHotelsCache.get();
-            if (cachedHotels) {
-                console.log('✅ Serving all hotels from Redis cache');
-                return res.json(cachedHotels);
-            }
-        }
-        
-        let query = {};
-        
-        // Filter by country if provided
-        if (country) {
-            query.country = country;
-        }
-        
-        // Filter by city if provided
-        if (city) {
-            query.city = city;
-        }
-        
-        console.log('🏨 Fetching hotels from database...');
-        // Sort by updatedAt in descending order (newest first)
-        const hotels = await Hotel.find(query).sort({ updatedAt: -1 });
-        
-        // Cache the result only if no filters (full list)
-        if (!country && !city) {
-            await allHotelsCache.set(hotels);
-        }
-        
-        res.json(hotels);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+  try {
+    const { country, city, search, stars, page, limit } = req.query;
+    
+    let query = {};
+    if (country) query.country = country;
+    if (city) query.city = city;
+    if (stars) query.stars = parseInt(stars);
+    
+    // Search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { city: searchRegex },
+        { country: searchRegex },
+        { description: searchRegex }
+      ];
     }
+    
+    // If NO pagination, return all hotels (backward compatible)
+    if (!page && !limit) {
+      if (!country && !city && !search && !stars) {
+        const cachedHotels = await allHotelsCache.get();
+        if (cachedHotels) {
+          console.log('✅ Serving all hotels from Redis cache');
+          return res.status(200).json(cachedHotels);
+        }
+      }
+      
+      console.log('🏨 Fetching all hotels from database...');
+      const hotels = await Hotel.find(query).sort({ updatedAt: -1 });
+      
+      if (!country && !city && !search && !stars) {
+        await allHotelsCache.set(hotels);
+      }
+      
+      return res.status(200).json(hotels);
+    }
+    
+    // PAGINATION MODE
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 9;
+    const skip = (pageNum - 1) * limitNum;
+    
+    const [hotels, totalHotels] = await Promise.all([
+      Hotel.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum),
+      Hotel.countDocuments(query)
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        hotels,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalHotels / limitNum),
+          totalHotels,
+          hotelsPerPage: limitNum,
+          hasNextPage: pageNum < Math.ceil(totalHotels / limitNum),
+          hasPrevPage: pageNum > 1
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.addHotel = async (req, res) => {

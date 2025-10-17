@@ -5,7 +5,8 @@ const {
     invalidateDashboardCache, 
     invalidatePublicCache,
     featuredPackagesCache,
-    packageDetailsCache 
+    packageDetailsCache,
+    allPackagesCache
 } = require('../utils/redis');
 
 // Create a new package
@@ -89,94 +90,96 @@ exports.createPackage = async (req, res) => {
     }
 };
 
-// Get all packages
+// Get all packages (with optional pagination and search)
 exports.getAllPackages = async (req, res) => {
-    try {
-        const {
-            page = 1,
-            limit = 10,
-            country,
-            city,
-            isActive,
-            targetAudience,
-            minDuration,
-            maxDuration,
-            search
-        } = req.query;
-
-        // Build query
-        let query = {};
-
-        // Only filter by isActive if explicitly provided
-        if (isActive !== undefined && isActive !== '') {
-            query.isActive = isActive === 'true';
-        }
-
-        if (country) {
-            query.countries = { $in: [country] };
-        }
-
-        if (city) {
-            query.cities = { $in: [city] };
-        }
-
-        if (targetAudience) {
-            if (Array.isArray(targetAudience)) {
-                query.targetAudience = { $in: targetAudience };
-            } else {
-                query.targetAudience = targetAudience;
-            }
-        }
-
-        if (minDuration || maxDuration) {
-            query.duration = {};
-            if (minDuration) query.duration.$gte = parseInt(minDuration);
-            if (maxDuration) query.duration.$lte = parseInt(maxDuration);
-        }
-
-        if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { cities: { $in: [new RegExp(search, 'i')] } },
-                { countries: { $in: [new RegExp(search, 'i')] } }
-            ];
-        }
-
-        const options = {
-            page: parseInt(page),
-            limit: parseInt(limit),
-            sort: { createdAt: -1 },
-            populate: [
-                { path: 'hotels.hotelId', select: 'name city stars' },
-                { path: 'tours.tourId', select: 'name city tourType price totalPrice' },
-                { path: 'createdBy', select: 'username' },
-                { path: 'updatedBy', select: 'username' }
-            ]
-        };
-
-        const packages = await Package.paginate(query, options);
-
-        res.status(200).json({
-            success: true,
-            data: packages.docs,
-            pagination: {
-                page: packages.page,
-                limit: packages.limit,
-                total: packages.totalDocs,
-                pages: packages.totalPages,
-                hasNext: packages.hasNextPage,
-                hasPrev: packages.hasPrevPage
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching packages:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch packages',
-            error: error.message
-        });
+  try {
+    const { country, city, search, targetAudience, duration, isActive, createdBy, page, limit } = req.query;
+    
+    let query = {};
+    if (country) query.countries = { $in: [country] };
+    if (city) query.cities = { $in: [city] };
+    if (targetAudience) query.targetAudience = { $in: [targetAudience] };
+    if (isActive !== undefined && isActive !== '') query.isActive = isActive === 'true';
+    if (createdBy) query.createdBy = createdBy;
+    
+    // Duration filter
+    if (duration) {
+      const durationNum = parseInt(duration);
+      if (durationNum === 1) {
+        query.duration = { $lte: 3 };
+      } else if (durationNum === 2) {
+        query.duration = { $gt: 3, $lte: 7 };
+      } else if (durationNum === 3) {
+        query.duration = { $gt: 7 };
+      }
     }
+    
+    // Search functionality
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      query.$or = [
+        { name: searchRegex },
+        { description: searchRegex },
+        { cities: { $in: [searchRegex] } },
+        { countries: { $in: [searchRegex] } }
+      ];
+    }
+    
+    // If NO pagination, return all packages (backward compatible)
+    if (!page && !limit) {
+      if (!country && !city && !search && !targetAudience && !duration && !isActive && !createdBy) {
+        const cachedPackages = await allPackagesCache.get();
+        if (cachedPackages) {
+          console.log('✅ Serving all packages from Redis cache');
+          return res.status(200).json(cachedPackages);
+        }
+      }
+      
+      console.log('📦 Fetching all packages from database...');
+      const packages = await Package.find(query).sort({ updatedAt: -1 })
+        .populate('hotels.hotelId', 'name city stars')
+        .populate('tours.tourId', 'name city tourType price totalPrice')
+        .populate('createdBy', 'username')
+        .populate('updatedBy', 'username');
+      
+      if (!country && !city && !search && !targetAudience && !duration && !isActive && !createdBy) {
+        await allPackagesCache.set(packages);
+      }
+      
+      return res.status(200).json(packages);
+    }
+    
+    // PAGINATION MODE
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 9;
+    const skip = (pageNum - 1) * limitNum;
+    
+    const [packages, totalPackages] = await Promise.all([
+      Package.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum)
+        .populate('hotels.hotelId', 'name city stars')
+        .populate('tours.tourId', 'name city tourType price totalPrice')
+        .populate('createdBy', 'username')
+        .populate('updatedBy', 'username'),
+      Package.countDocuments(query)
+    ]);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        packages,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalPackages / limitNum),
+          totalPackages,
+          packagesPerPage: limitNum,
+          hasNextPage: pageNum < Math.ceil(totalPackages / limitNum),
+          hasPrevPage: pageNum > 1
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // Get package by ID
@@ -525,6 +528,32 @@ exports.getFeaturedPackages = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: 'Failed to fetch featured packages',
+            error: error.message
+        });
+    }
+};
+
+// Public route - get recent packages (sorted by creation date)
+exports.getRecentPackages = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 4; // Default to 4 for sidebar
+        
+        console.log('📦 Fetching recent packages...');
+        const packages = await Package.find({ isActive: true })
+            .sort({ createdAt: -1 }) // Sort by most recent creation date
+            .limit(limit)
+            .populate('hotels.hotelId', 'name stars images')
+            .populate('tours.tourId', 'name city country tourType duration price totalPrice images');
+        
+        res.status(200).json({
+            success: true,
+            data: packages
+        });
+    } catch (error) {
+        console.error('Error fetching recent packages:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch recent packages',
             error: error.message
         });
     }

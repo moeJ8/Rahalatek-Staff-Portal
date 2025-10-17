@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem, FaAngleLeft, FaAngleRight, FaEye, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
-import Select from '../../components/Select';
 import CustomButton from '../../components/CustomButton';
+import CustomScrollbar from '../../components/CustomScrollbar';
+import SearchableSelect from '../../components/SearchableSelect';
 import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const GuestToursPage = () => {
   const [tours, setTours] = useState([]);
-  const [filteredTours, setFilteredTours] = useState([]);
+  const [featuredTours, setFeaturedTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [screenType, setScreenType] = useState('desktop');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [durationFilter, setDurationFilter] = useState('');
@@ -25,10 +27,14 @@ const GuestToursPage = () => {
   const [availableCities, setAvailableCities] = useState([]);
   const [expandedHighlights, setExpandedHighlights] = useState({});
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTours, setTotalTours] = useState(0);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isFeaturedOpen, setIsFeaturedOpen] = useState(false);
   const navigate = useNavigate();
 
   // Check screen size for responsive behavior
-  const updateScreenSize = () => {
+  const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
     
     if (width < 768) {
@@ -38,10 +44,10 @@ const GuestToursPage = () => {
     } else {
       setScreenType('desktop');
     }
-  };
+  }, []);
 
   // Items per page based on screen type
-  const getItemsPerPage = (type) => {
+  const getItemsPerPage = useCallback((type) => {
     switch(type) {
       case 'mobile':
         return 3;
@@ -51,25 +57,27 @@ const GuestToursPage = () => {
       default:
         return 9;
     }
-  };
-
-  // Pagination logic
-  const itemsPerPage = getItemsPerPage(screenType);
-  const totalPages = Math.ceil(filteredTours.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedTours = filteredTours.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
-    return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
+
+  // Debounce search term (300ms delay for faster response)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Reset to page 1 when screen type or filters change
   useEffect(() => {
     setPage(1);
-  }, [screenType, searchTerm, countryFilter, cityFilter, durationFilter, tourTypeFilter]);
+  }, [screenType, debouncedSearchTerm, countryFilter, cityFilter, durationFilter, tourTypeFilter]);
+
+  // Screen size effect
+  useEffect(() => {
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, [updateScreenSize]);
 
   // Set page title and meta tags (dynamically based on filters)
   useEffect(() => {
@@ -138,54 +146,84 @@ const GuestToursPage = () => {
     }
   }, [cityFilter, countryFilter]);
 
-  // Fetch tours
-  useEffect(() => {
-    const fetchTours = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/tours');
-        const toursData = response.data;
-        
-        // Sort tours by updatedAt timestamp (newest first)
-        const sortedTours = toursData.sort((a, b) => {
-          return new Date(b.updatedAt) - new Date(a.updatedAt);
-        });
-        
-        setTours(sortedTours);
-        setFilteredTours(sortedTours);
-        
-        // Extract unique countries and cities for filters
-        const countries = [...new Set(sortedTours.map(tour => tour.country).filter(Boolean))].sort();
-        const cities = [...new Set(sortedTours.map(tour => tour.city))].sort();
-        setAvailableCountries(countries);
-        setAvailableCities(cities);
-        
-      } catch (error) {
-        console.error('Error fetching tours:', error);
-        setError('Failed to load tours. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTours();
+  // Fetch filter options (only once on mount)
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/tours');
+      const allTours = response.data;
+      
+      // Extract unique countries and cities for filters
+      const countries = [...new Set(allTours.map(tour => tour.country).filter(Boolean))].sort();
+      const cities = [...new Set(allTours.map(tour => tour.city))].sort();
+      setAvailableCountries(countries);
+      setAvailableCities(cities);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
   }, []);
 
-  // Filter tours based on search term and filters
+  // Fetch featured tours (most viewed)
+  const fetchFeaturedTours = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/tours/featured?limit=4');
+      setFeaturedTours(response.data || []);
+    } catch (error) {
+      console.error('Error fetching featured tours:', error);
+    }
+  }, []);
+
+  // Fetch tours with server-side pagination and filtering
+  const fetchTours = useCallback(async () => {
+    try {
+      // Only show loading on initial page load
+      if (page === 1 && !countryFilter && !cityFilter && !debouncedSearchTerm && !tourTypeFilter && tours.length === 0) {
+        setLoading(true);
+      }
+      
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: getItemsPerPage(screenType).toString()
+      });
+      
+      if (countryFilter) params.append('country', countryFilter);
+      if (cityFilter) params.append('city', cityFilter);
+      if (tourTypeFilter) params.append('tourType', tourTypeFilter);
+      if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+      
+      const response = await axios.get(`/api/tours?${params.toString()}`);
+      
+      if (response.data.success) {
+        // Server-side paginated response
+        setTours(response.data.data.tours);
+        setTotalPages(response.data.data.pagination.totalPages);
+        setTotalTours(response.data.data.pagination.totalTours);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching tours:', error);
+      setError('Failed to load tours. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, screenType, countryFilter, cityFilter, tourTypeFilter, debouncedSearchTerm, getItemsPerPage, tours.length]);
+
+  // Fetch filter options and featured tours on mount
   useEffect(() => {
+    fetchFilterOptions();
+    fetchFeaturedTours();
+  }, [fetchFilterOptions, fetchFeaturedTours]);
+
+  // Fetch tours when dependencies change
+  useEffect(() => {
+    fetchTours();
+  }, [fetchTours]);
+
+  // Client-side filtering for duration only (tour type now server-side)
+  const getFilteredTours = useCallback(() => {
     let filtered = tours;
     
-    // Apply country filter
-    if (countryFilter) {
-      filtered = filtered.filter(tour => tour.country === countryFilter);
-    }
-    
-    // Apply city filter
-    if (cityFilter) {
-      filtered = filtered.filter(tour => tour.city === cityFilter);
-    }
-    
-    // Apply duration filter
+    // Apply duration filter (client-side)
     if (durationFilter) {
       const duration = parseInt(durationFilter);
       if (duration === 1) {
@@ -197,59 +235,46 @@ const GuestToursPage = () => {
       }
     }
     
-    // Apply tour type filter
-    if (tourTypeFilter) {
-      filtered = filtered.filter(tour => tour.tourType === tourTypeFilter);
-    }
-    
-    // Apply search term
-    if (searchTerm.trim()) {
-      const searchTermLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        tour =>
-          tour.name.toLowerCase().includes(searchTermLower) ||
-          tour.city.toLowerCase().includes(searchTermLower) ||
-          (tour.country && tour.country.toLowerCase().includes(searchTermLower)) ||
-          (tour.description && tour.description.toLowerCase().includes(searchTermLower)) ||
-          (tour.highlights && tour.highlights.some(highlight => 
-            highlight.toLowerCase().includes(searchTermLower)
-          ))
-      );
-    }
-    
-    setFilteredTours(filtered);
-  }, [searchTerm, countryFilter, cityFilter, durationFilter, tourTypeFilter, tours]);
+    return filtered;
+  }, [tours, durationFilter]);
 
-  const handleSearch = (e) => {
+  const displayedTours = getFilteredTours();
+
+  const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
-  const handleCountryFilter = (value) => {
+  const handleCountryFilter = useCallback((e) => {
+    const value = e.target.value;
     setCountryFilter(value);
     setCityFilter(''); // Reset city filter when country changes
-  };
+  }, []);
 
-  const handleCityFilter = (value) => {
+  const handleCityFilter = useCallback((e) => {
+    const value = e.target.value;
     setCityFilter(value);
-  };
+  }, []);
 
-  const handleDurationFilter = (value) => {
+  const handleDurationFilter = useCallback((e) => {
+    const value = e.target.value;
     setDurationFilter(value);
-  };
+  }, []);
 
-  const handleTourTypeFilter = (value) => {
+  const handleTourTypeFilter = useCallback((e) => {
+    const value = e.target.value;
     setTourTypeFilter(value);
-  };
+  }, []);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setCountryFilter('');
     setCityFilter('');
     setDurationFilter('');
     setTourTypeFilter('');
-  };
+  }, []);
 
-  const handleTourClick = async (tour) => {
+  const handleTourClick = useCallback(async (tour) => {
     try {
       // Increment view count
       await axios.post(`/api/tours/public/${tour.slug}/view`);
@@ -259,9 +284,9 @@ const GuestToursPage = () => {
     
     // Navigate to tour page
     navigate(`/tours/${tour.slug}`);
-  };
+  }, [navigate]);
 
-  const getCountryCode = (country) => {
+  const getCountryCode = useCallback((country) => {
     const codes = {
       'Turkey': 'TR',
       'Malaysia': 'MY',
@@ -275,14 +300,14 @@ const GuestToursPage = () => {
       'Albania': 'AL'
     };
     return codes[country] || null;
-  };
+  }, []);
 
-  const toggleHighlights = (tourId) => {
+  const toggleHighlights = useCallback((tourId) => {
     setExpandedHighlights(prev => ({
       ...prev,
       [tourId]: !prev[tourId]
     }));
-  };
+  }, []);
 
   const TourCard = ({ tour }) => {
     // Get primary image or first image
@@ -433,7 +458,7 @@ const GuestToursPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -444,187 +469,485 @@ const GuestToursPage = () => {
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
-          {/* Search Bar */}
-          <div className="mb-4">
-            <Search
-              placeholder="Search by name, city, description, or highlights..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full"
-              showClearButton={true}
-            />
-          </div>
-          
-          {/* Filter Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
-            <div className="w-full">
-              <Select 
-                value={countryFilter}
-                onChange={handleCountryFilter}
-                placeholder="Filter by Country"
-                options={[
-                  { value: '', label: 'Filter by Country' },
-                  ...availableCountries.map(country => ({ value: country, label: country }))
-                ]}
-                className="w-full"
-              />
+        {/* Mobile Filter Toggle Buttons */}
+        <div className="lg:hidden mb-4 space-y-3">
+          {/* Filters Toggle */}
+          <button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Filters
+              </span>
+              {(searchTerm || countryFilter || cityFilter || durationFilter || tourTypeFilter) && (
+                <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
+                  Active
+                </span>
+              )}
             </div>
-
-            <div className="w-full">
-              <Select 
-                value={cityFilter}
-                onChange={handleCityFilter}
-                placeholder="Filter by City"
-                options={[
-                  { value: '', label: 'Filter by City' },
-                  ...availableCities
-                    .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
-                    .map(city => ({ value: city, label: city }))
-                ]}
-                className="w-full"
-                disabled={countryFilter && !tours.some(tour => tour.country === countryFilter)}
-              />
-            </div>
-            
-            <div className="w-full">
-              <Select 
-                value={tourTypeFilter}
-                onChange={handleTourTypeFilter}
-                placeholder="Filter by Type"
-                options={[
-                  { value: '', label: 'Filter by Type' },
-                  { value: 'Group', label: 'Group Tours' },
-                  { value: 'VIP', label: 'VIP Tours' }
-                ]}
-                className="w-full"
-              />
-            </div>
-            
-            <div className="w-full">
-              <Select 
-                value={durationFilter}
-                onChange={handleDurationFilter}
-                placeholder="Filter by Duration"
-                options={[
-                  { value: '', label: 'Filter by Duration' },
-                  { value: '1', label: 'Short (up to 3 hours)' },
-                  { value: '2', label: 'Medium (3-6 hours)' },
-                  { value: '3', label: 'Long (6+ hours)' }
-                ]}
-                className="w-full"
-              />
-            </div>
-            
-            <div className="w-full">
-              <CustomButton 
-                variant="rippleRedToDarkRed" 
-                onClick={resetFilters}
-                disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !tourTypeFilter}
-                className="w-full h-[44px] my-0.5"
-                icon={FaFilter}
-              >
-                Clear Filters
-              </CustomButton>
-            </div>
-          </div>
-          
-          {/* Results count */}
-          <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-            {(searchTerm || countryFilter || cityFilter || durationFilter) ? (
-              <>Showing {filteredTours.length} of {tours.length} tours</>
+            {isFiltersOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             ) : (
-              <>Showing all {tours.length} tours</>
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+
+          {/* Featured Tours Toggle */}
+          <button
+            onClick={() => setIsFeaturedOpen(!isFeaturedOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Featured Tours
+              </span>
+            </div>
+            {isFeaturedOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Grid Layout: Sidebar + Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Sidebar - Filters */}
+          <div className="lg:col-span-1 order-1">
+            <div className="lg:sticky lg:top-24">
+              {/* Desktop: Single Card with All Content */}
+              <div className="hidden lg:block">
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                      {/* Search and Filters Section */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="mb-3">
+                          <Search
+                            placeholder="Search tours..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="w-full"
+                            showClearButton={true}
+                          />
+                        </div>
+
+                        {/* Country Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={countryFilter}
+                            onChange={handleCountryFilter}
+                            placeholder="All Countries"
+                            label="Country"
+                            options={[
+                              { value: '', label: 'All Countries' },
+                              ...availableCountries.map(country => ({ value: country, label: country }))
+                            ]}
+                          />
+                        </div>
+
+                        {/* City Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={cityFilter}
+                            onChange={handleCityFilter}
+                            placeholder="All Cities"
+                            label="City"
+                            options={[
+                              { value: '', label: 'All Cities' },
+                              ...availableCities
+                                .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
+                                .map(city => ({ value: city, label: city }))
+                            ]}
+                            disabled={countryFilter && !tours.some(tour => tour.country === countryFilter)}
+                          />
+                        </div>
+
+                        {/* Tour Type Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={tourTypeFilter}
+                            onChange={handleTourTypeFilter}
+                            placeholder="All Types"
+                            label="Tour Type"
+                            options={[
+                              { value: '', label: 'All Types' },
+                              { value: 'Group', label: 'Group Tours' },
+                              { value: 'VIP', label: 'VIP Tours' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Duration Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={durationFilter}
+                            onChange={handleDurationFilter}
+                            placeholder="All Durations"
+                            label="Duration"
+                            options={[
+                              { value: '', label: 'All Durations' },
+                              { value: '1', label: 'Short (up to 3 hours)' },
+                              { value: '2', label: 'Medium (3-6 hours)' },
+                              { value: '3', label: 'Long (6+ hours)' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Clear Filters Button */}
+                        <CustomButton 
+                          variant="rippleRedToDarkRed" 
+                          onClick={resetFilters}
+                          disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !tourTypeFilter}
+                          className="w-full"
+                          icon={FaFilter}
+                        >
+                          Clear Filters
+                        </CustomButton>
+
+                        {/* Results Count */}
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
+                          Showing page {page} of {totalPages} ({totalTours} tours total)
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      {featuredTours.length > 0 && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                      )}
+
+                      {/* Featured Tours Section */}
+                      {featuredTours.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Featured Tours</h3>
+                          </div>
+                          <div className="space-y-3">
+                            {featuredTours.map((tour) => {
+                              const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
+                              const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
+                              
+                              return (
+                                <div
+                                  key={tour._id}
+                                  onClick={() => handleTourClick(tour)}
+                                  className="flex gap-3 group cursor-pointer"
+                                >
+                                  <img
+                                    src={imageUrl}
+                                    alt={tour.name}
+                                    className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                                  />
+                                  <div className="flex-1 min-w-0 flex flex-col">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                                      {tour.name}
+                                    </h4>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                      {tour.city}, {tour.country}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                                      <FaClock className="w-3 h-3" />
+                                      <span>{tour.duration}h</span>
+                                      <span className="text-gray-300 dark:text-gray-600">•</span>
+                                      <FaEye className="w-3 h-3" />
+                                      <span>{tour.views || 0} views</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile: Separate Collapsible Filters Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isFiltersOpen ? 'max-h-[600px] opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                      {/* Search and Filters Section */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="mb-3">
+                          <Search
+                            placeholder="Search tours..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="w-full"
+                            showClearButton={true}
+                          />
+                        </div>
+
+                        {/* Country Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={countryFilter}
+                            onChange={handleCountryFilter}
+                            placeholder="All Countries"
+                            label="Country"
+                            options={[
+                              { value: '', label: 'All Countries' },
+                              ...availableCountries.map(country => ({ value: country, label: country }))
+                            ]}
+                          />
+                        </div>
+
+                        {/* City Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={cityFilter}
+                            onChange={handleCityFilter}
+                            placeholder="All Cities"
+                            label="City"
+                            options={[
+                              { value: '', label: 'All Cities' },
+                              ...availableCities
+                                .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
+                                .map(city => ({ value: city, label: city }))
+                            ]}
+                            disabled={countryFilter && !tours.some(tour => tour.country === countryFilter)}
+                          />
+                        </div>
+
+                        {/* Tour Type Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={tourTypeFilter}
+                            onChange={handleTourTypeFilter}
+                            placeholder="All Types"
+                            label="Tour Type"
+                            options={[
+                              { value: '', label: 'All Types' },
+                              { value: 'Group', label: 'Group Tours' },
+                              { value: 'VIP', label: 'VIP Tours' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Duration Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={durationFilter}
+                            onChange={handleDurationFilter}
+                            placeholder="All Durations"
+                            label="Duration"
+                            options={[
+                              { value: '', label: 'All Durations' },
+                              { value: '1', label: 'Short (up to 3 hours)' },
+                              { value: '2', label: 'Medium (3-6 hours)' },
+                              { value: '3', label: 'Long (6+ hours)' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Clear Filters Button */}
+                        <CustomButton 
+                          variant="rippleRedToDarkRed" 
+                          onClick={resetFilters}
+                          disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !tourTypeFilter}
+                          className="w-full"
+                          icon={FaFilter}
+                        >
+                          Clear Filters
+                        </CustomButton>
+
+                        {/* Results Count */}
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
+                          Showing page {page} of {totalPages} ({totalTours} tours total)
+                        </div>
+                      </div>
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile: Separate Collapsible Featured Tours Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isFeaturedOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                        {/* Featured Tours Section */}
+                        {featuredTours.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Featured Tours</h3>
+                            </div>
+                            <div className="space-y-3">
+                              {featuredTours.map((tour) => {
+                                const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
+                                const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
+                                
+                                return (
+                                  <div
+                                    key={tour._id}
+                                    onClick={() => handleTourClick(tour)}
+                                    className="flex gap-3 group cursor-pointer"
+                                  >
+                                    <img
+                                      src={imageUrl}
+                                      alt={tour.name}
+                                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                                    />
+                                    <div className="flex-1 min-w-0 flex flex-col">
+                                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                                        {tour.name}
+                                      </h4>
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                        {tour.city}, {tour.country}
+                                      </p>
+                                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                                        <FaClock className="w-3 h-3" />
+                                        <span>{tour.duration}h</span>
+                                        <span className="text-gray-300 dark:text-gray-600">•</span>
+                                        <FaEye className="w-3 h-3" />
+                                        <span>{tour.views || 0} views</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 order-2">
+            {/* Tours Grid */}
+            {displayedTours.length > 0 ? (
+              <>
+                <div className={`grid gap-4 sm:gap-6 ${
+                  screenType === 'mobile' 
+                    ? 'grid-cols-1' 
+                    : screenType === 'tablet'
+                    ? 'grid-cols-2'
+                    : 'grid-cols-3'
+                }`}>
+                  {displayedTours.map((tour) => (
+                    <TourCard key={tour._id} tour={tour} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+                    {/* Previous Button */}
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                        page === 1
+                          ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                          : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                      }`}
+                      aria-label="Previous page"
+                    >
+                      <FaAngleLeft className="w-4 h-4" />
+                    </button>
+
+                    {/* Page Numbers - Sliding Window */}
+                    {(() => {
+                      const pages = [];
+                      const showPages = 5;
+                      let startPage = Math.max(1, page - Math.floor(showPages / 2));
+                      let endPage = Math.min(totalPages, startPage + showPages - 1);
+                      
+                      if (endPage - startPage < showPages - 1) {
+                        startPage = Math.max(1, endPage - showPages + 1);
+                      }
+
+                      // Generate page number buttons (sliding window - no ellipsis)
+                      for (let i = startPage; i <= endPage; i++) {
+                        pages.push(
+                          <button
+                            key={i}
+                            onClick={() => setPage(i)}
+                            className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                              i === page
+                                ? 'bg-blue-500 dark:bg-yellow-600 text-white dark:text-gray-900 border-blue-500 dark:border-yellow-600 scale-110 shadow-lg'
+                                : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-blue-500 hover:text-white dark:hover:bg-yellow-600 dark:hover:text-gray-900 hover:border-blue-500 dark:hover:border-yellow-600 hover:scale-110 shadow-sm hover:shadow-md'
+                            }`}
+                          >
+                            {i}
+                          </button>
+                        );
+                      }
+
+                      return pages;
+                    })()}
+
+                    {/* Next Button */}
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
+                        page === totalPages
+                          ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                          : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
+                      }`}
+                      aria-label="Next page"
+                    >
+                      <FaAngleRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl shadow-md">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Tours Available</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {searchTerm || countryFilter || cityFilter || durationFilter || tourTypeFilter
+                    ? 'No tours match your current filters. Try adjusting your search criteria.'
+                    : 'Please check back later for our latest tour offerings.'}
+                </p>
+              </div>
             )}
           </div>
         </div>
-
-        {/* Tours Grid */}
-        {paginatedTours.length > 0 ? (
-          <>
-            <div className={`grid gap-4 sm:gap-6 ${
-              screenType === 'mobile' 
-                ? 'grid-cols-1' 
-                : screenType === 'tablet'
-                ? 'grid-cols-2'
-                : 'grid-cols-3'
-            }`}>
-              {paginatedTours.map((tour) => (
-                <TourCard key={tour._id} tour={tour} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
-                {/* Previous Button */}
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
-                    page === 1
-                      ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                      : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
-                  }`}
-                  aria-label="Previous page"
-                >
-                  <FaAngleLeft className="w-4 h-4" />
-                </button>
-
-                {/* Page Numbers - Sliding Window */}
-                {(() => {
-                  const pages = [];
-                  const showPages = 5;
-                  let startPage = Math.max(1, page - Math.floor(showPages / 2));
-                  let endPage = Math.min(totalPages, startPage + showPages - 1);
-                  
-                  if (endPage - startPage < showPages - 1) {
-                    startPage = Math.max(1, endPage - showPages + 1);
-                  }
-
-                  // Generate page number buttons (sliding window - no ellipsis)
-                  for (let i = startPage; i <= endPage; i++) {
-                    pages.push(
-                      <button
-                        key={i}
-                        onClick={() => setPage(i)}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
-                          i === page
-                            ? 'bg-blue-500 dark:bg-yellow-600 text-white dark:text-gray-900 border-blue-500 dark:border-yellow-600 scale-110 shadow-lg'
-                            : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:bg-blue-500 hover:text-white dark:hover:bg-yellow-600 dark:hover:text-gray-900 hover:border-blue-500 dark:hover:border-yellow-600 hover:scale-110 shadow-sm hover:shadow-md'
-                        }`}
-                      >
-                        {i}
-                      </button>
-                    );
-                  }
-
-                  return pages;
-                })()}
-
-                {/* Next Button */}
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full font-semibold transition-all duration-300 ${
-                    page === totalPages
-                      ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
-                      : 'bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 hover:scale-110 shadow-sm hover:shadow-md'
-                  }`}
-                  aria-label="Next page"
-                >
-                  <FaAngleRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Tours Available</h3>
-            <p className="text-gray-600 dark:text-gray-400">Please check back later for our latest tour offerings.</p>
-          </div>
-        )}
       </div>
     </div>
   );

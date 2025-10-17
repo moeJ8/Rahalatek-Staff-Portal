@@ -1,20 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { FaFilter, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaFilter, FaAngleLeft, FaAngleRight, FaGlobe, FaCity, FaClock, FaUsers, FaBox, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
-import Select from '../../components/Select';
 import CustomButton from '../../components/CustomButton';
+import CustomScrollbar from '../../components/CustomScrollbar';
+import SearchableSelect from '../../components/SearchableSelect';
 import PackageCard from '../../components/Visitors/PackageCard';
 import axios from 'axios';
 
 const PublicPackagesPage = () => {
   const [packages, setPackages] = useState([]);
-  const [filteredPackages, setFilteredPackages] = useState([]);
+  const [recentPackages, setRecentPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [screenType, setScreenType] = useState('desktop');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [durationFilter, setDurationFilter] = useState('');
@@ -22,10 +24,14 @@ const PublicPackagesPage = () => {
   const [availableCountries, setAvailableCountries] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPackages, setTotalPackages] = useState(0);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isRecentOpen, setIsRecentOpen] = useState(false);
   const navigate = useNavigate();
 
   // Check screen size for responsive behavior
-  const updateScreenSize = () => {
+  const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
     
     if (width < 768) {
@@ -35,10 +41,10 @@ const PublicPackagesPage = () => {
     } else {
       setScreenType('desktop');
     }
-  };
+  }, []);
 
   // Items per page based on screen type
-  const getItemsPerPage = (type) => {
+  const getItemsPerPage = useCallback((type) => {
     switch(type) {
       case 'mobile':
         return 3;
@@ -48,25 +54,27 @@ const PublicPackagesPage = () => {
       default:
         return 9;
     }
-  };
-
-  // Pagination logic
-  const itemsPerPage = getItemsPerPage(screenType);
-  const totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedPackages = filteredPackages.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
-    return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
+
+  // Debounce search term (300ms delay for faster response)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Reset to page 1 when screen type or filters change
   useEffect(() => {
     setPage(1);
-  }, [screenType, searchTerm, countryFilter, cityFilter, durationFilter, targetAudienceFilter]);
+  }, [screenType, debouncedSearchTerm, countryFilter, cityFilter, durationFilter, targetAudienceFilter]);
+
+  // Screen size effect
+  useEffect(() => {
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, [updateScreenSize]);
 
   // Set page title and meta tags (dynamically based on filters)
   useEffect(() => {
@@ -135,116 +143,167 @@ const PublicPackagesPage = () => {
     }
   }, [cityFilter, countryFilter]);
 
-  // Fetch packages
-  useEffect(() => {
-    const fetchPackages = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/packages/featured?limit=100');
-        if (response.data?.success) {
-          const packagesData = response.data.data || [];
-          
-          // Sort packages by updatedAt timestamp (newest first)
-          const sortedPackages = packagesData.sort((a, b) => {
-            return new Date(b.updatedAt) - new Date(a.updatedAt);
-          });
-          
-          setPackages(sortedPackages);
-          setFilteredPackages(sortedPackages);
-          
-          // Extract unique countries and cities for filters
-          const countries = [...new Set(sortedPackages.flatMap(pkg => pkg.countries || []).filter(Boolean))].sort();
-          const cities = [...new Set(sortedPackages.flatMap(pkg => pkg.cities || []))].sort();
-          setAvailableCountries(countries);
-          setAvailableCities(cities);
-        }
-      } catch (error) {
-        console.error('Error fetching packages:', error);
-        setError('Failed to load packages. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPackages();
+  // Fetch filter options (only once on mount)
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/packages/featured?limit=100');
+      const allPackages = response.data?.data || response.data || [];
+      
+      // Extract unique countries and cities for filters
+      const countries = [...new Set(allPackages.flatMap(pkg => pkg.countries || []).filter(Boolean))].sort();
+      const cities = [...new Set(allPackages.flatMap(pkg => pkg.cities || []))].sort();
+      setAvailableCountries(countries);
+      setAvailableCities(cities);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
   }, []);
 
-  // Filter packages based on search term and filters
-  useEffect(() => {
-    let filtered = packages;
-    
-    // Apply country filter
-    if (countryFilter) {
-      filtered = filtered.filter(pkg => pkg.countries?.includes(countryFilter));
-    }
-    
-    // Apply city filter
-    if (cityFilter) {
-      filtered = filtered.filter(pkg => pkg.cities?.includes(cityFilter));
-    }
-    
-    // Apply duration filter
-    if (durationFilter) {
-      const duration = parseInt(durationFilter);
-      if (duration === 1) {
-        filtered = filtered.filter(pkg => pkg.duration <= 3);
-      } else if (duration === 2) {
-        filtered = filtered.filter(pkg => pkg.duration > 3 && pkg.duration <= 7);
-      } else if (duration === 3) {
-        filtered = filtered.filter(pkg => pkg.duration > 7);
+  // Fetch recent packages
+  const fetchRecentPackages = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/packages/recent?limit=4');
+      if (response.data.success) {
+        setRecentPackages(response.data.data || []);
       }
+    } catch (error) {
+      console.error('Error fetching recent packages:', error);
     }
-    
-    // Apply target audience filter
-    if (targetAudienceFilter) {
-      filtered = filtered.filter(pkg => pkg.targetAudience?.includes(targetAudienceFilter));
-    }
-    
-    // Apply search term
-    if (searchTerm.trim()) {
-      const searchTermLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        pkg =>
-          pkg.name.toLowerCase().includes(searchTermLower) ||
-          (pkg.cities && pkg.cities.some(city => city.toLowerCase().includes(searchTermLower))) ||
-          (pkg.countries && pkg.countries.some(country => country.toLowerCase().includes(searchTermLower))) ||
-          (pkg.description && pkg.description.toLowerCase().includes(searchTermLower))
-      );
-    }
-    
-    setFilteredPackages(filtered);
-  }, [searchTerm, countryFilter, cityFilter, durationFilter, targetAudienceFilter, packages]);
+  }, []);
 
-  const handleSearch = (e) => {
+  // Fetch packages with server-side pagination and filtering
+  const fetchPackages = useCallback(async () => {
+    try {
+      // Only show loading on initial page load
+      if (page === 1 && !countryFilter && !cityFilter && !debouncedSearchTerm && !targetAudienceFilter && !durationFilter && packages.length === 0) {
+        setLoading(true);
+      }
+      
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: getItemsPerPage(screenType).toString()
+      });
+      
+      if (countryFilter) params.append('country', countryFilter);
+      if (cityFilter) params.append('city', cityFilter);
+      if (targetAudienceFilter) params.append('targetAudience', targetAudienceFilter);
+      if (durationFilter) params.append('duration', durationFilter);
+      if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+      
+      // For public pages, we need to use the featured packages endpoint
+      // Since the public API doesn't support pagination yet, we'll fetch all and paginate client-side
+      const response = await axios.get('/api/packages/featured?limit=100');
+      
+      if (response.data?.success) {
+        const allPackages = response.data.data || [];
+        
+        // Apply client-side filtering since public API doesn't support server-side filtering yet
+        let filteredPackages = allPackages;
+        
+        // Apply country filter
+        if (countryFilter) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.countries?.includes(countryFilter));
+        }
+        
+        // Apply city filter
+        if (cityFilter) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.cities?.includes(cityFilter));
+        }
+        
+        // Apply duration filter
+        if (durationFilter) {
+          const duration = parseInt(durationFilter);
+          if (duration === 1) {
+            filteredPackages = filteredPackages.filter(pkg => pkg.duration <= 3);
+          } else if (duration === 2) {
+            filteredPackages = filteredPackages.filter(pkg => pkg.duration > 3 && pkg.duration <= 7);
+          } else if (duration === 3) {
+            filteredPackages = filteredPackages.filter(pkg => pkg.duration > 7);
+          }
+        }
+        
+        // Apply target audience filter
+        if (targetAudienceFilter) {
+          filteredPackages = filteredPackages.filter(pkg => pkg.targetAudience?.includes(targetAudienceFilter));
+        }
+        
+        // Apply search term
+        if (debouncedSearchTerm.trim()) {
+          const searchTermLower = debouncedSearchTerm.toLowerCase();
+          filteredPackages = filteredPackages.filter(
+            pkg =>
+              pkg.name.toLowerCase().includes(searchTermLower) ||
+              (pkg.cities && pkg.cities.some(city => city.toLowerCase().includes(searchTermLower))) ||
+              (pkg.countries && pkg.countries.some(country => country.toLowerCase().includes(searchTermLower))) ||
+              (pkg.description && pkg.description.toLowerCase().includes(searchTermLower))
+          );
+        }
+        
+        // Client-side pagination
+        const itemsPerPage = getItemsPerPage(screenType);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedPackages = filteredPackages.slice(startIndex, endIndex);
+        
+        setPackages(paginatedPackages);
+        setTotalPages(Math.ceil(filteredPackages.length / itemsPerPage));
+        setTotalPackages(filteredPackages.length);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      setError('Failed to load packages. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, screenType, countryFilter, cityFilter, targetAudienceFilter, durationFilter, debouncedSearchTerm, getItemsPerPage, packages.length]);
+
+  // Fetch filter options and recent packages on mount
+  useEffect(() => {
+    fetchFilterOptions();
+    fetchRecentPackages();
+  }, [fetchFilterOptions, fetchRecentPackages]);
+
+  // Fetch packages when dependencies change
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
+
+  // No more client-side filtering - everything is server-side now
+  const displayedPackages = packages;
+
+  const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
-  const handleCountryFilter = (value) => {
+  const handleCountryFilter = useCallback((value) => {
     setCountryFilter(value);
     setCityFilter(''); // Reset city filter when country changes
-  };
+  }, []);
 
-  const handleCityFilter = (value) => {
+  const handleCityFilter = useCallback((value) => {
     setCityFilter(value);
-  };
+  }, []);
 
-  const handleDurationFilter = (value) => {
+  const handleDurationFilter = useCallback((value) => {
     setDurationFilter(value);
-  };
+  }, []);
 
-  const handleTargetAudienceFilter = (value) => {
+  const handleTargetAudienceFilter = useCallback((value) => {
     setTargetAudienceFilter(value);
-  };
+  }, []);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setCountryFilter('');
     setCityFilter('');
     setDurationFilter('');
     setTargetAudienceFilter('');
-  };
+  }, []);
 
-  const handlePackageClick = async (pkg) => {
+  const handlePackageClick = useCallback(async (pkg) => {
     try {
       // Increment view count
       await axios.post(`/api/packages/public/${pkg.slug}/view`);
@@ -254,7 +313,7 @@ const PublicPackagesPage = () => {
     
     // Navigate to package page
     navigate(`/packages/${pkg.slug}`);
-  };
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -277,120 +336,426 @@ const PublicPackagesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
+      <div className="max-w-8xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Our Travel Programs
+            Travel Packages
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Explore our exciting collection of travel packages and complete experiences
-          </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8 mx-auto px-2 sm:px-0 sm:max-w-4xl">
-          {/* Search Bar */}
-          <div className="mb-4">
-            <Search
-              placeholder="Search by name, city, country, or description..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full"
-              showClearButton={true}
-            />
-          </div>
-          
-          {/* Filter Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-3">
-            <div className="w-full">
-              <Select 
-                value={countryFilter}
-                onChange={handleCountryFilter}
-                placeholder="Filter by Country"
-                options={[
-                  { value: '', label: 'Filter by Country' },
-                  ...availableCountries.map(country => ({ value: country, label: country }))
-                ]}
-                className="w-full"
-              />
+        {/* Mobile Filter Toggle Buttons */}
+        <div className="lg:hidden mb-4 space-y-3">
+          {/* Filters Toggle */}
+          <button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Filters
+              </span>
+              {(searchTerm || countryFilter || cityFilter || durationFilter || targetAudienceFilter) && (
+                <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
+                  Active
+                </span>
+              )}
             </div>
-
-            <div className="w-full">
-              <Select 
-                value={cityFilter}
-                onChange={handleCityFilter}
-                placeholder="Filter by City"
-                options={[
-                  { value: '', label: 'Filter by City' },
-                  ...availableCities
-                    .filter(city => !countryFilter || packages.some(pkg => pkg.cities?.includes(city) && pkg.countries?.includes(countryFilter)))
-                    .map(city => ({ value: city, label: city }))
-                ]}
-                className="w-full"
-                disabled={countryFilter && !packages.some(pkg => pkg.countries?.includes(countryFilter))}
-              />
-            </div>
-            
-            <div className="w-full">
-              <Select 
-                value={targetAudienceFilter}
-                onChange={handleTargetAudienceFilter}
-                placeholder="Filter by Audience"
-                options={[
-                  { value: '', label: 'Filter by Audience' },
-                  { value: 'Family', label: 'Family' },
-                  { value: 'Couples', label: 'Couples' },
-                  { value: 'Solo Travelers', label: 'Solo Travelers' },
-                  { value: 'Groups', label: 'Groups' },
-                  { value: 'Business', label: 'Business' },
-                  { value: 'Luxury', label: 'Luxury' },
-                  { value: 'Budget', label: 'Budget' }
-                ]}
-                className="w-full"
-              />
-            </div>
-            
-            <div className="w-full">
-              <Select 
-                value={durationFilter}
-                onChange={handleDurationFilter}
-                placeholder="Filter by Duration"
-                options={[
-                  { value: '', label: 'Filter by Duration' },
-                  { value: '1', label: 'Short (up to 3 days)' },
-                  { value: '2', label: 'Medium (4-7 days)' },
-                  { value: '3', label: 'Long (8+ days)' }
-                ]}
-                className="w-full"
-              />
-            </div>
-            
-            <div className="w-full">
-              <CustomButton 
-                variant="rippleRedToDarkRed" 
-                onClick={resetFilters}
-                disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !targetAudienceFilter}
-                className="w-full h-[44px] my-0.5"
-                icon={FaFilter}
-              >
-                Clear Filters
-              </CustomButton>
-            </div>
-          </div>
-          
-          {/* Results count */}
-          <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-            {(searchTerm || countryFilter || cityFilter || durationFilter || targetAudienceFilter) ? (
-              <>Showing {filteredPackages.length} of {packages.length} packages</>
+            {isFiltersOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             ) : (
-              <>Showing all {packages.length} packages</>
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             )}
-          </div>
+          </button>
+
+          {/* Recent Packages Toggle */}
+          <button
+            onClick={() => setIsRecentOpen(!isRecentOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Recent Packages
+              </span>
+            </div>
+            {isRecentOpen ? (
+              <FaChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <FaChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
         </div>
 
-        {/* Packages Grid */}
-        {paginatedPackages.length > 0 ? (
+        {/* Main Layout with Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+          {/* Sidebar - Filters */}
+          <div className="lg:col-span-1 order-1">
+            <div className="lg:sticky lg:top-24">
+              {/* Desktop: Single Card with All Content */}
+              <div className="hidden lg:block">
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                {/* Single Card Container */}
+                <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                  <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                    <div className="p-3 sm:p-4">
+                      
+                      {/* Search and Filters Section */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="mb-3">
+                          <Search
+                            placeholder="Search packages..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="w-full"
+                            showClearButton={true}
+                          />
+                        </div>
+                        
+                        {/* Country Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect 
+                            value={countryFilter}
+                            onChange={(e) => handleCountryFilter(e.target.value)}
+                            placeholder="All Countries"
+                            label="Country"
+                            options={[
+                              { value: '', label: 'All Countries' },
+                              ...availableCountries.map(country => ({ value: country, label: country }))
+                            ]}
+                          />
+                        </div>
+
+                        {/* City Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect 
+                            value={cityFilter}
+                            onChange={(e) => handleCityFilter(e.target.value)}
+                            placeholder="All Cities"
+                            label="City"
+                            options={[
+                              { value: '', label: 'All Cities' },
+                              ...availableCities
+                                .filter(city => !countryFilter || packages.some(pkg => pkg.cities?.includes(city) && pkg.countries?.includes(countryFilter)))
+                                .map(city => ({ value: city, label: city }))
+                            ]}
+                            disabled={countryFilter && !packages.some(pkg => pkg.countries?.includes(countryFilter))}
+                          />
+                        </div>
+                        
+                        {/* Target Audience Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect 
+                            value={targetAudienceFilter}
+                            onChange={(e) => handleTargetAudienceFilter(e.target.value)}
+                            placeholder="All Audiences"
+                            label="Target Audience"
+                            options={[
+                              { value: '', label: 'All Audiences' },
+                              { value: 'Family', label: 'Family' },
+                              { value: 'Couples', label: 'Couples' },
+                              { value: 'Solo Travelers', label: 'Solo Travelers' },
+                              { value: 'Groups', label: 'Groups' },
+                              { value: 'Business', label: 'Business' },
+                              { value: 'Luxury', label: 'Luxury' },
+                              { value: 'Budget', label: 'Budget' }
+                            ]}
+                          />
+                        </div>
+                        
+                        {/* Duration Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect 
+                            value={durationFilter}
+                            onChange={(e) => handleDurationFilter(e.target.value)}
+                            placeholder="Any Duration"
+                            label="Duration"
+                            options={[
+                              { value: '', label: 'Any Duration' },
+                              { value: '1', label: 'Short (up to 3 days)' },
+                              { value: '2', label: 'Medium (4-7 days)' },
+                              { value: '3', label: 'Long (8+ days)' }
+                            ]}
+                          />
+                        </div>
+                        
+                        {/* Reset Button */}
+                        <CustomButton 
+                          variant="rippleRedToDarkRed" 
+                          onClick={resetFilters}
+                          disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !targetAudienceFilter}
+                          className="w-full"
+                          icon={FaFilter}
+                        >
+                          Clear Filters
+                        </CustomButton>
+                  
+                        {/* Results count */}
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
+                          {totalPackages > 0 ? (
+                            <>Showing page {page} of {totalPages} ({totalPackages} packages total)</>
+                          ) : (
+                            <>No packages found</>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      {recentPackages.length > 0 && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+                      )}
+
+                      {/* Recent Packages Section */}
+                      {recentPackages.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Packages</h3>
+                          </div>
+                          <div className="space-y-3">
+                            {recentPackages.map((pkg) => (
+                              <div
+                                key={pkg._id}
+                                onClick={() => handlePackageClick(pkg)}
+                                className="flex gap-3 group cursor-pointer"
+                              >
+                                {(() => {
+                                  // Get primary image or first image (same logic as PackageCard)
+                                  const primaryImage = pkg.images?.find(img => img.isPrimary) || pkg.images?.[0];
+                                  return primaryImage ? (
+                                    <img
+                                      src={primaryImage.url}
+                                      alt={primaryImage.altText || pkg.name}
+                                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                                    />
+                                  ) : (
+                                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex-shrink-0 flex items-center justify-center group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all">
+                                      <FaBox className="w-8 h-8 text-white" />
+                                    </div>
+                                  );
+                                })()}
+                                <div className="flex-1 min-w-0 flex flex-col">
+                                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                                    {pkg.name}
+                                  </h4>
+                                  {pkg.cities && pkg.cities.length > 0 && (
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                      {pkg.cities.join(', ')}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                                    <FaClock className="w-3 h-3" />
+                                    <span>{pkg.duration} {pkg.duration === 1 ? 'day' : 'days'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CustomScrollbar>
+                </div>
+                </div>
+              </div>
+
+              {/* Mobile: Separate Collapsible Filters Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isFiltersOpen ? 'max-h-[600px] opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                      {/* Search and Filters Section */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="mb-3">
+                          <Search
+                            placeholder="Search packages..."
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            className="w-full"
+                            showClearButton={true}
+                          />
+                        </div>
+
+                        {/* Country Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={countryFilter}
+                            onChange={handleCountryFilter}
+                            placeholder="All Countries"
+                            label="Country"
+                            options={[
+                              { value: '', label: 'All Countries' },
+                              ...availableCountries.map(country => ({ value: country, label: country }))
+                            ]}
+                          />
+                        </div>
+
+                        {/* City Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={cityFilter}
+                            onChange={handleCityFilter}
+                            placeholder="All Cities"
+                            label="City"
+                            options={[
+                              { value: '', label: 'All Cities' },
+                              ...availableCities
+                                .filter(city => !countryFilter || packages.some(pkg => pkg.cities?.includes(city) && pkg.countries?.includes(countryFilter)))
+                                .map(city => ({ value: city, label: city }))
+                            ]}
+                            disabled={countryFilter && !packages.some(pkg => pkg.countries?.includes(countryFilter))}
+                          />
+                        </div>
+
+                        {/* Target Audience Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={targetAudienceFilter}
+                            onChange={handleTargetAudienceFilter}
+                            placeholder="All Audiences"
+                            label="Target Audience"
+                            options={[
+                              { value: '', label: 'All Audiences' },
+                              { value: 'Families', label: 'Families' },
+                              { value: 'Couples', label: 'Couples' },
+                              { value: 'Solo', label: 'Solo Travelers' },
+                              { value: 'Groups', label: 'Groups' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Duration Filter */}
+                        <div className="mb-3">
+                          <SearchableSelect
+                            value={durationFilter}
+                            onChange={handleDurationFilter}
+                            placeholder="All Durations"
+                            label="Duration"
+                            options={[
+                              { value: '', label: 'All Durations' },
+                              { value: '1', label: 'Short (up to 3 days)' },
+                              { value: '2', label: 'Medium (3-7 days)' },
+                              { value: '3', label: 'Long (7+ days)' }
+                            ]}
+                          />
+                        </div>
+
+                        {/* Clear Filters Button */}
+                        <CustomButton 
+                          variant="rippleRedToDarkRed" 
+                          onClick={resetFilters}
+                          disabled={!searchTerm && !countryFilter && !cityFilter && !durationFilter && !targetAudienceFilter}
+                          className="w-full"
+                          icon={FaFilter}
+                        >
+                          Clear Filters
+                        </CustomButton>
+
+                        {/* Results count */}
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
+                          {totalPackages > 0 ? (
+                            <>Showing page {page} of {totalPages} ({totalPackages} packages total)</>
+                          ) : (
+                            <>No packages found</>
+                          )}
+                        </div>
+                      </div>
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile: Separate Collapsible Recent Packages Section */}
+              <div className={`lg:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+                isRecentOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                {/* Glowing Effect Wrapper */}
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 blur transition duration-300 pointer-events-none"></div>
+                  {/* Single Card Container */}
+                  <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-shadow overflow-hidden">
+                    <CustomScrollbar maxHeight="calc(100vh - 120px)">
+                      <div className="p-3 sm:p-4">
+                        {/* Recent Packages Section */}
+                        {recentPackages.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Packages</h3>
+                            </div>
+                            <div className="space-y-3">
+                              {recentPackages.map((pkg) => (
+                                <div
+                                  key={pkg._id}
+                                  onClick={() => handlePackageClick(pkg)}
+                                  className="flex gap-3 group cursor-pointer"
+                                >
+                                  {(() => {
+                                    // Get primary image or first image (same logic as PackageCard)
+                                    const primaryImage = pkg.images?.find(img => img.isPrimary) || pkg.images?.[0];
+                                    return primaryImage ? (
+                                      <img
+                                        src={primaryImage.url}
+                                        alt={primaryImage.altText || pkg.name}
+                                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
+                                      />
+                                    ) : (
+                                      <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex-shrink-0 flex items-center justify-center group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all">
+                                        <FaBox className="w-8 h-8 text-white" />
+                                      </div>
+                                    );
+                                  })()}
+                                  <div className="flex-1 min-w-0 flex flex-col">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
+                                      {pkg.name}
+                                    </h4>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                      {pkg.cities?.join(', ')}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                                      <FaClock className="w-3 h-3" />
+                                      <span>{pkg.duration} days</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CustomScrollbar>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3 order-2">
+            {/* Packages Grid */}
+            {displayedPackages.length > 0 ? (
           <>
             <div className={`grid gap-4 sm:gap-6 ${
               screenType === 'mobile' 
@@ -399,7 +764,7 @@ const PublicPackagesPage = () => {
                 ? 'grid-cols-2'
                 : 'grid-cols-3'
             }`}>
-              {paginatedPackages.map((pkg) => (
+              {displayedPackages.map((pkg) => (
                 <PackageCard 
                   key={pkg._id} 
                   pkg={pkg}
@@ -473,11 +838,28 @@ const PublicPackagesPage = () => {
             )}
           </>
         ) : (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Packages Available</h3>
-            <p className="text-gray-600 dark:text-gray-400">Please check back later for our latest package offerings.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-12 shadow-md border border-gray-200 dark:border-gray-700 text-center">
+            <FaFilter className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              No Packages Found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              No packages match your current filters. Try adjusting your search criteria.
+            </p>
+            {(searchTerm || countryFilter || cityFilter || durationFilter || targetAudienceFilter) && (
+              <CustomButton
+                onClick={resetFilters}
+                variant="blue"
+                size="md"
+                className="mt-4"
+              >
+                Clear Filters
+              </CustomButton>
+            )}
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

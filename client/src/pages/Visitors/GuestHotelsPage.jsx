@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaStar, FaMapMarkerAlt, FaFilter, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
@@ -11,21 +11,23 @@ import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const GuestHotelsPage = () => {
   const [hotels, setHotels] = useState([]);
-  const [filteredHotels, setFilteredHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [screenType, setScreenType] = useState('desktop');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [starFilter, setStarFilter] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const [availableCountries, setAvailableCountries] = useState([]);
   const [availableCities, setAvailableCities] = useState([]);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalHotels, setTotalHotels] = useState(0);
   const navigate = useNavigate();
 
   // Check screen size for responsive behavior
-  const updateScreenSize = () => {
+  const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
     
     if (width < 768) {
@@ -35,10 +37,10 @@ const GuestHotelsPage = () => {
     } else {
       setScreenType('desktop');
     }
-  };
+  }, []);
 
   // Items per page based on screen type
-  const getItemsPerPage = (type) => {
+  const getItemsPerPage = useCallback((type) => {
     switch(type) {
       case 'mobile':
         return 3;
@@ -48,142 +50,186 @@ const GuestHotelsPage = () => {
       default:
         return 9;
     }
-  };
-
-  // Pagination logic
-  const itemsPerPage = getItemsPerPage(screenType);
-  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedHotels = filteredHotels.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
-    return () => window.removeEventListener('resize', updateScreenSize);
   }, []);
+
+  // Debounce search term (300ms delay for faster response)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Reset to page 1 when screen type or filters change
   useEffect(() => {
     setPage(1);
-  }, [screenType, searchTerm, starFilter, countryFilter, cityFilter]);
+  }, [screenType, debouncedSearchTerm, countryFilter, cityFilter, starFilter]);
 
-  // Set page title and meta tags
+  // Screen size effect
   useEffect(() => {
-    document.title = 'Rahalatek | Hotels';
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, [updateScreenSize]);
+
+  // Set page title and meta tags (dynamically based on filters)
+  useEffect(() => {
+    // Dynamic title based on city filter
+    if (cityFilter) {
+      document.title = `${cityFilter} Hotels | Rahalatek`;
+    } else if (countryFilter) {
+      document.title = `${countryFilter} Hotels | Rahalatek`;
+    } else {
+      document.title = 'Rahalatek | Hotels';
+    }
     
-    // Update meta description
+    // Update meta description based on location
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels, resorts, and boutique accommodations worldwide. Book your perfect stay today.'
-      );
+      let description;
+      if (cityFilter) {
+        description = `Discover luxury hotels in ${cityFilter} with Rahalatek. Browse 3-star to 5-star hotels, resorts, and premium accommodations in ${cityFilter}. Book your perfect ${cityFilter} hotel stay today.`;
+      } else if (countryFilter) {
+        description = `Explore ${countryFilter} hotels with Rahalatek. Find luxury hotels, resorts, and premium accommodations throughout ${countryFilter}. Book your perfect ${countryFilter} hotel stay today.`;
+      } else {
+        description = 'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels, resorts, and boutique accommodations worldwide. Book your perfect stay today.';
+      }
+      metaDescription.setAttribute('content', description);
     }
 
-    // Update keywords
+    // Update keywords based on location
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      metaKeywords.setAttribute('content', 
-        'hotels, luxury hotels, accommodations, resorts, boutique hotels, 3-star hotels, 4-star hotels, 5-star hotels, hotel booking, premium accommodations, hotel rooms, hospitality, lodging, hotel deals'
-      );
+      let keywords;
+      if (cityFilter) {
+        keywords = `${cityFilter} hotels, ${cityFilter} accommodations, ${cityFilter} luxury hotels, ${cityFilter} resorts, hotels in ${cityFilter}, ${cityFilter} hospitality, ${cityFilter} lodging, ${cityFilter} hotel booking`;
+      } else if (countryFilter) {
+        keywords = `${countryFilter} hotels, ${countryFilter} accommodations, ${countryFilter} luxury hotels, ${countryFilter} resorts, hotels in ${countryFilter}, ${countryFilter} hospitality`;
+      } else {
+        keywords = 'hotels, luxury hotels, accommodations, resorts, boutique hotels, 3-star hotels, 4-star hotels, 5-star hotels, hotel booking, premium accommodations, hotel rooms, hospitality, lodging, hotel deals';
+      }
+      metaKeywords.setAttribute('content', keywords);
     }
 
-    // Update Open Graph
+    // Update Open Graph based on location
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', 'Browse Hotels - Rahalatek | Luxury Hotels & Accommodations');
+      let title;
+      if (cityFilter) {
+        title = `${cityFilter} Hotels | Rahalatek`;
+      } else if (countryFilter) {
+        title = `${countryFilter} Hotels | Rahalatek`;
+      } else {
+        title = 'Browse Hotels - Rahalatek | Luxury Hotels & Accommodations';
+      }
+      ogTitle.setAttribute('content', title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      ogDescription.setAttribute('content', 
-        'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels and resorts worldwide.'
-      );
-    }
-  }, []);
-
-  // Fetch hotels
-  useEffect(() => {
-    const fetchHotels = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/api/hotels');
-        const hotelsData = response.data;
-        setHotels(hotelsData);
-        setFilteredHotels(hotelsData);
-        
-        // Extract unique countries and cities for filters
-        const countries = [...new Set(hotelsData.map(hotel => hotel.country).filter(Boolean))].sort();
-        const cities = [...new Set(hotelsData.map(hotel => hotel.city))].sort();
-        setAvailableCountries(countries);
-        setAvailableCities(cities);
-        
-      } catch (error) {
-        console.error('Error fetching hotels:', error);
-        setError('Failed to load hotels. Please try again later.');
-      } finally {
-        setLoading(false);
+      let description;
+      if (cityFilter) {
+        description = `Discover luxury hotels in ${cityFilter} with Rahalatek. Browse premium accommodations and resorts in ${cityFilter}.`;
+      } else if (countryFilter) {
+        description = `Explore ${countryFilter} hotels with Rahalatek. Find luxury hotels and premium accommodations throughout ${countryFilter}.`;
+      } else {
+        description = 'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels and resorts worldwide.';
       }
-    };
+      ogDescription.setAttribute('content', description);
+    }
+  }, [cityFilter, countryFilter]);
 
-    fetchHotels();
+  // Fetch filter options (only once on mount)
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/hotels');
+      const allHotels = response.data;
+      
+      // Extract unique countries and cities for filters
+      const countries = [...new Set(allHotels.map(hotel => hotel.country).filter(Boolean))].sort();
+      const cities = [...new Set(allHotels.map(hotel => hotel.city))].sort();
+      setAvailableCountries(countries);
+      setAvailableCities(cities);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
   }, []);
 
-  // Filter hotels based on search term and filters
+  // Fetch hotels with server-side pagination and filtering
+  const fetchHotels = useCallback(async () => {
+    try {
+      // Only show loading on initial page load
+      if (page === 1 && !countryFilter && !cityFilter && !debouncedSearchTerm && !starFilter && hotels.length === 0) {
+        setLoading(true);
+      }
+      
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: getItemsPerPage(screenType).toString()
+      });
+      
+      if (countryFilter) params.append('country', countryFilter);
+      if (cityFilter) params.append('city', cityFilter);
+      if (starFilter) params.append('stars', starFilter);
+      if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+      
+      const response = await axios.get(`/api/hotels?${params.toString()}`);
+      
+      if (response.data.success) {
+        // Server-side paginated response
+        setHotels(response.data.data.hotels);
+        setTotalPages(response.data.data.pagination.totalPages);
+        setTotalHotels(response.data.data.pagination.totalHotels);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching hotels:', error);
+      setError('Failed to load hotels. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, screenType, countryFilter, cityFilter, starFilter, debouncedSearchTerm, getItemsPerPage, hotels.length]);
+
+  // Fetch filter options on mount
   useEffect(() => {
-    let filtered = hotels;
+    fetchFilterOptions();
+  }, [fetchFilterOptions]);
 
-    if (starFilter) {
-      filtered = filtered.filter(hotel => hotel.stars === parseInt(starFilter));
-    }
+  // Fetch hotels when dependencies change
+  useEffect(() => {
+    fetchHotels();
+  }, [fetchHotels]);
 
-    if (countryFilter) {
-      filtered = filtered.filter(hotel => hotel.country === countryFilter);
-    }
+  // No more client-side filtering - everything is server-side now
+  const displayedHotels = hotels;
 
-    if (cityFilter) {
-      filtered = filtered.filter(hotel => hotel.city === cityFilter);
-    }
-
-    if (searchTerm.trim()) {
-      const searchTermLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        hotel =>
-          hotel.name.toLowerCase().includes(searchTermLower) ||
-          hotel.city.toLowerCase().includes(searchTermLower) ||
-          (hotel.country && hotel.country.toLowerCase().includes(searchTermLower)) ||
-          (hotel.description && hotel.description.toLowerCase().includes(searchTermLower))
-      );
-    }
-    
-    setFilteredHotels(filtered);
-  }, [searchTerm, starFilter, countryFilter, cityFilter, hotels]);
-
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
   
-  const handleStarFilter = (value) => {
+  const handleStarFilter = useCallback((value) => {
     setStarFilter(value);
-  };
+  }, []);
 
-  const handleCountryFilter = (value) => {
+  const handleCountryFilter = useCallback((value) => {
     setCountryFilter(value);
     setCityFilter(''); // Reset city filter when country changes
-  };
+  }, []);
 
-  const handleCityFilter = (value) => {
+  const handleCityFilter = useCallback((value) => {
     setCityFilter(value);
-  };
+  }, []);
 
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setStarFilter('');
     setCountryFilter('');
     setCityFilter('');
-  };
+  }, []);
 
-  const handleHotelClick = async (hotel) => {
+  const handleHotelClick = useCallback(async (hotel) => {
     try {
       // Increment view count
       await axios.post(`/api/hotels/public/${hotel.slug}/view`);
@@ -193,7 +239,7 @@ const GuestHotelsPage = () => {
     
     // Navigate to hotel page
     navigate(`/hotels/${hotel.slug}`);
-  };
+  }, [navigate]);
 
   const truncateDescription = (description, screenType) => {
     if (!description) return '';
@@ -318,7 +364,7 @@ const GuestHotelsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -405,16 +451,16 @@ const GuestHotelsPage = () => {
           
           {/* Results count */}
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-            {(searchTerm || starFilter || countryFilter || cityFilter) ? (
-              <>Showing {filteredHotels.length} of {hotels.length} hotels</>
+            {totalHotels > 0 ? (
+              <>Showing page {page} of {totalPages} ({totalHotels} hotels total)</>
             ) : (
-              <>Showing all {hotels.length} hotels</>
+              <>No hotels found</>
             )}
           </div>
         </div>
 
         {/* Hotels Grid */}
-        {paginatedHotels.length > 0 ? (
+        {displayedHotels.length > 0 ? (
           <>
             <div className={`grid gap-4 sm:gap-6 ${
               screenType === 'mobile' 
@@ -423,7 +469,7 @@ const GuestHotelsPage = () => {
                 ? 'grid-cols-2'
                 : 'grid-cols-3'
             }`}>
-              {paginatedHotels.map((hotel) => (
+              {displayedHotels.map((hotel) => (
                 <HotelCard key={hotel._id} hotel={hotel} />
               ))}
             </div>

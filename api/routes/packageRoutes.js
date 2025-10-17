@@ -7,6 +7,7 @@ const { verifyToken } = require('../middleware/auth');
 router.get('/public/:slug', packageController.getPackageBySlug);
 router.post('/public/:slug/view', packageController.incrementPackageViews);
 router.get('/featured', packageController.getFeaturedPackages);
+router.get('/recent', packageController.getRecentPackages);
 
 // Apply authentication middleware to admin routes
 router.use(verifyToken);

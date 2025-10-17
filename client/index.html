@@ -107,6 +107,14 @@
     
     <!-- Preload critical resources -->
     <!-- Logo images are loaded conditionally based on theme, so no need to preload -->
+    
+    <!-- Preload sign-in page background image for instant load -->
+    <link 
+      rel="preload" 
+      as="image" 
+      href="https://res.cloudinary.com/dnzqnr6js/image/upload/q_95,f_auto/v1759933787/pexels-afterglow-10901250_dgbgtv.jpg"
+      fetchpriority="low"
+    />
   </head>
   <body>
     <div id="root"></div>

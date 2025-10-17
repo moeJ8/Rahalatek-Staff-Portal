@@ -69,6 +69,7 @@ export default function BlogManagement({ user }) {
     featured: '',
     createdBy: ''
   });
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   // Sorting state
   const [sortByViews, setSortByViews] = useState(false);
@@ -76,9 +77,11 @@ export default function BlogManagement({ user }) {
   // Pagination states
   const [page, setPage] = useState(1);
   const [screenType, setScreenType] = useState('desktop');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
 
   // Screen size detection and items per page
-  const getItemsPerPage = (type) => {
+  const getItemsPerPage = useCallback((type) => {
     switch(type) {
       case 'mobile':
         return 3;
@@ -88,9 +91,9 @@ export default function BlogManagement({ user }) {
       default:
         return 9;
     }
-  };
+  }, []);
 
-  const updateScreenSize = () => {
+  const updateScreenSize = useCallback(() => {
     const width = window.innerWidth;
     
     if (width < 768) {
@@ -100,7 +103,7 @@ export default function BlogManagement({ user }) {
     } else {
       setScreenType('desktop');
     }
-  };
+  }, []);
 
   // Available categories (matching the backend enum)
   const categories = [
@@ -276,20 +279,25 @@ export default function BlogManagement({ user }) {
     'link', 'image', 'video'
   ];
 
+  // Debounce search term (300ms delay for faster response)
   useEffect(() => {
-    updateScreenSize();
-    window.addEventListener('resize', updateScreenSize);
-    return () => window.removeEventListener('resize', updateScreenSize);
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(filters.search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [filters.search]);
 
   // Reset to page 1 when screen type, filters, or sorting changes
   useEffect(() => {
     setPage(1);
-  }, [screenType, filters, sortByViews]);
+  }, [screenType, debouncedSearchTerm, filters.status, filters.category, filters.featured, filters.createdBy, sortByViews]);
 
+  // Screen size detection
   useEffect(() => {
-    fetchBlogs();
-  }, []);
+    updateScreenSize();
+    window.addEventListener('resize', updateScreenSize);
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, [updateScreenSize]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -333,86 +341,49 @@ export default function BlogManagement({ user }) {
     return () => clearInterval(interval);
   }, [modalOpen]);
 
-  const fetchBlogs = async () => {
-    setLoading(true);
+  const fetchBlogs = useCallback(async () => {
     try {
-      const response = await axios.get('/api/blogs', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: getItemsPerPage(screenType).toString()
       });
       
-      // Handle paginated response format
-      let blogsData;
-      if (response.data?.data?.docs) {
-        // Paginated response: { success: true, data: { docs: [...], totalDocs: 3, ... } }
-        blogsData = response.data.data.docs;
-      } else if (response.data?.docs) {
-        // Direct paginated response: { docs: [...], totalDocs: 3, ... }
-        blogsData = response.data.docs;
-      } else if (Array.isArray(response.data?.data)) {
-        // Array in data: { success: true, data: [...] }
-        blogsData = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        // Direct array: [...]
-        blogsData = response.data;
-      } else {
-        blogsData = [];
+      if (filters.status) params.append('status', filters.status);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.createdBy) params.append('author', filters.createdBy);
+      if (filters.featured) params.append('featured', filters.featured);
+      if (sortByViews) params.append('sortBy', 'popular');
+      if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
+      
+      const response = await axios.get(`/api/blogs?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      if (response.data.success) {
+        // Server-side paginated response
+        setBlogs(response.data.data.blogs);
+        setTotalPages(response.data.data.pagination.totalPages);
+        setTotalBlogs(response.data.data.pagination.totalBlogs);
       }
       
-      setBlogs(Array.isArray(blogsData) ? blogsData : []);
     } catch (error) {
       console.error('Error fetching posts:', error);
       setError('Failed to load posts');
-      toast.error('Failed to load posts', {
-        duration: 3000,
-        style: {
-          background: '#ef4444',
-          color: '#fff',
-          fontWeight: 'bold',
-          fontSize: '16px',
-          padding: '16px',
-          zIndex: 10000,
-        },
-        iconTheme: {
-          primary: '#fff',
-          secondary: '#ef4444',
-        },
-      });
-      setBlogs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, screenType, filters.status, filters.category, filters.createdBy, filters.featured, sortByViews, debouncedSearchTerm, getItemsPerPage]);
 
-  // Filter blogs
-  const filteredBlogs = blogs.filter(blog => {
-    const matchesSearch = !filters.search || 
-      blog.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      blog.category?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      blog.author?.username?.toLowerCase().includes(filters.search.toLowerCase());
-    
-    const matchesStatus = !filters.status || blog.status === filters.status;
-    const matchesCategory = !filters.category || blog.category === filters.category;
-    const matchesFeatured = !filters.featured || 
-      (filters.featured === 'true' && blog.isFeatured) ||
-      (filters.featured === 'false' && !blog.isFeatured);
-    const matchesCreatedBy = !filters.createdBy || 
-      blog.author?._id === filters.createdBy ||
-      blog.author?.id === filters.createdBy;
-    
-    return matchesSearch && matchesStatus && matchesCategory && matchesFeatured && matchesCreatedBy;
-  });
+  // Fetch blogs when dependencies change
+  useEffect(() => {
+    if (page > 0) { // Only fetch if page is set
+      fetchBlogs();
+    }
+  }, [fetchBlogs, page]);
 
-  // Sort blogs
-  const sortedBlogs = sortByViews 
-    ? [...filteredBlogs].sort((a, b) => (b.views || 0) - (a.views || 0))
-    : filteredBlogs;
-
-  // Pagination logic
-  const itemsPerPage = getItemsPerPage(screenType);
-  const totalPages = Math.ceil(sortedBlogs.length / itemsPerPage);
-  const startIndex = (page - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedBlogs = sortedBlogs.slice(startIndex, endIndex);
+  // No more client-side filtering - everything is server-side now
+  const displayedBlogs = blogs;
 
   // Category options for filter
   const getCategoryOptions = () => {
@@ -1042,7 +1013,7 @@ export default function BlogManagement({ user }) {
       </div>
 
       {/* Post Cards Grid */}
-      {paginatedBlogs.length === 0 ? (
+      {displayedBlogs.length === 0 ? (
         <Card className="dark:bg-slate-900 text-center py-12">
           <div className="max-w-md mx-auto">
             <div className="mb-4">
@@ -1071,8 +1042,15 @@ export default function BlogManagement({ user }) {
         </Card>
       ) : (
         <>
+          {/* Results Count */}
+          <div className="mb-4 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Showing page {page} of {totalPages} ({totalBlogs} Posts total)
+            </p>
+          </div>
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {paginatedBlogs.map((blog) => (
+            {displayedBlogs.map((blog) => (
               <BlogCard
                 key={blog._id}
                 blog={blog}
