@@ -11,7 +11,9 @@ import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import ImageUploader from '../ImageUploader';
 import CustomTable from '../CustomTable';
 import AboutHeroManagement from './AboutHeroManagement';
+import YoutubeShortsManagement from './YoutubeShortsManagement';
 import toast from 'react-hot-toast';
+import { FaYoutube } from 'react-icons/fa';
 
 // Carousel Management Component
 const CarouselManagement = () => {
@@ -855,6 +857,10 @@ const CarouselManagement = () => {
 // Main UI Management Component with Tabs
 export default function UIManagement() {
   const [activeTab, setActiveTab] = useState('carousel');
+  
+  // Get user information
+  const authUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isPublisher = authUser.isPublisher || false;
 
   return (
     <div className="space-y-6">
@@ -894,6 +900,19 @@ export default function UIManagement() {
               <FaInfoCircle className="w-4 h-4" />
               <span>About</span>
             </button>
+            {!isPublisher && (
+              <button
+                onClick={() => setActiveTab('youtube')}
+                className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+                  activeTab === 'youtube'
+                    ? 'bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm'
+                }`}
+              >
+                <FaYoutube className="w-4 h-4" />
+                <span>Shorts</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -908,6 +927,12 @@ export default function UIManagement() {
       {activeTab === 'about' && (
         <div>
           <AboutHeroManagement />
+        </div>
+      )}
+
+      {activeTab === 'youtube' && !isPublisher && (
+        <div>
+          <YoutubeShortsManagement />
         </div>
       )}
     </div>

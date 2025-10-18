@@ -6,6 +6,7 @@ import FeaturedPackages from '../../components/Visitors/FeaturedPackages';
 import FeaturedHotels from '../../components/Visitors/FeaturedHotels';
 import FeaturedTours from '../../components/Visitors/FeaturedTours';
 import RecentPosts from '../../components/Visitors/RecentPosts';
+import YoutubeShortsSection from '../../components/Visitors/YoutubeShortsSection';
 import PartnersSection from '../../components/PartnersSection';
 
 export default function GuestHomePage() {
@@ -187,6 +188,9 @@ export default function GuestHomePage() {
       
       {/* Recent Blog Posts Section */}
       <RecentPosts />
+      
+      {/* YouTube Shorts Section */}
+      <YoutubeShortsSection />
       
       {/* Partners Section */}
       <PartnersSection />
