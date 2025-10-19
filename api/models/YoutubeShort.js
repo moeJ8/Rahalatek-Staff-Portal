@@ -34,6 +34,12 @@ const youtubeShortSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  category: {
+    type: String,
+    enum: ['shorts', 'reviews'],
+    default: 'shorts',
+    required: true
+  },
   order: {
     type: Number,
     default: 0
@@ -64,6 +70,7 @@ const youtubeShortSchema = new mongoose.Schema({
 // Index for efficient querying
 youtubeShortSchema.index({ isActive: 1, order: 1 });
 youtubeShortSchema.index({ createdBy: 1 });
+youtubeShortSchema.index({ category: 1, isActive: 1, order: 1 });
 
 // Pre-save middleware to extract video ID from URL
 youtubeShortSchema.pre('save', function(next) {
@@ -104,15 +111,16 @@ youtubeShortSchema.virtual('embedUrl').get(function() {
 });
 
 // Static method to get active shorts for public display
-youtubeShortSchema.statics.getActiveShorts = function() {
-  return this.find({ isActive: true })
+youtubeShortSchema.statics.getActiveShorts = function(category = 'shorts') {
+  return this.find({ isActive: true, category: category })
     .sort({ order: 1, createdAt: -1 })
     .select('-createdBy -updatedBy -__v');
 };
 
 // Static method to get all shorts for admin
-youtubeShortSchema.statics.getAllShortsForAdmin = function() {
-  return this.find()
+youtubeShortSchema.statics.getAllShortsForAdmin = function(category = null) {
+  const query = category ? { category } : {};
+  return this.find(query)
     .populate('createdBy', 'username')
     .populate('updatedBy', 'username')
     .sort({ order: 1, createdAt: -1 });

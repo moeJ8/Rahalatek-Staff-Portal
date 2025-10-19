@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FaYoutube, FaPlay, FaEye } from 'react-icons/fa';
+import { FaYoutube, FaPlay } from 'react-icons/fa';
 import CustomButton from '../CustomButton';
 import CustomModal from '../CustomModal';
 import RahalatekLoader from '../RahalatekLoader';
 
-export default function YoutubeShortsSection() {
-  const [shorts, setShorts] = useState([]);
+export default function ClientReviewsSection() {
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedShort, setSelectedShort] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const scrollContainerRef = useRef(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [shortsPerSlide, setShortsPerSlide] = useState(3);
+  const [reviewsPerSlide, setReviewsPerSlide] = useState(3);
 
   useEffect(() => {
-    fetchShorts();
+    fetchReviews();
   }, []);
 
   // Screen size detection
@@ -24,13 +24,13 @@ export default function YoutubeShortsSection() {
     const width = window.innerWidth;
     
     if (width < 768) {
-      setShortsPerSlide(1);
+      setReviewsPerSlide(1);
       setIsDesktop(false);
     } else if (width < 1024) {
-      setShortsPerSlide(2);
+      setReviewsPerSlide(2);
       setIsDesktop(false);
     } else {
-      setShortsPerSlide(3);
+      setReviewsPerSlide(3);
       setIsDesktop(true);
     }
   };
@@ -42,36 +42,36 @@ export default function YoutubeShortsSection() {
   }, []);
 
 
-  const fetchShorts = async () => {
+  const fetchReviews = async () => {
     try {
-      const response = await axios.get('/api/youtube-shorts/active?category=shorts');
-      setShorts(response.data);
+      const response = await axios.get('/api/youtube-shorts/active?category=reviews');
+      setReviews(response.data);
     } catch (error) {
-      console.error('Error fetching YouTube Shorts:', error);
+      console.error('Error fetching Client Reviews:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleShortClick = async (short) => {
+  const handleReviewClick = async (review) => {
     // Increment view count
     try {
-      await axios.patch(`/api/youtube-shorts/${short._id}/view`);
+      await axios.patch(`/api/youtube-shorts/${review._id}/view`);
     } catch (error) {
       console.error('Error incrementing view count:', error);
     }
     
     // Open modal with embedded video
-    setSelectedShort(short);
+    setSelectedReview(review);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedShort(null);
+    setSelectedReview(null);
   };
 
-  const totalSlides = Math.ceil(shorts.length / shortsPerSlide);
+  const totalSlides = Math.ceil(reviews.length / reviewsPerSlide);
 
   // Reset slide when screen size changes
   useEffect(() => {
@@ -105,22 +105,25 @@ export default function YoutubeShortsSection() {
     );
   }
 
-  if (shorts.length === 0) {
-    return null; // Don't show section if no shorts
+  if (reviews.length === 0) {
+    return null; // Don't show section if no reviews
   }
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            YouTube Shorts
+            Client Reviews
           </h2>
+          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Hear what our clients have to say about their experiences with Rahalatek
+          </p>
         </div>
 
-        {/* Shorts Carousel */}
-        {shorts.length > 0 ? (
+        {/* Reviews Carousel */}
+        {reviews.length > 0 ? (
           <>
             {isDesktop ? (
               // Desktop: Slide-based carousel with arrows and dots
@@ -132,7 +135,7 @@ export default function YoutubeShortsSection() {
                     <button
                       onClick={prevSlide}
                       className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-300 ease-in-out bg-blue-600 hover:bg-blue-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-yellow-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 mr-2 sm:mr-3 md:mr-4"
-                      aria-label="Previous shorts"
+                      aria-label="Previous reviews"
                     >
                       <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -140,7 +143,7 @@ export default function YoutubeShortsSection() {
                     </button>
                   )}
 
-                  {/* Shorts Container */}
+                  {/* Reviews Container */}
                   <div className="flex-1 overflow-hidden" ref={scrollContainerRef}>
                     <div 
                       className="flex transition-transform duration-500 ease-in-out"
@@ -152,24 +155,24 @@ export default function YoutubeShortsSection() {
                           key={slideIndex} 
                           className="w-full flex-shrink-0 grid grid-cols-3 gap-6"
                         >
-                          {/* Short cards for this slide */}
-                          {shorts
-                            .slice(slideIndex * shortsPerSlide, (slideIndex + 1) * shortsPerSlide)
-                            .map((short, shortIndex) => (
+                          {/* Review cards for this slide */}
+                          {reviews
+                            .slice(slideIndex * reviewsPerSlide, (slideIndex + 1) * reviewsPerSlide)
+                            .map((review, reviewIndex) => (
                                 <div
-                                  key={`${slideIndex}-${shortIndex}`}
+                                  key={`${slideIndex}-${reviewIndex}`}
                                   className="group cursor-pointer"
-                                  onClick={() => handleShortClick(short)}
+                                  onClick={() => handleReviewClick(review)}
                                 >
                                 <div className="relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                                   {/* Thumbnail */}
                                   <div className="relative aspect-[9/16] overflow-hidden">
                                     <img
-                                      src={short.thumbnail}
-                                      alt={short.title}
+                                      src={review.thumbnail}
+                                      alt={review.title}
                                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                       onError={(e) => {
-                                        e.target.src = `https://img.youtube.com/vi/${short.videoId}/default.jpg`;
+                                        e.target.src = `https://img.youtube.com/vi/${review.videoId}/default.jpg`;
                                       }}
                                       loading="lazy"
                                     />
@@ -188,24 +191,17 @@ export default function YoutubeShortsSection() {
 
                                     {/* YouTube Shorts Badge - Top right */}
                                     <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                                      Shorts
+                                      Review
                                     </div>
-
-                                    {/* Views count overlay - Top left */}
-                                    {/* <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full">
-                                      <span className="text-white text-xs font-medium">
-                                        {short.views} views
-                                      </span>
-                                    </div> */}
 
                                     {/* Clean title and description overlay */}
                                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                                       <h3 className="text-white font-bold text-sm line-clamp-2 mb-1">
-                                        {short.title}
+                                        {review.title}
                                       </h3>
-                                      {short.description && (
+                                      {review.description && (
                                         <p className="text-gray-200 text-xs line-clamp-2">
-                                          {short.description}
+                                          {review.description}
                                         </p>
                                       )}
                                     </div>
@@ -224,7 +220,7 @@ export default function YoutubeShortsSection() {
                     <button
                       onClick={nextSlide}
                       className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 transition-all duration-300 ease-in-out bg-blue-600 hover:bg-blue-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-yellow-400/50 focus:ring-offset-2 dark:focus:ring-offset-gray-900 z-10 ml-2 sm:ml-3 md:ml-4"
-                      aria-label="Next shorts"
+                      aria-label="Next reviews"
                     >
                       <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -263,22 +259,22 @@ export default function YoutubeShortsSection() {
                   scrollBehavior: 'smooth'
                 }}
               >
-                 {shorts.map((short, index) => (
+                 {reviews.map((review, index) => (
                    <div
-                     key={short._id}
+                     key={review._id}
                      className="flex-shrink-0 w-80 sm:w-80 md:w-80 group cursor-pointer"
                      style={{ animationDelay: `${index * 100}ms` }}
-                     onClick={() => handleShortClick(short)}
+                     onClick={() => handleReviewClick(review)}
                    >
                     <div className="relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group">
                       {/* Thumbnail */}
                       <div className="relative aspect-[9/16] overflow-hidden">
                         <img
-                          src={short.thumbnail}
-                          alt={short.title}
+                          src={review.thumbnail}
+                          alt={review.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           onError={(e) => {
-                            e.target.src = `https://img.youtube.com/vi/${short.videoId}/default.jpg`;
+                            e.target.src = `https://img.youtube.com/vi/${review.videoId}/default.jpg`;
                           }}
                           loading="lazy"
                         />
@@ -297,24 +293,17 @@ export default function YoutubeShortsSection() {
 
                         {/* YouTube Shorts Badge - Top right */}
                         <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                          Shorts
+                          Review
                         </div>
-
-                        {/* Views count overlay - Top left */}
-                        {/* <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full">
-                          <span className="text-white text-xs font-medium">
-                            {short.views} views
-                          </span>
-                        </div> */}
 
                         {/* Clean title and description overlay */}
                         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                           <h3 className="text-white font-bold text-sm line-clamp-2 mb-1">
-                            {short.title}
+                            {review.title}
                           </h3>
-                          {short.description && (
+                          {review.description && (
                             <p className="text-gray-200 text-xs line-clamp-2">
-                              {short.description}
+                              {review.description}
                             </p>
                           )}
                         </div>
@@ -343,7 +332,7 @@ export default function YoutubeShortsSection() {
           </>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No YouTube Shorts available at the moment.</p>
+            <p className="text-gray-500 dark:text-gray-400">No Client Reviews available at the moment.</p>
           </div>
         )}
       </div>
@@ -352,18 +341,18 @@ export default function YoutubeShortsSection() {
       <CustomModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={selectedShort?.title || 'YouTube Short'}
+        title={selectedReview?.title || 'Client Review'}
         subtitle=""
         maxWidth="md:max-w-4xl"
       >
-        {selectedShort && (
+        {selectedReview && (
           <div className="space-y-4">
             {/* Video Container */}
             <div className="relative">
               <div className="aspect-video bg-black rounded-lg overflow-hidden">
                 <iframe
-                  src={`https://www.youtube.com/embed/${selectedShort.videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0`}
-                  title={selectedShort.title}
+                  src={`https://www.youtube.com/embed/${selectedReview.videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0`}
+                  title={selectedReview.title}
                   className="w-full h-full"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -373,16 +362,16 @@ export default function YoutubeShortsSection() {
             </div>
 
             {/* Description */}
-            {selectedShort.description && (
+            {selectedReview.description && (
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {selectedShort.description}
+                {selectedReview.description}
               </p>
             )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-slate-700">
               <CustomButton
-                onClick={() => window.open(selectedShort.youtubeUrl, '_blank')}
+                onClick={() => window.open(selectedReview.youtubeUrl, '_blank')}
                 variant="red"
                 size="sm"
                 icon={FaYoutube}

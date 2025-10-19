@@ -10,14 +10,14 @@ import CustomTable from '../CustomTable';
 import CustomModal from '../CustomModal';
 import toast from 'react-hot-toast';
 
-const YoutubeShortsManagement = () => {
-  const [shorts, setShorts] = useState([]);
+const ReviewsManagement = () => {
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [editingShort, setEditingShort] = useState(null);
-  const [shortToDelete, setShortToDelete] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -30,35 +30,35 @@ const YoutubeShortsManagement = () => {
     isActive: true
   });
 
-  // Fetch shorts
-  const fetchShorts = async () => {
+  // Fetch reviews
+  const fetchReviews = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/youtube-shorts?category=shorts', {
+      const response = await fetch('/api/youtube-shorts?category=reviews', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch YouTube Shorts');
+        throw new Error('Failed to fetch Client Reviews');
       }
 
       const data = await response.json();
-      setShorts(data);
+      setReviews(data);
       setError('');
     } catch (err) {
-      console.error('Error fetching shorts:', err);
-      setError('Failed to load YouTube Shorts');
-      setShorts([]);
+      console.error('Error fetching reviews:', err);
+      setError('Failed to load Client Reviews');
+      setReviews([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchShorts();
+    fetchReviews();
   }, []);
 
   // Reset form
@@ -70,24 +70,24 @@ const YoutubeShortsManagement = () => {
       order: 0,
       isActive: true
     });
-    setEditingShort(null);
+    setEditingReview(null);
   };
 
   // Open modal for creating/editing
-  const openModal = (short = null) => {
-    if (short) {
-      setEditingShort(short);
+  const openModal = (review = null) => {
+    if (review) {
+      setEditingReview(review);
       setFormData({
-        title: short.title,
-        description: short.description || '',
-        youtubeUrl: short.youtubeUrl,
-        order: short.order,
-        isActive: short.isActive
+        title: review.title,
+        description: review.description || '',
+        youtubeUrl: review.youtubeUrl,
+        order: review.order,
+        isActive: review.isActive
       });
     } else {
       resetForm();
       // Find the highest order number and add 1
-      const maxOrder = shorts.length > 0 ? Math.max(...shorts.map(short => short.order)) : 0;
+      const maxOrder = reviews.length > 0 ? Math.max(...reviews.map(review => review.order)) : 0;
       setFormData(prev => ({ ...prev, order: maxOrder + 1 }));
     }
     setModalOpen(true);
@@ -161,17 +161,17 @@ const YoutubeShortsManagement = () => {
       }
 
       const token = localStorage.getItem('token');
-      const url = editingShort 
-        ? `/api/youtube-shorts/${editingShort._id}`
+      const url = editingReview 
+        ? `/api/youtube-shorts/${editingReview._id}`
         : '/api/youtube-shorts';
       
-      const method = editingShort ? 'PUT' : 'POST';
+      const method = editingReview ? 'PUT' : 'POST';
 
       const requestBody = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         youtubeUrl: formData.youtubeUrl.trim(),
-        category: 'shorts',
+        category: 'reviews',
         order: formData.order,
         isActive: formData.isActive
       };
@@ -187,15 +187,15 @@ const YoutubeShortsManagement = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save YouTube Short');
+        throw new Error(errorData.message || 'Failed to save Client Review');
       }
 
       await response.json();
       
       toast.success(
-        editingShort 
-          ? 'YouTube Short updated successfully!' 
-          : 'YouTube Short created successfully!',
+        editingReview 
+          ? 'Client Review updated successfully!' 
+          : 'Client Review created successfully!',
         {
           duration: 3000,
           style: {
@@ -206,14 +206,14 @@ const YoutubeShortsManagement = () => {
         }
       );
       
-      // Refresh shorts list
-      await fetchShorts();
+      // Refresh reviews list
+      await fetchReviews();
       
       // Close modal and reset form
       closeModal();
     } catch (err) {
-      console.error('Error saving short:', err);
-      toast.error(err.message || 'Failed to save YouTube Short', {
+      console.error('Error saving review:', err);
+      toast.error(err.message || 'Failed to save Client Review', {
         duration: 4000,
         style: {
           background: '#f44336',
@@ -228,12 +228,12 @@ const YoutubeShortsManagement = () => {
 
   // Handle delete
   const handleDelete = async () => {
-    if (!shortToDelete) return;
+    if (!reviewToDelete) return;
 
     setDeleting(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/youtube-shorts/${shortToDelete._id}`, {
+      const response = await fetch(`/api/youtube-shorts/${reviewToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -242,11 +242,11 @@ const YoutubeShortsManagement = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete YouTube Short');
+        throw new Error(errorData.message || 'Failed to delete Client Review');
       }
 
       await response.json();
-      toast.success('YouTube Short deleted successfully!', {
+      toast.success('Client Review deleted successfully!', {
         duration: 3000,
         style: {
           background: '#4CAF50',
@@ -255,15 +255,15 @@ const YoutubeShortsManagement = () => {
         }
       });
       
-      // Refresh shorts list
-      await fetchShorts();
+      // Refresh reviews list
+      await fetchReviews();
       
       // Close delete modal
       setDeleteModalOpen(false);
-      setShortToDelete(null);
+      setReviewToDelete(null);
     } catch (err) {
-      console.error('Error deleting short:', err);
-      toast.error('Failed to delete YouTube Short', {
+      console.error('Error deleting review:', err);
+      toast.error('Failed to delete Client Review', {
         duration: 4000,
         style: {
           background: '#f44336',
@@ -277,18 +277,18 @@ const YoutubeShortsManagement = () => {
   };
 
   // Toggle active status
-  const toggleActiveStatus = async (short) => {
+  const toggleActiveStatus = async (review) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/youtube-shorts/${short._id}`, {
+      const response = await fetch(`/api/youtube-shorts/${review._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...short,
-          isActive: !short.isActive
+          ...review,
+          isActive: !review.isActive
         })
       });
 
@@ -299,7 +299,7 @@ const YoutubeShortsManagement = () => {
 
       await response.json();
       toast.success(
-        `Short ${!short.isActive ? 'activated' : 'deactivated'} successfully!`,
+        `Review ${!review.isActive ? 'activated' : 'deactivated'} successfully!`,
         {
           duration: 3000,
           style: {
@@ -310,11 +310,11 @@ const YoutubeShortsManagement = () => {
         }
       );
       
-      // Refresh shorts list
-      await fetchShorts();
+      // Refresh reviews list
+      await fetchReviews();
     } catch (err) {
       console.error('Error toggling status:', err);
-      toast.error('Failed to update short status', {
+      toast.error('Failed to update review status', {
         duration: 4000,
         style: {
           background: '#f44336',
@@ -328,62 +328,62 @@ const YoutubeShortsManagement = () => {
   // Table headers and render function
   const headers = ['Preview', 'Title', 'Description', 'Order', 'Views', 'Status', 'Actions'];
 
-  const renderRow = (short) => (
+  const renderRow = (review) => (
     <>
       <Table.Cell className="px-4 py-3">
         <img
-          src={short.thumbnail}
-          alt={short.title}
+          src={review.thumbnail}
+          alt={review.title}
           className="w-20 h-36 object-cover rounded border"
           onError={(e) => {
-            e.target.src = `https://img.youtube.com/vi/${short.videoId}/default.jpg`;
+            e.target.src = `https://img.youtube.com/vi/${review.videoId}/default.jpg`;
           }}
         />
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <div className="font-medium text-gray-900 dark:text-white max-w-xs">
-          {short.title}
+          {review.title}
         </div>
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <div className="max-w-md text-gray-600 dark:text-gray-400 text-sm">
-          {short.description || '-'}
+          {review.description || '-'}
         </div>
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-          {short.order}
+          {review.order}
         </span>
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-          {short.views}
+          {review.views}
         </span>
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <button
-          onClick={() => toggleActiveStatus(short)}
+          onClick={() => toggleActiveStatus(review)}
           className={`inline-flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-            short.isActive
+            review.isActive
               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800'
               : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
           }`}
         >
-          {short.isActive ? <FaEye /> : <FaEyeSlash />}
-          {short.isActive ? 'Active' : 'Inactive'}
+          {review.isActive ? <FaEye /> : <FaEyeSlash />}
+          {review.isActive ? 'Active' : 'Inactive'}
         </button>
       </Table.Cell>
       <Table.Cell className="px-4 py-3">
         <div className="flex items-center gap-2">
           <CustomButton
-            onClick={() => openModal(short)}
+            onClick={() => openModal(review)}
             variant="purple"
             size="xs"
             icon={FaEdit}
           />
           <CustomButton
             onClick={() => {
-              setShortToDelete(short);
+              setReviewToDelete(review);
               setDeleteModalOpen(true);
             }}
             variant="red"
@@ -417,7 +417,7 @@ const YoutubeShortsManagement = () => {
           >
             <div className="flex items-center gap-2">
               <FaPlus className="w-3 h-3" />
-              <span>Add YouTube Short</span>
+              <span>Add Client Review</span>
             </div>
           </CustomButton>
       </div>
@@ -429,12 +429,12 @@ const YoutubeShortsManagement = () => {
         </div>
       )}
 
-      {/* Shorts Table */}
-      {shorts.length === 0 ? (
+      {/* Reviews Table */}
+      {reviews.length === 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-12 text-center">
           <FaYoutube className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            No YouTube Shorts added yet. Click "Add YouTube Short" to get started.
+            No Client Reviews added yet. Click "Add Client Review" to get started.
           </p>
         </div>
       ) : (
@@ -442,19 +442,19 @@ const YoutubeShortsManagement = () => {
           {/* Desktop Table View */}
           <div className="hidden lg:block">
             <CustomTable
-              data={shorts}
+              data={reviews}
               headers={headers}
               renderRow={renderRow}
-              emptyMessage="No YouTube Shorts found"
+              emptyMessage="No Client Reviews found"
               emptyIcon={FaYoutube}
             />
           </div>
 
           {/* Mobile/Tablet Cards View */}
           <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-            {shorts.map((short, index) => (
+            {reviews.map((review, index) => (
               <div
-                key={short._id}
+                key={review._id}
                 className="bg-white dark:bg-slate-900 rounded-lg p-4 border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -462,20 +462,20 @@ const YoutubeShortsManagement = () => {
                   {/* Image and Title */}
                   <div className="flex gap-3">
                     <img
-                      src={short.thumbnail}
-                      alt={short.title}
+                      src={review.thumbnail}
+                      alt={review.title}
                       className="w-24 h-36 object-cover rounded flex-shrink-0"
                       onError={(e) => {
-                        e.target.src = `https://img.youtube.com/vi/${short.videoId}/default.jpg`;
+                        e.target.src = `https://img.youtube.com/vi/${review.videoId}/default.jpg`;
                       }}
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 dark:text-white text-sm mb-2">
-                        {short.title}
+                        {review.title}
                       </h3>
-                      {short.description && (
+                      {review.description && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-3">
-                          {short.description}
+                          {review.description}
                         </p>
                       )}
                     </div>
@@ -484,33 +484,33 @@ const YoutubeShortsManagement = () => {
                   {/* Badges */}
                   <div className="flex flex-wrap gap-2">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                      Order: {short.order}
+                      Order: {review.order}
                     </span>
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                      {short.views} views
+                      {review.views} views
                     </span>
                     <button
-                      onClick={() => toggleActiveStatus(short)}
+                      onClick={() => toggleActiveStatus(review)}
                       className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full transition-colors ${
-                        short.isActive
+                        review.isActive
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                       }`}
                     >
-                      {short.isActive ? <FaEye className="w-3 h-3" /> : <FaEyeSlash className="w-3 h-3" />}
-                      {short.isActive ? 'Active' : 'Inactive'}
+                      {review.isActive ? <FaEye className="w-3 h-3" /> : <FaEyeSlash className="w-3 h-3" />}
+                      {review.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </div>
 
                   {/* Meta Info */}
                   <div className="text-xs text-gray-500 dark:text-gray-400 pb-2 border-b border-gray-200 dark:border-slate-700">
-                    Created by {short.createdBy?.username || 'Unknown'}
+                    Created by {review.createdBy?.username || 'Unknown'}
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-2">
                     <CustomButton
-                      onClick={() => openModal(short)}
+                      onClick={() => openModal(review)}
                       variant="purple"
                       size="sm"
                       className="flex-1"
@@ -520,7 +520,7 @@ const YoutubeShortsManagement = () => {
                     </CustomButton>
                     <CustomButton
                       onClick={() => {
-                        setShortToDelete(short);
+                        setReviewToDelete(review);
                         setDeleteModalOpen(true);
                       }}
                       variant="red"
@@ -542,7 +542,8 @@ const YoutubeShortsManagement = () => {
       <CustomModal
         isOpen={modalOpen}
         onClose={closeModal}
-        title={editingShort ? 'Edit YouTube Short' : 'Add YouTube Short'}
+        title={editingReview ? 'Edit Client Review' : 'Add Client Review'}
+        subtitle=""
         maxWidth="md:max-w-3xl"
       >
         <div className="p-6">
@@ -553,7 +554,7 @@ const YoutubeShortsManagement = () => {
               label="Title *"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter short title"
+              placeholder="Enter review title"
               required
               maxLength={100}
             />
@@ -594,7 +595,7 @@ const YoutubeShortsManagement = () => {
               label="Description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter short description (optional)"
+              placeholder="Enter review description (optional)"
               maxLength={300}
               as="textarea"
               rows={3}
@@ -618,7 +619,7 @@ const YoutubeShortsManagement = () => {
             {/* Active Status */}
             <div>
               <CustomCheckbox
-                label="Active (Display on homepage)"
+                label="Active (Display on About Us page)"
                 checked={formData.isActive}
                 onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
               />
@@ -642,7 +643,7 @@ const YoutubeShortsManagement = () => {
               loading={submitting}
             >
               {!submitting && <FaSave className="mr-2" />}
-              {editingShort ? 'Update Short' : 'Add Short'}
+              {editingReview ? 'Update Review' : 'Add Review'}
             </CustomButton>
           </div>
         </div>
@@ -653,15 +654,16 @@ const YoutubeShortsManagement = () => {
         show={deleteModalOpen}
         onClose={() => {
           setDeleteModalOpen(false);
-          setShortToDelete(null);
+          setReviewToDelete(null);
         }}
         onConfirm={handleDelete}
-        itemType="YouTube Short"
-        itemName={shortToDelete?.title || ''}
+        itemType="Client Review"
+        itemName={reviewToDelete?.title || ''}
         isLoading={deleting}
       />
     </div>
   );
 };
 
-export default YoutubeShortsManagement;
+export default ReviewsManagement;
+

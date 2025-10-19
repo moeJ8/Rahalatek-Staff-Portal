@@ -3,7 +3,8 @@ const YoutubeShort = require('../models/YoutubeShort');
 // Get all YouTube Shorts for admin
 exports.getAllShorts = async (req, res) => {
   try {
-    const shorts = await YoutubeShort.getAllShortsForAdmin();
+    const { category } = req.query;
+    const shorts = await YoutubeShort.getAllShortsForAdmin(category);
     res.status(200).json(shorts);
   } catch (error) {
     console.error('Error fetching YouTube Shorts:', error);
@@ -14,7 +15,8 @@ exports.getAllShorts = async (req, res) => {
 // Get active YouTube Shorts for public display
 exports.getActiveShorts = async (req, res) => {
   try {
-    const shorts = await YoutubeShort.getActiveShorts();
+    const { category } = req.query;
+    const shorts = await YoutubeShort.getActiveShorts(category || 'shorts');
     res.status(200).json(shorts);
   } catch (error) {
     console.error('Error fetching active YouTube Shorts:', error);
@@ -44,7 +46,7 @@ exports.getShortById = async (req, res) => {
 // Create new YouTube Short
 exports.createShort = async (req, res) => {
   try {
-    const { title, description, youtubeUrl, order, isActive } = req.body;
+    const { title, description, youtubeUrl, category, order, isActive } = req.body;
     
     // Validate required fields
     if (!title || !youtubeUrl) {
@@ -55,6 +57,7 @@ exports.createShort = async (req, res) => {
       title,
       description,
       youtubeUrl,
+      category: category || 'shorts',
       order: order || 0,
       isActive: isActive !== undefined ? isActive : true,
       createdBy: req.user.userId
@@ -92,7 +95,7 @@ exports.createShort = async (req, res) => {
 exports.updateShort = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, youtubeUrl, order, isActive } = req.body;
+    const { title, description, youtubeUrl, category, order, isActive } = req.body;
     
     const short = await YoutubeShort.findById(id);
     
@@ -104,6 +107,7 @@ exports.updateShort = async (req, res) => {
     if (title !== undefined) short.title = title;
     if (description !== undefined) short.description = description;
     if (youtubeUrl !== undefined) short.youtubeUrl = youtubeUrl;
+    if (category !== undefined) short.category = category;
     if (order !== undefined) short.order = order;
     if (isActive !== undefined) short.isActive = isActive;
     short.updatedBy = req.user.userId;

@@ -6,6 +6,7 @@ import Statistics from '../../components/Visitors/Statistics';
 import WhyChooseUs from '../../components/Visitors/WhyChooseUs';
 import ServicesSection from '../../components/Visitors/ServicesSection';
 import BranchesSection from '../../components/Visitors/BranchesSection';
+import ClientReviewsSection from '../../components/Visitors/ClientReviewsSection';
 import PartnersSection from '../../components/PartnersSection';
 import CTASection from '../../components/Visitors/CTASection';
 
@@ -46,6 +47,11 @@ const AboutUsPage = () => {
       {/* Mission, Vision & Values */}
       <MissionVisionValues />
       
+      {/* Branches Section */}
+      <div className="-mt-12">
+        <BranchesSection />
+      </div>
+      
       {/* Statistics */}
       <Statistics />
       
@@ -53,12 +59,12 @@ const AboutUsPage = () => {
       <WhyChooseUs />
       
       {/* Our Services */}
-      <div className="bg-gray-50 dark:bg-slate-900 -mt-12">
+      <div className="-mt-12 bg-white dark:bg-slate-950">
         <ServicesSection />
       </div>
       
-      {/* Branches Section */}
-      <BranchesSection />
+      {/* Client Reviews Section */}
+      <ClientReviewsSection />
       
       {/* Partners Section */}
       <div className="bg-white dark:bg-slate-950">
