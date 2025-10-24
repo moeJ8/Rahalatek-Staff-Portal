@@ -1,0 +1,1950 @@
+{
+  "header": {
+    "home": "Startseite",
+    "hotels": "Hotels",
+    "tours": "Touren",
+    "packages": "Pakete",
+    "blog": "Blog",
+    "contact": "Kontakt",
+    "about": "Über uns",
+    "signIn": "Anmelden",
+    "dashboard": "Dashboard",
+    "booking": "Buchung",
+    "vouchers": "Gutscheine",
+    "profile": "Profil",
+    "attendance": "Anwesenheit",
+    "calendar": "Kalender",
+    "logout": "Abmelden",
+    "publicPages": "Öffentliche Seiten",
+    "more": "Mehr",
+    "theme": "Design"
+  },
+  "search": {
+    "placeholder": "Reiseziele, Hotels, Touren, Beiträge suchen...",
+    "placeholderMobile": "Reiseziele, Hotels, Beiträge suchen...",
+    "title": "Reiseziele, Hotels, Touren & mehr entdecken",
+    "searchResults": "Suchergebnisse",
+    "search": "Suchen",
+    "loading": "Laden...",
+    "searching": "Suche läuft...",
+    "startTyping": "Beginnen Sie mit der Eingabe zu suchen",
+    "discoverFull": "Entdecken Sie Hotels, Touren, Pakete & Reiseziele",
+    "discoverMobile": "Entdecken Sie fantastische Hotels, Touren & Reiseziele",
+    "noResults": "Keine Ergebnisse gefunden",
+    "tryDifferent": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie unsere Reiseziele",
+    "tryDifferentMobile": "Versuchen Sie andere Suchbegriffe oder durchsuchen Sie Reiseziele",
+    "found": "gefunden",
+    "result": "Ergebnis",
+    "results": "Ergebnisse",
+    "hotel": "Hotel",
+    "tour": "Tour",
+    "package": "Paket",
+    "blogPost": "Blog-Beitrag",
+    "city": "Stadt",
+    "country": "Land",
+    "stars": "Sterne",
+    "days": "Tage",
+    "toursCount": "Touren",
+    "hotelsCount": "Hotels",
+    "exploreDestinations": "Reiseziele erkunden in"
+  },
+  "home": {
+    "destinations": {
+      "title": "Entdecken Sie unsere Reiseziele",
+      "subtitle": "Erkunden Sie fantastische Länder und schaffen Sie unvergessliche Erinnerungen"
+    },
+    "services": {
+      "title": "Unsere Dienstleistungen",
+      "subtitle": "Entdecken Sie unsere breite Palette an Premium-Tourismusdienstleistungen"
+    },
+    "packages": {
+      "title": "Entdecken Sie unsere Programme"
+    },
+    "hotels": {
+      "title": "Empfohlene Hotels",
+      "viewAll": "Alle Hotels anzeigen"
+    },
+    "tours": {
+      "title": "Empfohlene Touren",
+      "viewAll": "Alle Touren anzeigen"
+    },
+    "blog": {
+      "title": "Neueste Beiträge",
+      "viewAll": "Alle Beiträge anzeigen"
+    },
+    "youtube": {
+      "title": "YouTube Shorts",
+      "scrollHint": "Scrollen Sie, um mehr zu sehen",
+      "watchOnYoutube": "Auf YouTube ansehen",
+      "close": "Schließen"
+    },
+    "partners": {
+      "title": "Unsere Partner",
+      "subtitle": "Vertraut von führenden Marken weltweit"
+    }
+  },
+  "hotelsPage": {
+    "title": "Unsere Hotels",
+    "subtitle": "Entdecken Sie unsere Sammlung von Premium-Hotels und Unterkünften",
+    "searchPlaceholder": "Nach Name, Stadt oder Beschreibung suchen...",
+    "filterByStars": "Nach Sternen filtern",
+    "filterByCountry": "Nach Land filtern",
+    "filterByCity": "Nach Stadt filtern",
+    "clearFilters": "Filter löschen",
+    "star": "Stern",
+    "stars": "Sterne",
+    "showingPage": "Zeige Seite",
+    "of": "von",
+    "hotelsTotal": "Hotels insgesamt",
+    "noHotelsFound": "Keine Hotels gefunden",
+    "noHotelsAvailable": "Keine Hotels verfügbar",
+    "checkBackLater": "Bitte schauen Sie später wieder vorbei für unsere neuesten Hotelangebote."
+  },
+  "packagesPage": {
+    "title": "Reisepakete",
+    "filters": "Filter",
+    "active": "Aktiv",
+    "recentPackages": "Neueste Pakete",
+    "searchAndFilter": "Suchen & Filtern",
+    "searchPlaceholder": "Pakete suchen...",
+    "country": "Land",
+    "allCountries": "Alle Länder",
+    "city": "Stadt",
+    "allCities": "Alle Städte",
+    "targetAudience": "Zielgruppe",
+    "allAudiences": "Alle Zielgruppen",
+    "family": "Familie",
+    "couples": "Paare",
+    "soloTravelers": "Alleinreisende",
+    "groups": "Gruppen",
+    "business": "Geschäftlich",
+    "luxury": "Luxus",
+    "budget": "Budget",
+    "duration": "Dauer",
+    "anyDuration": "Beliebige Dauer",
+    "shortDuration": "Kurz (bis zu 3 Tage)",
+    "mediumDuration": "Mittel (4-7 Tage)",
+    "longDuration": "Lang (8+ Tage)",
+    "clearFilters": "Filter löschen",
+    "showingPage": "Zeige Seite",
+    "of": "von",
+    "packagesTotal": "Pakete insgesamt",
+    "noPackagesFound": "Keine Pakete gefunden",
+    "day": "Tag",
+    "days": "Tage",
+    "noPackagesFoundTitle": "Keine Pakete gefunden",
+    "noPackagesFoundMessage": "Keine Pakete entsprechen Ihren aktuellen Filtern. Versuchen Sie, Ihre Suchkriterien anzupassen."
+  },
+  "toursPage": {
+    "title": "Unsere Touren",
+    "subtitle": "Entdecken Sie unsere aufregende Sammlung von geführten Touren und Erlebnissen",
+    "filters": "Filter",
+    "active": "Aktiv",
+    "featuredTours": "Empfohlene Touren",
+    "searchAndFilter": "Suchen & Filtern",
+    "searchPlaceholder": "Touren suchen...",
+    "country": "Land",
+    "allCountries": "Alle Länder",
+    "city": "Stadt",
+    "allCities": "Alle Städte",
+    "tourType": "Tourtyp",
+    "allTypes": "Alle Typen",
+    "groupTours": "Gruppentouren",
+    "vipTours": "VIP-Touren",
+    "duration": "Dauer",
+    "allDurations": "Alle Dauern",
+    "shortDuration": "Kurz (bis zu 3 Stunden)",
+    "mediumDuration": "Mittel (3-6 Stunden)",
+    "longDuration": "Lang (6+ Stunden)",
+    "clearFilters": "Filter löschen",
+    "showingPage": "Zeige Seite",
+    "of": "von",
+    "toursTotal": "Touren insgesamt",
+    "highlights": "Höhepunkte:",
+    "contactForPricing": "Preis auf Anfrage",
+    "views": "Aufrufe",
+    "noToursAvailable": "Keine Touren verfügbar",
+    "noToursFiltered": "Keine Touren entsprechen Ihren aktuellen Filtern. Versuchen Sie, Ihre Suchkriterien anzupassen.",
+    "noToursYet": "Bitte schauen Sie später wieder vorbei für unsere neuesten Tourenangebote."
+  },
+  "blogPage": {
+    "title": "Rahalatek Blog",
+    "filters": "Filter",
+    "active": "Aktiv",
+    "recentPostsAndTags": "Neueste Beiträge & Tags",
+    "searchAndFilter": "Suchen & Filtern",
+    "searchPlaceholder": "Blogs suchen...",
+    "allCategories": "Alle Kategorien",
+    "category": "Kategorie",
+    "allTags": "Alle Tags",
+    "tag": "Tag",
+    "mostPopularPosts": "Beliebteste Beiträge",
+    "clearFilters": "Filter löschen",
+    "showingPage": "Zeige Seite",
+    "of": "von",
+    "blogsTotal": "Blogs insgesamt",
+    "recentPosts": "Neueste Beiträge",
+    "popularTags": "Beliebte Tags",
+    "featuredPosts": "Empfohlene Beiträge",
+    "readArticle": "Artikel lesen",
+    "min": "Min",
+    "noBlogsFound": "Keine Blogs gefunden",
+    "noBlogsMessage": "Keine Blogs entsprechen Ihren aktuellen Filtern. Versuchen Sie, Ihre Suchkriterien anzupassen."
+  },
+  "contactPage": {
+    "title": "Kontakt aufnehmen",
+    "subtitle": "Haben Sie Fragen zu unseren Touren, Hotels oder Paketen? Wir sind hier, um Ihnen bei der Planung Ihrer perfekten Reise zu helfen.",
+    "contactInformation": "Kontaktinformationen",
+    "contactDescription": "Kontaktieren Sie uns über einen der folgenden Kanäle. Wir sind verfügbar, um Ihnen bei Ihren Reisebedürfnissen zu helfen.",
+    "phone": "Rufen Sie uns an",
+    "whatsapp": "WhatsApp",
+    "email": "E-Mail",
+    "instagram": "Instagram",
+    "followYoutube": "Folgen Sie uns auf YouTube",
+    "youtubeDescription": "Abonnieren Sie unseren Kanal für Reisetipps, Reisezielführer und exklusive Tour-Highlights!"
+  },
+  "contactForm": {
+    "title": "Senden Sie uns eine Nachricht",
+    "subtitle": "Haben Sie Fragen? Wir freuen uns von Ihnen zu hören!",
+    "yourName": "Ihr Name",
+    "namePlaceholder": "Geben Sie Ihren Namen ein",
+    "emailAddress": "E-Mail-Adresse",
+    "emailPlaceholder": "Geben Sie Ihre E-Mail ein",
+    "subject": "Betreff",
+    "subjectPlaceholder": "Tour-Anfrage, Buchungsanfrage, Reiseberatung, etc.",
+    "message": "Nachricht",
+    "messagePlaceholder": "Erzählen Sie uns von Ihren Reiseplänen, Tour-Präferenzen oder Fragen zu unseren Dienstleistungen...",
+    "sending": "Senden...",
+    "sendMessage": "Nachricht senden",
+    "inquiryAbout": "Anfrage bezüglich",
+    "validationError": "Bitte füllen Sie alle erforderlichen Felder korrekt aus",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "successMessage": "Nachricht erfolgreich gesendet! Wir melden uns bald bei Ihnen.",
+    "errorMessage": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+  },
+  "aboutPage": {
+    "companyStory": {
+      "title": "Unsere Geschichte",
+      "subtitle": "Eine Reise, die mit Leidenschaft und Hingabe zur Schaffung unvergesslicher Reiseerlebnisse begann",
+      "imageOverlay": "Außergewöhnlicher Service, unvergessliche Reisen",
+      "paragraph1": "Gegründet mit der Vision, Reisende mit dem reichen kulturellen Erbe und atemberaubenden Landschaften der Türkei und darüber hinaus zu verbinden,",
+      "rahalatek": "Rahalatek",
+      "paragraph1End": "ist von bescheidenen Anfängen zu einem vertrauenswürdigen Namen in der Tourismusbranche gewachsen.",
+      "paragraph2": "Was als kleiner Betrieb in Istanbul begann, ist zu einem umfassenden Reisedienstleister gewachsen, der Tausende zufriedener Reisender aus aller Welt bedient. Unser Engagement für Exzellenz und persönlichen Service hat uns zur bevorzugten Wahl für Touristen gemacht, die authentische und unvergessliche Erlebnisse suchen.",
+      "paragraph3": "Heute operieren wir in mehreren Ländern und bieten eine vielfältige Palette von Dienstleistungen von Luxushotelbuchungen bis hin zu fachkundig geführten Touren, wobei wir die persönliche Note beibehalten, die von Anfang an unser Markenzeichen war."
+    },
+    "missionVision": {
+      "mission": "Unsere Mission",
+      "missionText": "Außergewöhnliche Reiseerlebnisse zu liefern, die bleibende Erinnerungen schaffen und Reisende mit dem reichen kulturellen Erbe, der natürlichen Schönheit und der warmen Gastfreundschaft der Türkei und darüber hinaus verbinden. Wir streben danach, jede Reise nahtlos, bereichernd und unvergesslich zu gestalten.",
+      "vision": "Unsere Vision",
+      "visionText": "Die führende Reiseagentur zu sein, die global für unser Engagement für Exzellenz, Innovation und persönlichen Service anerkannt wird. Wir stellen uns eine Welt vor, in der jeder Reisende die Magie der Entdeckung durch unsere sorgfältig kuratierten Reisen und unser unerschütterliches Engagement für ihre Zufriedenheit erlebt.",
+      "coreValues": "Unsere Grundwerte",
+      "coreValuesSubtitle": "Die Prinzipien, die jede unserer Entscheidungen und Handlungen leiten",
+      "customerFirst": "Kunde zuerst",
+      "customerFirstDesc": "Ihre Zufriedenheit hat in allem, was wir tun, oberste Priorität",
+      "qualityService": "Qualitätsservice",
+      "qualityServiceDesc": "Wir liefern Exzellenz in jedem Aspekt Ihrer Reise",
+      "trustTransparency": "Vertrauen & Transparenz",
+      "trustTransparencyDesc": "Aufbau dauerhafter Beziehungen durch Ehrlichkeit und Integrität",
+      "safetySecurity": "Sicherheit & Schutz",
+      "safetySecurityDesc": "Ihre Sicherheit und Ihr Komfort sind immer garantiert"
+    },
+    "statistics": {
+      "title": "Unsere Erfolge in Zahlen",
+      "subtitle": "Stolze Meilensteine, die unser Engagement für Exzellenz widerspiegeln",
+      "happyTravelers": "Zufriedene Reisende",
+      "toursConducted": "Durchgeführte Touren",
+      "hotelPartners": "Hotelpartner",
+      "additionalInfo": "Diese Zahlen repräsentieren mehr als nur Statistiken – sie repräsentieren Tausende von Lächeln, unvergessliche Erinnerungen und Reisen, die Herzen auf der ganzen Welt berührt haben."
+    },
+    "branches": {
+      "title": "Unsere globale Präsenz",
+      "subtitle": "Bedienung von Reisenden weltweit aus unseren strategisch gelegenen Niederlassungen",
+      "openingSoon": "Eröffnung bald",
+      "countries": {
+        "saudiArabia": "Saudi-Arabien",
+        "syria": "Syrien",
+        "turkey": "Türkei",
+        "morocco": "Marokko",
+        "kuwait": "Kuwait"
+      },
+      "cities": {
+        "aleppo": "Aleppo",
+        "istanbul": "Istanbul",
+        "tangier": "Tanger"
+      }
+    },
+    "whyChooseUs": {
+      "title": "Warum Rahalatek wählen?",
+      "subtitle": "Entdecken Sie, was uns auszeichnet und uns zur bevorzugten Wahl für Tausende von Reisenden weltweit macht",
+      "yearsOfExperience": "Jahre Erfahrung",
+      "yearsOfExperienceDesc": "Über ein Jahrzehnt Expertise in der Schaffung unvergesslicher Reiseerlebnisse",
+      "support247": "24/7 Support",
+      "support247Desc": "Rund-um-die-Uhr-Unterstützung, um sicherzustellen, dass Ihre Reise reibungslos und sorgenfrei verläuft",
+      "expertTeam": "Expertenteam",
+      "expertTeamDesc": "Professionelle mehrsprachige Führer, die Reiseziele zum Leben erwecken",
+      "bestPrices": "Beste Preise",
+      "bestPricesDesc": "Wettbewerbsfähige Preise ohne Kompromisse bei Qualität und Service",
+      "tailoredPackages": "Maßgeschneiderte Pakete",
+      "tailoredPackagesDesc": "Angepasste Reiserouten, die speziell für Ihre Präferenzen entwickelt wurden",
+      "safetyFirst": "Sicherheit zuerst",
+      "safetyFirstDesc": "Ihre Sicherheit und Ihr Schutz haben höchste Priorität",
+      "experienceTitle": "Erleben Sie den Unterschied",
+      "experienceText": "Schließen Sie sich Tausenden zufriedener Reisender an, die uns vertraut haben, ihre perfekte Reise zu schaffen",
+      "startPlanning": "Beginnen Sie mit der Planung Ihrer Reise",
+      "viewPackages": "Unsere Pakete anzeigen"
+    },
+    "clientReviews": {
+      "title": "Kundenbewertungen",
+      "subtitle": "Hören Sie, was unsere Kunden über ihre Erfahrungen mit Rahalatek zu sagen haben",
+      "review": "Bewertung",
+      "scrollHint": "Scrollen Sie, um mehr zu sehen",
+      "noReviews": "Derzeit sind keine Kundenbewertungen verfügbar.",
+      "watchOnYoutube": "Auf YouTube ansehen",
+      "close": "Schließen"
+    },
+    "cta": {
+      "badge": "✈️ Starten Sie heute Ihr Abenteuer",
+      "title1": "Bereit, unvergessliche",
+      "title2": "Erinnerungen zu schaffen?",
+      "description": "Lassen Sie uns die perfekte Reise für Sie gestalten. Von atemberaubenden Reisezielen bis hin zu außergewöhnlichem Service ist Ihr Traumurlaub nur einen Klick entfernt.",
+      "getStarted": "Jetzt loslegen",
+      "explorePackages": "Pakete erkunden",
+      "reachUs": "Oder kontaktieren Sie uns direkt:",
+      "whatsapp": "WhatsApp",
+      "email": "E-Mail",
+      "call": "Anrufen"
+    }
+  },
+  "footer": {
+    "companyDescription": "Ihr vertrauenswürdiger Partner für unvergessliche Reiseerlebnisse in der Türkei, Asien und darüber hinaus.",
+    "quickAccess": "Schnellzugriff",
+    "explore": "Erkunden",
+    "home": "Startseite",
+    "booking": "Buchung",
+    "vouchers": "Gutscheine",
+    "dashboard": "Dashboard",
+    "hotels": "Hotels",
+    "tours": "Touren",
+    "packages": "Pakete",
+    "blog": "Blog",
+    "topDestinations": "Top-Reiseziele",
+    "turkey": "Türkei",
+    "malaysia": "Malaysia",
+    "thailand": "Thailand",
+    "indonesia": "Indonesien",
+    "company": "Unternehmen",
+    "aboutUs": "Über uns",
+    "contactUs": "Kontaktieren Sie uns",
+    "social": "Sozial",
+    "copyright": "Rahalatek. Alle Rechte vorbehalten.",
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "termsOfService": "Nutzungsbedingungen",
+    "support": "Support",
+    "istanbul": "Istanbul, Türkei"
+  },
+  "countryPage": {
+    "backToHomepage": "Zurück zur Startseite",
+    "about": "Über",
+    "popularCities": "Beliebte Städte",
+    "noCitiesAvailable": "Keine Städte verfügbar",
+    "workingOnCities": "Wir arbeiten daran, beliebte Städte für",
+    "tour": "Tour",
+    "tours": "Touren",
+    "hotel": "Hotel",
+    "hotels": "Hotels",
+    "cities": {
+      "Istanbul": "Istanbul",
+      "Antalya": "Antalya",
+      "Trabzon": "Trabzon",
+      "Bursa": "Bursa",
+      "Izmir": "Izmir",
+      "Ankara": "Ankara",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Marmaris": "Marmaris",
+      "Kusadasi": "Kusadasi",
+      "Cappadocia": "Kappadokien",
+      "Pamukkale": "Pamukkale",
+      "Konya": "Konya",
+      "Alanya": "Alanya",
+      "Side": "Side",
+      "Belek": "Belek",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malakka",
+      "Johor Bahru": "Johor Bahru",
+      "Kota Kinabalu": "Kota Kinabalu",
+      "Bangkok": "Bangkok",
+      "Phuket": "Phuket",
+      "Chiang Mai": "Chiang Mai",
+      "Pattaya": "Pattaya",
+      "Krabi": "Krabi",
+      "Koh Samui": "Koh Samui",
+      "Bali": "Bali",
+      "Jakarta": "Jakarta",
+      "Yogyakarta": "Yogyakarta",
+      "Lombok": "Lombok",
+      "Bandung": "Bandung",
+      "Riyadh": "Riad",
+      "Jeddah": "Dschidda",
+      "Makkah": "Mekka",
+      "Madinah": "Medina",
+      "Dammam": "Dammam",
+      "Taif": "Taif",
+      "AlUla": "AlUla",
+      "Marrakech": "Marrakesch",
+      "Casablanca": "Casablanca",
+      "Fes": "Fes",
+      "Tangier": "Tanger",
+      "Chefchaouen": "Chefchaouen",
+      "Rabat": "Rabat",
+      "Essaouira": "Essaouira",
+      "Cairo": "Kairo",
+      "Luxor": "Luxor",
+      "Aswan": "Assuan",
+      "Alexandria": "Alexandria",
+      "Sharm El Sheikh": "Sharm El Sheikh",
+      "Hurghada": "Hurghada",
+      "Baku": "Baku",
+      "Gabala": "Gabala",
+      "Sheki": "Sheki",
+      "Tbilisi": "Tiflis",
+      "Batumi": "Batumi",
+      "Kazbegi": "Kasbegi",
+      "Mtskheta": "Mtskheta",
+      "Tirana": "Tirana",
+      "Sarande": "Saranda",
+      "Berat": "Berat",
+      "Gjirokaster": "Gjirokastra",
+      "Ksamil": "Ksamil"
+    },
+    "featuredTours": "Empfohlene Touren",
+    "viewAllTours": "Alle Touren anzeigen",
+    "noToursAvailable": "Keine Touren verfügbar",
+    "workingOnTours": "Wir arbeiten daran, fantastische Touren für",
+    "checkBackSoon": "Schauen Sie bald wieder vorbei!",
+    "highlights": "Höhepunkte:",
+    "contactForPricing": "Preis auf Anfrage",
+    "featuredHotels": "Empfohlene Hotels",
+    "viewAllHotels": "Alle Hotels anzeigen",
+    "noHotelsAvailable": "Keine Hotels verfügbar",
+    "workingOnHotels": "Wir arbeiten daran, Luxusunterkünfte für",
+    "returnToHomepage": "Zurück zur Startseite",
+    "error": "Fehler",
+    "countryNames": {
+      "Turkey": "Türkei",
+      "Malaysia": "Malaysia",
+      "Thailand": "Thailand",
+      "Indonesia": "Indonesien",
+      "Saudi Arabia": "Saudi-Arabien",
+      "Morocco": "Marokko",
+      "Egypt": "Ägypten",
+      "Azerbaijan": "Aserbaidschan",
+      "Georgia": "Georgien",
+      "Albania": "Albanien"
+    },
+    "countries": {
+      "Turkey": "Entdecken Sie die Türkei, wo Ost und West auf die spektakulärste Weise imaginierbar aufeinandertreffen. Dieser transkontinentale Schatz verbindet Europa und Asien und bietet Reisenden eine berauschende Mischung aus antiken Wundern, atemberaubenden Küstenlinien und warmer mediterraner Gastfreundschaft. Beginnen Sie Ihr türkisches Abenteuer in Istanbul, der einzigen Stadt, die zwei Kontinente überspannt, wo byzantinische Kirchen neben osmanischen Moscheen stehen und traditionelle Basare neben trendigen Dachbars liegen. Kreuzen Sie durch die Bosporus-Straße, erkunden Sie kaiserliche Paläste und verlieren Sie sich in den labyrinthischen Gassen des Großen Basars. Reisen Sie nach Süden zur sonnenverwöhnten türkischen Riviera, wo Antalyas unberührte Strände und antike Ruinen das perfekte mediterrane Refugium schaffen—über 300 Sonnentage jährlich garantieren perfektes Strandwetter. Erleben Sie Kappadokiens außerirdische Landschaft, wo Millionen Jahre vulkanischer Aktivität Feenkamine und Felsformationen geschaffen haben, die wie aus einem Traum zu stammen scheinen. Schweben Sie über dieses magische Terrain in einem Heißluftballon bei Sonnenaufgang, übernachten Sie in luxuriösen Höhlenhotels und erkunden Sie unterirdische Städte, die in den Fels gehauen wurden. Fahren Sie zur Schwarzmeerküste für Trabzons üppige grüne Berge, das klippenhängende Sumela-Kloster und unberührte Alpenseen. Feiern Sie in sophistiziertem Bodrum, wo Superyachten an glamourösen Marinas anlegen und Strandclubs die Ägäisküste säumen. Gleitschirmfliegen Sie über die weltberühmte Blaue Lagune in Fethiye, skifahren Sie auf den besten Pisten der Türkei am Uludağ in Bursa oder entspannen Sie in jahrhundertealten Thermalbädern. Probieren Sie unglaubliche türkische Küche von Straßenverkäufern' Simit und Döner bis hin zu innovativen Kreationen von Michelin-Sterne-Restaurants. Erleben Sie authentische Hamam-Traditionen, trinken Sie endlosen Çay (Tee) mit freundlichen Einheimischen und entdecken Sie, warum die Türkei seit Jahrtausenden Reisende willkommen heißt. Mit exzellenter Infrastruktur, vielfältigen Landschaften von mediterranen Stränden bis zu Bergplateaus, reichem kulturellen Erbe über Imperien hinweg und außergewöhnlichem Preis-Leistungs-Verhältnis bietet die Türkei unvergessliche Erlebnisse für Familien, Paare, Abenteuersuchende und Kulturliebhaber gleichermaßen.",
+      "Malaysia": "Erleben Sie Malaysia, Südostasiens vielfältigstes Reiseziel, wo ultra-moderne Städte auf uralte Regenwälder treffen und unberührte tropische Inseln an lebendige multikulturelle Gemeinschaften grenzen. Dieses faszinierende Land vereint einzigartig malaiische, chinesische, indische und europäische Einflüsse und schafft einen außergewöhnlichen kulturellen Teppich, der jeden Besucher entzückt. Beginnen Sie im dynamischen Kuala Lumpur, wo die ikonischen Petronas Twin Towers die Skyline durchbohren, erstklassige Einkaufszentren Käufer verzaubern und unglaubliche Straßenküche an jeder Ecke lockt—von würzigem Laksa bis süßem Roti Canai. Erkunden Sie George Town in Penang, eine UNESCO-Welterbestätte berühmt für ihre Kolonialarchitektur, farbenfrohe Straßenkunst-Murals und legendären Status als Malaysias kulinarische Hauptstadt mit einigen der besten Hawker-Food Asiens. Entfliehen Sie zu Langkawis tropischem Paradies aus 99 Inseln, wo zollfreies Einkaufen auf unberührte Strände trifft und die berühmte Sky Bridge atemberaubende Dschungelblicke bietet. Entdecken Sie Malakkas charmantes koloniales Erbe mit portugiesischen Forts, niederländischen Gebäuden und einzigartiger Peranakan-Kultur, die köstliche Nyonya-Küche hervorbringt. Wagen Sie sich in uralte Regenwälder—einige der ältesten der Welt mit 130 Millionen Jahren—und erspähen Sie Orang-Utans in Borneo, erkunden Sie die nebligen Teeplantagen der Cameron Highlands oder wandern Sie durch den Taman Negara Nationalpark. Tauchen Sie erstklassige Plätze vor der Insel Sipadan, entspannen Sie an den puderweißen Stränden der Perhentian-Inseln oder springen Sie durch das unberührte Langkawi-Archipel von Insel zu Insel. Probieren Sie unglaubliche Geschmacksvielfalt von malaiischem Rendang und Satay bis chinesischem Dim Sum, indischem Banana Leaf Curry und Peranakan-Spezialitäten. Besuchen Sie die hoch aufragenden Hindu-Tempel der Batu Caves, erleben Sie traditionelles Kampung-Dorfleben und erleben Sie die Harmonie von Moscheen, Tempeln und Kirchen, die friedlich nebeneinander stehen. Mit weit verbreitetem Englisch, exzellenter Infrastruktur, erschwinglichen Preisen, ganzjährigem tropischem Wetter und aufrichtig warmer Gastfreundschaft bietet Malaysia zugängliche südostasiatische Abenteuer, perfekt für Erstbesucher und erfahrene Reisende, die authentische Erlebnisse suchen, was es ideal für Familien, Flitterwochenpaare, Feinschmecker und Naturliebhaber macht.",
+      "Thailand": "Willkommen in Thailand, dem 'Land der Lächeln', wo legendäre Gastfreundschaft auf exotisches Abenteuer in Südostasiens beliebtestem Reiseziel trifft. Dieses tropische Paradies bietet eine unschlagbare Kombination aus atemberaubenden Stränden, antiken Tempeln, köstlicher Küche und erschwinglichem Luxus, die Reisende Jahr für Jahr zurückkehren lässt. Beginnen Sie im elektrisierenden Bangkok, wo goldene Türme des Großen Palastes und Wat Arun Tempels neben modernen Wolkenkratzern glänzen und das beste Straßenfutter der Welt an jeder Ecke brutzelt—probieren Sie authentisches Pad Thai, Mango-Klebreis und Tom Yum Suppe dort, wo sie perfektioniert wurden. Shoppen Sie bis zum Umfallen im riesigen Chatuchak Markt mit 15.000 Ständen, schlürfen Sie Cocktails in glamourösen Dachbars und kreuzen Sie den Chao Phraya Fluss an illuminierten Tempeln vorbei. Entfliehen Sie zu Thailands Inselparadies: Phuket bietet lebendige Patong Beach Nachtleben neben ruhigem Kata Beach Familienspaß, mit spektakulären Phi Phi Islands Tagesausflügen nach Maya Bay. Entdecken Sie Koh Samuis Luxusresorts und Strandclubs, Krabis dramatische Kalksteinklippen und versteckte Lagunen oder das Backpacker-Paradies Koh Tao für erstklassiges Tauchen. Reisen Sie nach Norden zum kulturellen Chiang Mai, Tor zu nebligen Bergen, Bergstamm-Dörfern und ethischen Elefantenschutzgebieten, wo Sie diese sanften Riesen füttern und baden können. Lernen Sie thailändisches Kochen in praktischen Kursen, erkunden Sie über 300 antike Tempel, shoppen Sie Nachtmärkte für Handwerkskunst und erleben Sie das magische Yi Peng Laternenfest. Abenteuersuchende können Dschungelpfade wandern, durch Regenwälder ziplinen, Wildwasserrafting gehen oder ATVs durch die Landschaft fahren. Gönnen Sie sich erschwinglichen Luxus mit Strandresorts, traditioneller thailändischer Massage und Spa-Behandlungen zu Preisen, die unmöglich erscheinen. Erleben Sie überall warme Lächeln—von Tuk-Tuk-Fahrern bis Resort-Personal lieben Thais es wirklich, Besucher willkommen zu heißen. Mit köstlichem Essen zu jedem Preis, atemberaubender natürlicher Schönheit, reicher buddhistischer Kultur, aufregendem Nachtleben und unglaublichem Preis-Leistungs-Verhältnis bietet Thailand den perfekten tropischen Urlaub für Flitterwochenpaare, Familien, Backpacker, Luxusreisende und alle dazwischen.",
+      "Indonesia": "Entdecken Sie Indonesien, den weltgrößten Archipel mit über 17.000 Inseln, der das ultimative tropische Abenteuer über Südostasiens vielfältigste Nation bietet. Dieses exotische Paradies bietet alles von Balis spirituellen Tempeln und erstklassigem Surfen bis zu Javas antikem Borobudur-Buddhistenmonument und aktiven Vulkanen. Beginnen Sie in Bali, Indonesiens Kronjuwel, wo atemberaubende Reisterrassen die Hänge hinunterkaskaden, Strandclubs bis zum Morgengrauen in Seminyak feiern und Yoga-Retreats Zen in Ubuds Dschungel-Einstellungen finden. Schauen Sie traditionellen Kecak-Feuertänzen am Klippen-Uluwatu-Tempel zu, wandern Sie den Mount Batur Vulkan für den Sonnenaufgang und erkunden Sie den Heiligen Affenwald. Erleben Sie Jakartas urbane Energie mit Mega-Malls, Museen und Tor zu den Tausend Inseln für Schnorchel-Ausflüge. Besuchen Sie Yogyakarta, Javas kulturelle Seele, Heimat des prächtigen Borobudur—des weltgrößten buddhistischen Tempels—und dramatischen Prambanan-Hindu-Komplexes. Schauen Sie Ramayana-Ballettaufführungen zu, lernen Sie Batik-Herstellung und erkunden Sie den lebenden Sultan-Palast. Abenteuer zum Komodo-Nationalpark, um prähistorische Komodo-Drachen zu sehen, Indonesiens endemische Riesenechsen. Tauchen oder schnorcheln Sie Raja Ampats unberührte Korallenriffe, die als das biologisch vielfältigste Meeresökosystem der Erde gelten. Wandern Sie durch uralte sumatranische Regenwälder und erspähen Sie Orang-Utans, entspannen Sie an den autofreien Stränden der Gili-Inseln oder surfen Sie weltberühmte Breaks von Uluwatu bis Desert Point. Probieren Sie unglaublich vielfältige Küche von balinesischem Babi Guling bis javanesischem Nasi Goreng, Padangs würzigem Rendang bis frischen Meeresfrüchten, die an Stränden gegrillt werden. Erleben Sie warme indonesische Gastfreundschaft, erschwingliche Luxusresorts, traditionelle Zeremonien und Gamelan-Musik. Mit Hunderten von ethnischen Gruppen, Sprachen und kulturellen Traditionen, atemberaubenden vulkanischen Landschaften, unberührten Stränden, unglaublicher Biodiversität und Preisen, die jeden Geldbeutel strecken, bietet Indonesien grenzenlose Erkundung für Abenteurer, Strandliebhaber, Kultursuchende und spirituelle Reisende, die Südostasiens bezauberndsten Archipel entdecken.",
+      "Saudi Arabia": "Erleben Sie Saudi-Arabien, die größte Nation der Arabischen Halbinsel, die jetzt nach Jahrzehnten der Exklusivität ihre Schätze für den internationalen Tourismus öffnet. Diese transformative Nation bietet mutigen Reisenden beispiellosen Zugang zu antiken Kulturerbestätten, futuristischen Megastädten, unberührten Rotmeer-Tauchgängen und weiten Wüstenlandschaften. Erkunden Sie Riadhs moderne Hauptstadt mit dem ikonischen Kingdom Centre Tower, den dramatischen Edge of the World Klippenformationen und der UNESCO-Stätte Diriyah—Geburtsort des saudischen Staates mit traditioneller Lehmziegel-Architektur. Entdecken Sie das kosmopolitische Dschidda, die Torstadt mit historischem Al-Balad's Korallenstein-Häusern (UNESCO-Stätte), dem weltgrößten Brunnen und einer 30km Corniche-Wasserpromenade. Tauchen Sie die unberührten Korallenriffe des Roten Meeres, die denen Ägyptens Konkurrenz machen, mit unberührten Plätzen und reicher Meeresfauna. Besuchen Sie die spektakulären Felsformationen und antiken Nabatäer-Gräber von Al-Ula (Saudi-Arabiens Antwort auf Petra), besuchen Sie Konzerte bei Maraya, dem weltgrößten gespiegelten Gebäude in der Wüste. Erleben Sie das Leere Viertel (Rub' al Khali), die größte zusammenhängende Sandwüste der Erde, bei 4x4-Abenteuern oder Kamel-Treks zu Beduinen-Lagern unter sternenreichen Himmeln. Erkunden Sie Taifs kühles Bergklima, Rosengärten und Obstmärkte—der Sommerflucht für Saudis, die Erleichterung von der Wüstenhitze suchen. Entdecken Sie traditionelle Souks, die Gold, Weihrauch, Datteln und Teppiche verkaufen, probieren Sie authentische saudische Küche wie Kabsa und Mandi und erleben Sie legendäre arabische Gastfreundschaft über arabischen Kaffee und Datteln. Erleben Sie die schnelle Transformation der Nation mit Unterhaltungszonen, Musikfestivals und modernen Attraktionen, während Sie reiche kulturelle Traditionen respektieren. Saudi-Arabien bietet abenteuerlustigen Reisenden eine seltene Gelegenheit, ein aufstrebendes Reiseziel zu erkunden, das antikes Erbe, dramatische natürliche Schönheit, modernen Luxus und authentische arabische Kultur vereint, bevor die Massen dieses versteckte Juwel entdecken.",
+      "Morocco": "Reisen Sie nach Marokko, Nordafrikas bezauberndstem Reiseziel, wo antike Medinas, Sahara-Wüstenabenteuer und Atlantikstrände ein exotisches Refugium schaffen, nur Stunden von Europa entfernt. Dieses faszinierende Königreich vereint arabische, berberische, afrikanische und europäische Einflüsse zu einem Sinnesfest aus farbenfrohen Souks, aromatischen Gewürzen, kunstvollen Fliesenarbeiten und warmer Gastfreundschaft. Beginnen Sie im magischen Marrakesch, wo der Jemaa el-Fnaa Platz mit Schlangenbeschwörern, Geschichtenerzählern und brutzenden Essensständen zum Leben erwacht und die labyrinthischen Medina-Souks alles von handgewebten Teppichen bis duftendem Arganöl verkaufen. Übernachten Sie in traditionellen Riads—prächtigen Innenhofhäusern, die zu Boutique-Hotels wurden—und erkunden Sie den atemberaubenden Majorelle-Garten mit seinen elektrisch blauen Wänden. Wandeln Sie durch Fes' mittelalterliche Medina, der weltgrößten autofreien urbanen Zone und UNESCO-Stätte, wo Ledergerber mit seit Jahrhunderten unveränderten Methoden arbeiten und Handwerker kunstvolle Mosaike und Metallarbeiten schaffen. Entdecken Sie das 'Blaue Juwel' von Chefchaouen, wo ganze Stadtteile in Blautönen gemalt Instagram-perfekte Kulissen in den Rif-Bergen schaffen. Besuchen Sie Kaiserstädte wie Rabat und Meknes, die prächtige Paläste und historische Tore zeigen. Erleben Sie das ultimative Wüstenabenteuer—reiten Sie auf Kamelen in die Sahara bei Sonnenuntergang, verbringen Sie Nächte in luxuriösen Berber-Lagern unter unendlichen Sternen und schauen Sie zu, wie der Sonnenaufgang die Dünen golden malt. Erkunden Sie dramatische Atlas-Berge, besuchen Sie traditionelle Berber-Dörfer, wandern Sie durch malerische Täler und sehen Sie Nordafrikas höchste Gipfel. Surfen Sie Atlantik-Wellen im entspannten Essaouira und Taghazout oder entspannen Sie an Mittelmeerstränden in Tanger. Gönnen Sie sich unglaubliche marokkanische Küche—duftende Tajines, fluffigen Couscous, süße Pastilla, Minztee und frisches Brot aus Gemeinschaftsöfen. Erleben Sie authentische Hamams, shoppen Sie für Lederwaren und Laternen und lernen Sie, in den Souks zu handeln. Mit atemberaubenden Riads, Luxushotels und Budget-Unterkünften, vielfältigen Landschaften von Bergen bis Wüste bis Küste, reichen künstlerischen Traditionen und aufrichtiger Wärme bietet Marokko ein exotisches Abenteuer, das sich sowohl fremd als auch einladend anfühlt, perfekt für Paare, Familien, Abenteuerreisende und Kulturliebhaber.",
+      "Egypt": "Treten Sie ein in Ägypten, die Wiege der Zivilisation und Heimat der ikonischsten antiken Monumente der Menschheit, die 5.000 Jahre Geschichte umspannen. Dieses legendäre Reiseziel erfüllt Kindheitsträume vom Erkunden der Pyramiden, Entschlüsseln von Hieroglyphen und Kreuzen des Nil-Flusses wie die Pharaonen. Beginnen Sie bei den Pyramiden von Gizeh, dem letzten überlebenden Weltwunder der Antike, wo die Große Pyramide und der rätselhafte Sphinx seit 4.500 Jahren Wache stehen. Erkunden Sie Kairo's weltberühmtes Ägyptisches Museum mit König Tutanchamuns goldenen Schätzen und Räumen voller Mumien, dann handeln Sie im atmosphärischen Khan el-Khalili Basar um Papyrus, Schmuck und Gewürze. Kreuzen Sie den lebensspendenden Nil-Fluss auf Luxusbooten oder traditionellen Felukken und schauen Sie zeitlosen Szenen von Bauern, Fischern und antiken Tempeln vorbeigleiten. Reisen Sie nach Luxor, dem weltgrößten Freilichtmuseum, wo der massive Karnak-Tempelkomplex, der schöne Luxor-Tempel und die Königsgräber im Tal der Könige (einschließlich Tutanchamuns) ein Archäologenparadies schaffen. Stehen Sie vor Morgengrauen auf für unvergessliche Heißluftballonflüge über diese antiken Monumente. Wagen Sie sich nach Assuan für den atemberaubenden Philae-Tempel auf seiner Insel und Tagesausflüge zu Abu Simbels kolossalen Ramses II.-Statuen. Entfliehen Sie zur Rotmeerküste für erstklassiges Tauchen und Schnorcheln—unberührte Korallenriffe bei Sharm El Sheikh, Hurghada und Dahab konkurrieren mit jedem tropischen Reiseziel. Entspannen Sie an Strandresorts, lernen Sie Windsurfen oder erkunden Sie Unterwasserwracks. Erleben Sie lebendige ägyptische Kultur durch Bauchtanz-Shows, traditionelle Musik, aromatische Shisha-Cafés und köstliche Küche von Koshari-Straßenfutter bis frische Meeresfrüchte. Besuchen Sie koptische Kirchen, islamische Moscheen und Beduinen-Wüstenlager. Mit erschwinglichen Preisen, verbesserter Infrastruktur, einladenden Menschen, die eifrig ihr Erbe teilen möchten, und Monumenten, die die menschliche Zivilisation definierten, bietet Ägypten Bucket-List-Erlebnisse, die Sie durch die Zeit transportieren und dabei modernen Komfort bieten—perfekt für Geschichtsliebhaber, Familien, Abenteuersuchende und alle, die von antiken Wundern träumen.",
+      "Azerbaijan": "Erkunden Sie Aserbaidschan, das 'Land des Feuers', ein aufstrebendes Reiseziel, wo futuristische Architektur auf antike Traditionen am Kreuzungspunkt von Europa und Asien trifft. Diese faszinierende Kaukasus-Nation überrascht Besucher mit ihren dramatischen Kontrasten—von Bakus ultra-modernen Flame Towers und Zaha Hadid-designed Heydar Aliyev Center bis zur UNESCO-gelisteten Altstadt's mittelalterlichen Steinstraßen. Gehen Sie durch Bakus Icherisheher ummauerte Stadt und entdecken Sie den geheimnisvollen Jungfrauenturm, besuchen Sie den Palast der Shirvanshahs und schlendern Sie die lange Kaspische Meer-Boulevard mit ihren Parks und Attraktionen. Erleben Sie die 'ewigen Flammen' des Landes an antiken zoroastrischen Feuertempeln, wo aus der Erde sickerndes Erdgas seit Tausenden von Jahren brennt. Wagen Sie sich nach Gobustan, um 40.000 Jahre alte Felskunst-Petroglyphen und bizarre sprudelnde Schlammvulkane zu sehen. Erkunden Sie die Bergregionen mit mittelalterlichen Burgen, farbenfrohen Dörfern und atemberaubender Kaukasus-Landschaft. Besuchen Sie das Aserbaidschan-Teppichmuseum, das die renommierten Webtraditionen des Landes zeigt. Probieren Sie köstliche aserbaidschanische Küche, die türkische, persische und russische Einflüsse vereint—versuchen Sie Plov (Safranreis), Dolma, Kebabs und süße Pakhlava mit aromatischem Tee. Erleben Sie warme kaukasische Gastfreundschaft, shoppen Sie moderne Malls und traditionelle Märkte und entdecken Sie ein Land, das stark in Tourismusinfrastruktur investiert. Mit seiner Mischung aus ölfinanzierter Modernität und antiker Seidenstraßen-Tradition, dramatischen Landschaften von Kaspischen Stränden bis Bergdörfern, reichen kulturellen Traditionen und relativ unentdecktem Status bietet Aserbaidschan abenteuerlustigen Reisenden ein einzigartiges Reiseziel, das östliche Mystik mit europäischer Raffinesse zu überraschend erschwinglichen Preisen vereint—perfekt für die, die Reiseziele abseits der ausgetretenen Pfade suchen.",
+      "Georgia": "Willkommen in Georgien, dem Juwel des Kaukasus und einem von Europas faszinierendsten aufstrebenden Reisezielen, wo antike Weinkultur auf dramatische Berglandschaften und legendäre Gastfreundschaft trifft. Dieses kleine Land bietet enorme Vielfalt—von charmantem Tiflis' Kopfsteinpflaster-Altstadt und natürlichen Schwefelbädern bis zu den hoch aufragenden Kaukasus-Gipfeln und Schwarzmeerstränden. Entdecken Sie, warum Georgien behauptet, die Geburtsstätte des Weins zu sein—archäologische Beweise beweisen 8.000 Jahre Weinherstellung mit traditionellen Qvevri (Tonbehältern, die unterirdisch vergraben werden). Besuchen Sie Kakheti-Weinregion's Weinberge, probieren Sie einzigartige Bernsteinweine und erleben Sie traditionelle georgische Feste (Supra) mit endlosen Trinksprüchen und Gerichten, die den gesamten Tisch bedecken. Erkunden Sie Tiflis' eklektische Architektur, die mittelalterliche Kirchen, Jugendstil-Villen und sowjetische Gebäude mischt, alle durch eine moderne Glas-Brücke des Friedens verbunden. Fahren Sie mit der Seilbahn zur antiken Narikala-Festung für Panoramablicke auf die Stadt, dann steigen Sie zum historischen Badehaus-Viertel für authentische georgische Spa-Erlebnisse hinab. Reisen Sie nach Kasbegi, um die ikonische Gergeti-Dreifaltigkeitskirche zu sehen, die auf einem Hügel mit dem Mount Kasbek dahinter thront—eine der weltweit meistfotografierten Bergkirchen. Besuchen Sie Stepantsminda zum Wandern, Reiten und atemberaubender Kaukasus-Landschaft. Fahren Sie zur Schwarzmeerküste, wo subtropisches Batumi Palmenstrände, moderne Architektur, botanische Gärten und lebendiges Nachtleben bietet. Entdecken Sie Mtskheta, Georgiens antike Hauptstadt und UNESCO-Stätte mit atemberaubenden Hügelklöstern. Erkunden Sie Festungsstädte wie Sighnaghi mit Blick auf das Alazani-Tal, Höhlenstädte, die in Klippen gehauen wurden, und mittelalterliche Verteidigungstürme, die Bergdörfer säumen. Probieren Sie unglaubliche georgische Küche—Khinkali (Suppenknödel), Khachapuri (Käsebrot) und unzählige einzigartige Gerichte, begleitet von georgischem Wein oder Chacha (Traubenvodka). Erleben Sie unvergleichliche georgische Gastfreundschaft, wo Einheimische Gäste als Geschenke Gottes behandeln. Mit dramatischer Berglandschaft, antiker Kultur, außergewöhnlichem Essen und Wein, therapeutischen Schwefelbädern, Abenteueraktivitäten vom Skifahren bis Paragliding, unglaublich erschwinglichen Preisen und warmen, einladenden Menschen bietet Georgien authentische Erlebnisse, natürliche Schönheit und kulturellen Reichtum, die jeden Besucher ihre Rückkehr planen lassen.",
+      "Albania": "Entdecken Sie Albanien, Europas letztes verstecktes Juwel und das bestgehütete Geheimnis des Balkans, wo unberührte Strände mit den griechischen Inseln konkurrieren, antike Kulturerbestätten dramatische Berge säumen und authentische Kultur ohne Touristenscharen gedeiht—alles zu einem Bruchteil der Preise Westeuropas. Dieses mediterrane Juwel, das aus Jahrzehnten der Isolation hervorgeht, heißt jetzt Reisende willkommen, UNESCO-Welterbestätten, atemberaubende Riviera-Küste und warme albanische Gastfreundschaft zu entdecken. Erkunden Sie charmantes Tirana, die farbenfrohe Hauptstadt, wo kommunistische Bunker in Kunstmuseen verwandelt mit trendigen Blloku-Viertel's Cafés und Nachtleben kontrastieren. Fahren Sie mit der Dajti-Berg-Seilbahn für spektakuläre Aussichten, dann wandeln Sie durch lebendigen Skanderbeg-Platz, umgeben von Museen und Moscheen. Reisen Sie nach Berat, der 'Stadt der Tausend Fenster', wo weiße osmanische Häuser die Hänge hinunterkaskaden und antike Burgruinen über den Osum-Fluss blicken—eine perfekt erhaltene UNESCO-Stadt, die scheinbar in der Zeit eingefroren ist. Besuchen Sie Gjirokastërs Steinfestung und traditionelle Architektur, eine weitere UNESCO-Stätte, die authentische albanische Bergkultur zeigt. Fahren Sie nach Süden zur albanischen Riviera, wo postkartenperfekte Ksamil-Strände mit der Karibik konkurrieren mit weißem Sand und türkisfarbenen Gewässern gegenüber von Korfu. Basieren Sie sich in Sarandas Strandhotels, besuchen Sie die atemberaubende Blaue Quelle mit unmöglich blauem Wasser und erkunden Sie Butrint-Nationalpark's griechische und römische Ruinen am Meer. Wandern Sie durch die dramatischen albanischen Alpen, besuchen Sie abgelegene Bergdörfer, wo Traditionen fortbestehen, und erkunden Sie die türkisfarbenen Gewässer des Komani-Sees. Entdecken Sie antike illyrische Ruinen, osmanische Brücken und mittelalterliche Burgen im ganzen Land. Probieren Sie köstliche albanische Küche—Byrek (herzhafte Pasteten), Tavë Kosi (Lamm mit Joghurt), frische Meeresfrüchte und lokalen Raki. Erleben Sie aufrichtige Wärme von Einheimischen, die begeistert sind, ihr Land zu teilen, genießen Sie mediterranes Klima und erkunden Sie atemberaubende Natur von Bergen bis unberührte Küste. Mit unglaublichem Wert (billigstes Land Europas), vielfältigen Landschaften, reicher Geschichte, authentischen Erlebnissen und Abwesenheit von Touristenscharen belohnt Albanien abenteuerlustige Reisende, die unentdeckte Reiseziele suchen, die den mediterranen Traum ohne den Preis oder die Massen bieten—perfekt für Budget-Reisende, Paare und die, die erkunden möchten, bevor alle anderen diesen Balkan-Schatz entdecken."
+    }
+  },
+  "cityPage": {
+    "backTo": "Zurück zu",
+    "about": "Über",
+    "topAttractions": "Top-Attraktionen & Merkmale",
+    "toursIn": "Touren in",
+    "viewAllTours": "Alle Touren anzeigen",
+    "hotelsIn": "Hotels in",
+    "viewAllHotels": "Alle Hotels anzeigen",
+    "highlights": "Höhepunkte:",
+    "contactForPricing": "Preis auf Anfrage",
+    "error": "Fehler",
+    "returnTo": "Zurück zu",
+    "cities": {
+      "Istanbul": {
+        "description": "Erleben Sie die Magie, wo Ost und West in Istanbul aufeinandertreffen, der einzigen Stadt der Welt, die zwei Kontinente überspannt. Diese prächtige Metropole bietet eine berauschende Mischung aus antiker Geschichte und moderner Raffinesse. Beginnen Sie Ihre Tage mit der Erkundung byzantinischer Meisterwerke wie der Hagia Sophia und der Blauen Moschee, wandeln Sie durch das labyrinthische Große Bazar mit seinen 4.000 Geschäften und bestaunen Sie den prunkvollen Topkapi-Palast, wo einst osmanische Sultane regierten. Machen Sie eine malerische Bosporus-Kreuzfahrt zwischen Europa und Asien und schauen Sie zu, wie Uferpaläste und Festungen vorbeigleiten. Wenn der Abend hereinbricht, gehen Sie zum Taksim-Platz und schlendern Sie die belebte Istiklal-Straße entlang, gesäumt von Geschäften, Restaurants und historischer Straßenbahn. Genießen Sie Dachbars mit atemberaubenden Skyline-Blicken, probieren Sie authentische türkische Küche von Straßenverkäufern bis Michelin-Sterne-Restaurants und erleben Sie die legendäre türkische Teekultur in charmanten Cafés. Verpassen Sie nicht die geheimnisvolle Basilika-Zisterne, den lebendigen Gewürzbasar, zeitgenössische Kunstgalerien im trendigen Karaköy und traditionelle Hamam-Erlebnisse. Ob Sie handgewebte Teppiche kaufen, atemberaubende Sonnenuntergänge über dem Goldenen Horn fotografieren oder bis zum Morgengrauen in Nachtclubs tanzen, Istanbul bietet unvergessliche Erinnerungen bei jeder Wendung. Die warme Gastfreundschaft der Stadt, der reiche kulturelle Teppich und die perfekte Mischung aus Tradition und Moderne machen sie zu einem unverzichtbaren Reiseziel für jeden Reisenden.",
+        "features": [
+          "Hagia Sophia - Atemberaubendes byzantinisches Meisterwerk mit beeindruckender Kuppel und Mosaiken",
+          "Blaue Moschee - Prächtige osmanische Architektur mit sechs hoch aufragenden Minaretten",
+          "Topkapi-Palast - Kaiserpalast mit Schatzkammer, Harem und Bosporus-Blicken",
+          "Großer Bazar - 4.000 Geschäfte im ältesten überdachten Markt der Welt",
+          "Bosporus-Kreuzfahrt - Malerische Bootstour zwischen Europa und Asien",
+          "Galata-Turm - 360° Panoramablicke auf die Stadtskyline",
+          "Basilika-Zisterne - Atmosphärischer unterirdischer Wasserpalast",
+          "Taksim-Platz & Istiklal-Straße - Shopping-, Essens- und Nachtleben-Zentrum",
+          "Dolmabahçe-Palast - Prunkvoller Uferpalast mit Kristalltreppen",
+          "Gewürzbasar - Aromatischer Markt für türkische Köstlichkeiten und Gewürze"
+        ]
+      },
+      "Antalya": {
+        "description": "Willkommen in Antalya, dem Kronjuwel der türkischen Mittelmeerküste und Tor zur türkischen Riviera. Mit über 300 Sonnentagen jährlich gesegnet, vereint dieses atemberaubende Küstenparadies kristallklares türkisfarbenes Wasser, unberührte Strände und dramatische Taurus-Bergkulisse. Beginnen Sie Ihr Abenteuer in Kaleiçi, der charmanten Altstadt, wo osmanische Häuser, Boutique-Hotels und authentische Restaurants schmale Kopfsteinpflasterstraßen säumen, die zum antiken römischen Hafen führen. Verbringen Sie sonnenverwöhnte Tage an weltberühmten Stränden wie Konyaaltı und Lara, wo moderne Strandclubs auf familienfreundliche Ufer treffen. Abenteuersuchende können spektakuläre antike Ruinen erkunden, einschließlich des bemerkenswert erhaltenen Aspendos-Theaters und der prächtigen Stadt Perge. Kühlen Sie sich an den atemberaubenden Düden-Wasserfällen ab, die dramatisch ins Mittelmeer stürzen. Familien lieben das Antalya-Aquarium mit seinem rekordbrechenden Tunnel, während Thrill-Seeker zum Land of Legends Themenpark für Wasserrutschen und Shows fahren. Genießen Sie frische mediterrane Meeresfrüchte in Hafenrestaurants, shoppen Sie in modernen Malls und traditionellen Märkten und erleben Sie lebendiges Nachtleben von Strandbars bis Nachtclubs. Machen Sie Tagesausflüge zu nahegelegenen Attraktionen wie dem bergigen Termessos, der charmanten Küstenstadt Kaş oder dem schönen Kemer-Marina. Mit luxuriösen All-inclusive-Resorts, budgetfreundlichen Hotels, exzellenter Infrastruktur und warmer türkischer Gastfreundschaft bietet Antalya den perfekten mediterranen Urlaub für jeden Reisenden und jedes Budget.",
+        "features": [
+          "Kaleiçi Altstadt - Charmantes osmanisches Viertel mit Boutique-Hotels und Restaurants",
+          "Düden-Wasserfälle - Atemberaubende Kaskaden, die ins Mittelmeer stürzen",
+          "Konyaaltı Strand - 7km Kiesstrand mit Taurus-Bergkulisse",
+          "Lara Strand - Berühmter goldener Sandstrand mit Luxusresorts",
+          "Antalya-Aquarium - Längster Tunnel-Aquarium der Welt",
+          "Antikes Perge - Spektakuläre griechisch-römische Stadtruinen",
+          "Aspendos-Theater - Best-erhaltenes römisches Amphitheater, veranstaltet Opernfestivals",
+          "Land of Legends Themenpark - Familienunterhaltung mit Wasserrutschen und Shows",
+          "Termessos - Bergige antike Stadt mit atemberaubenden Aussichten",
+          "Kemer-Marina - Segeln, Yacht-Touren und Ufer-Dining"
+        ]
+      },
+      "Cappadocia": {
+        "description": "Treten Sie in eine Märchenlandschaft in Kappadokien ein, einem der außergewöhnlichsten Reiseziele der Erde und UNESCO-Welterbestätte. Diese außerirdische Region zeigt spektakuläre Feenkamine, antike Höhlenwohnungen und surreale Felsformationen, geschaffen durch Millionen Jahre vulkanischer Aktivität und Erosion. Wachen Sie vor Morgengrauen auf für das Erlebnis eines Lebens—schweben Sie über die magische Landschaft in einem Heißluftballon, während Hunderte farbenfroher Ballons über den Sonnenaufgangshimmel treiben und eine der weltweit meistfotografierten Szenen schaffen. Erkunden Sie das unglaubliche Göreme-Freilichtmuseum mit seinen byzantinischen Fels-Kirchen, geschmückt mit atemberaubenden Fresken aus dem 10. Jahrhundert. Steigen Sie hinab in faszinierende unterirdische Städte wie Derinkuyu, wo antike Zivilisationen ausgeklügelte 8-stöckige unterirdische Komplexe mit Kirchen, Weinkellern und Belüftungssystemen schufen. Übernachten Sie in authentischen Höhlenhotels, die in den weichen Vulkangestein gehauen wurden und modernen Luxus innerhalb antiker Wände bieten. Wandern Sie durch spektakuläre Täler—das Rosental mit seinen rosa-farbenen Klippen, das Liebestal mit einzigartigen Formationen und das Ihlara-Tal's 14km Schlucht, gesäumt von Felskirchen. Erleben Sie traditionelle türkische Kultur in der Töpfereistadt Avanos, fahren Sie ATVs oder Pferde durch Mondlandschaften und genießen Sie spektakuläre Türkische Nacht-Shows mit traditionellem Tanz und Musik. Schauen Sie den Sonnenuntergang von der Uçhisar-Burg, dem höchsten Punkt der Region, mit Panoramablicken über dieses traumhafte Terrain. Mit seinen einzigartigen Höhlenunterkünften, Abenteueraktivitäten, antikem Erbe und fotogenen Landschaften wie nirgendwo sonst auf der Erde verspricht Kappadokien ein wahrhaft magisches türkisches Erlebnis.",
+        "features": [
+          "Heißluftballon-Flüge - Unvergessliche Sonnenaufgang-Ballonfahrten über Feenkamine",
+          "Göreme-Freilichtmuseum - Antike Fels-Kirchen mit byzantinischen Fresken",
+          "Derinkuyu-Untergrundstadt - 8-stöckige unterirdische Stadt bis 85m Tiefe",
+          "Liebestal - Einzigartige Felsformationen und malerische Wanderwege",
+          "Uçhisar-Burg - Höchster Punkt mit Panoramablicken auf das Tal",
+          "Höhlenhotels - Schlafen Sie in luxuriös umgebauten Höhlenwohnungen",
+          "Ihlara-Tal - 14km Schlucht mit Wanderweg und Felskirchen",
+          "Avanos - Töpferei-Workshops und traditionelle türkische Handwerkskunst",
+          "ATV & Jeep-Safaris - Abenteuer-Touren durch Täler und Felsformationen",
+          "Türkische Nacht-Shows - Traditioneller Tanz, Musik und Dinner-Unterhaltung"
+        ]
+      },
+      "Trabzon": {
+        "description": "Entdecken Sie Trabzon, wo die smaragdgrünen Berge der Pontischen Alpen dramatisch zur spektakulären Schwarzmeerküste der Türkei kaskaden. Diese bezaubernde Region bietet eine erfrischende Alternative zu den Strandresorts der Türkei, mit ihrem kühleren Klima, üppigen grünen Landschaften und authentischer türkischer Bergkultur. Die Hauptattraktion ist das atemberaubende Sumela-Kloster, ein griechisch-orthodoxes Kloster aus dem 4. Jahrhundert, das scheinbar an einer Klippe 1.200 Meter über dem Meeresspiegel schwebt—eine der ikonischsten und meistfotografierten Stätten der Türkei. Reisen Sie zum bildschönen Uzungöl, einem Alpensee, umgeben von dichten Kiefernwäldern und traditionellen Holzhäusern, wo Morgennebel eine mystische Atmosphäre schafft. Erleben Sie das Ayder-Plateau's natürliche heiße Quellen und Hochland-Gastfreundschaft, wo Einheimische traditionelle Schwarzmeer-Küche mit frischen Sardellen, Maisbrot und lokalen Käsesorten servieren. Erkunden Sie arbeitende Teeplantagen, die die Hänge in lebendigem Grün bedecken, und lernen Sie über die Teekultur der Türkei, die ihrer Kaffeetradition Konkurrenz macht. Besuchen Sie das wunderschön erhaltene Atatürk-Pavillon-Herrenhaus in friedlichen Gärten und entdecken Sie Trabzons byzantinisches Erbe in der Hagia Sophia aus dem 13. Jahrhundert mit ihren bemerkenswerten Fresken. Wandern Sie durch Hochlandplateaus wie Zigana mit spektakulären Bergausblicken, erkunden Sie die antike Trabzon-Burg mit Blick auf Stadt und Meer und genießen Sie frischen Fisch in Meeresrestaurants. Die kühleren Sommertemperaturen der Region, unberührte Natur, freundliche Einheimische und abseits der ausgetretenen Pfade Charme machen Trabzon perfekt für Reisende, die authentische Türkei fernab vom Massentourismus suchen und echte kulturelle Erlebnisse und atemberaubende natürliche Schönheit bieten.",
+        "features": [
+          "Sumela-Kloster - Dramatisches klippen-seitiges Kloster mit atemberaubenden Fresken",
+          "Uzungöl-See - Bildschöner Alpensee, umgeben von Kiefernwäldern",
+          "Ayder-Plateau - Bergretreat mit heißen Quellen und Wanderwegen",
+          "Zigana-Berg - Malerisches Hochlandplateau mit traditionellen Dörfern",
+          "Atatürk-Pavillon - Historisches Herrenhaus in schönen Gärten",
+          "Hagia Sophia von Trabzon - Byzantinische Kirche mit bemerkenswerten Fresken",
+          "Trabzon-Burg - Antike Festung mit Stadt- und Meerblick",
+          "Lokale Teeplantagen - Besuchen Sie arbeitende Teegärten und probieren Sie frischen türkischen Tee",
+          "Sera-See - Ruhige Seeuferparks und Spazierwege",
+          "Traditionelle Schwarzmeer-Küche - Probieren Sie einzigartige lokale Gerichte und frischen Fisch"
+        ]
+      },
+      "Bodrum": {
+        "description": "Willkommen in Bodrum, der glamourösesten und raffiniertesten Resort-Destination der Türkei an der atemberaubenden Ägäisküste. Diese kosmopolitische Halbinsel balanciert perfekt antike Geschichte mit Jet-Set-Luxus und zieht Prominente, Yachtfahrer und anspruchsvolle Reisende an, die das ultimative türkische Küstenerlebnis suchen. Das Kronjuwel der Stadt ist die prächtige Bodrum-Burg, eine Festung der Johanniter aus dem 15. Jahrhundert, die jetzt das weltberühmte Museum für Unterwasserarchäologie beherbergt. Erkunden Sie die faszinierenden Überreste des Mausoleums von Halikarnassos, einem der Sieben Weltwunder der Antike, und gehen Sie durch das bemerkenswert erhaltene antike Amphitheater mit atemberaubenden Meerblicken. Bodrums Küste ist übersät mit unberührten Stränden und exklusiven Strandclubs—von den lebendigen Ufern von Gümbet bis zu den ruhigen Buchten von Bitez, vom Windsurf-Paradies Türkbükü bis zum bohemischen Fischerdorf Gümüşlük, wo Sie mit den Füßen im Sand essen. Die funkelnde Marina ist das Herz von Bodrums sozialer Szene, wo Superyachten neben traditionellen Gulets anlegen und Uferrestaurants frische Ägäis-Meeresfrüchte mit Rakı servieren. Shoppen Sie Designer-Mode in schicken Boutiquen, durchstöbern Sie lokale Märkte für handgemachte Ledersandalen und entdecken Sie die ikonischen weißgetünchten Windmühlen mit Blick auf die Halbinsel. Wenn die Nacht hereinbricht, verwandelt sich Bodrum in die Partymetropole der Türkei mit erstklassigen Nachtclubs, Strandbars und Dachlounges. Machen Sie Bootstouren zu versteckten Buchten, nahegelegenen griechischen Inseln oder schwimmen Sie in unmöglich klarem türkisfarbenen Wasser. Mit seiner perfekten Mischung aus 5-Sterne-Luxushotels, charmanten Boutique-Eigenschaften, antiker Kultur, unberührten Stränden und elektrischem Nachtleben bietet Bodrum ein unvergessliches Ägäis-Refugium, das Geschichtsliebhaber, Strandliebhaber und Partygänger gleichermaßen zufriedenstellt.",
+        "features": [
+          "Bodrum-Burg - Beeindruckende mittelalterliche Festung mit Unterwasserarchäologie-Museum",
+          "Antike Mausoleum-Stätte - Ruinen eines der Sieben Weltwunder der Antike",
+          "Bodrum-Marina - Luxus-Yachthafen mit Uferrestaurants und Bars",
+          "Bodrum-Strände - Unberührte Buchten, Strandclubs und Wassersport",
+          "Gümbet - Beliebter Strandresort mit lebendigem Nachtleben",
+          "Turgutreis - Langer Sandstrand mit spektakulären Sonnenuntergängen",
+          "Gümüşlük - Charmantes Fischerdorf mit Meeresrestaurants",
+          "Windmühlen von Bodrum - Ikonische weißgetünchte Windmühlen mit Meerblick",
+          "Bootstouren - Tägliche Kreuzfahrten zu versteckten Buchten und griechischen Inseln",
+          "Shopping & Nachtleben - Designer-Boutiquen, Bars und Strandclubs"
+        ]
+      },
+      "Fethiye": {
+        "description": "Entdecken Sie Fethiye, das Tor zur spektakulären Türkisküste der Türkei, wo kiefernbewachsene Berge in das kristallklare Mittelmeer stürzen. Diese atemberaubende Region ist Heimat von Ölüdeniz, konsequent unter den schönsten Stränden der Welt bewertet, mit seiner berühmten Blauen Lagune, die ein Instagram-perfektes Paradies aus türkisfarbenen und azurblauen Gewässern schafft. Erleben Sie den Adrenalinrausch des Paraglidings vom Babadağ-Berg—einer der weltweit führenden Tandem-Paragliding-Plätze—und schweben Sie 1.960 Meter über der Küstenlinie mit atemberaubenden Vogelperspektiven der Lagune und Berge. Die antiken Lykier hinterließen ihre Spuren mit beeindruckenden Felsgräbern, die in die Klippen über dem Fethiye-Hafen gehauen wurden und eine dramatische Kulisse für die belebte Marina schaffen, gefüllt mit traditionellen hölzernen Gulet-Booten. Machen Sie die ikonische 12-Inseln-Bootstour und verbringen Sie einen ganzen Tag mit Insel-Hopping zu versteckten Schwimmplätzen, Schnorcheln in unberührten Buchten und Genießen frisch gegrillten Fisch an Bord. Wagen Sie sich zum spektakulären Schmetterlingstal, einem abgelegenen Canyonstrand, der nur per Boot erreichbar ist, oder kühlen Sie sich in der Saklıkent-Schlucht ab, einem 18 Kilometer langen Canyon, wo Sie durch eiskaltes Bergwasser waten können. Erkunden Sie das gespenstische Kayaköy-Geisterdorf mit seinen 500 verlassenen Steinhäusern, wandern Sie Teile des legendären Lykischen Wegs Küstenpfad und entdecken Sie Unterwasserwunder durch erstklassiges Tauchen. Das charmante Stadtzentrum summt mit authentischem türkischen Leben—traditionelle Märkte, familiengeführte Restaurants, die den Fang des Tages servieren, und lebendiger Fischmarkt am Hafen. Erleben Sie entspanntes Strandleben am Çalış-Strand mit spektakulären Sonnenuntergängen, genießen Sie Wassersport vom Jetski bis Kitesurfen und entspannen Sie in Boutique-Hotels und Budget-Pensionen. Mit seiner unschlagbaren Kombination aus natürlicher Schönheit, Abenteueraktivitäten, antiker Kultur und aufrichtiger türkischer Gastfreundschaft verspricht Fethiye ein authentisches mediterranes Paradies.",
+        "features": [
+          "Ölüdeniz-Blaue Lagune - Weltberühmter türkisfarbener Strand und Lagune",
+          "Paragliding vom Babadağ - Tandem-Flüge mit atemberaubenden Küstenblicken",
+          "Schmetterlingstal - Abgelegener Strandcanyon, per Boot erreichbar",
+          "Saklıkent-Schlucht - Dramatische 18km-Schlucht zum Wandern und Rafting",
+          "Lykische Felsgräber - Antike gehauene Gräber mit Blick auf die Marina",
+          "12-Inseln-Bootstour - Ganztägige Kreuzfahrt durch versteckte Buchten",
+          "Kayaköy-Geisterdorf - Verlassenes griechisches Dorf mit Steinhäusern",
+          "Fethiye-Marina - Uferpromenade mit Restaurants und Shopping",
+          "Çalış-Strand - Langer Sandstrand mit Sonnenuntergangsblicken",
+          "Tauchen & Schnorcheln - Erkunden Sie reiche mediterrane Meeresfauna"
+        ]
+      },
+      "Bursa": {
+        "description": "Erleben Sie Bursa, die Geburtsstätte des Osmanischen Reiches und die kulturell reichste Stadt der Türkei, prächtig am Fuß des majestätischen Uludağ-Bergs gelegen. Dieser historische Schatz bietet ein perfektes ganzjähriges Reiseziel—erstklassiges Skifahren im Winter und erfrischende Bergretreats im Sommer. Bursas osmanisches Erbe glänzt durch seine atemberaubenden kaiserlichen Moscheen, besonders die Große Moschee (Ulu Cami) mit 20 Kuppeln und die exquisite Grüne Moschee und Grünes Grab, die die besten Beispiele früher osmanischer Architektur und kunstvoller İznik-Fliesenarbeit zeigen. Die Stadt ist legendär für ihre therapeutischen natürlichen heißen Quellen und traditionellen türkischen Bäder—entspannen Sie in jahrhundertealten Hamams oder modernen Thermal-Spa-Einrichtungen und erleben Sie authentische Wellness-Traditionen, die durch Generationen weitergegeben wurden. Machen Sie die spektakuläre Uludağ-Seilbahnfahrt und steigen Sie von Stadtebene zu alpinen Höhen mit atemberaubenden Panoramablicken auf. Im Winter verwandelt sich der Uludağ-Nationalpark in das führende Skiresort der Türkei mit exzellenten Pisten, modernen Liften und gemütlichen Berghotels. Der Sommer bringt Wanderer, Mountainbiker und Naturliebhaber zur kühlen Bergluft und malerischen Pfaden. Feinschmecker strömen nach Bursa als Geburtsstätte des İskender-Kebabs—dünne Scheiben Döner-Fleisch serviert über Pide-Brot mit Tomatensauce, Joghurt und geschmolzener Butter—ein Muss bei historischen Restaurants, die das Rezept perfektionierten. Erkunden Sie das historische Seidenstraßen-Erbe im Seidenbasar (Koza Han), wo Händler seit 600 Jahren feine Seidenprodukte handeln. Besuchen Sie das UNESCO-Welterbe-Dorf Cumalıkızık, ein perfekt erhaltenes osmanisches Dorf mit traditionellen Holzhäusern und authentischem Dorfleben. Schlendern Sie durch schöne Parks und Gärten, entspannen Sie unter dem massiven 600 Jahre alten Inkaya-Platanenbaum und genießen Sie den Küstencharme des nahegelegenen Mudanya mit seinen Ufer-Fischrestaurants. Mit exzellentem Shopping in modernen Malls und traditionellen Märkten, erschwinglichen Preisen, minimalen Menschenmassen und einfachem Zugang von Istanbul bietet Bursa authentische türkische Kultur, natürliche Schönheit und historische Bedeutung ohne die Touristenscharen.",
+        "features": [
+          "Uludağ-Berg - Führendes Skiresort im Winter, Wanderparadies im Sommer",
+          "Historische osmanische Moscheen - Große Moschee und Grüne Moschee mit atemberaubenden Fliesen",
+          "Thermalbäder - Natürliche heiße Quellen und traditionelle türkische Hamams",
+          "Bursa-Seilbahn - Malerische Fahrt mit Panoramablicken auf Stadt und Berge",
+          "Grünes Grab - Ikonisches türkisfarben-gefliestes Mausoleum in schönen Gärten",
+          "Seidenbasar - Historischer überdachter Markt für Seidenschals und Textilien",
+          "Cumalıkızık-Dorf - UNESCO-osmanisches Dorf mit traditionellen Häusern",
+          "İskender-Kebab - Geburtsstätte des berühmten türkischen Gerichts",
+          "Inkaya-Platanenbaum - 600 Jahre alter Riesenbaum in friedlichem Park",
+          "Mudanya - Küstenstadt mit Fischrestaurants und Meerespromenade"
+        ]
+      },
+      "Kuala Lumpur": {
+        "description": "Kuala Lumpur, Malaysias dynamische Hauptstadt, blendet mit futuristischen Wolkenkratzern, lebendigen Straßenmärkten und vielfältigem kulturellem Erbe. Heimat der ikonischen Petronas Twin Towers, erstklassiger Einkaufszentren und unglaublicher Straßenküche. Erleben Sie malaiische, chinesische und indische Kulturen, erkunden Sie Kolonialarchitektur und genießen Sie tropische Gärten in diesem kosmopolitischen südostasiatischen Zentrum.",
+        "features": [
+          "Petronas Twin Towers - Ikonische 88-stöckige Türme mit Skybridge und Aussichtsplattform",
+          "Batu Caves - Hindu-Tempel in Kalksteinhöhlen mit riesiger goldener Statue",
+          "KL Tower - 421m-Turm mit 360°-Stadtblicken und Drehrestaurant",
+          "Bukit Bintang - Führendes Shopping- und Unterhaltungsviertel",
+          "Chinatown & Petaling Street - Belebte Märkte und authentische Straßenküche",
+          "KLCC Park - Urbaner Oase mit Brunnen, Spazierwegen und Turmblicken",
+          "Merdeka Square - Historische Kolonialgebäude und Unabhängigkeitsdenkmal",
+          "Jalan Alor Food Street - Berühmter Nachtmarkt mit Hunderten von Essensständen",
+          "Islamisches Kunstmuseum - Erstklassige Sammlung islamischer Kunst und Artefakte",
+          "Vogelpark & Schmetterlingspark - Tropische Wildtiererlebnisse im Stadtzentrum"
+        ]
+      },
+      "Penang": {
+        "description": "Penang ist Malaysias kulinarische Hauptstadt und UNESCO-Welterbestätte, berühmt für Straßenkunst, Kolonialarchitektur und unglaubliches Essen. George Towns historische Straßen vereinen chinesische Tempel, indische Moscheen und britische Gebäude. Strandresorts, Gewürzgärten, tropische Hügel und einige der besten Straßenküche Asiens machen Penang unverzichtbar.",
+        "features": [
+          "George Town - UNESCO-Erbestadt mit Straßenkunst und Kolonialarchitektur",
+          "Straßenküche-Paradies - Hawker-Zentren servieren Char Kway Teow, Laksa und mehr",
+          "Penang Hill - Seilbahn zum Hügelgipfel mit Panoramablicken auf die Insel",
+          "Kek Lok Si Tempel - Größter buddhistischer Tempel Südostasiens",
+          "Straßenkunst-Pfad - Berühmte Murals von Ernest Zacharevic und lokalen Künstlern",
+          "Batu Ferringhi Strand - Beliebter Strandresort-Bereich mit Nachtmarkt",
+          "Tropischer Gewürzgarten - Schöne Gärten mit exotischen Pflanzen und Kochkursen",
+          "Clan Jetties - Traditionelle chinesische Wasserdörfer auf Stelzen",
+          "Penang Nationalpark - Strände, Dschungelpfade und Baumkronenwege",
+          "Gurney Drive - Uferpromenade mit Restaurants und Shopping"
+        ]
+      },
+      "Langkawi": {
+        "description": "Langkawi ist ein tropisches Paradies aus 99 Inseln in der Andamanensee und bietet unberührte Strände, zollfreies Shopping und Naturwunder. Fahren Sie über die weltberühmte SkyBridge, springen Sie von Insel zu Insel zu versteckten Stränden, erspähen Sie Adler und entspannen Sie in Luxusresorts. Kristallklares Wasser, dschungelbedeckte Berge und legendäre Folklore machen Langkawi perfekt für romantische Ausflüge und Familienurlaube.",
+        "features": [
+          "Langkawi Sky Bridge - Gebogene Hängebrücke mit Panoramablicken auf den Dschungel",
+          "Seilbahn zum Mount Mat Cincang - Malerische Fahrt zum zweithöchsten Gipfel",
+          "Pantai Cenang - Hauptstrand mit Resorts, Restaurants und Wassersport",
+          "Insel-Hopping-Touren - Besuchen Sie unbewohnte Inseln, Strände und Schnorchelplätze",
+          "Mangroven-Kajakfahren - Paddeln Sie durch uralte Mangrovenwälder und Höhlen",
+          "Eagle Square - Ikonisches Wahrzeichen mit 12m-Adlerstatue am Ufer",
+          "Underwater World Langkawi - Großes Aquarium mit Meereslebensausstellungen",
+          "Zollfreies Shopping - Steuerfreie Schokolade, Alkohol und Luxusgüter",
+          "Kilim Geoforest Park - UNESCO-Geopark mit Kalksteinformationen",
+          "Sonnenuntergang-Kreuzfahrten - Romantische Yacht-Touren mit Dinner und Unterhaltung"
+        ]
+      },
+      "Malacca": {
+        "description": "Malakka ist ein lebendes Museum von Malaysias kolonialer Vergangenheit, wo portugiesisches, niederländisches und britisches Erbe auf lebendige Peranakan-Kultur trifft. Schlendern Sie entlang des historischen Flusses, besuchen Sie farbenfrohe Tempel, erkunden Sie Museen in Kolonialgebäuden und probieren Sie einzigartige Nyonya-Küche. Diese UNESCO-Welterbestadt bietet charmante Nachtmärkte, Flusskreuzfahrten und authentische kulturelle Erlebnisse.",
+        "features": [
+          "Jonker Street Nachtmarkt - Freitag-Sonntag-Markt mit Antiquitäten und Straßenküche",
+          "A Famosa Fort - 16. Jahrhundert portugiesische Festungsruinen",
+          "Christ Church & Dutch Square - Ikonische rote Gebäude aus der Kolonialzeit",
+          "Malakka-Flusskreuzfahrt - Abendbootfahrten vorbei an Straßenkunst und Restaurants",
+          "Baba & Nyonya Heritage Museum - Peranakan-Kultur und Lebensstil-Ausstellungen",
+          "St. Paul's Hill - Ruinen mit Panoramablicken auf Stadt und Meer",
+          "Straits Chinese Jewelry Museum - Einzigartige Sammlung von Peranakan-Schmuck",
+          "Malakka-Zoo - Nachtsafari-Erlebnisse mit nachtaktiven Tieren",
+          "Nyonya-Küche - Traditionelle Peranakan-Gerichte, die chinesische und malaiische Aromen vereinen",
+          "Rikscha-Touren - Dekorierte Fahrrad-Rikschas mit Musik und Lichtern"
+        ]
+      }
+    }
+  },
+  "tourismPage": {
+    "hero": {
+      "title": "Entdecken Sie die Magie der Türkei",
+      "subtitle": "Erleben Sie die besten Touren in der Türkei mit professionellen Führern und unvergesslichen Reisen"
+    },
+    "nav": {
+      "overview": "Übersicht",
+      "features": "Merkmale",
+      "tours": "Touren",
+      "pricing": "Preise",
+      "included": "Was enthalten ist",
+      "contact": "Kontakt",
+      "faqs": "Häufige Fragen"
+    },
+    "discover": {
+      "title": "Entdecken Sie die Magie der Türkei",
+      "paragraph1": "Beginnen Sie eine unvergessliche Reise durch die reiche Geschichte, atemberaubende Landschaften und lebendige Kultur der Türkei. Von den antiken Wundern Istanbuls bis zu den Feenkaminen Kappadokiens, von den türkisfarbenen Küsten Antalyas bis zu den nebligen Bergen Trabzons – erleben Sie alles mit unseren fachkundig kuratierten Touren.",
+      "paragraph2": "Unsere Touren sind darauf ausgelegt, Sie in das authentische türkische Erlebnis einzutauchen und dabei Muss-Sehen-Sehenswürdigkeiten mit versteckten Juwelen zu kombinieren, die nur Einheimische kennen. Ob Sie Abenteuer, kulturelle Bereicherung oder Entspannung suchen, wir haben die perfekte Tour für Sie."
+    },
+    "tourService": {
+      "title": "Was ist ein Tour-Service?",
+      "intro": "Der Tour-Service von Rehlatak ist ein vollständiges Reiseerlebnis, das es Ihnen ermöglicht, die schönsten und berühmtesten Touristenattraktionen der Türkei zu entdecken, ohne sich um die Planung oder den Transport sorgen zu müssen.",
+      "weHandle": "Wir kümmern uns um Ihre Reisen:",
+      "services": [
+        "Vollständige Organisation Ihrer Reiseroute von A bis Z",
+        "Bereitstellung von Transport zwischen und innerhalb von Städten",
+        "Buchung komfortabler Unterkünfte nach Ihren Vorlieben",
+        "Arrangement von Besuchen bei Touristenattraktionen in Begleitung professioneller Führer",
+        "Bereitstellung von Eintrittskarten zu Sehenswürdigkeiten und Aktivitäten",
+        "24/7-Support auf Arabisch"
+      ],
+      "conclusion": "Ob Sie allein reisen, mit Ihrem Partner, als Familie oder als große Gruppe, wir entwerfen ein Tourprogramm in der Türkei, das Ihren Bestrebungen entspricht und Ihren Bedürfnissen gerecht wird."
+    },
+    "features": {
+      "title": "Merkmale unserer Touren",
+      "items": [
+        {
+          "title": "Vielfalt der Reiseziele und Programme",
+          "description": "Wir bieten eine breite Palette von Touren in der Türkei, die verschiedene Touristenattraktionen von Norden bis Süden abdecken, von historischen Städten bis zu charmanten Stränden und atemberaubenden Naturgebieten."
+        },
+        {
+          "title": "Professionelle Tourführer",
+          "description": "Ihre Touren werden von arabisch- und englischsprachigen Führern begleitet, die über tiefes Wissen über die Geschichte und Kultur der Regionen verfügen, die Sie besuchen, und Ihr Erlebnis bereichern und angenehmer und nützlicher machen."
+        },
+        {
+          "title": "Persönlicher Service und flexible Programme",
+          "description": "Wir passen Reisen an Ihre Bedürfnisse an, mit der Option, zwischen privaten oder Gruppentouren zu wählen, und der Freiheit, das Programm an Ihre Interessen und Ihr Budget anzupassen."
+        },
+        {
+          "title": "Komfortabler Transport in modernen Autos",
+          "description": "Wir stellen moderne, klimatisierte Fahrzeuge mit professionellen Fahrern zur Verfügung, um sicheren und komfortablen Transport zwischen Städten und während der Touren zu gewährleisten."
+        },
+        {
+          "title": "Sorgfältig ausgewählte Unterkünfte",
+          "description": "Wir wählen sorgfältig die besten Hotels und Resorts aus, die exzellenten Service, eine strategische Lage und Einrichtungen bieten, die Ihren Bedürfnissen entsprechen."
+        },
+        {
+          "title": "Wettbewerbsfähige und transparente Preise",
+          "description": "Unsere Preise sind von Anfang an wettbewerbsfähig und transparent, ohne versteckte Gebühren oder unerwartete Überraschungen, und bieten das beste Preis-Leistungs-Verhältnis."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Kosten für Touristentrips in der Türkei",
+      "intro": "Unsere Türkei-Tour-Pakete bieten eine Vielzahl von Preisen für verschiedene Budgets, während hochwertige Dienstleistungen aufrechterhalten werden:",
+      "economy": {
+        "title": "1. Economy-Pakete",
+        "features": [
+          "<strong>Ab $250</strong> pro Person (3 Tage/2 Nächte)",
+          "Beinhaltet Unterkunft in 3-4-Sterne-Hotels",
+          "Gruppentouren mit arabischsprachigem Führer",
+          "Transport zwischen Städten und Touristenattraktionen"
+        ]
+      },
+      "classic": {
+        "title": "2. Classic-Pakete",
+        "features": [
+          "<strong>Ab $450</strong> pro Person (5 Tage/4 Nächte)",
+          "Unterkunft in 4-5-Sterne-Hotels in erstklassigen Lagen",
+          "Eine Kombination aus privaten und Gruppentouren",
+          "Tägliche Frühstücke und einige Hauptmahlzeiten"
+        ]
+      },
+      "luxury": {
+        "title": "3. Luxus-Pakete",
+        "features": [
+          "<strong>Ab $750</strong> pro Person (7 Tage/6 Nächte)",
+          "Unterkunft in 5-Sterne-Hotels und Luxusresorts",
+          "Exklusive private Touren mit spezialisiertem Führer",
+          "Einzigartige Erlebnisse und besondere Aktivitäten",
+          "Vollpension mit Gourmet-Mahlzeiten"
+        ]
+      },
+      "note": {
+        "label": "Hinweis:",
+        "text": "Preise können je nach Saison, Unterkunftstyp und dem spezifischen Paket variieren. Wir bieten saisonale Angebote und Rabatte für Gruppen und frühzeitige Buchungen."
+      }
+    },
+    "included": {
+      "title": "Was beinhaltet ein Tourpaket in der Türkei?",
+      "intro": "Wenn Sie eine Tour in der Türkei bei uns buchen, erhalten Sie ein umfassendes Paket von Dienstleistungen, das alle Ihre Bedürfnisse abdeckt:",
+      "beforeTrip": {
+        "title": "1. Vor Ihrer Reise",
+        "items": [
+          "Persönliche Tourismusberatung zur Gestaltung des besten Programms für Sie",
+          "Ein detaillierter Reiseplan mit klarem Zeitplan",
+          "Hilfe bei der Auswahl geeigneter Hotels",
+          "Beratung über die besten Besuchszeiten und verfügbare Aktivitäten"
+        ]
+      },
+      "uponArrival": {
+        "title": "2. Bei der Ankunft",
+        "items": [
+          "Flughafen-Abhol- und Bringservice",
+          "Privates Auto mit professionellem Fahrer",
+          "Ein Tourführer zur Begleitung während Ihrer Touren",
+          "Eintrittskarten zu Museen und Touristenattraktionen"
+        ]
+      },
+      "duringStay": {
+        "title": "3. Während Ihres Aufenthalts",
+        "items": [
+          "Unterkunft in sorgfältig ausgewählten Hotels",
+          "Mahlzeiten entsprechend dem gewählten Paket",
+          "Transport zwischen und innerhalb von Städten",
+          "Tägliche Touren zu den wichtigsten Touristenattraktionen",
+          "Unterhaltungsaktivitäten und kulturelle Erlebnisse"
+        ]
+      },
+      "additional": {
+        "title": "4. Zusätzliche Dienstleistungen",
+        "items": [
+          "Notfall- und Anfrage-Hotline (24/7)",
+          "Hilfe in Ihrer Sprache zur Kommunikation mit Einheimischen",
+          "Empfehlungen für die besten Restaurants und Einkaufszentren",
+          "Optionale Dienstleistungen wie Heißluftballonfahrten, Kreuzfahrten und Folklore-Shows"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Buchen Sie jetzt Ihre Traum-Tourismusreise in der Türkei",
+      "description": "Entdecken Sie die Geheimnisse des Tourismus in der Türkei mit einem vollständigen Reiseerlebnis, das alles von Anfang bis Ende beinhaltet. Kontaktieren Sie uns jetzt, und lassen Sie uns die perfekte Reise für Sie nach Ihrem Budget und Ihren Vorlieben organisieren.",
+      "email": "E-Mail",
+      "whatsapp": "WhatsApp",
+      "contactNow": "Kontaktieren Sie uns jetzt",
+      "followUs": "Folgen Sie uns",
+      "instagram": "Instagram",
+      "callNow": "Rufen Sie uns jetzt an"
+    },
+    "contactForm": {
+      "title": "Kontakt aufnehmen",
+      "description": "Haben Sie Fragen zu unseren Touren? Wir sind hier, um Ihnen bei der Planung Ihrer perfekten Reise zu helfen. Senden Sie uns eine Nachricht und wir melden uns so schnell wie möglich bei Ihnen."
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen",
+      "items": [
+        {
+          "question": "Was ist der beste Monat, um die Türkei zu besuchen?",
+          "answer": "Die beste Zeit, um die Türkei zu besuchen, ist im Frühling (April bis Juni) und Herbst (September bis November), wo das Wetter gemäßigt ist und die Touristenattraktionen weniger überfüllt sind. Rahalatek organisiert jedoch das ganze Jahr über Touren mit maßgeschneiderten Aktivitäten für jede Saison, um sicherzustellen, dass Sie ein wunderbares Erlebnis haben, unabhängig davon, wann Sie besuchen."
+        },
+        {
+          "question": "Ist die Türkei teuer für den Tourismus?",
+          "answer": "Die Türkei gilt im Vergleich zu europäischen Ländern als wirtschaftliches Touristenziel und bietet eine Vielzahl von Optionen für alle Budgets. Mit Rahalatek können Sie aus wirtschaftlichen Paketen ab $250 pro Person, Classic-Paketen oder Luxuserlebnissen wählen. Wir bieten transparente Preise und exzellentes Preis-Leistungs-Verhältnis für alle unsere Touren."
+        },
+        {
+          "question": "Ist die Türkei sicher für den Tourismus?",
+          "answer": "Ja, die Türkei ist ein sicheres Touristenziel. Die wichtigsten Touristenstädte der Türkei sind sehr sicher und gastfreundlich gegenüber Besuchern. Mit Rahalatek erhalten Sie zusätzliche Sicherheit durch professionelle arabisch- und englischsprachige Führer, 24/7-Kundensupport, sorgfältig ausgewählte Unterkünfte und vollständig versicherten Transport, um Ihre vollständige Ruhe während Ihrer Reise zu gewährleisten."
+        },
+        {
+          "question": "Wie weit im Voraus sollte ich meine Tour buchen?",
+          "answer": "Wir empfehlen, mindestens 2-4 Wochen im Voraus zu buchen, um die besten Hotels und Tourführer zu sichern, besonders während der Hauptsaison (Sommer und Feiertage). Rahalatek berücksichtigt jedoch auch Last-Minute-Buchungen basierend auf Verfügbarkeit. Frühe Buchung kommt oft mit speziellen Rabatten und besseren Anpassungsoptionen."
+        },
+        {
+          "question": "Kann ich meine Tourroute anpassen?",
+          "answer": "Absolut! Eine der Hauptstärken von Rahalatek ist Flexibilität und Personalisierung. Wir können Ihre Tour an Ihre Interessen, Vorlieben und Ihr Budget anpassen. Ob Sie spezifische Reiseziele hinzufügen, Ihren Aufenthalt verlängern, bestimmte Aktivitäten wählen oder das Tempo der Tour anpassen möchten, unser Team arbeitet mit Ihnen zusammen, um Ihr perfektes türkisches Abenteuer zu schaffen."
+        },
+        {
+          "question": "Stellen Sie arabischsprachige Tourführer zur Verfügung?",
+          "answer": "Ja! Alle Rahalatek-Touren beinhalten professionelle Tourführer, die fließend Arabisch und Englisch sprechen. Unsere Führer sind nicht nur Sprachexperten, sondern haben auch tiefes Wissen über türkische Geschichte, Kultur und lokale Bräuche. Sie stellen sicher, dass Sie ein bereicherndes, informatives und komfortables Erlebnis haben und dabei alle Sprachbarrieren während Ihrer Reise beseitigen."
+        }
+      ]
+    }
+  },
+  "hotelBookingPage": {
+    "hero": {
+      "title": "Ihr perfekter Aufenthalt mit Rahalatek",
+      "subtitle": "Buchen Sie Premium-Hotels in der Türkei und anderen Ländern mit den besten Preisen und außergewöhnlichem Service"
+    },
+    "nav": {
+      "overview": "Übersicht",
+      "whyChooseUsFull": "Warum uns wählen",
+      "whyChooseUsShort": "Warum wir",
+      "hotels": "Hotels",
+      "pricing": "Preise",
+      "included": "Was enthalten ist",
+      "contact": "Kontakt",
+      "faqs": "Häufige Fragen"
+    },
+    "introduction": {
+      "title": "Ihr Tor zu perfekten Unterkünften",
+      "paragraph1": "Erleben Sie unvergleichlichen Komfort und Luxus mit unserer sorgfältig kuratierten Hotelauswahl in der gesamten Türkei. Von dem historischen Charme Istanbuls bis zu den sonnenverwöhnten Stränden Antalyas, von den märchenhaften Landschaften Kappadokiens bis zu den unberührten Bergen Trabzons bieten wir Premium-Unterkünfte, die den Traum jedes Reisenden erfüllen.",
+      "paragraph2": "Unser umfangreiches Portfolio bietet handverlesene Hotels von elegantem 3-Sterne-Komfort bis zu opulenten 5-Sterne-Luxusresorts. Ob Sie eine romantische Auszeit, einen Familienurlaub oder eine Geschäftsreise planen, unser Hotelbuchungsservice stellt sicher, dass Sie die perfekte Unterkunft finden, die Ihren Vorlieben, Ihrem Budget und Ihrem Reiseverhalten entspricht, alles unterstützt von wettbewerbsfähigen Preisen und außergewöhnlichem Kundenservice."
+    },
+    "hotelService": {
+      "title": "Was ist unser Hotelbuchungsservice?",
+      "description": "Unser Hotelbuchungsservice von Rahalatek ist Ihre vollständige Unterkunftslösung in der Türkei und bietet nahtlose Reservierungen in sorgfältig ausgewählten Hotels, die den höchsten Standards für Qualität, Komfort und Gastfreundschaft entsprechen. Wir kümmern uns um jeden Aspekt Ihres Hotelaufenthalts, von der Suche nach dem perfekten Zimmer bis zur Arrangierung spezieller Anfragen, und gewährleisten ein stressfreies und unvergessliches Erlebnis.",
+      "weProvide": "Was wir bieten:",
+      "services": [
+        "Sorgfältig ausgewählte 3-, 4- und 5-Sterne-Hotels in allen wichtigen türkischen Städten",
+        "Verschiedene Zimmertypen für Alleinreisende, Paare, Familien und Gruppen",
+        "Flexible Buchungsoptionen mit Frühstück inklusive oder nur-Zimmer-Arrangements",
+        "Flughafen-Transfer-Services mit komfortablen Fahrzeugen (Vito-, Sprinter- oder Bus-Optionen)",
+        "Saisonale Preise mit speziellen Tarifen und exklusiven Angeboten das ganze Jahr über",
+        "Familienfreundliche Richtlinien mit speziellen Tarifen für Kinder unter 6 und im Alter von 6-12 Jahren",
+        "24/7-Kundensupport auf Arabisch und Englisch für Ihre Bequemlichkeit"
+      ]
+    },
+    "features": {
+      "title": "Warum unseren Hotelbuchungsservice wählen",
+      "items": [
+        {
+          "title": "Breite Auswahl an Hotels",
+          "description": "Von luxuriösen 5-Sterne-Resorts bis zu budgetfreundlichen Unterkünften bieten wir eine vielfältige Palette von Hotels in der gesamten Türkei, um die Bedürfnisse und das Budget jedes Reisenden zu erfüllen."
+        },
+        {
+          "title": "Qualitätsunterkünfte",
+          "description": "Alle unsere Partnerhotels werden sorgfältig ausgewählt und regelmäßig inspiziert, um die höchsten Standards für Komfort, Sauberkeit und Servicequalität zu gewährleisten."
+        },
+        {
+          "title": "Premium-Services",
+          "description": "Genießen Sie außergewöhnliche Services einschließlich Zimmerservice, Concierge-Unterstützung und 24/7-Support, um Ihren Aufenthalt komfortabel und unvergesslich zu machen."
+        },
+        {
+          "title": "Moderne Annehmlichkeiten",
+          "description": "Kostenloses Wi-Fi, Klimaanlage, moderne Badezimmer, Flachbildfernseher und alle Annehmlichkeiten, die Sie für einen komfortablen Aufenthalt benötigen."
+        },
+        {
+          "title": "Exklusive Einrichtungen",
+          "description": "Zugang zu Schwimmbädern, Fitnesszentren, Spa-Einrichtungen und Erholungsbereichen, um Ihr Urlaubserlebnis zu verbessern."
+        },
+        {
+          "title": "Speiseoptionen",
+          "description": "Genießen Sie köstliche Mahlzeiten mit inklusivem Frühstück, mehreren Restaurantoptionen und verfügbaren speziellen Diätunterkünften."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Hotelpreise & Pakete",
+      "intro": "Unsere Hotelpakete sind darauf ausgelegt, außergewöhnlichen Wert mit flexiblen Preisoptionen zu bieten, die jedem Budget entsprechen. Alle Tarife beinhalten Steuern und sind in mehreren Währungen (USD, EUR, TRY) mit saisonalen Variationen für die besten Angebote verfügbar.",
+      "budget": {
+        "title": "1. Budget-Hotels (3-Sterne)",
+        "features": [
+          "<strong>Ab $45-$70</strong> pro Nacht pro Zimmer",
+          "Komfortable Zimmer mit wesentlichen Annehmlichkeiten",
+          "Tägliches Frühstück in den meisten Hotels inklusive",
+          "Kostenloses Wi-Fi und Klimaanlage",
+          "Zentrale Lagen in der Nähe wichtiger Attraktionen"
+        ]
+      },
+      "standard": {
+        "title": "2. Standard-Hotels (4-Sterne)",
+        "features": [
+          "<strong>Ab $80-$140</strong> pro Nacht pro Zimmer",
+          "Überlegene Zimmer mit Premium-Annehmlichkeiten",
+          "Vollständiges Frühstücksbuffet mit internationalen Optionen",
+          "Schwimmbad und Fitnesseinrichtungen",
+          "Restaurant und Zimmerservice verfügbar"
+        ]
+      },
+      "luxury": {
+        "title": "3. Luxus-Hotels (5-Sterne)",
+        "features": [
+          "<strong>Ab $150-$400+</strong> pro Nacht pro Zimmer",
+          "Luxuriöse Suiten mit atemberaubenden Aussichten",
+          "Gourmet-Dining und exklusive Frühstücksoptionen",
+          "Vollservice-Spa, mehrere Pools und Strandzugang",
+          "Concierge-Services und exklusive Annehmlichkeiten",
+          "VIP-Flughafen-Transfers inklusive"
+        ]
+      },
+      "note": {
+        "label": "Hinweis:",
+        "text": "Preise variieren je nach Saison, Lage und Zimmertyp. Monatliche Preisvariationen verfügbar (Juni-August Hauptsaison, Dezember-Januar Wintertarife). Wir bieten spezielle Gruppenrabatte, verlängerte Aufenthaltsraten und Frühbucher-Promotionen. Kinder unter 6 Jahren übernachten kostenlos in den meisten Hotels, im Alter von 6-12 Jahren genießen reduzierte Tarife."
+      }
+    },
+    "included": {
+      "title": "Was ist in Ihrer Hotelbuchung enthalten?",
+      "intro": "Wenn Sie ein Hotel über Rahalatek buchen, erhalten Sie ein umfassendes Paket, das alle wesentlichen Services und Annehmlichkeiten für einen komfortablen und sorgenfreien Aufenthalt in der Türkei abdeckt.",
+      "beforeArrival": {
+        "title": "1. Vor Ihrer Ankunft",
+        "items": [
+          "Personalisierte Beratung zur Auswahl des perfekten Hotels für Ihre Bedürfnisse",
+          "Detaillierte Hotelinformationen mit Fotos, Annehmlichkeiten und Standortdetails",
+          "Bestätigte Reservierung mit Buchungsbestätigungsnummer",
+          "Vor-Ankunft-Kommunikation über Check-in-Verfahren"
+        ]
+      },
+      "transportation": {
+        "title": "2. Flughafen & Transport",
+        "items": [
+          "Flughafen-Abholservice mit Meet & Greet",
+          "Komfortable Fahrzeugoptionen: Vito (2-8 Passagiere), Sprinter (9-16) oder Bus",
+          "Professionelle, lizenzierte Fahrer mit lokalen Kenntnissen",
+          "Rückflughafen-Transfer für die Abreise"
+        ]
+      },
+      "roomAmenities": {
+        "title": "3. Zimmer & Annehmlichkeiten",
+        "items": [
+          "Auswahl von Zimmertypen: Standard, Deluxe, Suite, Familienzimmer",
+          "Klimaanlage und Klimakontrolle",
+          "Kostenloses Highspeed-Wi-Fi im gesamten Hotel",
+          "Flachbildfernseher mit Satellitenkanälen",
+          "Privates Badezimmer mit kostenlosen Toilettenartikeln",
+          "Täglicher Hausmeisterservice"
+        ]
+      },
+      "dining": {
+        "title": "4. Speisen & Zusätzliche Services",
+        "items": [
+          "Tägliches Frühstücksbuffet (türkische und internationale Küche)",
+          "Zugang zu Hotelrestaurants und Bars",
+          "Schwimmbad- und Fitnesscenter-Zugang",
+          "24/7-Rezeption und Concierge-Service",
+          "24/7-Kundensupport auf Arabisch und Englisch",
+          "Spezielle Unterstützung für spezielle Anfragen und diätetische Bedürfnisse"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Buchen Sie jetzt Ihr perfektes Hotel in der Türkei",
+      "description": "Erleben Sie die besten Unterkünfte in der Türkei mit Premium-Service und wettbewerbsfähigen Preisen. Kontaktieren Sie uns jetzt, um Ihr ideales Hotel zu finden.",
+      "email": "E-Mail",
+      "whatsapp": "WhatsApp",
+      "contactNow": "Kontaktieren Sie uns jetzt",
+      "followUs": "Folgen Sie uns",
+      "instagram": "Instagram",
+      "callNow": "Rufen Sie uns jetzt an"
+    },
+    "contactForm": {
+      "title": "Kontakt aufnehmen",
+      "description": "Haben Sie Fragen zur Hotelbuchung? Wir sind hier, um Ihnen zu helfen, die perfekte Unterkunft zu finden. Senden Sie uns eine Nachricht und wir melden uns so schnell wie möglich bei Ihnen."
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen",
+      "items": [
+        {
+          "question": "Wie weit im Voraus sollte ich ein Hotel buchen?",
+          "answer": "Wir empfehlen, Hotels mindestens 1-2 Wochen im Voraus zu buchen, um die besten Tarife und Zimmerverfügbarkeit zu sichern, besonders während der Hauptsaison (Juni-August) und wichtigen Feiertagen. Rahalatek kann jedoch auch Last-Minute-Buchungen basierend auf Hotelverfügbarkeit berücksichtigen. Frühe Buchung kommt oft mit speziellen Rabatten und mehr Zimmertyp-Optionen."
+        },
+        {
+          "question": "Ist Frühstück im Hotelpreis enthalten?",
+          "answer": "Die meisten unserer Hotelpakete beinhalten tägliches Frühstücksbuffet mit türkischen und internationalen Optionen. Die Frühstücksinklusion wird in der Hotelbeschreibung klar erwähnt. Einige Budget-Hotels können nur-Zimmer-Tarife anbieten, die wir basierend auf Ihrer Präferenz anpassen können. Wir spezifizieren immer, was enthalten ist, wenn wir Preise anbieten."
+        },
+        {
+          "question": "Kann ich meine Hotelreservierung stornieren oder ändern?",
+          "answer": "Ja, Stornierungs- und Änderungsrichtlinien variieren je nach Hotel und Buchungstyp. Die meisten Hotels bieten kostenlose Stornierung bis zu 24-72 Stunden vor dem Check-in. Einige Promotionsraten können strengere Stornierungsrichtlinien haben. Wir informieren Sie immer über die spezifische Stornierungsrichtlinie vor der Bestätigung Ihrer Buchung, und unser Team ist verfügbar, um bei Änderungen an Ihrer Reservierung zu helfen."
+        },
+        {
+          "question": "Übernachten Kinder kostenlos in Hotels?",
+          "answer": "Die meisten Hotels in unserer Auswahl bieten kostenlose Unterkunft für Kinder unter 6 Jahren, wenn sie dasselbe Zimmer mit den Eltern teilen. Kinder im Alter von 6-12 Jahren erhalten typischerweise einen 50%igen Rabatt. Diese familienfreundlichen Richtlinien gelten bei der Nutzung bestehender Betten. Zusätzliche Betten oder Kinderbetten können gegen eine zusätzliche Gebühr arrangiert werden. Spezifische Richtlinien variieren je nach Hotel, und wir werden genaue Details bei der Buchung bereitstellen."
+        },
+        {
+          "question": "Ist Flughafen-Transfer mit Hotelbuchung enthalten?",
+          "answer": "Flughafen-Transfer ist mit 5-Sterne-Luxushotelbuchungen enthalten. Für 3-Sterne- und 4-Sterne-Hotels kann Flughafen-Transfer zu Ihrem Paket zu wettbewerbsfähigen Tarifen hinzugefügt werden. Wir bieten komfortable Fahrzeugoptionen einschließlich Vito (2-8 Passagiere), Sprinter (9-16 Passagiere) und Luxusbusse für größere Gruppen. Alle Transfers beinhalten Meet & Greet-Service mit professionellen Fahrern."
+        },
+        {
+          "question": "Welche Zahlungsmethoden akzeptieren Sie?",
+          "answer": "Wir akzeptieren mehrere Zahlungsmethoden für Ihre Bequemlichkeit: Banküberweisung, Kredit-/Debitkarten (Visa, Mastercard) und Barzahlung in USD, EUR oder türkischer Lira. Die Zahlung kann im Voraus erfolgen, um Ihre Buchung zu sichern, oder im Hotel beim Check-in, je nach Hotelrichtlinie. Wir bieten sichere Zahlungsabwicklung und detaillierte Quittungen für alle Transaktionen."
+        }
+      ]
+    }
+  },
+  "luxurySuitesPage": {
+    "hero": {
+      "title": "Luxus-Suiten",
+      "subtitle": "Erleben Sie unvergleichlichen Luxus und Komfort"
+    },
+    "nav": {
+      "overview": "Übersicht",
+      "whyChooseUsFull": "Warum uns wählen",
+      "whyChooseUsShort": "Warum wir",
+      "apartmentTypes": "Apartment-Typen",
+      "destinations": "Reiseziele",
+      "contact": "Kontakt",
+      "faqs": "Häufige Fragen"
+    },
+    "introduction": {
+      "title": "Genießen Sie Privatsphäre und Komfort mit bezaubernden Aussichten auf die schönsten Touristenattraktionen der Türkei.",
+      "subtitle": "Stehen Sie vor diesen Problemen beim Aufenthalt in traditionellen Hotels?",
+      "problems": [
+        "Kleine, beengte Zimmer, die für eine Familie nicht ausreichen oder an Privatsphäre mangeln.",
+        "Übermäßige zusätzliche Kosten für jeden Service, vom Restaurant bis zur Wäscherei.",
+        "Mangel an einer Küche zwingt Sie, immer auswärts zu essen.",
+        "Schwierigkeit, große Familien in angrenzenden Zimmern unterzubringen.",
+        "Sprachbarriere mit nicht-arabischsprachigem Hotelpersonal.",
+        "Mangel an Privatsphäre in der Hotellobby, Restaurants und unter Gästen."
+      ]
+    },
+    "serviceSection": {
+      "title": "Was ist der Service Ihrer Reisen-Service-Apartments?",
+      "description": "Ihre Reisen-Service-Apartments sind die perfekte Lösung für diejenigen, die den Komfort von zu Hause und die Services eines Hotels suchen. Wenn Sie sich entscheiden, in der Türkei mit Ihren Reisen zu bleiben, möchten Sie sich nicht wie ein gewöhnlicher Tourist fühlen, sondern wie ein Einwohner, der das Echte erlebt.",
+      "offersTitle": "Ihre Reisen-Service-Apartments bieten:",
+      "offers": [
+        "Geräumige Räume und mehrere Zimmer geeignet für Familien und Gruppen",
+        "Vollständig ausgestattete Küchen zur Zubereitung Ihrer Lieblingsmahlzeiten und Einsparung von Restaurantkosten",
+        "Privates Wohnzimmer zur Entspannung und Familienversammlungen",
+        "Hotelservices wie Reinigung und 24-Stunden-Rezeption",
+        "Absolute Privatsphäre, als wären Sie in Ihrem eigenen Zuhause",
+        "Bestes Preis-Leistungs-Verhältnis, besonders für längere Aufenthalte"
+      ]
+    },
+    "features": {
+      "title": "Merkmale von Rehlatak-Apartments",
+      "subtitle": "Warum sind Rehlatak-Apartments die beste Wahl für Unterkünfte in der Türkei?",
+      "strategic": {
+        "title": "Strategische Lagen im Herzen türkischer Städte",
+        "description": "Rehlatak-Apartments befinden sich in den besten Touristenbereichen der Türkei – nur wenige Gehminuten entfernt von:",
+        "points": [
+          "Den berühmtesten Touristenattraktionen und historischen Denkmälern der Türkei",
+          "Haupt-Einkaufszentren und beliebten Märkten",
+          "Öffentlichen Verkehrsstationen",
+          "Den besten Restaurants und Cafés"
+        ]
+      },
+      "amenities": {
+        "title": "Luxuriöse Annehmlichkeiten, die Ihre Erwartungen übertreffen",
+        "points": [
+          "Komfortable Betten mit Premium-Orthopädie-Matratzen",
+          "Zentrale Klimaanlage mit Temperaturkontrolle",
+          "Moderne Haushaltsgeräte einschließlich Waschmaschine, Kühlschrank und Mikrowelle",
+          "Vollständiges Küchengeschirr zur Zubereitung Ihrer Lieblingsmahlzeiten",
+          "Kostenloses Highspeed-Internet",
+          "Arabische und internationale Kanäle"
+        ]
+      },
+      "services": {
+        "title": "Umfassende Services auf Arabisch und Englisch vom Rehlatak-Team",
+        "points": [
+          "24/7-Arabisch- und Englisch-Support-Team",
+          "Flughafen-Abhol- und Bringservice",
+          "Regelmäßige Reinigung auf Anfrage",
+          "Medizinische Hilfe bei Bedarf",
+          "Tourführung zu den besten Orten und Restaurants",
+          "Flexible Ankunftsverfahren, die Ihrem Reiseplan entsprechen"
+        ]
+      }
+    },
+    "apartmentTypes": {
+      "title": "Hotel-Apartment-Optionen von Rehlatak, die allen Bedürfnissen entsprechen",
+      "description": "Wir bieten eine Vielzahl von Hotel-Apartments von Rehlatak und stellen auch eine vielfältige Sammlung von Apartments zur Verfügung, die allen Ihren Bedürfnissen entsprechen",
+      "studio": {
+        "title": "Studio-Apartment | Ab $35/Nacht",
+        "features": [
+          "Ideal für Alleinreisende oder Paare",
+          "Kompakter Raum mit allen grundlegenden Annehmlichkeiten",
+          "Zentrale Lage im Herzen der Stadt"
+        ]
+      },
+      "oneBedroom": {
+        "title": "Ein-Zimmer-Apartment | Ab $55/Nacht",
+        "features": [
+          "Geeignet für Familien oder kleine Gruppen (2-3 Personen)",
+          "Separates Schlafzimmer mit geräumigem Wohnbereich",
+          "Vollständig ausgestattete Küche für Familienmahlzeiten"
+        ]
+      },
+      "twoBedroom": {
+        "title": "Zwei-Zimmer-Apartment | Ab $75/Nacht",
+        "features": [
+          "Geeignet für Familien (4-6 Personen)",
+          "Zwei geräumige Schlafzimmer mit großem Wohnraum",
+          "Vollständig ausgestattete Küche und kompletter Essbereich"
+        ]
+      },
+      "luxury": {
+        "title": "Rahalatek-Luxus-Apartments | Ab $120/Nacht",
+        "features": [
+          "Premium-Unterhaltungserlebnis wie kein anderes",
+          "Luxus-Badezimmer mit modernen Annehmlichkeiten",
+          "Geräumige Bereiche mit exklusiven modernen Möbeln",
+          "Kommt mit Whirlpool oder privater Sauna"
+        ]
+      }
+    },
+    "destinations": {
+      "title": "Beliebte Reiseziele für Luxus-Suiten",
+      "istanbul": {
+        "title": "Istanbul - Hauptstadt der Zivilisationen",
+        "features": [
+          "Luxus-Apartments mit Blick auf den Bosporus",
+          "Gelegen in der Nähe wichtiger historischer Wahrzeichen",
+          "Einfacher Zugang zu Einkaufszentren und Restaurants"
+        ]
+      },
+      "trabzon": {
+        "title": "Trabzon - Juwel des Nordens",
+        "features": [
+          "Luxus-Apartments mit Bergblick",
+          "In der Nähe von Uzungol und natürlichen Attraktionen",
+          "Premium-Annehmlichkeiten mit atemberaubenden Meerblick"
+        ]
+      },
+      "antalya": {
+        "title": "Antalya - Türkische Riviera",
+        "features": [
+          "Luxus-Strandfront-Apartments",
+          "In der Nähe antiker Ruinen und Touristenattraktionen",
+          "Moderne Annehmlichkeiten mit traditionellem türkischem Charme"
+        ]
+      },
+      "bursa": {
+        "title": "Bursa - Die grüne Stadt",
+        "features": [
+          "Luxus-Apartments mit Bergblick",
+          "In der Nähe natürlicher heißer Quellen und Skigebiete",
+          "Premium-Einrichtungen mit atemberaubenden grünen Landschaften"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Buchen Sie jetzt Ihre Luxus-Suite",
+      "description": "Erleben Sie den Komfort von zu Hause mit dem Luxus eines Hotels. Kontaktieren Sie uns jetzt, um Ihr perfektes Service-Apartment zu reservieren.",
+      "email": "E-Mail",
+      "contactNow": "Kontaktieren Sie uns jetzt",
+      "whatsapp": "WhatsApp",
+      "followUs": "Folgen Sie uns",
+      "instagram": "Instagram",
+      "callNow": "Rufen Sie uns jetzt an"
+    },
+    "contactForm": {
+      "title": "Kontakt aufnehmen",
+      "description": "Haben Sie Fragen zu unseren Luxus-Suiten? Wir sind hier, um Ihnen zu helfen, die perfekte Unterkunft für Ihren Aufenthalt zu finden. Senden Sie uns eine Nachricht und wir melden uns so schnell wie möglich bei Ihnen."
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen",
+      "items": [
+        {
+          "question": "Welche Arten von Hotel-Apartments sind mit Rahalatek verfügbar?",
+          "answer": "Rahalatek bietet eine vielfältige Palette von Hotel-Apartments für alle Bedürfnisse:\n\n• Studio-Apartments (25-40m²): Kompakter offener Raum mit kleiner Küche, geeignet für 1-2 Personen.\n• Ein-Zimmer-Apartment (70-80m²): Beinhaltet Wohnzimmer, separate Küche und Badezimmer, ideal für 3-4 Personen.\n• Zwei-Zimmer-Apartment (100-70m²): Zwei separate Schlafzimmer mit Wohnzimmer, vollständige Küche, geeignet für Familien bis zu 6 Personen.\n• Drei-Zimmer-Apartment (150-100m²): Drei separate Schlafzimmer, großes Wohnzimmer, vollständige Küche, geeignet für große Gruppen.\n• Duplex und Penthouses (150+m²): Luxus-Apartments auf zwei Etagen oder an der Spitze des Gebäudes mit Panoramablick, ein außergewöhnliches Erlebnis.\n\nAlle Rahalatek-Apartments sind vollständig möbliert und mit internationalen Standards ausgestattet, um Ihnen einen komfortablen Aufenthalt zu gewährleisten."
+        },
+        {
+          "question": "Was ist der Unterschied zwischen Rahalateks Hotel-Apartments und Service-Apartments?",
+          "answer": "Hotel-Apartments von Rahalatek bieten Hotelservices wie Rezeption rund um die Uhr, regelmäßige Reinigung, Wäscheservice und manchmal geteilte Annehmlichkeiten wie Fitnessstudio und Pool.\n\nService-Apartments sind typischerweise unabhängiger wie normale Apartments, normalerweise ohne Rezeption oder tägliche Services und können Annehmlichkeiten wie eine rund-um-die-Uhr-Rezeption nicht beinhalten.\n\nMit Rahalatek erhalten Sie vollständig betreute Apartments mit allen Hotelservices, Freiheit des Raums und der Privatsphäre und Komfort, der die Apartments auszeichnet."
+        },
+        {
+          "question": "Was ist der Unterschied zwischen Rahalateks Hotel-Apartments und Hotels?",
+          "answer": "Rahalateks Hotel-Apartments bieten:\n\n• Größere Räume (150-25m²) im Vergleich zu kleinen Hotelzimmern (15-30m²)\n• Vollständig ausgestattete Küche ohne Bedarf für ein Restaurant\n• Mehrere separate Zimmer und ein oder mehrere Badezimmer vergleichbar mit einem Hotel\n• Flexibilität bei der Zubereitung von Mahlzeiten anstatt sich ausschließlich auf Hotelrestaurants zu verlassen\n• Geeignet für längere Aufenthalte, während Hotelunterkunft für kurze Aufenthalte geeignet ist\n• Niedrigere Kosten für Familien und Gruppen im Vergleich zu höheren Kosten für mehrere Zimmer in einem Hotel\n• Komfortable häusliche Umgebung mit Rahalatek im Vergleich zum kommerziellen und touristischen Gefühl\n\nDer Hauptvorteil von Rahalateks Hotel-Apartments ist Freiheit, Privatsphäre und Wert für Geld, besonders für Aufenthalte über 3 Nächte."
+        }
+      ]
+    }
+  },
+  "airportServicePage": {
+    "hero": {
+      "title": "Nahtlose Flughafen-Transfers",
+      "subtitle": "Professioneller Flughafenempfang und Abschiedsservice mit VIP-Behandlung"
+    },
+    "nav": {
+      "overview": "Übersicht",
+      "whyChooseUsFull": "Warum uns wählen",
+      "whyChooseUsShort": "Warum wir",
+      "pricing": "Preise",
+      "whatsIncluded": "Was enthalten ist",
+      "contact": "Kontakt",
+      "faqs": "Häufige Fragen"
+    },
+    "introduction": {
+      "title": "Ihre Reise beginnt mit Komfort",
+      "paragraph1": "Erleben Sie ultimative Bequemlichkeit mit unserem Premium-Flughafen-Transfer-Service in der gesamten Türkei. Von dem Moment Ihrer Landung bis zu Ihrer Abreise gewährleisten wir eine reibungslose, komfortable und stressfreie Reise. Unser VIP-Empfangsservice beinhaltet personalisierten Meet & Greet, Gepäckunterstützung und direkten Transfer zu Ihrem Hotel oder Ziel.",
+      "paragraph2": "Ob Sie in Istanbul, Antalya, Trabzon oder einem anderen großen türkischen Flughafen ankommen, unser professionelles Team ist bereit, Sie willkommen zu heißen. Wir bedienen alle Städte und bieten Tür-zu-Tür-Service mit modernen Fahrzeugen, erfahrenen Fahrern und 24/7-Kundensupport, um Ihr Reiseerlebnis außergewöhnlich zu machen."
+    },
+    "serviceSection": {
+      "title": "Was ist unser Flughafen-Transfer-Service?",
+      "description": "Unser Flughafen-Transfer-Service von Rahalatek bietet vollständige Flughafenempfangs- und Abschiedslösungen und gewährleistet problemlose Ankünfte und Abflüge. Wir kümmern uns um alle Aspekte Ihres Flughafen-Transfers, von Flugüberwachung bis Gepäckabwicklung, und liefern ein Premium-Erlebnis von Landung bis Abflug.",
+      "whatWeProvide": "Was wir bieten:",
+      "items": {
+        "item1": "Personalisierter Meet & Greet am Ankunftsgate mit Namensschild",
+        "item2": "Professionelle Unterstützung bei Zoll, Einwanderung und Gepäckausgabe",
+        "item3": "Moderne Fahrzeugflotte: Vito (2-8 Pax), Sprinter (9-16 Pax) oder Luxusbusse",
+        "item4": "Lizenzierte Fahrer mit exzellenten lokalen Kenntnissen und mehrsprachigen Fähigkeiten",
+        "item5": "Flugverfolgung und automatische Abholzeit-Anpassungen bei Verspätungen",
+        "item6": "Tür-zu-Tür-Service vom Flughafen zum Hotel und Hotel zum Flughafen",
+        "item7": "24/7-Kundensupport auf Arabisch, Englisch und Türkisch"
+      },
+      "closing": "Wir verwandeln den stressigsten Teil der Reise in ein reibungsloses und komfortables Erlebnis für Sie und Ihre Familie."
+    },
+    "features": {
+      "title": "Warum unseren Flughafen-Transfer-Service wählen",
+      "items": {
+        "feature1": {
+          "title": "Meet & Greet-Service",
+          "description": "Unser professionelles Team trifft Sie am Flughafen-Ankunftsgate mit einem personalisierten Namensschild, hilft mit Gepäck und führt Sie bei Bedarf durch Zoll und Einwanderung."
+        },
+        "feature2": {
+          "title": "Komfortable Fahrzeuge",
+          "description": "Wählen Sie aus unserer Flotte moderner, klimatisierter Fahrzeuge: Vito (2-8 Passagiere), Sprinter (9-16 Passagiere) oder Luxusbusse für größere Gruppen, alle nach höchsten Standards gewartet."
+        },
+        "feature3": {
+          "title": "Professionelle Fahrer",
+          "description": "Lizenzierte, erfahrene Fahrer mit exzellenter Kenntnis lokaler Routen und Verkehrsmuster. Mehrsprachige Fahrer verfügbar (Englisch, Arabisch, Türkisch) für nahtlose Kommunikation."
+        },
+        "feature4": {
+          "title": "24/7-Verfügbarkeit",
+          "description": "Rund-um-die-Uhr-Service für jede Ankunfts- oder Abflugzeit. Flugüberwachung stellt sicher, dass wir Verspätungen verfolgen und Abholzeiten automatisch anpassen, sodass Sie nie warten müssen."
+        },
+        "feature5": {
+          "title": "Kontinuierliche Flugstatus-Überwachung",
+          "description": "Wir überwachen kontinuierlich Ihren Flugstatus, um sicherzustellen, dass wir pünktlich sind, selbst bei Verspätungen oder Änderungen Ihrer Ankunftszeit."
+        },
+        "feature6": {
+          "title": "Sicher & Zuverlässig",
+          "description": "Vollständig versicherte Fahrzeuge mit erfahrenen Fahrern, die alle Sicherheitsprotokolle befolgen. GPS-Verfolgung und Echtzeit-Updates halten Sie während Ihrer Reise informiert."
+        },
+        "feature7": {
+          "title": "Gepäckunterstützung",
+          "description": "Vollständige Gepäckabwicklung von Flughafen-Abholung bis Hotel-Abgabe. Wir stellen sicher, dass Ihre Sachen sicher transportiert und während der Reise sorgfältig behandelt werden."
+        },
+        "feature8": {
+          "title": "Transparente Preise ohne Überraschungen",
+          "description": "Unsere Preise sind von Anfang an klar und transparent, ohne versteckte Kosten oder überraschende zusätzliche Gebühren bei der Ankunft."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Flughafen-Transfer-Preise",
+      "intro": "Unsere transparente Preisstruktur bietet exzellenten Wert ohne versteckte Gebühren. Preise variieren je nach Fahrzeugtyp, Entfernung und Passagierzahl. Alle Tarife beinhalten Meet & Greet, Gepäckunterstützung und professionellen Fahrerservice.",
+      "vito": {
+        "title": "1. Vito-Transfer (2-8 Passagiere)",
+        "feature1": "Ab $30-$50 je nach Entfernung und Standort",
+        "feature2": "Perfekt für Paare, kleine Familien oder Geschäftsreisende",
+        "feature3": "Moderner Mercedes Vito mit Klimaanlage",
+        "feature4": "Komfortable Sitzplätze mit reichlich Gepäckraum"
+      },
+      "sprinter": {
+        "title": "2. Sprinter-Transfer (9-16 Passagiere)",
+        "feature1": "Ab $50-$70 je nach Entfernung und Standort",
+        "feature2": "Ideal für mittelgroße Gruppen und Familien",
+        "feature3": "Mercedes Sprinter mit Premium-Komfortmerkmalen",
+        "feature4": "Extra Gepäckkapazität für Gruppenreisende"
+      },
+      "bus": {
+        "title": "3. Bus-Transfer (17+ Passagiere)",
+        "feature1": "Ab $180-$300+ je nach Entfernung und Passagierzahl",
+        "feature2": "Perfekt für große Reisegruppen und Firmenveranstaltungen",
+        "feature3": "Moderner Luxusbus mit Klimakontrolle",
+        "feature4": "Professioneller Fahrer und Reiseleiter verfügbar"
+      },
+      "note": {
+        "label": "Hinweis:",
+        "text": "Preise variieren je nach Flughafen, Zielstadt und Tageszeit. Nacht-Transfers (23-6 Uhr) können zusätzliche Gebühren haben. Hin- und Rückfahrt-Buchungen erhalten spezielle Rabatte. Gruppentarife verfügbar für 3+ Fahrzeuge. Alle Preise beinhalten Meet & Greet, Flugüberwachung und Gepäckunterstützung."
+      }
+    },
+    "included": {
+      "title": "Was ist in Ihrem Flughafen-Transfer enthalten?",
+      "intro": "Unser umfassender Flughafen-Transfer-Service deckt jeden Aspekt Ihrer Reise von der Landung bis zum Hotel-Check-in und Hotel zur Abflug-Gate ab.",
+      "arrival": {
+        "title": "1. Flughafen-Empfang (Ankunft)",
+        "item1": "Meet & Greet am Ankunftsgate mit personalisiertem Namensschild",
+        "item2": "Unterstützung bei Gepäckausgabe und Gepäckabwicklung",
+        "item3": "Hilfe bei Zoll- und Einwanderungsverfahren bei Bedarf",
+        "item4": "Begleitung zum Fahrzeug mit Gepäckwagen-Unterstützung"
+      },
+      "journey": {
+        "title": "2. Transfer-Reise",
+        "item1": "Modernes, klimatisiertes Fahrzeug (Vito, Sprinter oder Bus)",
+        "item2": "Professioneller, lizenzierter Fahrer mit lokaler Expertise",
+        "item3": "Kostenloses Flaschenwasser und Wi-Fi (ausgewählte Fahrzeuge)",
+        "item4": "Sichere, direkte Route zu Ihrem Hotel oder Ziel",
+        "item5": "GPS-Verfolgung für Sicherheit und Echtzeit-Updates"
+      },
+      "departure": {
+        "title": "3. Flughafen-Abschied (Abflug)",
+        "item1": "Hotel-Abholung zur geplanten Zeit mit Flugüberwachung",
+        "item2": "Gepäckverladung und Unterstützung zum Check-in-Schalter",
+        "item3": "Terminal-Abgabe am Abflug-Gate-Bereich",
+        "item4": "Unterstützung beim Airline-Check-in bei Bedarf"
+      },
+      "additional": {
+        "title": "4. Zusätzliche Dienstleistungen",
+        "item1": "Flugverfolgung und automatische Verspätungsanpassungen",
+        "item2": "24/7-Kundensupport-Hotline in mehreren Sprachen",
+        "item3": "Kindersitze und spezielle Ausrüstung auf Anfrage",
+        "item4": "Extra Stopps oder Routenänderungen verfügbar",
+        "item5": "VIP-Fast-Track-Services an ausgewählten Flughäfen (zusätzliche Gebühr)"
+      }
+    },
+    "contact": {
+      "title": "Buchen Sie jetzt Ihren Flughafen-Transfer",
+      "description": "Erleben Sie problemlose Flughafen-Transfers mit professionellem Service und komfortablen Fahrzeugen. Kontaktieren Sie uns jetzt, um Ihren VIP-Empfangs- oder Abschiedsservice zu arrangieren.",
+      "email": "E-Mail",
+      "contactUsNow": "Kontaktieren Sie uns jetzt",
+      "whatsapp": "WhatsApp",
+      "followUs": "Folgen Sie uns",
+      "instagram": "Instagram",
+      "callUsNow": "Rufen Sie uns jetzt an"
+    },
+    "contactForm": {
+      "title": "Kontakt aufnehmen",
+      "description": "Haben Sie Fragen zu unserem Flughafen-Transfer-Service? Wir sind hier, um Ihnen bei der Planung Ihrer nahtlosen Ankunft und Abreise zu helfen. Senden Sie uns eine Nachricht und wir melden uns so schnell wie möglich bei Ihnen."
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen",
+      "items": {
+        "faq1": {
+          "question": "Muss ich im Voraus buchen?",
+          "answer": "Ja, wir empfehlen, mindestens 24 Stunden im Voraus zu buchen. Dies stellt sicher, dass wir das richtige Fahrzeug verfügbar haben und Ihnen den besten Service bieten können. Wir akzeptieren jedoch auch Last-Minute-Buchungen basierend auf Verfügbarkeit."
+        },
+        "faq2": {
+          "question": "Ist der Service 24/7 verfügbar?",
+          "answer": "Ja, wir bieten Flughafen-Empfangsservice 24 Stunden am Tag, 7 Tage die Woche, einschließlich Wochenenden, Feiertagen und während der Hauptreisezeiten. Unser Team ist immer bereit, Sie willkommen zu heißen, wann immer Sie ankommen."
+        },
+        "faq3": {
+          "question": "Was ist, wenn mein Flug verspätet ist?",
+          "answer": "Keine Sorge! Wir verfolgen kontinuierlich Ihren Flugstatus und werden pünktlich dort sein, selbst wenn Ihre Ankunft verspätet ist oder sich ändert. Unser Fahrer wird Sie zu Ihrer tatsächlichen Ankunftszeit ohne zusätzliche Gebühr für angemessene Verspätungen treffen."
+        },
+        "faq4": {
+          "question": "Akzeptieren Sie Zahlung bei der Ankunft?",
+          "answer": "Ja, wir akzeptieren Barzahlung in USD, EUR oder türkischer Lira bei der Ankunft. Wir bieten auch Vorauszahlungsoptionen durch Banküberweisung oder Kreditkarte für Ihre Bequemlichkeit. Preise werden im Voraus vereinbart ohne versteckte Gebühren."
+        },
+        "faq5": {
+          "question": "Bieten Sie Service für große Gruppen?",
+          "answer": "Absolut! Wir haben große Fahrzeuge wie Mercedes Sprinter (9-16 Passagiere) und Luxusbusse (17+ Passagiere) speziell für Gruppen. Wir können auch mehrere Fahrzeuge für größere Gruppen koordinieren. Mengenrabatte sind für 3+ Fahrzeuge verfügbar."
+        },
+        "faq6": {
+          "question": "Stellen Sie Kindersitze in den Fahrzeugen zur Verfügung?",
+          "answer": "Ja, wir stellen kostenlose Kindersitze und Sitzerhöhungen auf Anfrage zur Verfügung. Bitte informieren Sie uns zum Zeitpunkt der Buchung über das Alter des Kindes und die Anzahl der benötigten Sitze, damit wir uns entsprechend vorbereiten können."
+        }
+      }
+    }
+  },
+  "publicTourPage": {
+    "tourLabel": "Tour",
+    "nav": {
+      "overview": "Übersicht",
+      "highlights": "Höhepunkte",
+      "information": "Informationen",
+      "policies": "Richtlinien",
+      "faqs": "Häufige Fragen"
+    },
+    "overview": {
+      "title": "Übersicht"
+    },
+    "highlights": {
+      "title": "Tour-Höhepunkte"
+    },
+    "details": {
+      "title": "Tour-Informationen",
+      "tourType": "Tour-Typ",
+      "duration": "Dauer",
+      "hour": "Stunde",
+      "hours": "Stunden",
+      "location": "Standort",
+      "vehicle": "Fahrzeug"
+    },
+    "policies": {
+      "title": "Tour-Richtlinien",
+      "childrenPolicy": "Kinder-Richtlinien",
+      "under3": "Kinder unter 3 Jahren",
+      "above3": "Kinder 3+ Jahre",
+      "free": "Kostenlos",
+      "adultPrice": "Erwachsenenpreis",
+      "bookingCancellation": "Buchung & Stornierung"
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen"
+    },
+    "tourTypes": {
+      "VIP": "VIP",
+      "Standard": "Standard",
+      "Group": "Gruppe"
+    },
+    "tourTypeCombined": {
+      "VIP": "VIP-Tour",
+      "Standard": "Standard-Tour",
+      "Group": "Gruppen-Tour"
+    },
+    "vehicleTypes": {
+      "Vito": "Vito",
+      "Sprinter": "Sprinter",
+      "Bus": "Bus"
+    },
+    "vehicleCapacity": "Personen",
+    "cities": {
+      "Istanbul": "Istanbul",
+      "Antalya": "Antalya",
+      "Cappadocia": "Kappadokien",
+      "Trabzon": "Trabzon",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Bursa": "Bursa",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malakka"
+    },
+    "countries": {
+      "Turkey": "Türkei",
+      "Malaysia": "Malaysia"
+    }
+  },
+  "publicHotelPage": {
+    "starProperty": "Sterne-Hotel",
+    "nav": {
+      "overview": "Übersicht",
+      "rooms": "Zimmer",
+      "amenities": "Annehmlichkeiten",
+      "transportation": "Transport",
+      "location": "Standort",
+      "policies": "Richtlinien",
+      "faqs": "Häufige Fragen"
+    },
+    "transportation": {
+      "title": "Transport",
+      "airport": "Flughafen",
+      "vehicles": {
+        "vito": "Vito",
+        "sprinter": "Sprinter",
+        "bus": "Bus"
+      },
+      "vitoCapacity": "2-8 Passagiere",
+      "sprinterCapacity": "9-16 Passagiere",
+      "busCapacity": "17+ Passagiere",
+      "airportReception": "Flughafen-Empfang",
+      "airportFarewell": "Flughafen-Abschied"
+    },
+    "location": {
+      "title": "Standort"
+    },
+    "policies": {
+      "title": "Richtlinien",
+      "childrenPolicy": "Kinder-Richtlinien",
+      "under6": "Kinder unter 6 Jahren",
+      "age6to12": "Kinder 6-12 Jahre",
+      "above12": "Kinder über 12 Jahre",
+      "free": "Kostenlos",
+      "additionalCharge": "Zusätzliche Gebühr pro Zimmertyp",
+      "adultPrice": "Erwachsenenpreis",
+      "breakfastPolicy": "Frühstücks-Richtlinien",
+      "breakfastIncluded": "Frühstück ist im Zimmerpreis enthalten",
+      "breakfastAvailable": "Frühstück ist im Hotel gegen Aufpreis verfügbar",
+      "generalPolicies": "Allgemeine Richtlinien",
+      "checkInOut": "Standard-Hotel Check-in/Check-out-Zeiten gelten",
+      "cancellation": "Stornierungs- und Vorauszahlungsrichtlinien variieren je nach Zimmertyp",
+      "photoId": "Gültiger Lichtbildausweis und Kreditkarte beim Check-in erforderlich",
+      "specialRequests": "Spezielle Anfragen unterliegen der Verfügbarkeit beim Check-in"
+    },
+    "faqs": {
+      "title": "Häufig gestellte Fragen"
+    },
+    "cities": {
+      "Istanbul": "Istanbul",
+      "Antalya": "Antalya",
+      "Cappadocia": "Kappadokien",
+      "Trabzon": "Trabzon",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Bursa": "Bursa",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malakka",
+      "Johor Bahru": "Johor Bahru",
+      "Kota Kinabalu": "Kota Kinabalu",
+      "Kuching": "Kuching",
+      "Cameron Highlands": "Cameron Highlands",
+      "Genting Highlands": "Genting Highlands",
+      "Bangkok": "Bangkok",
+      "Phuket": "Phuket",
+      "Pattaya": "Pattaya",
+      "Chiang Mai": "Chiang Mai",
+      "Krabi": "Krabi",
+      "Koh Samui": "Koh Samui",
+      "Hua Hin": "Hua Hin",
+      "Ayutthaya": "Ayutthaya",
+      "Chiang Rai": "Chiang Rai",
+      "Kanchanaburi": "Kanchanaburi",
+      "Jakarta": "Jakarta",
+      "Bali": "Bali",
+      "Yogyakarta": "Yogyakarta",
+      "Bandung": "Bandung",
+      "Surabaya": "Surabaya",
+      "Medan": "Medan",
+      "Lombok": "Lombok",
+      "Bogor": "Bogor",
+      "Malang": "Malang",
+      "Solo": "Solo",
+      "Ubud": "Ubud",
+      "Sanur": "Sanur",
+      "Seminyak": "Seminyak",
+      "Riyadh": "Riad",
+      "Jeddah": "Dschidda",
+      "Mecca": "Mekka",
+      "Medina": "Medina",
+      "Dammam": "Dammam",
+      "Khobar": "Khobar",
+      "Taif": "Taif",
+      "Abha": "Abha",
+      "Tabuk": "Tabuk",
+      "Al Khobar": "Al Khobar",
+      "Casablanca": "Casablanca",
+      "Marrakech": "Marrakesch",
+      "Rabat": "Rabat",
+      "Fez": "Fes",
+      "Tangier": "Tanger",
+      "Agadir": "Agadir",
+      "Meknes": "Meknes",
+      "Essaouira": "Essaouira",
+      "Chefchaouen": "Chefchaouen",
+      "Ouarzazate": "Ouarzazate",
+      "Cairo": "Kairo",
+      "Alexandria": "Alexandria",
+      "Luxor": "Luxor",
+      "Aswan": "Assuan",
+      "Hurghada": "Hurghada",
+      "Sharm El Sheikh": "Sharm El Sheikh",
+      "Dahab": "Dahab",
+      "Marsa Alam": "Marsa Alam",
+      "Taba": "Taba",
+      "Giza": "Gizeh",
+      "Baku": "Baku",
+      "Ganja": "Ganja",
+      "Sumgayit": "Sumqayıt",
+      "Mingachevir": "Mingəçevir",
+      "Qabalah": "Qəbələ",
+      "Shaki": "Şəki",
+      "Lankaran": "Lənkəran",
+      "Shamakhi": "Şamaxı",
+      "Quba": "Quba",
+      "Gabala": "Gabala",
+      "Tbilisi": "Tiflis",
+      "Batumi": "Batumi",
+      "Kutaisi": "Kutaissi",
+      "Rustavi": "Rustawi",
+      "Zugdidi": "Sugdidi",
+      "Gori": "Gori",
+      "Telavi": "Telawi",
+      "Mestia": "Mestia",
+      "Kazbegi": "Kasbegi",
+      "Sighnaghi": "Signagi",
+      "Mtskheta": "Mtskheta",
+      "Borjomi": "Bordschomi",
+      "Tirana": "Tirana",
+      "Durres": "Durrës",
+      "Vlore": "Vlora",
+      "Shkoder": "Shkodra",
+      "Fier": "Fier",
+      "Korce": "Korça",
+      "Berat": "Berat",
+      "Gjirokaster": "Gjirokastra",
+      "Sarande": "Saranda",
+      "Kruje": "Kruja"
+    },
+    "countries": {
+      "Turkey": "Türkei",
+      "Malaysia": "Malaysia",
+      "Thailand": "Thailand",
+      "Indonesia": "Indonesien",
+      "Saudi Arabia": "Saudi-Arabien",
+      "Morocco": "Marokko",
+      "Egypt": "Ägypten",
+      "Azerbaijan": "Aserbaidschan",
+      "Georgia": "Georgien",
+      "Albania": "Albanien"
+    },
+    "similarProperties": "Ähnliche Hotels",
+    "amenities": {
+      "title": "Beliebte Annehmlichkeiten",
+      "seeAll": "Alle anzeigen",
+      "amenities": "Annehmlichkeiten",
+      "allAmenities": "Alle Annehmlichkeiten verfügbar bei",
+      "modalTitle": "Hotel-Annehmlichkeiten & Services",
+      "categories": {
+        "topFamilyFriendlyAmenities": "Top familienfreundliche Annehmlichkeiten",
+        "popularAmenities": "Beliebte Annehmlichkeiten",
+        "businessServices": "Geschäftsservices",
+        "parkingAndTransportation": "Parken & Transport",
+        "foodAndDrink": "Essen & Trinken",
+        "internet": "Internet",
+        "thingsToDo": "Aktivitäten",
+        "familyFriendly": "Familienfreundlich",
+        "conveniences": "Bequemlichkeiten",
+        "guestServices": "Gästeservices",
+        "outdoors": "Außenbereich",
+        "accessibility": "Barrierefreiheit",
+        "fullServiceSpaDetails": "Vollservice-Spa",
+        "languagesSpoken": "Gesprochene Sprachen",
+        "more": "Mehr",
+        "restaurantsOnSite": "Restaurants vor Ort"
+      },
+      "topFamilyFriendlyAmenities": {
+        "gameRoom": "Spielzimmer",
+        "toysGames": "Spielzeug/Spiele",
+        "waterslide": "Wasserrutsche",
+        "kidsClub": "Kinderclub",
+        "kidsPool": "Kinderpool",
+        "babysitting": "Babysitting",
+        "tennisCourt": "Tennisplatz",
+        "soundproofRooms": "Schallisolierte Zimmer",
+        "groceryConvenienceStore": "Lebensmittelgeschäft"
+      },
+      "popularAmenities": {
+        "bar": "Bar",
+        "pool": "Pool",
+        "allInclusive": "All Inclusive",
+        "breakfastIncluded": "Frühstück inklusive",
+        "gym": "Fitnessstudio",
+        "roomService": "Zimmerservice",
+        "laundry": "Wäscherei",
+        "housekeeping": "Reinigung",
+        "frontDesk24h": "24/7-Rezeption",
+        "spa": "Spa",
+        "airConditioning": "Klimaanlage",
+        "parkingIncluded": "Parkplatz inklusive",
+        "freeWiFi": "Kostenloses WLAN",
+        "restaurant": "Restaurant"
+      },
+      "businessServices": {
+        "businessCenter24h": "24-Stunden-Businesscenter",
+        "conferenceSpace": "425 Quadratfuß Konferenzraum",
+        "computerStation": "Computerstation",
+        "coworkingSpace": "Coworking-Space",
+        "meetingRoom": "Besprechungsraum"
+      },
+      "parkingAndTransportation": {
+        "airportShuttle24h": "24-Stunden-Flughafen-Shuttle auf Anfrage gegen Aufpreis",
+        "freeSelfParking": "Kostenlose Selbstparkplätze vor Ort"
+      },
+      "foodAndDrink": {
+        "buffetBreakfast": "Kostenloses Buffet-Frühstück täglich 7:00-10:30 Uhr",
+        "poolsideBars": "3 Pool-Bars",
+        "restaurants": "5 Restaurants",
+        "barsLounges": "7 Bars/Lounges",
+        "beachBar": "Strandbar",
+        "coffeeTeaCommonAreas": "Kaffee und Tee in Gemeinschaftsbereichen",
+        "snackBarDeli": "Snackbar/Feinkostladen"
+      },
+      "internet": {
+        "freeWiFiPublicAreas": "Verfügbar in einigen öffentlichen Bereichen: Kostenloses WLAN"
+      },
+      "thingsToDo": {
+        "outdoorTennisCourts": "4 Außen-Tennisplätze",
+        "outdoorPools": "5 Außenpools",
+        "arcadeGameRoom": "Arcade/Spielzimmer",
+        "beachVolleyball": "Beachvolleyball",
+        "billiardsPoolTable": "Billard/Poolbillard-Tisch",
+        "bowlingAlley": "Bowlingbahn",
+        "childrensPool": "Kinderpool",
+        "concertsLiveShows": "Konzerte/Live-Shows",
+        "eveningEntertainment": "Abendunterhaltung",
+        "fitnessClasses": "Fitnesskurse",
+        "freeBicycleRentals": "Kostenloser Fahrradverleih",
+        "freeChildrensClub": "Kostenloser Kinderclub",
+        "fullServiceSpa": "Vollservice-Spa",
+        "games": "Spiele",
+        "gymFacility": "Fitnessstudio",
+        "indoorPool": "Innenpool",
+        "karaoke": "Karaoke",
+        "nightclub": "Nachtclub",
+        "parasailing": "Parasailing",
+        "playground": "Spielplatz",
+        "racquetballSquash": "Racquetball/Squash",
+        "sailing": "Segeln",
+        "saunaFacility": "Sauna",
+        "scubaDiving": "Tauchen",
+        "shopping": "Einkaufen",
+        "steamRoom": "Dampfbad",
+        "tableTennis": "Tischtennis",
+        "tennisLessons": "Tennisstunden",
+        "tvCommonAreas": "TV in Gemeinschaftsbereichen",
+        "waterSkiing": "Wasserski",
+        "waterslideFacility": "Wasserrutsche",
+        "windsurfing": "Windsurfen",
+        "yogaClasses": "Yoga-Kurse"
+      },
+      "familyFriendly": {
+        "outdoorPoolsFamily": "5 Außenpools",
+        "arcadeGameRoomFamily": "Arcade/Spielzimmer",
+        "bowlingAlleyFamily": "Bowlingbahn",
+        "childrensGames": "Kinderspiele",
+        "childrensPoolFamily": "Kinderpool",
+        "childrensToys": "Kinderspielzeug",
+        "freeChildrensClubFamily": "Kostenloser Kinderclub",
+        "freeSupervisedActivities": "Kostenlose beaufsichtigte Aktivitäten für Kinder",
+        "groceryConvenienceStoreFamily": "Lebensmittelgeschäft",
+        "inRoomBabysitting": "Babysitting im Zimmer (gegen Aufpreis)",
+        "indoorPoolFamily": "Innenpool",
+        "laundryFacilities": "Wäschemöglichkeiten",
+        "playgroundFamily": "Spielplatz",
+        "snackBarDeliFamily": "Snackbar/Feinkostladen",
+        "soundproofedRooms": "Schallisolierte Zimmer",
+        "stroller": "Kinderwagen",
+        "waterslideFamily": "Wasserrutsche"
+      },
+      "conveniences": {
+        "frontDesk24hConvenience": "24/7-Rezeption",
+        "giftShopNewsstand": "Geschenkeladen/Kiosk",
+        "groceryConvenienceStoreConvenience": "Lebensmittelgeschäft",
+        "hairSalon": "Friseursalon",
+        "laundryFacilitiesConvenience": "Wäschemöglichkeiten",
+        "lockers": "Schließfächer",
+        "safeFrontDesk": "Safe an der Rezeption"
+      },
+      "guestServices": {
+        "changeOfBedsheets": "Wechsel der Bettwäsche (auf Anfrage)",
+        "changeOfTowels": "Handtuchwechsel auf Anfrage",
+        "conciergeServices": "Concierge-Services",
+        "dryCleaningLaundry": "Chemische Reinigung/Wäscheservice",
+        "housekeepingDaily": "Reinigung (täglich)",
+        "multilingualStaff": "Mehrsprachiges Personal",
+        "porterBellhop": "Portier/Gepäckträger",
+        "proposalRomancePackages": "Heirats-/Romantik-Pakete",
+        "tourTicketAssistance": "Tour- und Ticket-Unterstützung",
+        "weddingServices": "Hochzeitsservices"
+      },
+      "outdoors": {
+        "beachLoungers": "Strandliegen",
+        "beachTowels": "Strandtücher",
+        "beachUmbrellas": "Strandschirme",
+        "garden": "Garten",
+        "onTheBay": "An der Bucht",
+        "onTheBeach": "Am Strand",
+        "outdoorEntertainmentArea": "Außenunterhaltungsbereich",
+        "outdoorFurniture": "Gartenmöbel",
+        "poolLoungers": "Poolliegen",
+        "poolUmbrellas": "Poolschirme",
+        "terrace": "Terrasse"
+      },
+      "accessibility": {
+        "accessibleAirportShuttle": "Barrierefreier Flughafen-Shuttle",
+        "elevator": "Aufzug",
+        "poolHoist": "Pool-Hebevorrichtung vor Ort",
+        "wellLitPath": "Gut beleuchteter Weg zum Eingang",
+        "wheelchairAccessible": "Rollstuhlgerecht (kann Einschränkungen haben)",
+        "wheelchairAccessiblePath": "Rollstuhlgerechter Weg zum Aufzug",
+        "wheelchairAccessibleWashroom": "Rollstuhlgerechte öffentliche Toilette",
+        "wheelchairAccessibleDesk": "Rollstuhlgerechter Anmeldeschalter"
+      },
+      "fullServiceSpaDetails": {
+        "bodyScrubs": "Körperpeelings",
+        "bodyWraps": "Körperpackungen",
+        "facials": "Gesichtsbehandlungen",
+        "manicuresPedicures": "Maniküre/Pediküre",
+        "massage": "Massage",
+        "saunaService": "Sauna",
+        "spaOpenDaily": "Spa täglich geöffnet",
+        "turkishBath": "Türkisches Bad"
+      },
+      "languagesSpoken": {
+        "dutch": "Niederländisch",
+        "english": "Englisch",
+        "french": "Französisch",
+        "german": "Deutsch",
+        "russian": "Russisch",
+        "turkish": "Türkisch"
+      },
+      "more": {
+        "twoFloors": "2 Etagen",
+        "ledLighting80Percent": "Mindestens 80% Beleuchtung durch LEDs",
+        "locallySourcedFood80Percent": "Mindestens 80% der Lebensmittel aus lokalen Quellen",
+        "banquetHall": "Bankettsaal",
+        "builtIn1999": "Erbaut 1999",
+        "designatedSmokingAreas": "Ausgewiesene Raucherbereiche (Bußgelder gelten)",
+        "mediterraneanArchitecture": "Mediterrane Architektur",
+        "vegetarianBreakfast": "Vegetarisches Frühstück verfügbar",
+        "vegetarianDining": "Vegetarische Essensoptionen"
+      },
+      "restaurantsOnSite": {
+        "italian": "Italienisch",
+        "buffetMeals": "Buffet-Mahlzeiten",
+        "seafood": "Meeresfrüchte",
+        "sevenTwentyFour": "Seven Twenty Four",
+        "turkish": "Türkisch"
+      }
+    }
+  },
+  "notFound": {
+    "page": {
+      "title": "Seite nicht gefunden",
+      "description": "Die Seite, die Sie suchen, existiert nicht oder wurde verschoben."
+    },
+    "hotel": {
+      "title": "Hotel nicht gefunden",
+      "description": "Das Hotel, das Sie suchen, existiert nicht oder wurde möglicherweise aus unseren Angeboten entfernt."
+    },
+    "voucher": {
+      "title": "Gutschein nicht gefunden",
+      "description": "Der Gutschein, den Sie suchen, existiert nicht oder ist möglicherweise abgelaufen."
+    },
+    "buttons": {
+      "backToHome": "Zurück zur Startseite",
+      "browseHotels": "Hotels durchsuchen",
+      "browseTours": "Touren durchsuchen"
+    },
+    "helpText": "Erkunden Sie unsere verfügbaren Hotels und Touren, oder versuchen Sie, die Seite zu aktualisieren, wenn Sie glauben, dass dies ein Fehler ist."
+  },
+  "publicPackagePage": {
+    "nav": {
+      "overview": "Übersicht",
+      "itinerary": "Reiseroute",
+      "hotels": "Hotels",
+      "included": "Was enthalten ist",
+      "contact": "Kontaktieren Sie uns",
+      "faqs": "Häufige Fragen"
+    },
+    "sections": {
+      "overview": "Paket-Übersicht",
+      "itinerary": "Tägliche Reiseroute",
+      "hotels": "Hotels im Paket",
+      "included": "Was enthalten ist",
+      "faqs": "Häufig gestellte Fragen"
+    },
+    "hotel": {
+      "starHotel": "Sterne-Hotel",
+      "nights": "Nacht",
+      "nights_other": "Nächte",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "breakfast": "Frühstück",
+      "airportReception": "Flughafen-Empfang",
+      "airportFarewell": "Flughafen-Abschied"
+    },
+    "included": {
+      "title": "Im Paket enthalten"
+    },
+    "excluded": {
+      "title": "Nicht enthalten"
+    },
+    "dayCard": {
+      "days": "Tage",
+      "moreActivities": "weitere Aktivitäten",
+      "breakfast": "Frühstück",
+      "lunch": "Mittagessen",
+      "dinner": "Abendessen",
+      "arrivalTransfer": "Ankunft & Transfer",
+      "arrivalDescription": "Ankunft am Flughafen, Meet & Greet-Service, Transfer zum Hotel, Check-in und Ruhe.",
+      "airportReceptionService": "Flughafen-Empfangsservice",
+      "meetGreetRepresentative": "Meet & Greet mit Tour-Repräsentant",
+      "transferToHotel": "Transfer zum Hotel",
+      "hotelCheckinAssistance": "Hotel-Check-in-Unterstützung",
+      "welcomeBriefing": "Willkommens-Briefing",
+      "restPrepare": "Ruhen und Vorbereitung auf kommende Touren"
+    }
+  },
+  "signIn": {
+    "loginTitle": "Melden Sie sich bei Ihrem Konto an",
+    "registerTitle": "Erstellen Sie Ihr Konto",
+    "resetPasswordTitle": "Passwort zurücksetzen",
+    "securityVerificationTitle": "Sicherheitsüberprüfung",
+    "createNewPasswordTitle": "Neues Passwort erstellen",
+    "emailOrUsername": "E-Mail oder Benutzername",
+    "emailOrUsernamePlaceholder": "Geben Sie Ihre E-Mail oder Benutzernamen ein",
+    "password": "Passwort",
+    "passwordPlaceholder": "Geben Sie Ihr Passwort ein",
+    "emailOptional": "E-Mail (Optional)",
+    "emailPlaceholder": "Geben Sie Ihre E-Mail-Adresse ein",
+    "phoneNumber": "Telefonnummer (Optional)",
+    "countryCodePlaceholder": "Ländercode auswählen",
+    "phonePlaceholder": "Telefonnummer eingeben",
+    "securityQuestion": "Sicherheitsfrage",
+    "securityQuestionPlaceholder": "Wählen Sie eine Sicherheitsfrage",
+    "securityAnswer": "Sicherheitsantwort",
+    "securityAnswerPlaceholder": "Geben Sie Ihre Antwort ein",
+    "securityAnswerHelp": "Dies wird verwendet, um Ihre Identität zu überprüfen, falls Sie Ihr Passwort zurücksetzen müssen.",
+    "registerAsPublisher": "Als Publisher registrieren",
+    "loginButton": "ANMELDEN",
+    "registerButton": "REGISTRIEREN",
+    "nextButton": "WEITER",
+    "verifyButton": "ÜBERPRÜFEN",
+    "resetPasswordButton": "PASSWORT ZURÜCKSETZEN",
+    "newPassword": "Neues Passwort",
+    "newPasswordPlaceholder": "Neues Passwort eingeben",
+    "confirmPassword": "Passwort bestätigen",
+    "confirmPasswordPlaceholder": "Neues Passwort bestätigen",
+    "newStaffMember": "Neues Teammitglied? Registrieren",
+    "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+    "forgotPassword": "Passwort vergessen?",
+    "backToSignIn": "Zurück zur Anmeldung",
+    "back": "← Zurück",
+    "exploreTheWorld": "ENTDECKEN SIE DIE WELT",
+    "withRahalatek": "MIT",
+    "yourJourneyBeginsHere": "Ihre Reise beginnt hier",
+    "errors": {
+      "enterEmailOrUsername": "Bitte geben Sie Ihre E-Mail oder Benutzernamen ein",
+      "enterPassword": "Bitte geben Sie Ihr Passwort ein",
+      "selectSecurityQuestion": "Bitte wählen Sie eine Sicherheitsfrage",
+      "provideSecurityAnswer": "Bitte geben Sie eine Antwort auf Ihre Sicherheitsfrage",
+      "validEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein (beispiel@domain.com)",
+      "answerSecurityQuestion": "Bitte beantworten Sie die Sicherheitsfrage",
+      "passwordMinLength": "Passwort muss mindestens 6 Zeichen lang sein",
+      "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+      "userNotFound": "Benutzer nicht gefunden. Bitte überprüfen Sie Ihre E-Mail oder Benutzernamen.",
+      "unableToRetrieveQuestion": "Sicherheitsfrage konnte nicht abgerufen werden",
+      "incorrectSecurityAnswer": "Falsche Sicherheitsantwort",
+      "passwordResetSuccess": "Passwort wurde erfolgreich zurückgesetzt",
+      "failedToResetPassword": "Passwort zurücksetzen fehlgeschlagen",
+      "noResponseFromServer": "Keine Antwort vom Server. Bitte versuchen Sie es später erneut.",
+      "anErrorOccurred": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "accountCreated": "Ihr Konto wurde erstellt. Bitte warten Sie auf die Admin-Genehmigung, um sich anzumelden.",
+      "accountPendingApproval": "Ihr Konto wartet auf die Genehmigung durch einen Administrator.",
+      "anErrorOccurredGeneric": "Ein Fehler ist aufgetreten"
+    },
+    "securityQuestions": {
+      "childhoodNickname": "Wie war Ihr Kindheitsspitzname?",
+      "firstPet": "Wie hieß Ihr erstes Haustier?",
+      "motherMaidenName": "Wie lautet der Mädchenname Ihrer Mutter?",
+      "firstCar": "Was war das Modell Ihres ersten Autos?",
+      "birthCity": "In welcher Stadt wurden Sie geboren?"
+    }
+  }
+}

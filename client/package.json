@@ -14,6 +14,8 @@
     "axios": "^1.6.7",
     "chart.js": "^4.5.0",
     "flowbite-react": "^0.10.2",
+    "i18next": "^25.6.0",
+    "i18next-browser-languagedetector": "^8.2.0",
     "jspdf": "^3.0.1",
     "qr-scanner": "^1.4.2",
     "react": "^19.0.0",
@@ -22,12 +24,14 @@
     "react-dropzone": "^14.3.8",
     "react-helmet-async": "^2.0.5",
     "react-hot-toast": "^2.5.2",
+    "react-i18next": "^16.1.0",
     "react-icons": "^5.5.0",
     "react-quill-new": "^3.6.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.5.0",
     "react-world-flags": "^1.6.0",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-rtl": "^0.9.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

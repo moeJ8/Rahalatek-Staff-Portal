@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSearch, FaHotel, FaRoute, FaBox, FaBlog, FaGlobe, FaTimes, FaMapMarkerAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import CustomScrollbar from './CustomScrollbar';
 
 const PublicSearchbar = () => {
+  const { t } = useTranslation();
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -450,12 +452,12 @@ const PublicSearchbar = () => {
 
   const getTypeBadge = (type) => {
     const badges = {
-      hotel: { label: 'Hotel', class: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-      tour: { label: 'Tour', class: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' },
-      package: { label: 'Package', class: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
-      blog: { label: 'Blog Post', class: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
-      city: { label: 'City', class: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200' },
-      country: { label: 'Country', class: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' }
+      hotel: { label: t('search.hotel'), class: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+      tour: { label: t('search.tour'), class: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' },
+      package: { label: t('search.package'), class: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
+      blog: { label: t('search.blogPost'), class: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+      city: { label: t('search.city'), class: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200' },
+      country: { label: t('search.country'), class: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' }
     };
     
     const badge = badges[type] || { label: type, class: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' };
@@ -469,17 +471,17 @@ const PublicSearchbar = () => {
 
   const getResultSubtitle = (result) => {
     if (result.type === 'hotel') {
-      return `${result.city}, ${result.country} • ${result.stars} Stars`;
+      return `${result.city}, ${result.country} • ${result.stars} ${t('search.stars')}`;
     } else if (result.type === 'tour') {
       return `${result.city}, ${result.country} • ${result.tourType}`;
     } else if (result.type === 'package') {
-      return `${result.duration} Days • ${result.countries?.join(', ')}`;
+      return `${result.duration} ${t('search.days')} • ${result.countries?.join(', ')}`;
     } else if (result.type === 'blog') {
-      return result.category || 'Blog Post';
+      return result.category || t('search.blogPost');
     } else if (result.type === 'city') {
-      return `${result.country} • ${result.tourCount || 0} tours • ${result.hotelCount || 0} hotels`;
+      return `${result.country} • ${result.tourCount || 0} ${t('search.toursCount')} • ${result.hotelCount || 0} ${t('search.hotelsCount')}`;
     } else if (result.type === 'country') {
-      return `Explore destinations in ${result.name}`;
+      return `${t('search.exploreDestinations')} ${result.name}`;
     }
     return '';
   };
@@ -492,7 +494,7 @@ const PublicSearchbar = () => {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search destinations, hotels, tours, posts..."
+            placeholder={t('search.placeholder')}
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
@@ -550,7 +552,7 @@ const PublicSearchbar = () => {
             rounded-full 
             hover:bg-blue-50 dark:hover:bg-yellow-900/20
             hover:shadow-md active:scale-95"
-          title="Search destinations, hotels, tours & more"
+          title={t('search.title')}
         >
           <FaSearch className="w-5 h-5" />
         </button>
@@ -574,7 +576,7 @@ const PublicSearchbar = () => {
                 <div className="p-1.5 rounded-lg bg-blue-500/10 dark:bg-yellow-500/10">
                   <FaSearch className="w-3.5 h-3.5 text-blue-600 dark:text-yellow-400" />
                 </div>
-                Search Results
+                {t('search.searchResults')}
               </h3>
               
               {searchQuery && (
@@ -583,7 +585,7 @@ const PublicSearchbar = () => {
                   bg-blue-50 dark:bg-yellow-900/20 
                   border border-blue-200/60 dark:border-yellow-800/60 
                   rounded-full">
-                  {filteredResults.length} found
+                  {filteredResults.length} {t('search.found')}
                 </span>
               )}
             </div>
@@ -594,21 +596,21 @@ const PublicSearchbar = () => {
                 {loading ? (
                   <div className="flex items-center justify-center px-4 py-12">
                     <div className="w-6 h-6 border-2 border-blue-600 dark:border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 font-medium">Loading...</span>
+                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 font-medium">{t('search.loading')}</span>
                   </div>
                 ) : searchQuery !== debouncedQuery ? (
                   <div className="flex items-center justify-center px-4 py-12">
                     <div className="w-5 h-5 border-2 border-blue-500 dark:border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">Searching...</span>
+                    <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">{t('search.searching')}</span>
                   </div>
                 ) : !searchQuery ? (
                   <div className="px-6 py-12 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-yellow-900/20 dark:to-orange-900/20 flex items-center justify-center">
                       <FaSearch className="w-8 h-8 text-blue-500 dark:text-yellow-400" />
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 font-medium">Start typing to search</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">{t('search.startTyping')}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      Discover hotels, tours, packages & destinations
+                      {t('search.discoverFull')}
                     </p>
                   </div>
                 ) : filteredResults.length === 0 ? (
@@ -616,9 +618,9 @@ const PublicSearchbar = () => {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
                       <FaSearch className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 font-medium">No results found</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">{t('search.noResults')}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      Try different keywords or browse our destinations
+                      {t('search.tryDifferent')}
                     </p>
                   </div>
                 ) : (
@@ -689,7 +691,7 @@ const PublicSearchbar = () => {
               <div className="p-1.5 sm:p-2 rounded-xl bg-blue-500/10 dark:bg-yellow-500/10">
                 <FaSearch className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-yellow-400" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Search</h2>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">{t('search.search')}</h2>
             </div>
             <button
               onClick={() => {
@@ -712,7 +714,7 @@ const PublicSearchbar = () => {
               <input
                 ref={mobileInputRef}
                 type="text"
-                placeholder="Search destinations, hotels, posts..."
+                placeholder={t('search.placeholderMobile')}
                 value={searchQuery}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
@@ -753,7 +755,7 @@ const PublicSearchbar = () => {
                   bg-blue-50 dark:bg-yellow-900/20 
                   border border-blue-200/60 dark:border-yellow-800/60 
                   rounded-full">
-                  {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''}
+                  {filteredResults.length} {filteredResults.length !== 1 ? t('search.results') : t('search.result')}
                 </span>
               </div>
             )}
@@ -765,21 +767,21 @@ const PublicSearchbar = () => {
               {loading ? (
                 <div className="flex items-center justify-center px-4 py-16">
                   <div className="w-6 h-6 border-2 border-blue-600 dark:border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 font-medium">Loading...</span>
+                  <span className="ml-3 text-sm text-gray-600 dark:text-gray-400 font-medium">{t('search.loading')}</span>
                 </div>
               ) : searchQuery !== debouncedQuery ? (
                 <div className="flex items-center justify-center px-4 py-16">
                   <div className="w-5 h-5 border-2 border-blue-500 dark:border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">Searching...</span>
+                  <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">{t('search.searching')}</span>
                 </div>
               ) : !searchQuery ? (
                 <div className="px-6 py-20 text-center">
                   <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-yellow-900/20 dark:to-orange-900/20 flex items-center justify-center">
                     <FaSearch className="w-10 h-10 text-blue-500 dark:text-yellow-400" />
                   </div>
-                  <p className="text-lg text-gray-700 dark:text-gray-300 font-semibold">Start typing to search</p>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 font-semibold">{t('search.startTyping')}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Discover amazing hotels, tours & destinations
+                    {t('search.discoverMobile')}
                   </p>
                 </div>
               ) : filteredResults.length === 0 ? (
@@ -787,9 +789,9 @@ const PublicSearchbar = () => {
                   <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
                     <FaSearch className="w-10 h-10 text-gray-400" />
                   </div>
-                  <p className="text-lg text-gray-700 dark:text-gray-300 font-semibold">No results found</p>
+                  <p className="text-lg text-gray-700 dark:text-gray-300 font-semibold">{t('search.noResults')}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Try different keywords or browse destinations
+                    {t('search.tryDifferentMobile')}
                   </p>
                 </div>
               ) : (

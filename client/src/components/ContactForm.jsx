@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import TextInput from './TextInput';
 import CustomButton from './CustomButton';
 
 export default function ContactForm({ packageName = null, packageSlug = null }) {
+    const { t, i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
+    
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        subject: packageName ? `Inquiry about ${packageName}` : '',
+        subject: packageName ? `${t('contactForm.inquiryAbout')} ${packageName}` : '',
         message: ''
     });
     const [loading, setLoading] = useState(false);
@@ -52,7 +56,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
         if (formData.email.trim() && !emailRegex.test(formData.email)) {
             newErrors.email = true;
             setErrors(newErrors);
-            toast.error('Please enter a valid email address', {
+            toast.error(t('contactForm.invalidEmail'), {
                 duration: 4000,
                 style: {
                     background: '#f44336',
@@ -72,7 +76,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
         // Check if there are any errors
         if (Object.values(newErrors).some(error => error)) {
             setErrors(newErrors);
-            toast.error('Please fill in all required fields correctly', {
+            toast.error(t('contactForm.validationError'), {
                 duration: 4000,
                 style: {
                     background: '#f44336',
@@ -97,7 +101,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                 packageSlug
             });
 
-            toast.success('Message sent successfully! We\'ll get back to you soon.', {
+            toast.success(t('contactForm.successMessage'), {
                 duration: 4000,
                 style: {
                     background: '#4CAF50',
@@ -116,7 +120,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
             setFormData({
                 name: '',
                 email: '',
-                subject: packageName ? `Inquiry about ${packageName}` : '',
+                subject: packageName ? `${t('contactForm.inquiryAbout')} ${packageName}` : '',
                 message: ''
             });
             setErrors({
@@ -127,7 +131,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
             });
         } catch (error) {
             console.error('Error sending message:', error);
-            toast.error(error.response?.data?.message || 'Failed to send message. Please try again.', {
+            toast.error(error.response?.data?.message || t('contactForm.errorMessage'), {
                 duration: 3000,
                 style: {
                     background: '#f44336',
@@ -150,15 +154,15 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
         <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-yellow-600 dark:to-orange-600 rounded-2xl opacity-20 group-hover:opacity-30 blur transition duration-300"></div>
             <div className="relative bg-white dark:bg-slate-950 rounded-2xl p-6 sm:p-8 shadow-xl border border-gray-200 dark:border-slate-800">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Send Us a Message</h2>
-                <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm sm:text-base">Have questions? We'd love to hear from you!</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('contactForm.title')}</h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm sm:text-base">{t('contactForm.subtitle')}</p>
             
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 {/* Name Field */}
                 <div>
                     <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        Your Name
-                        {errors.name && <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+                        {t('contactForm.yourName')}
+                        {errors.name && <span className={`${isRTL ? 'mr-2' : 'ml-2'} inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse`}></span>}
                     </label>
                     <input
                         id="contact-name"
@@ -166,7 +170,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         type="text"
                         value={formData.name}
                         onChange={handleChange}
-                        placeholder="Enter your name"
+                        placeholder={t('contactForm.namePlaceholder')}
                         className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.name ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200`}
                     />
                 </div>
@@ -174,8 +178,8 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                 {/* Email Field */}
                 <div>
                     <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        Email Address
-                        {errors.email && <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+                        {t('contactForm.emailAddress')}
+                        {errors.email && <span className={`${isRTL ? 'mr-2' : 'ml-2'} inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse`}></span>}
                     </label>
                     <input
                         id="contact-email"
@@ -183,16 +187,16 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        placeholder="Enter your email"
-                        className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200`}
+                        placeholder={t('contactForm.emailPlaceholder')}
+                        className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200 ${isRTL ? 'text-right placeholder:text-right' : 'text-left'}`}
                     />
                 </div>
 
                 {/* Subject Field */}
                 <div>
                     <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        Subject
-                        {errors.subject && <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+                        {t('contactForm.subject')}
+                        {errors.subject && <span className={`${isRTL ? 'mr-2' : 'ml-2'} inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse`}></span>}
                     </label>
                     <input
                         id="contact-subject"
@@ -200,7 +204,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         type="text"
                         value={formData.subject}
                         onChange={handleChange}
-                        placeholder="Tour inquiry, booking request, travel consultation, etc."
+                        placeholder={t('contactForm.subjectPlaceholder')}
                         className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.subject ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200`}
                     />
                 </div>
@@ -208,15 +212,15 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                 {/* Message Field */}
                 <div>
                     <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        Message
-                        {errors.message && <span className="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+                        {t('contactForm.message')}
+                        {errors.message && <span className={`${isRTL ? 'mr-2' : 'ml-2'} inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse`}></span>}
                     </label>
                     <textarea
                         id="contact-message"
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
-                        placeholder="Tell us about your travel plans, tour preferences, or any questions you have about our services..."
+                        placeholder={t('contactForm.messagePlaceholder')}
                         rows={6}
                         className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border ${errors.message ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-slate-700'} rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 dark:focus:ring-yellow-400 focus:border-transparent transition-all duration-200 resize-none`}
                     />
@@ -232,7 +236,7 @@ export default function ContactForm({ packageName = null, packageSlug = null }) 
                         size="md"
                         icon={loading ? FaSpinner : FaPaperPlane}
                     >
-                        {loading ? 'Sending...' : 'Send Message'}
+                        {loading ? t('contactForm.sending') : t('contactForm.sendMessage')}
                     </CustomButton>
                 </div>
             </form>

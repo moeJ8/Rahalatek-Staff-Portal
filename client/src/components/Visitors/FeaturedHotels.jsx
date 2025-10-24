@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaStar, FaMapMarkerAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Flag from 'react-world-flags';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
@@ -8,6 +9,7 @@ import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const FeaturedHotels = () => {
+  const { t } = useTranslation();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -196,7 +198,7 @@ const FeaturedHotels = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Featured Hotels
+              {t('home.hotels.title')}
             </h2>
           </div>
           <div className="flex justify-center">
@@ -213,7 +215,7 @@ const FeaturedHotels = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Featured Hotels
+              {t('home.hotels.title')}
             </h2>
             <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
@@ -223,12 +225,12 @@ const FeaturedHotels = () => {
   }
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-6 sm:py-8 md:py-12" dir="ltr">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Featured Hotels
+            {t('home.hotels.title')}
           </h2>
           {/* View All Button - Desktop Only in Header */}
           <div className="hidden lg:block lg:absolute lg:right-16 lg:top-0">
@@ -238,7 +240,7 @@ const FeaturedHotels = () => {
               size="md"
               className="px-6 py-2 text-sm"
             >
-              View All Hotels
+              {t('home.hotels.viewAll')}
             </CustomButton>
           </div>
         </div>
@@ -334,7 +336,7 @@ const FeaturedHotels = () => {
                 size="md"
                 className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
               >
-                View All Hotels
+                {t('home.hotels.viewAll')}
               </CustomButton>
             </div>
 

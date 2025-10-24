@@ -1,8 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { FaPhone, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 
 const CTASection = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-20 md:py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 relative overflow-hidden">
       {/* Background Pattern */}
@@ -21,23 +24,22 @@ const CTASection = () => {
           {/* Badge */}
           <div className="inline-block mb-6">
             <span className="px-6 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-semibold border border-white/30">
-              ✈️ Start Your Adventure Today
+              {t('aboutPage.cta.badge')}
             </span>
           </div>
 
           {/* Main Heading */}
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Ready to Create
+            {t('aboutPage.cta.title1')}
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-orange-200">
-              Unforgettable Memories?
+              {t('aboutPage.cta.title2')}
             </span>
           </h2>
 
           {/* Description */}
           <p className="text-xl md:text-2xl text-blue-100 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Let us craft the perfect journey for you. From breathtaking destinations to exceptional service, 
-            your dream vacation is just one click away.
+            {t('aboutPage.cta.description')}
           </p>
 
           {/* CTA Buttons */}
@@ -46,7 +48,7 @@ const CTASection = () => {
               to="/contact"
               className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-blue-600 dark:text-blue-600 font-bold text-lg rounded-xl hover:bg-blue-50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 min-w-[200px]"
             >
-              <span className="relative z-10">Get Started Now</span>
+              <span className="relative z-10">{t('aboutPage.cta.getStarted')}</span>
               <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
             </Link>
 
@@ -54,14 +56,14 @@ const CTASection = () => {
               to="/packages"
               className="group inline-flex items-center justify-center px-8 py-4 bg-transparent text-white font-bold text-lg rounded-xl border-2 border-white hover:bg-white hover:text-blue-600 transition-all duration-300 min-w-[200px]"
             >
-              <span>Explore Packages</span>
+              <span>{t('aboutPage.cta.explorePackages')}</span>
             </Link>
           </div>
 
           {/* Contact Options */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <p className="text-blue-100 dark:text-gray-400 font-medium">
-              Or reach us directly:
+              {t('aboutPage.cta.reachUs')}
             </p>
 
             <div className="flex gap-4">
@@ -73,7 +75,7 @@ const CTASection = () => {
                 className="group flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 shadow-lg"
               >
                 <FaWhatsapp className="text-xl" />
-                <span className="hidden sm:inline">WhatsApp</span>
+                <span className="hidden sm:inline">{t('aboutPage.cta.whatsapp')}</span>
               </a>
 
               {/* Email */}
@@ -82,7 +84,7 @@ const CTASection = () => {
                 className="group flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"
               >
                 <FaEnvelope className="text-xl" />
-                <span className="hidden sm:inline">Email</span>
+                <span className="hidden sm:inline">{t('aboutPage.cta.email')}</span>
               </a>
 
               {/* Phone */}
@@ -91,7 +93,7 @@ const CTASection = () => {
                 className="group flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 border border-white/30"
               >
                 <FaPhone className="text-xl" />
-                <span className="hidden sm:inline">Call</span>
+                <span className="hidden sm:inline">{t('aboutPage.cta.call')}</span>
               </a>
             </div>
           </div>

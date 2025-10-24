@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import PackageCard from './PackageCard';
 
 const OtherPackagesCarousel = ({ packages = [], currentPackageId }) => {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef(null);
   const navigate = useNavigate();
@@ -78,12 +80,12 @@ const OtherPackagesCarousel = ({ packages = [], currentPackageId }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       <div className="mb-4 sm:mb-6">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Discover Our Packages
+          {t('home.packages.title')}
         </h2>
       </div>
 
       {/* Carousel Container with Side Arrows */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center" dir="ltr">
         {/* Left Arrow */}
         {totalSlides > 1 && (
           <button
@@ -147,7 +149,7 @@ const OtherPackagesCarousel = ({ packages = [], currentPackageId }) => {
 
       {/* Dots Indicator */}
       {totalSlides > 1 && (
-        <div className="flex justify-center mt-6 space-x-2">
+        <div className="flex justify-center mt-6 space-x-2" dir="ltr">
           {(() => {
             const maxDotsOnMobile = 8;
             const isMobileView = screenType === 'mobile';

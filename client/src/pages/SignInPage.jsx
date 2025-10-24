@@ -10,8 +10,27 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import CustomButton from '../components/CustomButton';
 import { countryCodes } from '../utils/countryCodes';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 export default function SignInPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
+  // Function to translate security questions
+  const translateSecurityQuestion = (question) => {
+    if (!question) return question;
+    
+    const questionMap = {
+      'What was your childhood nickname?': t('signIn.securityQuestions.childhoodNickname'),
+      'What is the name of your first pet?': t('signIn.securityQuestions.firstPet'),
+      'What is your mother\'s maiden name?': t('signIn.securityQuestions.motherMaidenName'),
+      'What was the model of your first car?': t('signIn.securityQuestions.firstCar'),
+      'In what city were you born?': t('signIn.securityQuestions.birthCity')
+    };
+    
+    return questionMap[question] || question;
+  };
+  
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -67,7 +86,7 @@ export default function SignInPage() {
     
     // Validate required fields
     if (!username.trim()) {
-      toast.error('Please enter your email or username', {
+      toast.error(t('signIn.errors.enterEmailOrUsername'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -79,7 +98,7 @@ export default function SignInPage() {
     }
     
     if (!password.trim()) {
-      toast.error('Please enter your password', {
+      toast.error(t('signIn.errors.enterPassword'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -93,7 +112,7 @@ export default function SignInPage() {
     // Additional validation for registration
     if (!isLogin) {
       if (!securityQuestion) {
-        toast.error('Please select a security question', {
+        toast.error(t('signIn.errors.selectSecurityQuestion'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -105,7 +124,7 @@ export default function SignInPage() {
       }
       
       if (!securityAnswer.trim()) {
-        toast.error('Please provide an answer to your security question', {
+        toast.error(t('signIn.errors.provideSecurityAnswer'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -119,7 +138,7 @@ export default function SignInPage() {
     
     // Validate email format if provided
     if (!isLogin && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast.error('Please enter a valid email address (example@domain.com)', {
+      toast.error(t('signIn.errors.validEmail'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -141,7 +160,7 @@ export default function SignInPage() {
       const response = await axios.post(endpoint, requestData);
       
       if (!isLogin) {
-        toast.success('Your account has been created. Please wait for admin approval to log in.', {
+        toast.success(t('signIn.errors.accountCreated'), {
           duration: 4000,
           style: {
             background: '#4CAF50',
@@ -156,7 +175,7 @@ export default function SignInPage() {
       }
       
       if (response.data.isPendingApproval) {
-        toast.error('Your account is pending approval by an administrator.', {
+        toast.error(t('signIn.errors.accountPendingApproval'), {
           duration: 4000,
           style: {
             background: '#f44336',
@@ -181,7 +200,7 @@ export default function SignInPage() {
       }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.isPendingApproval) {
-        toast.error('Your account is pending approval by an administrator.', {
+        toast.error(t('signIn.errors.accountPendingApproval'), {
           duration: 4000,
           style: {
             background: '#f44336',
@@ -190,7 +209,7 @@ export default function SignInPage() {
           }
         });
       } else {
-        toast.error(err.response?.data?.message || 'An error occurred', {
+        toast.error(err.response?.data?.message || t('signIn.errors.anErrorOccurredGeneric'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -207,7 +226,7 @@ export default function SignInPage() {
     e.preventDefault();
     
     if (!username) {
-      toast.error('Please enter your email or username', {
+      toast.error(t('signIn.errors.enterEmailOrUsername'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -225,7 +244,7 @@ export default function SignInPage() {
     } catch (err) {
       console.error('Error fetching security question:', err);
       if (err.response?.status === 404) {
-        toast.error('User not found. Please check your email or username.', {
+        toast.error(t('signIn.errors.userNotFound'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -234,7 +253,7 @@ export default function SignInPage() {
           }
         });
       } else {
-        toast.error(err.response?.data?.message || 'Unable to retrieve security question', {
+        toast.error(err.response?.data?.message || t('signIn.errors.unableToRetrieveQuestion'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -250,7 +269,7 @@ export default function SignInPage() {
     e.preventDefault();
     
     if (!securityAnswer) {
-      toast.error('Please answer the security question', {
+      toast.error(t('signIn.errors.answerSecurityQuestion'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -271,7 +290,7 @@ export default function SignInPage() {
       setResetStep(3);
     } catch (err) {
       console.error('Error verifying security answer:', err);
-      toast.error(err.response?.data?.message || 'Incorrect security answer', {
+      toast.error(err.response?.data?.message || t('signIn.errors.incorrectSecurityAnswer'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -287,7 +306,7 @@ export default function SignInPage() {
     e.preventDefault();
     
     if (!newPassword || newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters long', {
+      toast.error(t('signIn.errors.passwordMinLength'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -299,7 +318,7 @@ export default function SignInPage() {
     }
     
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match', {
+      toast.error(t('signIn.errors.passwordsDoNotMatch'), {
         duration: 3000,
         style: {
           background: '#f44336',
@@ -317,7 +336,7 @@ export default function SignInPage() {
         newPassword 
       });
       
-      toast.success('Password has been reset successfully', {
+      toast.success(t('signIn.errors.passwordResetSuccess'), {
         duration: 3000,
         style: {
           background: '#4CAF50',
@@ -337,7 +356,7 @@ export default function SignInPage() {
       console.error('Password reset error:', err);
       
       if (err.response) {
-        toast.error(err.response.data.message || 'Failed to reset password', {
+        toast.error(err.response.data.message || t('signIn.errors.failedToResetPassword'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -346,7 +365,7 @@ export default function SignInPage() {
           }
         });
       } else if (err.request) {
-        toast.error('No response from server. Please try again later.', {
+        toast.error(t('signIn.errors.noResponseFromServer'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -355,7 +374,7 @@ export default function SignInPage() {
           }
         });
       } else {
-        toast.error('An error occurred. Please try again.', {
+        toast.error(t('signIn.errors.anErrorOccurred'), {
           duration: 3000,
           style: {
             background: '#f44336',
@@ -382,17 +401,17 @@ export default function SignInPage() {
     switch (resetStep) {
       case 1:
         return (
-          <form onSubmit={handleResetStepOne} className="space-y-5">
+          <form onSubmit={handleResetStepOne} className="space-y-3">
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="username" value="Email or Username" className="text-white text-sm" />
+                <Label htmlFor="username" value={t('signIn.emailOrUsername')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
               </div>
               <TextInput
                 id="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your email or username"
+                placeholder={t('signIn.emailOrUsernamePlaceholder')}
                 variant="glass"
               />
             </div>
@@ -402,16 +421,16 @@ export default function SignInPage() {
               variant="blueToTeal"
               className="w-full mt-6"
             >
-              NEXT
+              {t('signIn.nextButton')}
             </CustomButton>
             
             <div className="mt-6 text-center">
               <button
                 type="button"
                 onClick={toggleForgotPassword}
-                className="text-white/90 hover:text-white hover:underline text-sm"
+                className={`text-white/90 hover:text-white hover:underline text-sm ${isRTL ? 'text-right' : 'text-left'}`}
               >
-                Back to Sign In
+                {t('signIn.backToSignIn')}
               </button>
             </div>
           </form>
@@ -419,24 +438,24 @@ export default function SignInPage() {
         
       case 2:
         return (
-          <form onSubmit={handleResetStepTwo} className="space-y-5">
+          <form onSubmit={handleResetStepTwo} className="space-y-3">
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="securityQuestion" value="Security Question" className="text-white text-sm" />
+                <Label htmlFor="securityQuestion" value={t('signIn.securityQuestion')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
               </div>
-              <div className="p-4 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium rounded-lg mb-4">
-                {securityQuestion}
+              <div className={`p-4 bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium rounded-lg mb-4 ${isRTL ? 'text-right' : 'text-left'}`}>
+                {translateSecurityQuestion(securityQuestion)}
               </div>
               
               <div className="mb-2 block">
-                <Label htmlFor="securityAnswer" value="Answer" className="text-white text-sm" />
+                <Label htmlFor="securityAnswer" value={t('signIn.securityAnswer')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
               </div>
               <TextInput
                 id="securityAnswer"
                 type="text"
                 value={securityAnswer}
                 onChange={(e) => setSecurityAnswer(e.target.value)}
-                placeholder="Enter your answer"
+                placeholder={t('signIn.securityAnswerPlaceholder')}
                 variant="glass"
               />
             </div>
@@ -446,24 +465,24 @@ export default function SignInPage() {
               variant="blueToTeal"
               className="w-full mt-6"
             >
-              VERIFY
+              {t('signIn.verifyButton')}
             </CustomButton>
             
-            <div className="mt-6 flex justify-between text-sm">
+            <div className={`mt-6 flex ${isRTL ? 'flex-row-reverse' : ''} justify-between text-sm`}>
               <button
                 type="button"
                 onClick={() => setResetStep(1)}
-                className="text-white/90 hover:text-white hover:underline"
+                className={`text-white/90 hover:text-white hover:underline ${isRTL ? 'text-right' : 'text-left'}`}
               >
-                ← Back
+                {t('signIn.back')}
               </button>
               
               <button
                 type="button"
                 onClick={toggleForgotPassword}
-                className="text-white/90 hover:text-white hover:underline"
+                className={`text-white/90 hover:text-white hover:underline ${isRTL ? 'text-right' : 'text-left'}`}
               >
-                Back to Sign In
+                {t('signIn.backToSignIn')}
               </button>
             </div>
           </form>
@@ -471,10 +490,10 @@ export default function SignInPage() {
         
       case 3:
         return (
-          <form onSubmit={handleResetStepThree} className="space-y-5">
+          <form onSubmit={handleResetStepThree} className="space-y-3">
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="newPassword" value="New Password" className="text-white text-sm" />
+                <Label htmlFor="newPassword" value={t('signIn.newPassword')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
               </div>
               <div className="relative">
                 <TextInput
@@ -482,13 +501,13 @@ export default function SignInPage() {
                   type={showPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
+                  placeholder={t('signIn.newPasswordPlaceholder')}
                   className="w-full"
                   variant="glass"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center`}
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -502,14 +521,14 @@ export default function SignInPage() {
             
             <div>
               <div className="mb-2 block">
-                <Label htmlFor="confirmPassword" value="Confirm Password" className="text-white text-sm" />
+                <Label htmlFor="confirmPassword" value={t('signIn.confirmPassword')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
               </div>
               <TextInput
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t('signIn.confirmPasswordPlaceholder')}
                 variant="glass"
               />
             </div>
@@ -519,24 +538,24 @@ export default function SignInPage() {
               variant="blueToTeal"
               className="w-full mt-6"
             >
-              RESET PASSWORD
+              {t('signIn.resetPasswordButton')}
             </CustomButton>
             
-            <div className="mt-6 flex justify-between text-sm">
+            <div className={`mt-6 flex ${isRTL ? 'flex-row-reverse' : ''} justify-between text-sm`}>
               <button
                 type="button"
                 onClick={() => setResetStep(2)}
-                className="text-white/90 hover:text-white hover:underline"
+                className={`text-white/90 hover:text-white hover:underline ${isRTL ? 'text-right' : 'text-left'}`}
               >
-                ← Back
+                {t('signIn.back')}
               </button>
               
               <button
                 type="button"
                 onClick={toggleForgotPassword}
-                className="text-white/90 hover:text-white hover:underline"
+                className={`text-white/90 hover:text-white hover:underline ${isRTL ? 'text-right' : 'text-left'}`}
               >
-                Back to Sign In
+                {t('signIn.backToSignIn')}
               </button>
             </div>
           </form>
@@ -548,7 +567,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-7rem)] relative flex items-center justify-center px-4 overflow-hidden">
+    <div className="min-h-screen relative flex items-center justify-center px-4" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Background Image with Overlay - Fixed to viewport */}
       <div className="fixed inset-0 z-0">
         <div 
@@ -573,35 +592,35 @@ export default function SignInPage() {
         {/* Left side - Glassmorphism Auth Form */}
         <div className="w-full max-w-lg">
           <div className="bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl p-8">
-            <h2 className="text-2xl font-semibold text-center mb-8 text-white">
+            <h2 className={`text-2xl font-semibold text-center mb-4 text-white ${isRTL ? 'text-right' : 'text-left'}`}>
               {isForgotPassword ? 
-                (resetStep === 1 ? 'Reset Password' : 
-                 resetStep === 2 ? 'Security Verification' : 
-                 'Create New Password') 
-                : (isLogin ? 'Login to Your Account' : 'Create Your Account')}
+                (resetStep === 1 ? t('signIn.resetPasswordTitle') : 
+                 resetStep === 2 ? t('signIn.securityVerificationTitle') : 
+                 t('signIn.createNewPasswordTitle')) 
+                : (isLogin ? t('signIn.loginTitle') : t('signIn.registerTitle'))}
             </h2>
           
           {isForgotPassword ? (
             renderResetForm()
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="username" value="Email or Username" className="text-white text-sm" />
+                  <Label htmlFor="username" value={t('signIn.emailOrUsername')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
                 </div>
                 <TextInput
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your email or username"
+                  placeholder={t('signIn.emailOrUsernamePlaceholder')}
                   variant="glass"
                 />
               </div>
               
               <div>
                 <div className="mb-2 block">
-                  <Label htmlFor="password" value="Password" className="text-white text-sm" />
+                  <Label htmlFor="password" value={t('signIn.password')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
                 </div>
                 <div className="relative">
                   <TextInput
@@ -609,13 +628,13 @@ export default function SignInPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t('signIn.passwordPlaceholder')}
                     className="w-full"
                     variant="glass"
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className={`absolute inset-y-0 ${isRTL ? 'left-0 pl-3' : 'right-0 pr-3'} flex items-center`}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -632,7 +651,7 @@ export default function SignInPage() {
                   {/* Email Field */}
                   <div>
                     <div className="mb-2 block">
-                      <Label htmlFor="email" value="Email (Optional)" className="text-white text-sm" />
+                      <Label htmlFor="email" value={t('signIn.emailOptional')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
                     </div>
                     <TextInput
                       id="email"
@@ -647,7 +666,7 @@ export default function SignInPage() {
                         // Validate email format on blur
                         if (e.target.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value) && !emailValidationShown) {
                           setEmailValidationShown(true);
-                          toast.error('Please enter a valid email address (example@domain.com)', {
+                          toast.error(t('signIn.errors.validEmail'), {
                             duration: 3000,
                             style: {
                               background: '#f44336',
@@ -657,7 +676,7 @@ export default function SignInPage() {
                           });
                         }
                       }}
-                      placeholder="Enter your email address"
+                      placeholder={t('signIn.emailPlaceholder')}
                       variant="glass"
                     />
                   </div>
@@ -665,16 +684,16 @@ export default function SignInPage() {
                   {/* Phone Number Section */}
                   <div>
                     <div className="mb-2 block">
-                      <Label value="Phone Number (Optional)" className="text-white text-sm" />
+                      <Label value={t('signIn.phoneNumber')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <div className={`grid grid-cols-1 md:grid-cols-5 gap-2 ${isRTL ? 'md:grid-cols-reverse' : ''}`}>
                       <div className="md:col-span-2">
                         <SearchableSelect
                           id="countryCode"
                           options={countryCodes}
                           value={countryCode}
                           onChange={(e) => setCountryCode(e.target.value)}
-                          placeholder="Select country code"
+                          placeholder={t('signIn.countryCodePlaceholder')}
                           variant="glass"
                         />
                       </div>
@@ -693,7 +712,7 @@ export default function SignInPage() {
                               e.preventDefault();
                             }
                           }}
-                          placeholder="Enter phone number"
+                          placeholder={t('signIn.phonePlaceholder')}
                           variant="glass"
                         />
                       </div>
@@ -703,34 +722,34 @@ export default function SignInPage() {
                   <div>
                     <CustomSelect
                       id="securityQuestion"
-                      label="Security Question"
+                      label={t('signIn.securityQuestion')}
                       value={securityQuestion}
                       onChange={(value) => setSecurityQuestion(value)}
                       options={[
-                        { value: "What was your childhood nickname?", label: "What was your childhood nickname?" },
-                        { value: "What is the name of your first pet?", label: "What is the name of your first pet?" },
-                        { value: "What is your mother's maiden name?", label: "What is your mother's maiden name?" },
-                        { value: "What was the model of your first car?", label: "What was the model of your first car?" },
-                        { value: "In what city were you born?", label: "In what city were you born?" }
+                        { value: t('signIn.securityQuestions.childhoodNickname'), label: t('signIn.securityQuestions.childhoodNickname') },
+                        { value: t('signIn.securityQuestions.firstPet'), label: t('signIn.securityQuestions.firstPet') },
+                        { value: t('signIn.securityQuestions.motherMaidenName'), label: t('signIn.securityQuestions.motherMaidenName') },
+                        { value: t('signIn.securityQuestions.firstCar'), label: t('signIn.securityQuestions.firstCar') },
+                        { value: t('signIn.securityQuestions.birthCity'), label: t('signIn.securityQuestions.birthCity') }
                       ]}
-                      placeholder="Select a security question"
+                      placeholder={t('signIn.securityQuestionPlaceholder')}
                       variant="glass"
                     />
                   </div>
                   <div>
                     <div className="mb-2 block">
-                      <Label htmlFor="securityAnswer" value="Security Answer" className="text-white text-sm" />
+                      <Label htmlFor="securityAnswer" value={t('signIn.securityAnswer')} className={`text-white text-sm ${isRTL ? 'text-right' : 'text-left'}`} />
                     </div>
                     <TextInput
                       id="securityAnswer"
                       type="text"
                       value={securityAnswer}
                       onChange={(e) => setSecurityAnswer(e.target.value)}
-                      placeholder="Enter your answer"
+                      placeholder={t('signIn.securityAnswerPlaceholder')}
                       variant="glass"
                     />
-                    <p className="mt-1 text-xs text-white/70">
-                      This will be used to verify your identity if you need to reset your password.
+                    <p className={`mt-1 text-xs text-white/70 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      {t('signIn.securityAnswerHelp')}
                     </p>
                   </div>
                   
@@ -738,10 +757,10 @@ export default function SignInPage() {
                   <div className="mt-4">
                     <CustomCheckbox
                       id="registerAsPublisher"
-                      label="Register as Publisher"
+                      label={t('signIn.registerAsPublisher')}
                       checked={registerAsPublisher}
                       onChange={setRegisterAsPublisher}
-                      labelClassName="text-white text-sm font-medium"
+                      labelClassName={`text-white text-sm font-medium ${isRTL ? 'text-right' : 'text-left'}`}
                     />
                   </div>
                 </>
@@ -752,25 +771,25 @@ export default function SignInPage() {
                 variant="blueToTeal"
                 className="w-full mt-6"
               >
-                {isLogin ? 'LOGIN' : 'REGISTER'}
+                {isLogin ? t('signIn.loginButton') : t('signIn.registerButton')}
               </CustomButton>
               
-              <div className="mt-6 text-center flex justify-between items-center">
+              <div className={`mt-6 text-center flex ${isRTL ? 'flex-row-reverse' : ''} justify-between items-center`}>
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-white/90 hover:text-white hover:underline text-sm"
+                  className={`text-white/90 hover:text-white hover:underline text-sm ${isRTL ? 'text-right' : 'text-left'}`}
                 >
-                  {isLogin ? 'New staff member? Register' : 'Already have account?'}
+                  {isLogin ? t('signIn.newStaffMember') : t('signIn.alreadyHaveAccount')}
                 </button>
                 
                 {isLogin && (
                   <button
                     type="button"
                     onClick={toggleForgotPassword}
-                    className="text-white/90 hover:text-white hover:underline text-sm"
+                    className={`text-white/90 hover:text-white hover:underline text-sm ${isRTL ? 'text-right' : 'text-left'}`}
                   >
-                    Forgot Password?
+                    {t('signIn.forgotPassword')}
                   </button>
                 )}
               </div>
@@ -780,20 +799,20 @@ export default function SignInPage() {
         </div>
 
         {/* Right side - Inspirational Quote (Hidden on mobile) */}
-        <div className="hidden lg:block w-full max-w-2xl text-center lg:text-left">
+        <div className={`hidden lg:block w-full max-w-2xl text-center ${isRTL ? 'lg:text-right' : 'lg:text-left'}`}>
           <div className="mb-10" style={{ fontFamily: 'Jost, sans-serif' }}>
-            <h1 className="text-5xl xl:text-7xl font-extrabold leading-tight mb-4">
+            <h1 className={`text-5xl xl:text-7xl font-extrabold leading-tight mb-4 ${isRTL ? 'text-right' : 'text-left'}`}>
               <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent drop-shadow-2xl animate-pulse">
-                EXPLORE THE WORLD
+                {t('signIn.exploreTheWorld')}
               </span>
             </h1>
-            <h2 className="text-3xl xl:text-5xl font-bold text-white/95 leading-tight mb-3 tracking-wide">
-              WITH <span className="text-yellow-400 drop-shadow-lg">RAHALATEK</span>
+            <h2 className={`text-3xl xl:text-5xl font-bold text-white/95 leading-tight mb-3 tracking-wide ${isRTL ? 'text-right' : 'text-left'}`}>
+              {t('signIn.withRahalatek')} <span className="text-yellow-400 drop-shadow-lg">{isRTL ? 'رحلاتك' : 'RAHALATEK'}</span>
             </h2>
-            <div className="flex items-center gap-3 justify-center lg:justify-start mb-4">
+            <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'justify-center lg:justify-start' : 'justify-center lg:justify-start'}`}>
               <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-yellow-300"></div>
-              <p className="text-xl xl:text-2xl text-white/90 font-medium italic tracking-wider">
-                Your Journey Begins Here
+              <p className={`text-xl xl:text-2xl text-white/90 font-medium italic tracking-wider ${isRTL ? 'text-center' : 'text-left'}`}>
+                {t('signIn.yourJourneyBeginsHere')}
               </p>
               <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-yellow-300"></div>
             </div>

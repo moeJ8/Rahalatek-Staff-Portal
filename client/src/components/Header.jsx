@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import CustomDarkModeToggle from './CustomDarkModeToggle';
 import CustomButton from './CustomButton';
 import UserDropdown from './UserDropdown';
@@ -8,6 +9,8 @@ import NotificationDropdown from './NotificationDropdown';
 import Searchbar from './Searchbar';
 import PublicSearchbar from './PublicSearchbar';
 import UserCalendar from './UserCalendar';
+import LanguageSwitcher from './LanguageSwitcher';
+import { shouldHideLanguageSwitcher } from '../utils/pageUtils';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
   FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope, FaInfoCircle,
@@ -17,6 +20,7 @@ import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
 
 export default function Header() {
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -28,6 +32,39 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const darkMode = useSelector((state) => state.theme.darkMode);
+
+  // Check if we're on a protected/auth page
+  const isAuthenticated = !!user;
+  const hideLanguageSwitcher = shouldHideLanguageSwitcher(location.pathname, isAuthenticated);
+  
+  // Force English translations for protected/auth pages
+  const getTranslation = (key) => {
+    if (hideLanguageSwitcher) {
+      // Force English translations for protected/auth pages
+      const englishTranslations = {
+        'header.home': 'Home',
+        'header.hotels': 'Hotels',
+        'header.tours': 'Tours',
+        'header.packages': 'Packages',
+        'header.blog': 'Blog',
+        'header.contact': 'Contact',
+        'header.about': 'About Us',
+        'header.signIn': 'Sign In',
+        'header.dashboard': 'Dashboard',
+        'header.booking': 'Booking',
+        'header.vouchers': 'Vouchers',
+        'header.profile': 'Profile',
+        'header.attendance': 'Attendance',
+        'header.calendar': 'Calendar',
+        'header.logout': 'Logout',
+        'header.publicPages': 'Public Pages',
+        'header.more': 'More',
+        'header.theme': 'Theme'
+      };
+      return englishTranslations[key] || key;
+    }
+    return t(key);
+  };
 
   // Fetch attendance status
   const fetchAttendanceStatus = async () => {
@@ -105,7 +142,9 @@ export default function Header() {
 
   // Check if current page is a public page where sign-in should be hidden
   const isPublicPage = () => {
-    return location.pathname.startsWith('/hotels/') || location.pathname.startsWith('/tours/');
+    // Show sign-in button on all public pages
+    // This function now returns false to always show the sign-in button
+    return false;
   };
 
   const handleCalendarClick = () => {
@@ -210,9 +249,13 @@ export default function Header() {
   };
 
   const isSignInPage = location.pathname === '/signin';
+  const isRTL = i18n.language === 'ar';
+  
+  // Force LTR layout for protected/auth pages
+  const headerDirection = hideLanguageSwitcher ? 'ltr' : (isRTL ? 'rtl' : 'ltr');
 
   return (
-    <header className={`shadow-md mb-6 transition-all duration-300 sticky top-0 z-50 ${
+    <header dir={headerDirection} className={`shadow-md mb-6 transition-all duration-300 sticky top-0 z-50 ${
       isSignInPage 
         ? 'bg-white/10 backdrop-blur-md border-b border-white/20' 
         : 'bg-white dark:bg-slate-950'
@@ -258,11 +301,12 @@ export default function Header() {
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                       }`}
                     >
-                      Dashboard
+                      {getTranslation('header.dashboard')}
                       <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                         isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}></span>
                     </Link>
+                     {!hideLanguageSwitcher && <LanguageSwitcher />}
                     <CustomDarkModeToggle />
                     <NotificationDropdown />
                     {renderAttendanceIndicators()}
@@ -279,7 +323,7 @@ export default function Header() {
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                       }`}
                     >
-                      Home
+                      {getTranslation('header.home')}
                       <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                         isActive('/home') ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}></span>
@@ -292,7 +336,7 @@ export default function Header() {
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                       }`}
                     >
-                      Booking
+                      {getTranslation('header.booking')}
                       <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                         isActive('/booking') ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}></span>
@@ -305,7 +349,7 @@ export default function Header() {
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                       }`}
                     >
-                      Vouchers
+                      {getTranslation('header.vouchers')}
                       <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                         isActive('/vouchers') ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}></span>
@@ -319,12 +363,13 @@ export default function Header() {
                             : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                         }`}
                       >
-                        Dashboard
+                        {getTranslation('header.dashboard')}
                         <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
                           isActive('/dashboard') ? 'w-full' : 'w-0 group-hover:w-full'
                         }`}></span>
                       </Link>
                     )}
+                     {!hideLanguageSwitcher && <LanguageSwitcher />}
                     <CustomDarkModeToggle />
                     <NotificationDropdown />
                     {renderAttendanceIndicators()}
@@ -345,7 +390,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Home
+                  {getTranslation('header.home')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -362,7 +407,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Hotels
+                  {getTranslation('header.hotels')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/guest/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -379,7 +424,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Tours
+                  {getTranslation('header.tours')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/guest/tours') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -396,7 +441,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Packages
+                  {getTranslation('header.packages')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/packages') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -413,7 +458,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Blog
+                  {getTranslation('header.blog')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/blog') || location.pathname.startsWith('/blog/') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -430,7 +475,7 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  Contact
+                  {getTranslation('header.contact')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/contact') ? 'w-full' : 'w-0 group-hover:w-full'
@@ -447,14 +492,20 @@ export default function Header() {
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
                 >
-                  About Us
+                  {getTranslation('header.about')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
                       isActive('/about') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
-                {!isSignInPage && <CustomDarkModeToggle />}
+                {!isSignInPage && (
+                  <>
+                     {!hideLanguageSwitcher && <LanguageSwitcher />}
+                    <CustomDarkModeToggle />
+                  </>
+                )}
+                {isSignInPage && !hideLanguageSwitcher && <LanguageSwitcher variant="light" />}
                 {!isPublicPage() && (
                   <CustomButton 
                     as={Link} 
@@ -462,7 +513,7 @@ export default function Header() {
                     variant="rippleBlueToYellowTeal" 
                     size="sm"
                   >
-                    Sign In
+                    {getTranslation('header.signIn')}
                   </CustomButton>
                 )}
               </>
@@ -532,7 +583,7 @@ export default function Header() {
                         }`}
                       >
                         <FaChartLine className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Dashboard</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.dashboard')}</span>
                       </Link>
                       
                       <Link 
@@ -545,7 +596,7 @@ export default function Header() {
                         }`}
                       >
                         <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Hotels</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.hotels')}</span>
                       </Link>
                       
                       <Link 
@@ -558,7 +609,7 @@ export default function Header() {
                         }`}
                       >
                         <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Tours</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.tours')}</span>
                       </Link>
                       
                       {/* Row 2 */}
@@ -572,7 +623,7 @@ export default function Header() {
                         }`}
                       >
                         <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Profile</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.profile')}</span>
                       </Link>
                       
                       <Link 
@@ -585,7 +636,7 @@ export default function Header() {
                         }`}
                       >
                         <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Attendance</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.attendance')}</span>
                       </Link>
                       
                       <button 
@@ -596,7 +647,7 @@ export default function Header() {
                         className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md"
                       >
                         <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Calendar</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.calendar')}</span>
                       </button>
                     </div>
                     
@@ -606,7 +657,7 @@ export default function Header() {
                         onClick={() => setMobilePublicPagesOpen(!mobilePublicPagesOpen)}
                         className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
-                        <span className="text-sm font-medium mr-2">Public Pages</span>
+                        <span className="text-sm font-medium mr-2">{getTranslation('header.publicPages')}</span>
                         {mobilePublicPagesOpen ? (
                           <HiChevronUp className="text-lg transition-transform duration-200" />
                         ) : (
@@ -629,7 +680,7 @@ export default function Header() {
                             }`}
                           >
                             <FaHome className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Home</span>
+                            <span className="text-[10px] font-medium text-center">{getTranslation('header.home')}</span>
                           </Link>
                           
                           <Link 
@@ -642,7 +693,7 @@ export default function Header() {
                             }`}
                           >
                             <FaHotel className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Hotels</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.hotels')}</span>
                           </Link>
                           
                           <Link 
@@ -655,7 +706,7 @@ export default function Header() {
                             }`}
                           >
                             <FaRoute className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Tours</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.tours')}</span>
                           </Link>
                           
                           <Link 
@@ -668,7 +719,7 @@ export default function Header() {
                             }`}
                           >
                             <FaBox className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Packages</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.packages')}</span>
                           </Link>
                           
                           <Link 
@@ -681,7 +732,7 @@ export default function Header() {
                             }`}
                           >
                             <FaBlog className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Blog</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.blog')}</span>
                           </Link>
                           
                           <Link 
@@ -694,7 +745,7 @@ export default function Header() {
                             }`}
                           >
                             <FaEnvelope className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">Contact</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.contact')}</span>
                           </Link>
                           
                           <Link 
@@ -707,7 +758,7 @@ export default function Header() {
                             }`}
                           >
                             <FaInfoCircle className="text-lg mb-1 group-hover:scale-110 transition-transform duration-200" />
-                            <span className="text-[10px] font-medium text-center">About</span>
+                            <span className="text-[10px] font-medium text-center">{t('header.about')}</span>
                           </Link>
                         </div>
                       </div>
@@ -719,7 +770,7 @@ export default function Header() {
                         onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
                         className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
-                        <span className="text-sm font-medium mr-2">More</span>
+                        <span className="text-sm font-medium mr-2">{getTranslation('header.more')}</span>
                         {mobileMenuExpanded ? (
                           <HiChevronUp className="text-lg transition-transform duration-200" />
                         ) : (
@@ -737,7 +788,7 @@ export default function Header() {
                             <div className="transform group-hover:scale-110 transition-transform duration-200">
                               <CustomDarkModeToggle />
                             </div>
-                            <span className="text-xs font-medium text-center mt-1">Theme</span>
+                            <span className="text-xs font-medium text-center mt-1">{getTranslation('header.theme')}</span>
                           </div>
                         </div>
                       </div>
@@ -753,7 +804,7 @@ export default function Header() {
                       >
                         <div className="flex items-center justify-center gap-2">
                           <FaLogout className="text-lg" />
-                          <span>Logout ({user.username})</span>
+                          <span>{getTranslation('header.logout')} ({user.username})</span>
                         </div>
                       </CustomButton>
                     </div>
@@ -775,7 +826,7 @@ export default function Header() {
                         }`}
                       >
                         <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Home</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.home')}</span>
                       </Link>
                   
                   <Link 
@@ -790,7 +841,7 @@ export default function Header() {
                     }`}
                   >
                     <FaClipboardList className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Booking</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.booking')}</span>
                   </Link>
                   
                   <Link 
@@ -805,7 +856,7 @@ export default function Header() {
                     }`}
                   >
                     <FaTicketAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Vouchers</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.vouchers')}</span>
                   </Link>
                   
                   {/* Row 2 */}
@@ -821,7 +872,7 @@ export default function Header() {
                     }`}
                   >
                     <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Hotels</span>
+                    <span className="text-xs font-medium text-center">{t('header.hotels')}</span>
                   </Link>
                   
                   <Link 
@@ -836,7 +887,7 @@ export default function Header() {
                     }`}
                   >
                     <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Tours</span>
+                    <span className="text-xs font-medium text-center">{t('header.tours')}</span>
                   </Link>
                   
                   {(user.isAdmin || user.isAccountant || user.isContentManager) ? (
@@ -852,7 +903,7 @@ export default function Header() {
                       }`}
                     >
                       <FaChartLine className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-xs font-medium text-center">Dashboard</span>
+                      <span className="text-xs font-medium text-center">{t('header.dashboard')}</span>
                     </Link>
                   ) : (
                     <Link 
@@ -865,7 +916,7 @@ export default function Header() {
                       }`}
                     >
                       <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="text-xs font-medium text-center">Profile</span>
+                      <span className="text-xs font-medium text-center">{t('header.profile')}</span>
                     </Link>
                   )}
                       
@@ -881,7 +932,7 @@ export default function Header() {
                           }`}
                         >
                           <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                          <span className="text-xs font-medium text-center">Profile</span>
+                          <span className="text-xs font-medium text-center">{getTranslation('header.profile')}</span>
                         </Link>
                       )}
                       
@@ -897,7 +948,7 @@ export default function Header() {
                         }`}
                       >
                         <FaUserClock className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Attendance</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.attendance')}</span>
                       </Link>
                       
                       <button 
@@ -912,7 +963,7 @@ export default function Header() {
                         }`}
                       >
                         <FaCalendarAlt className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                        <span className="text-xs font-medium text-center">Calendar</span>
+                        <span className="text-xs font-medium text-center">{getTranslation('header.calendar')}</span>
                       </button>
                     </div>
                     
@@ -922,7 +973,7 @@ export default function Header() {
                     onClick={() => setMobilePublicPagesOpen(!mobilePublicPagesOpen)}
                     className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <span className="text-sm font-medium mr-2">Public Pages</span>
+                    <span className="text-sm font-medium mr-2">{t('header.publicPages')}</span>
                     {mobilePublicPagesOpen ? (
                       <HiChevronUp className="text-lg transition-transform duration-200" />
                     ) : (
@@ -1057,7 +1108,7 @@ export default function Header() {
                         <div className="transform group-hover:scale-110 transition-transform duration-200">
                           <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
                         </div>
-                        <span className="text-xs font-medium text-center mt-1">Theme</span>
+                        <span className="text-xs font-medium text-center mt-1">{t('header.theme')}</span>
                       </div>
                     </div>
                       </div>
@@ -1073,7 +1124,7 @@ export default function Header() {
                       >
                         <div className="flex items-center justify-center gap-2">
                           <FaLogout className="text-lg" />
-                          <span>Logout ({user.username})</span>
+                          <span>{getTranslation('header.logout')} ({user.username})</span>
                         </div>
                       </CustomButton>
                     </div>
@@ -1096,7 +1147,7 @@ export default function Header() {
                     }`}
                   >
                     <FaHome className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Home</span>
+                    <span className="text-xs font-medium text-center">{getTranslation('header.home')}</span>
                   </Link>
                   
                   <Link 
@@ -1111,7 +1162,7 @@ export default function Header() {
                     }`}
                   >
                     <FaHotel className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Hotels</span>
+                    <span className="text-xs font-medium text-center">{t('header.hotels')}</span>
                   </Link>
                   
                   <Link 
@@ -1126,7 +1177,7 @@ export default function Header() {
                     }`}
                   >
                     <FaRoute className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Tours</span>
+                    <span className="text-xs font-medium text-center">{t('header.tours')}</span>
                   </Link>
                   
                   <Link 
@@ -1141,7 +1192,7 @@ export default function Header() {
                     }`}
                   >
                     <FaBox className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Packages</span>
+                    <span className="text-xs font-medium text-center">{t('header.packages')}</span>
                   </Link>
                   
                   <Link 
@@ -1156,7 +1207,7 @@ export default function Header() {
                     }`}
                   >
                     <FaBlog className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Blog</span>
+                    <span className="text-xs font-medium text-center">{t('header.blog')}</span>
                   </Link>
                   
                   <Link 
@@ -1171,7 +1222,7 @@ export default function Header() {
                     }`}
                   >
                     <FaEnvelope className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">Contact</span>
+                    <span className="text-xs font-medium text-center">{t('header.contact')}</span>
                   </Link>
                   
                   <Link 
@@ -1186,7 +1237,7 @@ export default function Header() {
                     }`}
                   >
                     <FaInfoCircle className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-xs font-medium text-center">About Us</span>
+                    <span className="text-xs font-medium text-center">{t('header.about')}</span>
                   </Link>
                 </div>
                 
@@ -1196,7 +1247,7 @@ export default function Header() {
                     onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
                     className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <span className="text-sm font-medium mr-2">More</span>
+                    <span className="text-sm font-medium mr-2">{t('header.more')}</span>
                     {mobileMenuExpanded ? (
                       <HiChevronUp className="text-lg transition-transform duration-200" />
                     ) : (
@@ -1208,7 +1259,7 @@ export default function Header() {
                   <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
                     mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
                   }`}>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-4">
                       {/* Theme Toggle */}
                       <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                         isSignInPage
@@ -1218,7 +1269,21 @@ export default function Header() {
                         <div className="transform group-hover:scale-110 transition-transform duration-200">
                           <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
                         </div>
-                        <span className="text-xs font-medium text-center mt-1">Theme</span>
+                        <span className="text-xs font-medium text-center mt-1">{t('header.theme')}</span>
+                      </div>
+                      
+                      {/* Language Switcher */}
+                      <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                        isSignInPage
+                          ? 'text-white hover:bg-white/10'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                      }`}>
+                        <div className="transform group-hover:scale-110 transition-transform duration-200">
+                          <LanguageSwitcher variant={isSignInPage ? "light" : "default"} />
+                        </div>
+                        <span className="text-xs font-medium text-center mt-1">
+                          {i18n.language === 'en' ? 'Language' : i18n.language === 'ar' ? 'اللغة' : i18n.language === 'fr' ? 'Langue' : i18n.language === 'tr' ? 'Dil' : 'Sprache'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1237,7 +1302,7 @@ export default function Header() {
                     >
                       <div className="flex items-center justify-center gap-2">
                         <FaSignInAlt className="text-lg" />
-                        <span>Sign In</span>
+                        <span>{t('header.signIn')}</span>
                       </div>
                     </CustomButton>
                   </div>

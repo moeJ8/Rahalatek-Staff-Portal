@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   FaCheckCircle,
   FaWhatsapp,
@@ -12,6 +13,8 @@ import ContactForm from '../../components/ContactForm';
 import FloatingContactButtons from '../../components/FloatingContactButtons';
 
 export default function LuxurySuitesPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [activeFaqIndex, setActiveFaqIndex] = useState(null);
 
   const toggleFaq = (index) => {
@@ -137,9 +140,9 @@ export default function LuxurySuitesPage() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-slate-950 min-h-screen">
+    <div className="bg-white dark:bg-slate-950 min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
-      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6">
+      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6" dir="ltr">
         <div className="absolute inset-0 w-full h-full">
           <img
             src="https://res.cloudinary.com/dnzqnr6js/image/upload/c_fill,w_2560,h_1440,q_100,f_auto/v1759860833/Panorama_vvjf0a.jpg"
@@ -153,10 +156,10 @@ export default function LuxurySuitesPage() {
         <div className="absolute inset-0 flex items-center justify-center text-center z-10">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight" style={{ fontFamily: 'Jost, sans-serif' }}>
-              Luxury Suites
+              {t('luxurySuitesPage.hero.title')}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-100 font-medium max-w-3xl mx-auto leading-relaxed">
-              Experience unparalleled luxury and comfort
+              {t('luxurySuitesPage.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -169,43 +172,43 @@ export default function LuxurySuitesPage() {
             onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Overview
+            {t('luxurySuitesPage.nav.overview')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            <span className="hidden sm:inline">Why Choose Us</span>
-            <span className="inline sm:hidden">Why Us</span>
+            <span className="hidden sm:inline">{t('luxurySuitesPage.nav.whyChooseUsFull')}</span>
+            <span className="inline sm:hidden">{t('luxurySuitesPage.nav.whyChooseUsShort')}</span>
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('amenities')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Apartment Types
+            {t('luxurySuitesPage.nav.apartmentTypes')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('destinations')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Destinations
+            {t('luxurySuitesPage.nav.destinations')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Contact
+            {t('luxurySuitesPage.nav.contact')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            FAQs
+            {t('luxurySuitesPage.nav.faqs')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
         </div>
@@ -232,35 +235,35 @@ export default function LuxurySuitesPage() {
             {/* Content */}
             <div className="order-1 lg:order-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                Enjoy privacy and comfort with enchanting views of Turkey's most beautiful tourist attractions.
+                {t('luxurySuitesPage.introduction.title')}
               </h2>
               <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                Do you face these problems while staying in traditional hotels?
+                {t('luxurySuitesPage.introduction.subtitle')}
               </p>
               <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Small, cramped rooms that are not enough for a family or lack privacy.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.0')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Exorbitant additional costs for every service, from the restaurant to the laundry.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.1')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Lack of a kitchen forces you to always eat out.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.2')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Difficulty accommodating large families in adjoining rooms.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.3')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Language barrier with non-Arabic-speaking hotel staff.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.4')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Lack of privacy in the hotel lobby, restaurants, and among guests.</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.introduction.problems.5')}</span>
               </li>
               </ul>
             </div>
@@ -270,40 +273,40 @@ export default function LuxurySuitesPage() {
         {/* What is the Service Section */}
         <section className="mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">
-            What is the service of your travels' serviced apartments?
+            {t('luxurySuitesPage.serviceSection.title')}
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-6 text-center">
-            You travels' serviced apartments are the perfect solution for those seeking the comfort of home and the services of a hotel. When you choose to stay in Turkey with your travels, you don't want to feel like an ordinary tourist, but rather like a resident experiencing the real thing.
+            {t('luxurySuitesPage.serviceSection.description')}
           </p>
           
           <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-              You travels' serviced apartments offer:
+              {t('luxurySuitesPage.serviceSection.offersTitle')}
             </h3>
             <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base mb-6">
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Spacious spaces and multiple rooms suitable for families and groups</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.0')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Fully equipped kitchens for preparing your favorite meals and saving on restaurant costs</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.1')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Private living room for relaxation and family gatherings</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.2')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Hotel services such as cleaning and 24-hour reception</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.3')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Absolute privacy, as if you were in your own home</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.4')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Best value for money, especially for long stays</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('luxurySuitesPage.serviceSection.offers.5')}</span>
               </li>
             </ul>
           </div>
@@ -322,10 +325,10 @@ export default function LuxurySuitesPage() {
         <div id="features" className="scroll-mt-24"></div>
         <section>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-            Features of Rehlatak Apartments
+            {t('luxurySuitesPage.features.title')}
           </h2>
           <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-8 text-center">
-            Why are Rehlatak Apartments the best choice for accommodation in Turkey?
+            {t('luxurySuitesPage.features.subtitle')}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-center">
@@ -334,27 +337,27 @@ export default function LuxurySuitesPage() {
               {/* Feature 1: Strategic Locations */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Strategic Locations in the Heart of Turkish Cities
+                  {t('luxurySuitesPage.features.strategic.title')}
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-4">
-                  Rehlatak Apartments are located in the best tourist areas in Turkey – just minutes' walk from:
+                  {t('luxurySuitesPage.features.strategic.description')}
                 </p>
                 <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Turkey's most famous tourist attractions and historical monuments</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.strategic.points.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Main shopping centers and popular markets</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.strategic.points.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Public transportation stations</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.strategic.points.2')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>The best restaurants and cafes</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.strategic.points.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -362,32 +365,32 @@ export default function LuxurySuitesPage() {
               {/* Feature 2: Luxurious Amenities */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Luxurious amenities that exceed your expectations
+                  {t('luxurySuitesPage.features.amenities.title')}
                 </h3>
                 <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Comfortable beds with premium orthopedic mattresses</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Central air conditioning with temperature control</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Modern home appliances including a washing machine, refrigerator, and microwave</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.2')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Complete kitchenware to prepare your favorite meals</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.3')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Free high-speed internet</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.4')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Arabic and international channels</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.amenities.points.5')}</span>
                   </li>
                 </ul>
               </div>
@@ -395,32 +398,32 @@ export default function LuxurySuitesPage() {
               {/* Feature 3: Comprehensive Services */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Comprehensive services in Arabic and English from the Rehlatak team
+                  {t('luxurySuitesPage.features.services.title')}
                 </h3>
                 <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>24/7 Arabic and English support team</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Airport pickup and drop-off service</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Regular cleaning upon request</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.2')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Medical assistance when needed</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.3')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Tour guidance to the best places and restaurants</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.4')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Flexible arrival procedures to suit your travel schedule</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.features.services.points.5')}</span>
                   </li>
                 </ul>
               </div>
@@ -441,10 +444,10 @@ export default function LuxurySuitesPage() {
         <div id="amenities" className="scroll-mt-24"></div>
         <section className="mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-            Hotel Apartment Options from Rehlatak that Suit All Needs
+            {t('luxurySuitesPage.apartmentTypes.title')}
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-8 text-center">
-            We offer a variety of hotel apartments from Rehlatak and also provide a diverse collection of apartments to suit all your needs
+            {t('luxurySuitesPage.apartmentTypes.description')}
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
@@ -459,20 +462,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Studio Apartment | Starting from $35/night
+                  {t('luxurySuitesPage.apartmentTypes.studio.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Ideal for solo travelers or couples</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.studio.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Compact space with all basic amenities</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.studio.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Central location in the heart of the city</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.studio.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -489,20 +492,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  One Bedroom Apartment | Starting from $55/night
+                  {t('luxurySuitesPage.apartmentTypes.oneBedroom.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Suitable for families or small groups (2-3 people)</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.oneBedroom.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Separate bedroom with spacious living area</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.oneBedroom.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Fully equipped kitchen for family meals</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.oneBedroom.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -519,20 +522,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Two Bedroom Apartment | Starting from $75/night
+                  {t('luxurySuitesPage.apartmentTypes.twoBedroom.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Suitable for families (4-6 people)</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.twoBedroom.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Two spacious bedrooms with large living space</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.twoBedroom.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Fully equipped kitchen and complete dining area</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.twoBedroom.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -549,24 +552,24 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Rahalatek Luxury Apartments | Starting from $120/night
+                {t('luxurySuitesPage.apartmentTypes.luxury.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Premium entertainment experience like no other</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.luxury.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Luxury bathrooms with modern amenities</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.luxury.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Spacious areas with exclusive modern furnishings</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.luxury.features.2')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Comes with jacuzzi or private sauna</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.apartmentTypes.luxury.features.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -578,7 +581,7 @@ export default function LuxurySuitesPage() {
         <div id="destinations" className="scroll-mt-24"></div>
         <section className="mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-            Popular Destinations for Luxury Suites
+            {t('luxurySuitesPage.destinations.title')}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
@@ -593,20 +596,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Istanbul - Capital of Civilizations
+                  {t('luxurySuitesPage.destinations.istanbul.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Luxury apartments overlooking the Bosphorus</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.istanbul.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Located near major historical landmarks</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.istanbul.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Easy access to shopping centers and restaurants</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.istanbul.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -623,20 +626,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Trabzon - Jewel of the North
+                  {t('luxurySuitesPage.destinations.trabzon.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Luxury apartments with mountain views</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.trabzon.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Close to Uzungol and natural attractions</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.trabzon.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Premium amenities with stunning sea views</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.trabzon.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -653,20 +656,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Antalya - Turkish Riviera
+                  {t('luxurySuitesPage.destinations.antalya.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Luxury beachfront apartments</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.antalya.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Close to ancient ruins and tourist attractions</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.antalya.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Modern amenities with traditional Turkish charm</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.antalya.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -683,20 +686,20 @@ export default function LuxurySuitesPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Bursa - The Green City
+                  {t('luxurySuitesPage.destinations.bursa.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Luxury apartments with mountain views</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.bursa.features.0')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Close to natural hot springs and ski resorts</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.bursa.features.1')}</span>
                   </li>
                   <li className="flex gap-3 items-start">
-                    <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                    <span>Premium facilities with stunning green landscapes</span>
+                    <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                    <span>{t('luxurySuitesPage.destinations.bursa.features.2')}</span>
                   </li>
                 </ul>
               </div>
@@ -711,10 +714,10 @@ export default function LuxurySuitesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Book Your Luxury Suite Now
+              {t('luxurySuitesPage.contact.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-3xl mx-auto">
-              Experience the comfort of home with the luxury of a hotel. Contact us now to reserve your perfect serviced apartment.
+              {t('luxurySuitesPage.contact.description')}
             </p>
           </div>
 
@@ -731,7 +734,7 @@ export default function LuxurySuitesPage() {
                   <FaEnvelope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  Email
+                  {t('luxurySuitesPage.contact.email')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base font-medium">
                   info@rahalatek.com
@@ -754,10 +757,10 @@ export default function LuxurySuitesPage() {
                   <FaWhatsapp className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  Contact Us Now
+                  {t('luxurySuitesPage.contact.contactNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base font-medium">
-                  WhatsApp
+                  {t('luxurySuitesPage.contact.whatsapp')}
                 </p>
               </div>
               </a>
@@ -777,10 +780,10 @@ export default function LuxurySuitesPage() {
                   <FaInstagram className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  Follow Us
+                  {t('luxurySuitesPage.contact.followUs')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base font-medium">
-                  Instagram
+                  {t('luxurySuitesPage.contact.instagram')}
                 </p>
               </div>
               </a>
@@ -798,7 +801,7 @@ export default function LuxurySuitesPage() {
                   <FaPhone className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-                  Call Us Now
+                  {t('luxurySuitesPage.contact.callNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base font-medium break-all">
                   +905010684657
@@ -815,10 +818,10 @@ export default function LuxurySuitesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Get in Touch
+              {t('luxurySuitesPage.contactForm.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-2xl mx-auto">
-              Have questions about our luxury suites? We're here to help you find the perfect accommodation for your stay. Send us a message and we'll get back to you as soon as possible.
+              {t('luxurySuitesPage.contactForm.description')}
             </p>
           </div>
           
@@ -830,28 +833,28 @@ export default function LuxurySuitesPage() {
       <div id="faqs" className="scroll-mt-24"></div>
       <section className="py-8 sm:py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">{t('luxurySuitesPage.faqs.title')}</h2>
           
           <div className="space-y-3 sm:space-y-4">
             {/* FAQ 1 */}
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 0 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(0)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 0}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 0 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  What types of hotel apartments are available with Rahalatek?
+                  {t('luxurySuitesPage.faqs.items.0.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 0 
@@ -868,13 +871,7 @@ export default function LuxurySuitesPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Rahalatek offers a diverse range of hotel apartments to suit all needs:<br/><br/>
-                  • <strong>Studio Apartments (25-40m²):</strong> Compact open space with small kitchen, suitable for 1-2 people.<br/>
-                  • <strong>One Bedroom Apartment (70-80m²):</strong> Includes living room, separate kitchen, and bathroom, ideal for 3-4 people.<br/>
-                  • <strong>Two Bedroom Apartment (100-70m²):</strong> Two separate bedrooms with living room, full kitchen, suitable for families up to 6 people.<br/>
-                  • <strong>Three Bedroom Apartment (150-100m²):</strong> Three separate bedrooms, large living room, full kitchen, suitable for large groups.<br/>
-                  • <strong>Duplex and Penthouses (150+m²):</strong> Luxury apartments on two floors or at the top of the building with panoramic views, an exceptional experience.<br/><br/>
-                  All Rahalatek apartments are fully furnished and equipped with international standards to ensure you a comfortable stay.
+                  {t('luxurySuitesPage.faqs.items.0.answer')}
                 </div>
               </div>
             </div>
@@ -883,21 +880,21 @@ export default function LuxurySuitesPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 1 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(1)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 1}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 1 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  What is the difference between Rahalatek's hotel apartments and serviced apartments?
+                  {t('luxurySuitesPage.faqs.items.1.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 1 
@@ -914,9 +911,7 @@ export default function LuxurySuitesPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  <strong>Hotel Apartments from Rahalatek</strong> offer hotel services such as reception around the clock, regular cleaning, laundry service, and sometimes shared amenities like a gym and pool.<br/><br/>
-                  <strong>Serviced Apartments</strong> are typically more independent like regular apartments, usually without reception or daily services, and may not include amenities such as a round-the-clock reception.<br/><br/>
-                  With Rahalatek, you get <strong>fully serviced apartments</strong> with all hotel services, freedom of space, and the privacy and comfort that sets the apartments apart.
+                  {t('luxurySuitesPage.faqs.items.1.answer')}
                 </div>
               </div>
             </div>
@@ -925,21 +920,21 @@ export default function LuxurySuitesPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 2 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(2)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 2}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 2 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  What is the difference between Rahalatek's hotel apartments and hotels?
+                  {t('luxurySuitesPage.faqs.items.2.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 2 
@@ -956,15 +951,7 @@ export default function LuxurySuitesPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  <strong>Rahalatek's hotel apartments offer:</strong><br/><br/>
-                  • Larger spaces (150-25m²) compared to small hotel rooms (15-30m²)<br/>
-                  • Fully equipped kitchen without the need for a restaurant<br/>
-                  • Multiple separate rooms and one or more bathrooms comparable to a hotel<br/>
-                  • Flexibility in preparing meals instead of relying solely on hotel restaurants<br/>
-                  • Suitable for long stays while hotel accommodation is suitable for short stays<br/>
-                  • Lower cost for families and groups compared to higher costs for multiple rooms in a hotel<br/>
-                  • Comfortable home environment with Rahalatek compared to the commercial and tourist feel<br/><br/>
-                  The main advantage of Rahalatek's hotel apartments is <strong>freedom, privacy, and value for money</strong>, especially for stays exceeding 3 nights.
+                  {t('luxurySuitesPage.faqs.items.2.answer')}
                 </div>
               </div>
             </div>

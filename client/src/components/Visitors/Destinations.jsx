@@ -1,11 +1,14 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 import Flag from 'react-world-flags';
 import HorizontalScrollbar from '../HorizontalScrollbar';
 
 const Destinations = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const isRTL = i18n.language === 'ar';
 
   // Static destinations data with high-quality optimized Cloudinary images
   const destinations = useMemo(() => [
@@ -101,7 +104,7 @@ const Destinations = () => {
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 md:p-6 text-white z-10">
           {/* Country Name */}
           <h3 className="text-xl sm:text-2xl md:text-3xl font-bold group-hover:text-yellow-300 dark:group-hover:text-blue-400 transition-colors">
-            {destination.name}
+            {t(`countryPage.countryNames.${destination.name}`, destination.name)}
           </h3>
         </div>
       </div>
@@ -109,16 +112,16 @@ const Destinations = () => {
   });
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-6 sm:py-8 md:py-12" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Discover our Destinations
+            {t('home.destinations.title')}
           </h2>
-          <div className="flex items-center justify-center space-x-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+          <div className={`flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 text-sm sm:text-base ${isRTL ? 'flex-row-reverse' : ''}`}>
             <FaMapMarkerAlt className="hidden sm:block w-4 h-4" />
-            <p>Explore amazing countries and create unforgettable memories</p>
+            <p>{t('home.destinations.subtitle')}</p>
           </div>
         </div>
 

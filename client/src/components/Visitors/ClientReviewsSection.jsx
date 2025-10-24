@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { FaYoutube, FaPlay } from 'react-icons/fa';
 import CustomButton from '../CustomButton';
@@ -6,6 +7,7 @@ import CustomModal from '../CustomModal';
 import RahalatekLoader from '../RahalatekLoader';
 
 export default function ClientReviewsSection() {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState(null);
@@ -110,15 +112,15 @@ export default function ClientReviewsSection() {
   }
 
   return (
-    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950">
+    <section className="py-6 sm:py-8 md:py-12 bg-white dark:bg-slate-950" dir="ltr">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Client Reviews
+            {t('aboutPage.clientReviews.title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Hear what our clients have to say about their experiences with Rahalatek
+            {t('aboutPage.clientReviews.subtitle')}
           </p>
         </div>
 
@@ -191,7 +193,7 @@ export default function ClientReviewsSection() {
 
                                     {/* YouTube Shorts Badge - Top right */}
                                     <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                                      Review
+                                      {t('aboutPage.clientReviews.review')}
                                     </div>
 
                                     {/* Clean title and description overlay */}
@@ -293,7 +295,7 @@ export default function ClientReviewsSection() {
 
                         {/* YouTube Shorts Badge - Top right */}
                         <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                          Review
+                          {t('aboutPage.clientReviews.review')}
                         </div>
 
                         {/* Clean title and description overlay */}
@@ -321,7 +323,7 @@ export default function ClientReviewsSection() {
                   <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
                   </svg>
-                  Scroll to see more
+                  {t('aboutPage.clientReviews.scrollHint')}
                   <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -332,7 +334,7 @@ export default function ClientReviewsSection() {
           </>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No Client Reviews available at the moment.</p>
+            <p className="text-gray-500 dark:text-gray-400">{t('aboutPage.clientReviews.noReviews')}</p>
           </div>
         )}
       </div>
@@ -376,14 +378,14 @@ export default function ClientReviewsSection() {
                 size="sm"
                 icon={FaYoutube}
               >
-                Watch on YouTube
+                {t('aboutPage.clientReviews.watchOnYoutube')}
               </CustomButton>
               <CustomButton
                 onClick={closeModal}
                 variant="gray"
                 size="sm"
               >
-                Close
+                {t('aboutPage.clientReviews.close')}
               </CustomButton>
             </div>
           </div>

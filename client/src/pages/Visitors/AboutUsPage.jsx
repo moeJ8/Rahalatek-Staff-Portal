@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import AboutHeroSection from '../../components/Visitors/AboutHeroSection';
 import CompanyStory from '../../components/Visitors/CompanyStory';
 import MissionVisionValues from '../../components/Visitors/MissionVisionValues';
@@ -11,6 +12,8 @@ import PartnersSection from '../../components/PartnersSection';
 import CTASection from '../../components/Visitors/CTASection';
 
 const AboutUsPage = () => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   useEffect(() => {
     document.title = 'About Us - Rahalatek';
     
@@ -36,43 +39,46 @@ const AboutUsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Hero Section */}
+      {/* Hero Section - NO RTL */}
       <div className="-mt-6">
         <AboutHeroSection />
       </div>
       
-      {/* Company Story */}
-      <CompanyStory />
-      
-      {/* Mission, Vision & Values */}
-      <MissionVisionValues />
-      
-      {/* Branches Section */}
-      <div className="-mt-12">
-        <BranchesSection />
+      {/* Apply RTL to all sections below */}
+      <div dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Company Story */}
+        <CompanyStory />
+        
+        {/* Mission, Vision & Values */}
+        <MissionVisionValues />
+        
+        {/* Branches Section */}
+        <div className="-mt-12">
+          <BranchesSection />
+        </div>
+        
+        {/* Statistics */}
+        <Statistics />
+        
+        {/* Why Choose Us */}
+        <WhyChooseUs />
+        
+        {/* Our Services */}
+        <div className="-mt-12 bg-white dark:bg-slate-950">
+          <ServicesSection />
+        </div>
+        
+        {/* Client Reviews Section */}
+        <ClientReviewsSection />
+        
+        {/* Partners Section */}
+        <div className="bg-white dark:bg-slate-950">
+          <PartnersSection />
+        </div>
+        
+        {/* Call to Action */}
+        <CTASection />
       </div>
-      
-      {/* Statistics */}
-      <Statistics />
-      
-      {/* Why Choose Us */}
-      <WhyChooseUs />
-      
-      {/* Our Services */}
-      <div className="-mt-12 bg-white dark:bg-slate-950">
-        <ServicesSection />
-      </div>
-      
-      {/* Client Reviews Section */}
-      <ClientReviewsSection />
-      
-      {/* Partners Section */}
-      <div className="bg-white dark:bg-slate-950">
-        <PartnersSection />
-      </div>
-      
-      {/* Call to Action */}
-      <CTASection />
     </div>
   );
 };

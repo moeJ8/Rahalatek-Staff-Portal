@@ -38,6 +38,7 @@ const PublicBlogCard = ({ blog }) => {
       to={`/blog/${blog.slug}`}
       onClick={handleBlogClick}
       className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group flex flex-col"
+      dir="ltr"
     >
       {/* Blog Image */}
       <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">

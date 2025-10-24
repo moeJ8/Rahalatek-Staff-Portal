@@ -1,31 +1,34 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaBullseye, FaEye, FaStar, FaHandshake, FaShieldAlt, FaSmile } from 'react-icons/fa';
 
 const MissionVisionValues = () => {
+  const { t } = useTranslation();
+  
   const values = [
     {
       id: 1,
       icon: FaSmile,
-      title: 'Customer First',
-      description: 'Your satisfaction is our top priority in everything we do'
+      title: t('aboutPage.missionVision.customerFirst'),
+      description: t('aboutPage.missionVision.customerFirstDesc')
     },
     {
       id: 2,
       icon: FaStar,
-      title: 'Quality Service',
-      description: 'We deliver excellence in every aspect of your journey'
+      title: t('aboutPage.missionVision.qualityService'),
+      description: t('aboutPage.missionVision.qualityServiceDesc')
     },
     {
       id: 3,
       icon: FaHandshake,
-      title: 'Trust & Transparency',
-      description: 'Building lasting relationships through honesty and integrity'
+      title: t('aboutPage.missionVision.trustTransparency'),
+      description: t('aboutPage.missionVision.trustTransparencyDesc')
     },
     {
       id: 4,
       icon: FaShieldAlt,
-      title: 'Safety & Security',
-      description: 'Your safety and comfort are always guaranteed'
+      title: t('aboutPage.missionVision.safetySecurity'),
+      description: t('aboutPage.missionVision.safetySecurityDesc')
     }
   ];
 
@@ -42,12 +45,10 @@ const MissionVisionValues = () => {
                 <FaBullseye className="text-blue-600 dark:text-yellow-500 text-3xl" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Our Mission
+                {t('aboutPage.missionVision.mission')}
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
-                To deliver exceptional travel experiences that create lasting memories, connecting travelers with the 
-                rich cultural heritage, natural beauty, and warm hospitality of Turkey and beyond. We strive to make 
-                every journey seamless, enriching, and unforgettable.
+                {t('aboutPage.missionVision.missionText')}
               </p>
             </div>
           </div>
@@ -60,12 +61,10 @@ const MissionVisionValues = () => {
                 <FaEye className="text-purple-600 dark:text-orange-500 text-3xl" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Our Vision
+                {t('aboutPage.missionVision.vision')}
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
-                To be the leading travel agency recognized globally for our commitment to excellence, innovation, and 
-                personalized service. We envision a world where every traveler experiences the magic of discovery through 
-                our carefully curated journeys and unwavering dedication to their satisfaction.
+                {t('aboutPage.missionVision.visionText')}
               </p>
             </div>
           </div>
@@ -75,11 +74,11 @@ const MissionVisionValues = () => {
         <div>
           <div className="text-center mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Our Core Values
+              {t('aboutPage.missionVision.coreValues')}
             </h3>
             <div className="w-24 h-1 bg-blue-600 dark:bg-yellow-500 mx-auto mb-4"></div>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              The principles that guide our every decision and action
+              {t('aboutPage.missionVision.coreValuesSubtitle')}
             </p>
           </div>
 

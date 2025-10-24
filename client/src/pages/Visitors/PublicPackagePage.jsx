@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
+import { useTranslation } from 'react-i18next';
 import PublicPackageHero from '../../components/PublicPackageHero';
 import PackageDayCard from '../../components/Visitors/PackageDayCard';
 import ContactForm from '../../components/ContactForm';
@@ -11,6 +12,8 @@ import RahalatekLoader from '../../components/RahalatekLoader';
 export default function PublicPackagePage() {
     const { slug } = useParams();
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
     const [packageData, setPackageData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [zoomedHotelImage, setZoomedHotelImage] = useState(null);
@@ -213,7 +216,7 @@ export default function PublicPackagePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Hero Section */}
             <div className="-mt-6">
                 <PublicPackageHero package={packageData} />
@@ -223,40 +226,40 @@ export default function PublicPackagePage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Navigation Bar */}
                 <div className="py-4">
-                    <div className="flex justify-start sm:justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0">
+                    <div className={`flex justify-start sm:justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0 ${isRTL ? 'space-x-reverse' : ''}`}>
                         <button 
                             onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
                             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                         >
-                            Overview
+                            {t('publicPackagePage.nav.overview')}
                             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                         </button>
                         <button 
                             onClick={() => document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' })}
                             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                         >
-                            Itinerary
+                            {t('publicPackagePage.nav.itinerary')}
                             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                         </button>
                         <button 
                             onClick={() => document.getElementById('hotels')?.scrollIntoView({ behavior: 'smooth' })}
                             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                         >
-                            Hotels
+                            {t('publicPackagePage.nav.hotels')}
                             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                         </button>
                         <button 
                             onClick={() => document.getElementById('included')?.scrollIntoView({ behavior: 'smooth' })}
                             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                         >
-                            What's Included
+                            {t('publicPackagePage.nav.included')}
                             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                         </button>
                         <button 
                             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                         >
-                            Contact Us
+                            {t('publicPackagePage.nav.contact')}
                             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                         </button>
                         {packageData.faqs && packageData.faqs.length > 0 && (
@@ -264,7 +267,7 @@ export default function PublicPackagePage() {
                                 onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
                                 className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
                             >
-                                FAQs
+                                {t('publicPackagePage.nav.faqs')}
                                 <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
                             </button>
                         )}
@@ -275,8 +278,10 @@ export default function PublicPackagePage() {
                 <div id="overview" className="scroll-mt-24"></div>
                 {packageData.description && (
                     <div className="py-4 sm:py-6">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Package Overview</h2>
-                        <p className="text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base">
+                        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {t('publicPackagePage.sections.overview')}
+                        </h2>
+                        <p className={`text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base ${isRTL ? 'text-right' : 'text-left'}`}>
                             {packageData.description}
                         </p>
                     </div>
@@ -285,8 +290,10 @@ export default function PublicPackagePage() {
                 {/* Daily Itinerary Section */}
                 <div id="itinerary" className="scroll-mt-24"></div>
                 {packageData.dailyItinerary && packageData.dailyItinerary.length > 0 && (
-                    <div className="py-4 sm:py-6">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Daily Itinerary</h2>
+                    <div className="py-4 sm:py-6" dir="ltr">
+                        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {t('publicPackagePage.sections.itinerary')}
+                        </h2>
                         <div className="space-y-6">
                             {packageData.dailyItinerary.map((day, index) => {
                                 // Find the tour assigned to this day
@@ -310,7 +317,9 @@ export default function PublicPackagePage() {
                 <div id="hotels" className="scroll-mt-24"></div>
                 {packageData.hotels && packageData.hotels.length > 0 && (
                     <div className="py-4 sm:py-6">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Hotels in Package</h2>
+                        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {t('publicPackagePage.sections.hotels')}
+                        </h2>
                         <div className="space-y-6">
                             {packageData.hotels.map((hotel, index) => {
                                 const hotelData = hotel.hotelId;
@@ -321,7 +330,7 @@ export default function PublicPackagePage() {
                                 return (
                                     <div 
                                         key={index} 
-                                        className="flex flex-col md:flex-row gap-6 items-start cursor-pointer group"
+                                        className={`flex flex-col md:flex-row gap-6 items-start cursor-pointer group ${isRTL ? 'md:flex-row-reverse' : ''}`}
                                         onClick={() => hotelData?.slug && window.open(`/hotels/${hotelData.slug}`, '_blank')}
                                     >
                                         {/* Hotel Image */}
@@ -361,13 +370,13 @@ export default function PublicPackagePage() {
                                             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-yellow-400">
                                                 {hotelData?.name || `Hotel ${index + 1}`}
                                             </h3>
-                                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                            <div className={`flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3 ${isRTL ? 'space-x-reverse' : ''}`}>
                                                 <span>📍 {hotelData?.city}</span>
                                                 {hotelData?.stars && (
-                                                    <span>⭐ {hotelData.stars} Star Hotel</span>
+                                                    <span>⭐ {hotelData.stars} {t('publicPackagePage.hotel.starHotel')}</span>
                                                 )}
                                                 {hotel.checkIn && hotel.checkOut && (
-                                                    <span>🛏️ {nights} night{nights !== 1 ? 's' : ''}</span>
+                                                    <span>🛏️ {nights} {t('publicPackagePage.hotel.nights', { count: nights })}</span>
                                                 )}
                                             </div>
                                             
@@ -379,26 +388,26 @@ export default function PublicPackagePage() {
                                             )}
                                             
                                             {hotel.checkIn && hotel.checkOut && (
-                                                <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                                    <span className="font-medium">Check-in:</span> {new Date(hotel.checkIn).toLocaleDateString()} 
+                                                <div className={`text-sm text-gray-600 dark:text-gray-400 mb-3 ${isRTL ? 'text-right' : 'text-left'}`}>
+                                                    <span className="font-medium">{t('publicPackagePage.hotel.checkIn')}:</span> {new Date(hotel.checkIn).toLocaleDateString()} 
                                                     <span className="mx-2">•</span>
-                                                    <span className="font-medium">Check-out:</span> {new Date(hotel.checkOut).toLocaleDateString()}
+                                                    <span className="font-medium">{t('publicPackagePage.hotel.checkOut')}:</span> {new Date(hotel.checkOut).toLocaleDateString()}
                                                 </div>
                                             )}
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className={`flex flex-wrap gap-2 ${isRTL ? 'space-x-reverse' : ''}`}>
                                                 {hotel.includeBreakfast && (
                                                     <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-yellow-400 dark:to-yellow-500 text-white font-semibold rounded-full shadow-sm">
-                                                        ✓ Breakfast
+                                                        ✓ {t('publicPackagePage.hotel.breakfast')}
                                                     </span>
                                                 )}
                                                 {hotel.includeReception && (
                                                     <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-yellow-400 dark:to-yellow-500 text-white font-semibold rounded-full shadow-sm">
-                                                        ✓ Airport Reception
+                                                        ✓ {t('publicPackagePage.hotel.airportReception')}
                                                     </span>
                                                 )}
                                                 {hotel.includeFarewell && (
                                                     <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-yellow-400 dark:to-yellow-500 text-white font-semibold rounded-full shadow-sm">
-                                                        ✓ Airport Farewell
+                                                        ✓ {t('publicPackagePage.hotel.airportFarewell')}
                                                     </span>
                                                 )}
                                             </div>
@@ -413,29 +422,31 @@ export default function PublicPackagePage() {
                 {/* Includes & Excludes Section */}
                 <div id="included" className="scroll-mt-24">
                     <div className="py-4 sm:py-6">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">What's Included</h2>
+                    <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                        {t('publicPackagePage.sections.included')}
+                    </h2>
                     
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Included */}
                         {packageData.includes && packageData.includes.length > 0 && (
                             <div>
-                                <h3 className="text-xl font-bold text-green-700 dark:text-green-400 mb-5 flex items-center">
-                                    <span className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3 shadow-md">
+                                <h3 className={`text-xl font-bold text-green-700 dark:text-green-400 mb-5 flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+                                    <span className={`w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-md ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     </span>
-                                    Included in Package
+                                    {t('publicPackagePage.included.title')}
                                 </h3>
-                                <ul className="space-y-3 ml-12">
+                                <ul className={`space-y-3 ${isRTL ? 'mr-12' : 'ml-12'}`}>
                                     {packageData.includes.map((item, index) => (
-                                        <li key={index} className="flex items-start group hover:translate-x-1 transition-transform duration-200">
-                                            <span className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                                        <li key={index} className={`flex items-start group transition-transform duration-200 ${isRTL ? 'hover:translate-x-[-4px] space-x-reverse' : 'hover:translate-x-1'}`}>
+                                            <span className={`w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                 </svg>
                                             </span>
-                                            <span className="text-sm text-gray-800 dark:text-gray-200 font-medium leading-relaxed">{item}</span>
+                                            <span className={`text-sm text-gray-800 dark:text-gray-200 font-medium leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>{item}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -445,23 +456,23 @@ export default function PublicPackagePage() {
                         {/* Excluded */}
                         {packageData.excludes && packageData.excludes.length > 0 && (
                             <div>
-                                <h3 className="text-xl font-bold text-red-700 dark:text-red-400 mb-5 flex items-center">
-                                    <span className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3 shadow-md">
+                                <h3 className={`text-xl font-bold text-red-700 dark:text-red-400 mb-5 flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+                                    <span className={`w-10 h-10 bg-red-500 rounded-full flex items-center justify-center shadow-md ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                         <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                         </svg>
                                     </span>
-                                    Not Included
+                                    {t('publicPackagePage.excluded.title')}
                                 </h3>
-                                <ul className="space-y-3 ml-12">
+                                <ul className={`space-y-3 ${isRTL ? 'mr-12' : 'ml-12'}`}>
                                     {packageData.excludes.map((item, index) => (
-                                        <li key={index} className="flex items-start group hover:translate-x-1 transition-transform duration-200">
-                                            <span className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm">
+                                        <li key={index} className={`flex items-start group transition-transform duration-200 ${isRTL ? 'hover:translate-x-[-4px] space-x-reverse' : 'hover:translate-x-1'}`}>
+                                            <span className={`w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                                 </svg>
                                             </span>
-                                            <span className="text-sm text-gray-800 dark:text-gray-200 font-medium leading-relaxed">{item}</span>
+                                            <span className={`text-sm text-gray-800 dark:text-gray-200 font-medium leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>{item}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -495,7 +506,9 @@ export default function PublicPackagePage() {
                 <div id="faqs" className="scroll-mt-24"></div>
                 {packageData.faqs && packageData.faqs.length > 0 && (
                     <div className="py-4 sm:py-6">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Frequently Asked Questions</h2>
+                        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                            {t('publicPackagePage.sections.faqs')}
+                        </h2>
                         
                         <div className="space-y-3 sm:space-y-4">
                             {packageData.faqs.map((faq, index) => (
@@ -503,16 +516,16 @@ export default function PublicPackagePage() {
                                     key={index}
                                     className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                                         activeFaqIndex === index 
-                                            ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                                            : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                                            ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                                            : `hover:shadow-md hover:${isRTL ? 'border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
                                     }`}
                                 >
                                     <button
                                         onClick={() => toggleFaq(index)}
-                                        className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                                        className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right flex-row-reverse' : 'text-left'}`}
                                         aria-expanded={activeFaqIndex === index}
                                     >
-                                        <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                                        <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3 text-right' : 'pr-3 text-left'} ${
                                             activeFaqIndex === index 
                                                 ? 'text-blue-700 dark:text-yellow-300' 
                                                 : 'text-gray-800 dark:text-gray-100'
@@ -533,7 +546,7 @@ export default function PublicPackagePage() {
                                             activeFaqIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                                         }`}
                                     >
-                                        <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
+                                        <div className={`px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 ${isRTL ? 'text-right' : 'text-left'}`}>
                                             {faq.answer}
                                         </div>
                                     </div>

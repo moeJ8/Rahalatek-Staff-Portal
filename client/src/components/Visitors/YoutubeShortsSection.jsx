@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { FaYoutube, FaPlay, FaEye } from 'react-icons/fa';
 import CustomButton from '../CustomButton';
@@ -6,6 +7,7 @@ import CustomModal from '../CustomModal';
 import RahalatekLoader from '../RahalatekLoader';
 
 export default function YoutubeShortsSection() {
+  const { t } = useTranslation();
   const [shorts, setShorts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedShort, setSelectedShort] = useState(null);
@@ -115,7 +117,7 @@ export default function YoutubeShortsSection() {
         {/* Section Header */}
         <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            YouTube Shorts
+            {t('home.youtube.title')}
           </h2>
         </div>
 
@@ -332,7 +334,7 @@ export default function YoutubeShortsSection() {
                   <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
                   </svg>
-                  Scroll to see more
+                  {t('home.youtube.scrollHint')}
                   <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -387,14 +389,14 @@ export default function YoutubeShortsSection() {
                 size="sm"
                 icon={FaYoutube}
               >
-                Watch on YouTube
+                {t('home.youtube.watchOnYoutube')}
               </CustomButton>
               <CustomButton
                 onClick={closeModal}
                 variant="gray"
                 size="sm"
               >
-                Close
+                {t('home.youtube.close')}
               </CustomButton>
             </div>
           </div>

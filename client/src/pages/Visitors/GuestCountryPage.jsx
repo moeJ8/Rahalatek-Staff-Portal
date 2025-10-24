@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt, FaArrowLeft, FaHotel, FaRoute, FaCity, FaClock, FaUsers, FaCrown, FaGem, FaStar } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
@@ -9,6 +10,8 @@ import CustomButton from '../../components/CustomButton';
 import HorizontalScrollbar from '../../components/HorizontalScrollbar';
 
 const GuestCountryPage = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { country } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -317,11 +320,17 @@ const GuestCountryPage = () => {
         
         // Process cities data from backend with high-quality optimized Cloudinary URLs
         const citiesData = citiesResponse.data.cities || [];
-        const formattedCities = citiesData.map(city => ({
-          name: city.name,
-          description: `${city.tourCount} tour${city.tourCount !== 1 ? 's' : ''} • ${city.hotelCount} hotel${city.hotelCount !== 1 ? 's' : ''}`,
-          image: city.image ? city.image.replace('/upload/', '/upload/f_auto,q_80,w_600,h_450,c_fill,g_auto,dpr_auto/') : city.image
-        }));
+        const formattedCities = citiesData.map(city => {
+          const tourText = city.tourCount === 1 ? t('countryPage.tour') : t('countryPage.tours');
+          const hotelText = city.hotelCount === 1 ? t('countryPage.hotel') : t('countryPage.hotels');
+          const translatedCityName = t(`countryPage.cities.${city.name}`, city.name);
+          return {
+            name: translatedCityName,
+            originalName: city.name, // Keep original English name for navigation
+            description: `${city.tourCount} ${tourText} • ${city.hotelCount} ${hotelText}`,
+            image: city.image ? city.image.replace('/upload/', '/upload/f_auto,q_80,w_600,h_450,c_fill,g_auto,dpr_auto/') : city.image
+          };
+        });
         
         setCities(formattedCities);
         setCitiesLoading(false);
@@ -363,7 +372,7 @@ const GuestCountryPage = () => {
     };
 
     fetchData();
-  }, [countryName]);
+  }, [countryName, t]);
 
   // Tour Card Component
   const TourCard = ({ tour }) => {
@@ -442,7 +451,7 @@ const GuestCountryPage = () => {
               >
                 <div className="flex items-center space-x-1">
                   <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
-                  <span className="text-xs sm:text-sm font-medium">Highlights:</span>
+                  <span className="text-xs sm:text-sm font-medium">{t('countryPage.highlights')}</span>
                 </div>
                 {expandedHighlights[tour._id] ? (
                   <HiChevronUp className="text-sm transition-transform duration-200" />
@@ -480,7 +489,7 @@ const GuestCountryPage = () => {
                 </span>
               ) : (
                 <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Contact for pricing
+                  {t('countryPage.contactForPricing')}
                 </span>
               )}
             </div>
@@ -558,7 +567,7 @@ const GuestCountryPage = () => {
   const CityCard = ({ city }) => (
     <div 
       className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group cursor-pointer"
-      onClick={() => navigate(`/country/${encodeURIComponent(countryName)}/city/${encodeURIComponent(city.name)}`)}
+      onClick={() => navigate(`/country/${encodeURIComponent(countryName)}/city/${encodeURIComponent(city.originalName || city.name)}`)}
     >
       <div className="h-48 relative overflow-hidden">
         <img 
@@ -571,7 +580,7 @@ const GuestCountryPage = () => {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-        <div className="absolute bottom-4 left-4 text-white">
+        <div className={`absolute bottom-4 ${isRTL ? 'right-4' : 'left-4'} text-white`}>
           <h3 className="text-xl font-bold mb-1 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors">{city.name}</h3>
           <p className="text-gray-200 text-sm">{city.description}</p>
         </div>
@@ -591,13 +600,13 @@ const GuestCountryPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-4">Error</h1>
+          <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-4">{t('countryPage.error')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <CustomButton
             variant="rippleBlueToYellowTeal"
             onClick={() => navigate('/guest')}
           >
-            Return to Homepage
+            {t('countryPage.returnToHomepage')}
           </CustomButton>
         </div>
       </div>
@@ -605,9 +614,9 @@ const GuestCountryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
-      <div className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] overflow-hidden -mt-6">
+      <div className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] overflow-hidden -mt-6" dir="ltr">
         <div className="absolute inset-0 w-full h-full">
           <img
             src={countryData.heroImage}
@@ -626,10 +635,10 @@ const GuestCountryPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="absolute top-6 left-6 z-20 flex items-center space-x-2 text-white hover:text-yellow-300 transition-colors bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2"
+          className={`absolute top-6 ${isRTL ? 'right-6' : 'left-6'} z-20 flex items-center gap-2 text-white hover:text-yellow-300 transition-colors bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2`}
         >
-          <FaArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Back to Homepage</span>
+          <FaArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+          <span className="hidden sm:inline">{t('countryPage.backToHomepage')}</span>
         </button>
 
         {/* Hero Content */}
@@ -645,7 +654,7 @@ const GuestCountryPage = () => {
                 />
               )}
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white" style={{ fontFamily: 'Jost, sans-serif' }}>
-                {countryName}
+                {t(`countryPage.countryNames.${countryName}`, countryName)}
               </h1>
             </div>
           </div>
@@ -657,18 +666,18 @@ const GuestCountryPage = () => {
         {/* Overview Section */}
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-            About {countryName}
+            {t('countryPage.about')} {t(`countryPage.countryNames.${countryName}`, countryName)}
           </h2>
           <p className="text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base lg:text-lg">
-            {countryData.overview}
+            {t(`countryPage.countries.${countryName}`, countryData.overview)}
           </p>
         </section>
 
         {/* Cities Section */}
-        <section className="mb-16">
+        <section className="mb-16" dir={isRTL ? 'rtl' : 'ltr'}>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-              Popular Cities
+              {t('countryPage.popularCities')}
             </h2>
           </div>
 
@@ -690,30 +699,30 @@ const GuestCountryPage = () => {
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <FaCity className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No Cities Available
+                {t('countryPage.noCitiesAvailable')}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We're working on adding popular cities for {countryName}.
+                {t('countryPage.workingOnCities')} {t(`countryPage.countryNames.${countryName}`, countryName)}.
               </p>
             </div>
           )}
         </section>
 
         {/* Tours Section */}
-        <section className="mb-16">
-          <div className="relative mb-8">
+        <section className="mb-16" dir="ltr">
+          <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-              Featured Tours
+              {t('countryPage.featuredTours')}
             </h2>
             {/* View All Button - Desktop Only in Header */}
             {tours.length > 0 && (
-              <div className="hidden lg:block lg:absolute lg:right-0 lg:top-0">
+              <div className={`hidden lg:block lg:absolute ${isRTL ? 'lg:left-0' : 'lg:right-0'} lg:top-0`}>
                 <CustomButton
                   variant="rippleBlueToYellowTeal"
                   size="md"
                   onClick={() => navigate(`/guest/tours?country=${encodeURIComponent(countryName)}`)}
                 >
-                  View All Tours
+                  {t('countryPage.viewAllTours')}
                 </CustomButton>
               </div>
             )}
@@ -791,7 +800,7 @@ const GuestCountryPage = () => {
 
               {/* Dots Indicator */}
               {totalTourSlides > 1 && (
-                <div className="flex justify-center mb-6 space-x-2">
+                <div className="flex justify-center mb-6 gap-2">
                   {Array.from({ length: totalTourSlides }, (_, index) => (
                     <button
                       key={index}
@@ -815,7 +824,7 @@ const GuestCountryPage = () => {
                   onClick={() => navigate(`/guest/tours?country=${encodeURIComponent(countryName)}`)}
                   className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
                 >
-                  View All Tours
+                  {t('countryPage.viewAllTours')}
                 </CustomButton>
               </div>
             </>
@@ -823,30 +832,30 @@ const GuestCountryPage = () => {
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <FaRoute className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No Tours Available
+                {t('countryPage.noToursAvailable')}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We're working on adding amazing tours for {countryName}. Check back soon!
+                {t('countryPage.workingOnTours')} {t(`countryPage.countryNames.${countryName}`, countryName)}. {t('countryPage.checkBackSoon')}
               </p>
             </div>
           )}
         </section>
 
         {/* Hotels Section */}
-        <section>
-          <div className="relative mb-8">
+        <section dir="ltr">
+          <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-              Featured Hotels
+              {t('countryPage.featuredHotels')}
             </h2>
             {/* View All Button - Desktop Only in Header */}
             {hotels.length > 0 && (
-              <div className="hidden lg:block lg:absolute lg:right-0 lg:top-0">
+              <div className={`hidden lg:block lg:absolute ${isRTL ? 'lg:left-0' : 'lg:right-0'} lg:top-0`}>
                 <CustomButton
                   variant="rippleBlueToYellowTeal"
                   size="md"
                   onClick={() => navigate(`/guest/hotels?country=${encodeURIComponent(countryName)}`)}
                 >
-                  View All Hotels
+                  {t('countryPage.viewAllHotels')}
                 </CustomButton>
               </div>
             )}
@@ -924,7 +933,7 @@ const GuestCountryPage = () => {
 
               {/* Dots Indicator */}
               {totalHotelSlides > 1 && (
-                <div className="flex justify-center mb-6 space-x-2">
+                <div className="flex justify-center mb-6 gap-2">
                   {Array.from({ length: totalHotelSlides }, (_, index) => (
                     <button
                       key={index}
@@ -948,7 +957,7 @@ const GuestCountryPage = () => {
                   onClick={() => navigate(`/guest/hotels?country=${encodeURIComponent(countryName)}`)}
                   className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
                 >
-                  View All Hotels
+                  {t('countryPage.viewAllHotels')}
                 </CustomButton>
               </div>
             </>
@@ -956,10 +965,10 @@ const GuestCountryPage = () => {
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700">
               <FaHotel className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No Hotels Available
+                {t('countryPage.noHotelsAvailable')}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                We're working on adding luxury accommodations for {countryName}. Check back soon!
+                {t('countryPage.workingOnHotels')} {t(`countryPage.countryNames.${countryName}`, countryName)}. {t('countryPage.checkBackSoon')}
               </p>
             </div>
           )}

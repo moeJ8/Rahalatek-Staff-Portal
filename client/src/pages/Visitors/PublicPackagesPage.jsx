@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaFilter, FaAngleLeft, FaAngleRight, FaGlobe, FaCity, FaClock, FaUsers, FaBox, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
 import CustomButton from '../../components/CustomButton';
@@ -10,6 +11,8 @@ import PackageCard from '../../components/Visitors/PackageCard';
 import axios from 'axios';
 
 const PublicPackagesPage = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [packages, setPackages] = useState([]);
   const [recentPackages, setRecentPackages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -335,12 +338,12 @@ const PublicPackagesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-8xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Travel Packages
+            {t('packagesPage.title')}
           </h1>
         </div>
 
@@ -354,11 +357,11 @@ const PublicPackagesPage = () => {
             <div className="flex items-center gap-2">
               <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Filters
+                {t('packagesPage.filters')}
               </span>
               {(searchTerm || countryFilter || cityFilter || durationFilter || targetAudienceFilter) && (
                 <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
-                  Active
+                  {t('packagesPage.active')}
                 </span>
               )}
             </div>
@@ -377,7 +380,7 @@ const PublicPackagesPage = () => {
             <div className="flex items-center gap-2">
               <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Recent Packages
+                {t('packagesPage.recentPackages')}
               </span>
             </div>
             {isRecentOpen ? (
@@ -407,13 +410,13 @@ const PublicPackagesPage = () => {
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-3">
                           <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('packagesPage.searchAndFilter')}</h3>
                         </div>
 
                         {/* Search Bar */}
                         <div className="mb-3">
                           <Search
-                            placeholder="Search packages..."
+                            placeholder={t('packagesPage.searchPlaceholder')}
                             value={searchTerm}
                             onChange={handleSearch}
                             className="w-full"
@@ -426,10 +429,10 @@ const PublicPackagesPage = () => {
                           <SearchableSelect 
                             value={countryFilter}
                             onChange={(e) => handleCountryFilter(e.target.value)}
-                            placeholder="All Countries"
-                            label="Country"
+                            placeholder={t('packagesPage.allCountries')}
+                            label={t('packagesPage.country')}
                             options={[
-                              { value: '', label: 'All Countries' },
+                              { value: '', label: t('packagesPage.allCountries') },
                               ...availableCountries.map(country => ({ value: country, label: country }))
                             ]}
                           />
@@ -440,10 +443,10 @@ const PublicPackagesPage = () => {
                           <SearchableSelect 
                             value={cityFilter}
                             onChange={(e) => handleCityFilter(e.target.value)}
-                            placeholder="All Cities"
-                            label="City"
+                            placeholder={t('packagesPage.allCities')}
+                            label={t('packagesPage.city')}
                             options={[
-                              { value: '', label: 'All Cities' },
+                              { value: '', label: t('packagesPage.allCities') },
                               ...availableCities
                                 .filter(city => !countryFilter || packages.some(pkg => pkg.cities?.includes(city) && pkg.countries?.includes(countryFilter)))
                                 .map(city => ({ value: city, label: city }))
@@ -457,17 +460,17 @@ const PublicPackagesPage = () => {
                           <SearchableSelect 
                             value={targetAudienceFilter}
                             onChange={(e) => handleTargetAudienceFilter(e.target.value)}
-                            placeholder="All Audiences"
-                            label="Target Audience"
+                            placeholder={t('packagesPage.allAudiences')}
+                            label={t('packagesPage.targetAudience')}
                             options={[
-                              { value: '', label: 'All Audiences' },
-                              { value: 'Family', label: 'Family' },
-                              { value: 'Couples', label: 'Couples' },
-                              { value: 'Solo Travelers', label: 'Solo Travelers' },
-                              { value: 'Groups', label: 'Groups' },
-                              { value: 'Business', label: 'Business' },
-                              { value: 'Luxury', label: 'Luxury' },
-                              { value: 'Budget', label: 'Budget' }
+                              { value: '', label: t('packagesPage.allAudiences') },
+                              { value: 'Family', label: t('packagesPage.family') },
+                              { value: 'Couples', label: t('packagesPage.couples') },
+                              { value: 'Solo Travelers', label: t('packagesPage.soloTravelers') },
+                              { value: 'Groups', label: t('packagesPage.groups') },
+                              { value: 'Business', label: t('packagesPage.business') },
+                              { value: 'Luxury', label: t('packagesPage.luxury') },
+                              { value: 'Budget', label: t('packagesPage.budget') }
                             ]}
                           />
                         </div>
@@ -477,13 +480,13 @@ const PublicPackagesPage = () => {
                           <SearchableSelect 
                             value={durationFilter}
                             onChange={(e) => handleDurationFilter(e.target.value)}
-                            placeholder="Any Duration"
-                            label="Duration"
+                            placeholder={t('packagesPage.anyDuration')}
+                            label={t('packagesPage.duration')}
                             options={[
-                              { value: '', label: 'Any Duration' },
-                              { value: '1', label: 'Short (up to 3 days)' },
-                              { value: '2', label: 'Medium (4-7 days)' },
-                              { value: '3', label: 'Long (8+ days)' }
+                              { value: '', label: t('packagesPage.anyDuration') },
+                              { value: '1', label: t('packagesPage.shortDuration') },
+                              { value: '2', label: t('packagesPage.mediumDuration') },
+                              { value: '3', label: t('packagesPage.longDuration') }
                             ]}
                           />
                         </div>
@@ -496,15 +499,15 @@ const PublicPackagesPage = () => {
                           className="w-full"
                           icon={FaFilter}
                         >
-                          Clear Filters
+                          {t('packagesPage.clearFilters')}
                         </CustomButton>
                   
                         {/* Results count */}
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
                           {totalPackages > 0 ? (
-                            <>Showing page {page} of {totalPages} ({totalPackages} packages total)</>
+                            <>{t('packagesPage.showingPage')} {page} {t('packagesPage.of')} {totalPages} ({totalPackages} {t('packagesPage.packagesTotal')})</>
                           ) : (
-                            <>No packages found</>
+                            <>{t('packagesPage.noPackagesFound')}</>
                           )}
                         </div>
                       </div>
@@ -519,7 +522,7 @@ const PublicPackagesPage = () => {
                         <div className="mb-4">
                           <div className="flex items-center gap-2 mb-3">
                             <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Packages</h3>
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('packagesPage.recentPackages')}</h3>
                           </div>
                           <div className="space-y-3">
                             {recentPackages.map((pkg) => (
@@ -554,7 +557,7 @@ const PublicPackagesPage = () => {
                                   )}
                                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
                                     <FaClock className="w-3 h-3" />
-                                    <span>{pkg.duration} {pkg.duration === 1 ? 'day' : 'days'}</span>
+                                    <span>{pkg.duration} {pkg.duration === 1 ? t('packagesPage.day') : t('packagesPage.days')}</span>
                                   </div>
                                 </div>
                               </div>
@@ -583,13 +586,13 @@ const PublicPackagesPage = () => {
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-3">
                           <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('packagesPage.searchAndFilter')}</h3>
                         </div>
 
                         {/* Search Bar */}
                         <div className="mb-3">
                           <Search
-                            placeholder="Search packages..."
+                            placeholder={t('packagesPage.searchPlaceholder')}
                             value={searchTerm}
                             onChange={handleSearch}
                             className="w-full"
@@ -602,10 +605,10 @@ const PublicPackagesPage = () => {
                           <SearchableSelect
                             value={countryFilter}
                             onChange={handleCountryFilter}
-                            placeholder="All Countries"
-                            label="Country"
+                            placeholder={t('packagesPage.allCountries')}
+                            label={t('packagesPage.country')}
                             options={[
-                              { value: '', label: 'All Countries' },
+                              { value: '', label: t('packagesPage.allCountries') },
                               ...availableCountries.map(country => ({ value: country, label: country }))
                             ]}
                           />
@@ -616,10 +619,10 @@ const PublicPackagesPage = () => {
                           <SearchableSelect
                             value={cityFilter}
                             onChange={handleCityFilter}
-                            placeholder="All Cities"
-                            label="City"
+                            placeholder={t('packagesPage.allCities')}
+                            label={t('packagesPage.city')}
                             options={[
-                              { value: '', label: 'All Cities' },
+                              { value: '', label: t('packagesPage.allCities') },
                               ...availableCities
                                 .filter(city => !countryFilter || packages.some(pkg => pkg.cities?.includes(city) && pkg.countries?.includes(countryFilter)))
                                 .map(city => ({ value: city, label: city }))
@@ -633,14 +636,14 @@ const PublicPackagesPage = () => {
                           <SearchableSelect
                             value={targetAudienceFilter}
                             onChange={handleTargetAudienceFilter}
-                            placeholder="All Audiences"
-                            label="Target Audience"
+                            placeholder={t('packagesPage.allAudiences')}
+                            label={t('packagesPage.targetAudience')}
                             options={[
-                              { value: '', label: 'All Audiences' },
-                              { value: 'Families', label: 'Families' },
-                              { value: 'Couples', label: 'Couples' },
-                              { value: 'Solo', label: 'Solo Travelers' },
-                              { value: 'Groups', label: 'Groups' }
+                              { value: '', label: t('packagesPage.allAudiences') },
+                              { value: 'Families', label: t('packagesPage.family') },
+                              { value: 'Couples', label: t('packagesPage.couples') },
+                              { value: 'Solo', label: t('packagesPage.soloTravelers') },
+                              { value: 'Groups', label: t('packagesPage.groups') }
                             ]}
                           />
                         </div>
@@ -650,13 +653,13 @@ const PublicPackagesPage = () => {
                           <SearchableSelect
                             value={durationFilter}
                             onChange={handleDurationFilter}
-                            placeholder="All Durations"
-                            label="Duration"
+                            placeholder={t('packagesPage.anyDuration')}
+                            label={t('packagesPage.duration')}
                             options={[
-                              { value: '', label: 'All Durations' },
-                              { value: '1', label: 'Short (up to 3 days)' },
-                              { value: '2', label: 'Medium (3-7 days)' },
-                              { value: '3', label: 'Long (7+ days)' }
+                              { value: '', label: t('packagesPage.anyDuration') },
+                              { value: '1', label: t('packagesPage.shortDuration') },
+                              { value: '2', label: t('packagesPage.mediumDuration') },
+                              { value: '3', label: t('packagesPage.longDuration') }
                             ]}
                           />
                         </div>
@@ -669,15 +672,15 @@ const PublicPackagesPage = () => {
                           className="w-full"
                           icon={FaFilter}
                         >
-                          Clear Filters
+                          {t('packagesPage.clearFilters')}
                         </CustomButton>
 
                         {/* Results count */}
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
                           {totalPackages > 0 ? (
-                            <>Showing page {page} of {totalPages} ({totalPackages} packages total)</>
+                            <>{t('packagesPage.showingPage')} {page} {t('packagesPage.of')} {totalPages} ({totalPackages} {t('packagesPage.packagesTotal')})</>
                           ) : (
-                            <>No packages found</>
+                            <>{t('packagesPage.noPackagesFound')}</>
                           )}
                         </div>
                       </div>
@@ -703,7 +706,7 @@ const PublicPackagesPage = () => {
                           <div className="mb-4">
                             <div className="flex items-center gap-2 mb-3">
                               <FaBox className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Packages</h3>
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('packagesPage.recentPackages')}</h3>
                             </div>
                             <div className="space-y-3">
                               {recentPackages.map((pkg) => (
@@ -736,7 +739,7 @@ const PublicPackagesPage = () => {
                                     </p>
                                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-auto">
                                       <FaClock className="w-3 h-3" />
-                                      <span>{pkg.duration} days</span>
+                                      <span>{pkg.duration} {pkg.duration === 1 ? t('packagesPage.day') : t('packagesPage.days')}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -787,7 +790,7 @@ const PublicPackagesPage = () => {
                   }`}
                   aria-label="Previous page"
                 >
-                  <FaAngleLeft className="w-4 h-4" />
+                  {isRTL ? <FaAngleRight className="w-4 h-4" /> : <FaAngleLeft className="w-4 h-4" />}
                 </button>
 
                 {/* Page Numbers - Sliding Window */}
@@ -832,7 +835,7 @@ const PublicPackagesPage = () => {
                   }`}
                   aria-label="Next page"
                 >
-                  <FaAngleRight className="w-4 h-4" />
+                  {isRTL ? <FaAngleLeft className="w-4 h-4" /> : <FaAngleRight className="w-4 h-4" />}
                 </button>
               </div>
             )}
@@ -841,10 +844,10 @@ const PublicPackagesPage = () => {
           <div className="bg-white dark:bg-slate-900 rounded-xl p-12 shadow-md border border-gray-200 dark:border-gray-700 text-center">
             <FaFilter className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No Packages Found
+              {t('packagesPage.noPackagesFoundTitle')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              No packages match your current filters. Try adjusting your search criteria.
+              {t('packagesPage.noPackagesFoundMessage')}
             </p>
             {(searchTerm || countryFilter || cityFilter || durationFilter || targetAudienceFilter) && (
               <CustomButton
@@ -853,7 +856,7 @@ const PublicPackagesPage = () => {
                 size="md"
                 className="mt-4"
               >
-                Clear Filters
+                {t('packagesPage.clearFilters')}
               </CustomButton>
             )}
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt, FaArrowLeft, FaClock, FaUsers, FaCrown, FaGem, FaStar } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
@@ -8,6 +9,8 @@ import RahalatekLoader from '../../components/RahalatekLoader';
 import CustomButton from '../../components/CustomButton';
 
 const GuestCityPage = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const { country, city } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -309,7 +312,7 @@ const GuestCityPage = () => {
               >
                 <div className="flex items-center space-x-1">
                   <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
-                  <span className="text-xs sm:text-sm font-medium">Highlights:</span>
+                  <span className="text-xs sm:text-sm font-medium">{t('cityPage.highlights')}</span>
                 </div>
                 {expandedHighlights[tour._id] ? (
                   <HiChevronUp className="text-sm transition-transform duration-200" />
@@ -347,7 +350,7 @@ const GuestCityPage = () => {
                 </span>
               ) : (
                 <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Contact for pricing
+                  {t('cityPage.contactForPricing')}
                 </span>
               )}
             </div>
@@ -428,13 +431,13 @@ const GuestCityPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-4">Error</h1>
+          <h1 className="text-2xl font-bold text-red-500 dark:text-red-400 mb-4">{t('cityPage.error')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <CustomButton
             variant="rippleBlueToYellowTeal"
             onClick={() => navigate(`/country/${encodeURIComponent(countryName)}`)}
           >
-            Return to {countryName}
+            {t('cityPage.returnTo')} {countryName}
           </CustomButton>
         </div>
       </div>
@@ -442,9 +445,9 @@ const GuestCityPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
-      <div className="relative h-96 sm:h-[500px] md:h-[600px] overflow-hidden -mt-6">
+      <div className="relative h-96 sm:h-[500px] md:h-[600px] overflow-hidden -mt-6" dir="ltr">
         <div className="absolute inset-0">
           <img
             src={cityData?.image}
@@ -457,10 +460,10 @@ const GuestCityPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(`/country/${encodeURIComponent(countryName)}`)}
-          className="absolute top-6 left-6 z-20 flex items-center space-x-2 text-white hover:text-yellow-300 transition-colors bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2"
+          className={`absolute top-6 ${isRTL ? 'right-6' : 'left-6'} z-20 flex items-center gap-2 text-white hover:text-yellow-300 transition-colors bg-black/30 backdrop-blur-sm rounded-lg px-4 py-2`}
         >
-          <FaArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Back to {countryName}</span>
+          <FaArrowLeft className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+          <span className="hidden sm:inline">{t('cityPage.backTo')} {t(`countryPage.countryNames.${countryName}`, countryName)}</span>
         </button>
 
         {/* Hero Content */}
@@ -476,10 +479,10 @@ const GuestCityPage = () => {
                 />
               )}
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white" style={{ fontFamily: 'Jost, sans-serif' }}>
-                {cityName}
+                {t(`countryPage.cities.${cityName}`, cityName)}
               </h1>
             </div>
-            <p className="text-xl sm:text-2xl text-gray-200" style={{ fontFamily: 'Jost, sans-serif' }}>{countryName}</p>
+            <p className="text-xl sm:text-2xl text-gray-200" style={{ fontFamily: 'Jost, sans-serif' }}>{t(`countryPage.countryNames.${countryName}`, countryName)}</p>
           </div>
         </div>
       </div>
@@ -490,10 +493,10 @@ const GuestCityPage = () => {
         {cityData?.description && (
           <section className="mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-              About {cityName}
+              {t('cityPage.about')} {t(`countryPage.cities.${cityName}`, cityName)}
             </h2>
             <p className="text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base lg:text-lg">
-              {cityData.description}
+              {t(`cityPage.cities.${cityName}.description`, cityData.description)}
             </p>
           </section>
         )}
@@ -502,7 +505,7 @@ const GuestCityPage = () => {
         {cityData?.touristicFeatures && cityData.touristicFeatures.length > 0 && (
           <section className="mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">
-              Top Attractions & Features
+              {t('cityPage.topAttractions')}
             </h2>
             <div className="space-y-3 sm:space-y-4">
               {cityData.touristicFeatures.map((feature, index) => (
@@ -512,7 +515,7 @@ const GuestCityPage = () => {
                 >
                   <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-blue-500 dark:bg-yellow-400 flex-shrink-0 mt-1.5 sm:mt-2"></span>
                   <span className="text-gray-800 dark:text-gray-100 text-sm sm:text-base leading-relaxed">
-                    {feature}
+                    {t(`cityPage.cities.${cityName}.features.${index}`, feature)}
                   </span>
                 </div>
               ))}
@@ -522,19 +525,19 @@ const GuestCityPage = () => {
 
         {/* Tours Section */}
         {cityData?.tours && cityData.tours.length > 0 && (
-          <section className="mb-16">
-            <div className="relative mb-8">
+          <section className="mb-16" dir="ltr">
+            <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Tours in {cityName}
+                {t('cityPage.toursIn')} {t(`countryPage.cities.${cityName}`, cityName)}
               </h2>
               {/* View All Button - Desktop Only */}
-              <div className="hidden lg:block lg:absolute lg:right-0 lg:top-0">
+              <div className={`hidden lg:block lg:absolute ${isRTL ? 'lg:left-0' : 'lg:right-0'} lg:top-0`}>
                 <CustomButton
                   variant="rippleBlueToYellowTeal"
                   size="md"
                   onClick={() => navigate(`/guest/tours?city=${encodeURIComponent(cityName)}`)}
                 >
-                  View All Tours
+                  {t('cityPage.viewAllTours')}
                 </CustomButton>
               </div>
             </div>
@@ -635,7 +638,7 @@ const GuestCityPage = () => {
                     onClick={() => navigate(`/guest/tours?city=${encodeURIComponent(cityName)}`)}
                     className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
                   >
-                    View All Tours
+                    {t('cityPage.viewAllTours')}
                   </CustomButton>
                 </div>
               </>
@@ -645,19 +648,19 @@ const GuestCityPage = () => {
 
         {/* Hotels Section */}
         {cityData?.hotels && cityData.hotels.length > 0 && (
-          <section>
-            <div className="relative mb-8">
+          <section dir="ltr">
+            <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                Hotels in {cityName}
+                {t('cityPage.hotelsIn')} {t(`countryPage.cities.${cityName}`, cityName)}
               </h2>
               {/* View All Button - Desktop Only */}
-              <div className="hidden lg:block lg:absolute lg:right-0 lg:top-0">
+              <div className={`hidden lg:block lg:absolute ${isRTL ? 'lg:left-0' : 'lg:right-0'} lg:top-0`}>
                 <CustomButton
                   variant="rippleBlueToYellowTeal"
                   size="md"
                   onClick={() => navigate(`/guest/hotels?city=${encodeURIComponent(cityName)}`)}
                 >
-                  View All Hotels
+                  {t('cityPage.viewAllHotels')}
                 </CustomButton>
               </div>
             </div>
@@ -758,7 +761,7 @@ const GuestCityPage = () => {
                     onClick={() => navigate(`/guest/hotels?city=${encodeURIComponent(cityName)}`)}
                     className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
                   >
-                    View All Hotels
+                    {t('cityPage.viewAllHotels')}
                   </CustomButton>
                 </div>
               </>

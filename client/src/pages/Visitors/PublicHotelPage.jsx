@@ -13,6 +13,7 @@ import {
   FaVolumeDown, FaWater, FaHands
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ImageGallery from '../../components/ImageGallery';
@@ -27,6 +28,8 @@ import NotFoundPage from '../NotFoundPage';
 const PublicHotelPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [_selectedRoomType, setSelectedRoomType] = useState(null);
@@ -135,14 +138,17 @@ const PublicHotelPage = () => {
       if (typeof categoryData === 'object' && categoryData !== null) {
         Object.entries(categoryData).forEach(([amenityKey, value]) => {
           if (value === true) {
-            // Convert camelCase to readable text
-            const amenityName = amenityKey
-              .replace(/([A-Z])/g, ' $1')
-              .replace(/^./, str => str.toUpperCase())
-              .trim()
-              .replace(/Wifi/i, 'WiFi')
-              .replace(/24h/i, '24/7')
-              .replace(/Ac/i, 'AC');
+            // Try to get translation first, fallback to formatted key
+            const translationKey = `publicHotelPage.amenities.${categoryKey}.${amenityKey}`;
+            const amenityName = t(translationKey, {
+              defaultValue: amenityKey
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, str => str.toUpperCase())
+                .trim()
+                .replace(/Wifi/i, 'WiFi')
+                .replace(/24h/i, '24/7')
+                .replace(/Ac/i, 'AC')
+            });
             
             allAmenities.push({
               key: amenityKey,
@@ -362,20 +368,24 @@ const PublicHotelPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pt-2 sm:pt-4 md:pt-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pt-2 sm:pt-4 md:pt-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
         {/* Hotel Title */}
         <div className="mb-3 sm:mb-4">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">{hotel.name}</h1>
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+          <div className={`flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 ${isRTL ? 'sm:space-x-reverse sm:space-x-4' : 'sm:space-x-4'}`}>
+            <div className={`flex items-center text-gray-600 dark:text-gray-400 ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
               <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="text-sm sm:text-base">{hotel.city}, {hotel.country}</span>
+              <span className="text-sm sm:text-base">
+                {t(`publicHotelPage.cities.${hotel.city}`, hotel.city)}, {t(`publicHotelPage.countries.${hotel.country}`, hotel.country)}
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
               {renderStars(hotel.stars)}
-              <span className="text-gray-600 dark:text-gray-400 ml-2 text-sm sm:text-base">{hotel.stars} Star Property</span>
+              <span className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+                {hotel.stars} {t('publicHotelPage.starProperty')}
+              </span>
             </div>
           </div>
         </div>
@@ -389,12 +399,12 @@ const PublicHotelPage = () => {
         
         {/* Navigation Bar */}
         <div className="mt-3 sm:mt-4">
-          <div className="flex justify-start sm:justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0">
+          <div className="flex justify-center overflow-x-auto scrollbar-hide gap-1 sm:gap-2 md:gap-4 px-4 pb-2 sm:pb-0">
             <button 
               onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
               className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
-              Overview
+              {t('publicHotelPage.nav.overview')}
               <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.roomTypes && hotel.roomTypes.length > 0 && (
@@ -402,7 +412,7 @@ const PublicHotelPage = () => {
                 onClick={() => document.getElementById('rooms')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
-                Rooms
+                {t('publicHotelPage.nav.rooms')}
                 <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
@@ -410,7 +420,7 @@ const PublicHotelPage = () => {
               onClick={() => document.getElementById('amenities')?.scrollIntoView({ behavior: 'smooth' })}
               className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
-              Amenities
+              {t('publicHotelPage.nav.amenities')}
               <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.transportation && (
@@ -425,7 +435,7 @@ const PublicHotelPage = () => {
                 onClick={() => document.getElementById('transportation')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
-                Transportation
+                {t('publicHotelPage.nav.transportation')}
                 <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
@@ -434,7 +444,7 @@ const PublicHotelPage = () => {
                 onClick={() => document.getElementById('location')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
-                Location
+                {t('publicHotelPage.nav.location')}
                 <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
@@ -442,7 +452,7 @@ const PublicHotelPage = () => {
               onClick={() => document.getElementById('policies')?.scrollIntoView({ behavior: 'smooth' })}
               className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
             >
-              Policies
+              {t('publicHotelPage.nav.policies')}
               <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
             </button>
             {hotel.faqs && hotel.faqs.length > 0 && (
@@ -450,7 +460,7 @@ const PublicHotelPage = () => {
                 onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
               >
-                FAQs
+                {t('publicHotelPage.nav.faqs')}
                 <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
               </button>
             )}
@@ -478,12 +488,12 @@ const PublicHotelPage = () => {
         
         return (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Popular amenities</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.amenities.title')}</h2>
             
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
               {displayedAmenities.map((amenity) => (
-                <div key={`${amenity.category}-${amenity.key}`} className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 flex items-center justify-center flex-shrink-0">
+                <div key={`${amenity.category}-${amenity.key}`} className={`flex items-center ${isRTL ? 'space-x-reverse space-x-3 sm:space-x-4' : 'space-x-3 sm:space-x-4'}`}>
+                  <div className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 flex items-center justify-center flex-shrink-0 ${isRTL ? 'mr-0 ml-3 sm:ml-4' : ''}`}>
                     {getAmenityIcon(amenity.key)}
                   </div>
                   <span className="text-gray-800 dark:text-gray-100 text-sm sm:text-base">
@@ -498,7 +508,7 @@ const PublicHotelPage = () => {
                 onClick={() => setShowAmenitiesModal(true)}
                 className="text-blue-600 dark:text-yellow-400 hover:underline font-medium"
               >
-                See all {allAmenities.length} amenities
+                {t('publicHotelPage.amenities.seeAll')} {allAmenities.length} {t('publicHotelPage.amenities.amenities')}
               </button>
             )}
             
@@ -507,7 +517,7 @@ const PublicHotelPage = () => {
                 onClick={() => setShowAmenitiesModal(true)}
                 className="text-blue-600 dark:text-yellow-400 hover:underline font-medium"
               >
-                See all
+                {t('publicHotelPage.amenities.seeAll')}
               </button>
             )}
           </div>
@@ -533,14 +543,14 @@ const PublicHotelPage = () => {
         hotel.transportation.busFarewellPrice > 0
       ) && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Transportation</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.transportation.title')}</h2>
           
           {/* Airport Information */}
           {hotel.airport && (
             <div className="mb-4 sm:mb-6 text-center">
-              <div className="inline-flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 md:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-full shadow-lg">
-                <FaPlane className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="font-medium text-sm sm:text-base">Airport: {hotel.airport}</span>
+              <div className={`inline-flex items-center px-3 sm:px-4 md:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-full shadow-lg ${isRTL ? 'space-x-reverse space-x-2 sm:space-x-3' : 'space-x-2 sm:space-x-3'}`}>
+                <FaPlane className={`w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'mr-0 ml-2 sm:ml-3' : ''}`} />
+                <span className="font-medium text-sm sm:text-base">{t('publicHotelPage.transportation.airport')}: {hotel.airport}</span>
               </div>
             </div>
           )}
@@ -550,22 +560,22 @@ const PublicHotelPage = () => {
             {/* Vito Transportation */}
             {(hotel.transportation.vitoReceptionPrice > 0 || hotel.transportation.vitoFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaCar className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Vito</h4>
+                <div className={`flex items-center mb-3 sm:mb-4 ${isRTL ? 'space-x-reverse space-x-2 sm:space-x-3' : 'space-x-2 sm:space-x-3'}`}>
+                  <FaCar className={`text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'mr-0 ml-2 sm:ml-3' : ''}`} />
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{t('publicHotelPage.transportation.vehicles.vito')}</h4>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">2-8 passengers</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">{t('publicHotelPage.transportation.vitoCapacity')}</p>
                 <div className="space-y-1.5 sm:space-y-2">
                   {hotel.transportation.vitoReceptionPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Reception</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportReception')}</span>
                     </div>
                   )}
                   {hotel.transportation.vitoFarewellPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Farewell</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportFarewell')}</span>
                     </div>
                   )}
                 </div>
@@ -575,22 +585,22 @@ const PublicHotelPage = () => {
             {/* Sprinter Transportation */}
             {(hotel.transportation.sprinterReceptionPrice > 0 || hotel.transportation.sprinterFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaShuttleVan className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Sprinter</h4>
+                <div className={`flex items-center mb-3 sm:mb-4 ${isRTL ? 'space-x-reverse space-x-2 sm:space-x-3' : 'space-x-2 sm:space-x-3'}`}>
+                  <FaShuttleVan className={`text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'mr-0 ml-2 sm:ml-3' : ''}`} />
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{t('publicHotelPage.transportation.vehicles.sprinter')}</h4>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">9-16 passengers</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">{t('publicHotelPage.transportation.sprinterCapacity')}</p>
                 <div className="space-y-1.5 sm:space-y-2">
                   {hotel.transportation.sprinterReceptionPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Reception</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportReception')}</span>
                     </div>
                   )}
                   {hotel.transportation.sprinterFarewellPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Farewell</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportFarewell')}</span>
                     </div>
                   )}
                 </div>
@@ -600,22 +610,22 @@ const PublicHotelPage = () => {
             {/* Bus Transportation */}
             {(hotel.transportation.busReceptionPrice > 0 || hotel.transportation.busFarewellPrice > 0) && (
               <div className="bg-white dark:bg-slate-900 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
-                  <FaBus className="text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">Bus</h4>
+                <div className={`flex items-center mb-3 sm:mb-4 ${isRTL ? 'space-x-reverse space-x-2 sm:space-x-3' : 'space-x-2 sm:space-x-3'}`}>
+                  <FaBus className={`text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'mr-0 ml-2 sm:ml-3' : ''}`} />
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{t('publicHotelPage.transportation.vehicles.bus')}</h4>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">17+ passengers</p>
+                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-2 sm:mb-3">{t('publicHotelPage.transportation.busCapacity')}</p>
                 <div className="space-y-1.5 sm:space-y-2">
                   {hotel.transportation.busReceptionPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Reception</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportReception')}</span>
                     </div>
                   )}
                   {hotel.transportation.busFarewellPrice > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></span>
-                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">Airport Farewell</span>
+                    <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
+                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`}></span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{t('publicHotelPage.transportation.airportFarewell')}</span>
                     </div>
                   )}
                 </div>
@@ -629,7 +639,7 @@ const PublicHotelPage = () => {
       <div id="location" className="scroll-mt-24"></div>
       {hotel.locationDescription && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Location</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.location.title')}</h2>
           <p className="text-gray-800 dark:text-gray-100 leading-relaxed text-sm sm:text-base lg:text-lg">
             {hotel.locationDescription}
           </p>
@@ -639,53 +649,53 @@ const PublicHotelPage = () => {
       {/* Policy */}
       <div id="policies" className="scroll-mt-24"></div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Policies</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.policies.title')}</h2>
         
         <div className="space-y-6 sm:space-y-8">
           {/* Children Policies */}
           {hotel.childrenPolicies && (
             <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-                <FaChild className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-                Children Policy
+              <h3 className={`text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+                <FaChild className={`text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'}`} />
+                {t('publicHotelPage.policies.childrenPolicy')}
               </h3>
               <div className="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-100">
-                <p><span className="font-medium">Children under 6:</span> {hotel.childrenPolicies.under6}</p>
-                <p><span className="font-medium">Children 6-12 years:</span> {hotel.childrenPolicies.age6to12}</p>
-                <p><span className="font-medium">Children above 12:</span> {hotel.childrenPolicies.above12}</p>
+                <p><span className="font-medium">{t('publicHotelPage.policies.under6')}:</span> {hotel.childrenPolicies.under6 === 'Free' ? t('publicHotelPage.policies.free') : hotel.childrenPolicies.under6}</p>
+                <p><span className="font-medium">{t('publicHotelPage.policies.age6to12')}:</span> {hotel.childrenPolicies.age6to12 === 'Additional charge per room type' ? t('publicHotelPage.policies.additionalCharge') : hotel.childrenPolicies.age6to12}</p>
+                <p><span className="font-medium">{t('publicHotelPage.policies.above12')}:</span> {hotel.childrenPolicies.above12 === 'Adult price' ? t('publicHotelPage.policies.adultPrice') : hotel.childrenPolicies.above12}</p>
               </div>
             </div>
           )}
 
           {/* Breakfast Policy */}
           <div>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-              <FaCoffee className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-              Breakfast Policy
+            <h3 className={`text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+              <FaCoffee className={`text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'}`} />
+              {t('publicHotelPage.policies.breakfastPolicy')}
             </h3>
             <div className="text-sm sm:text-base text-gray-800 dark:text-gray-100">
               {hotel.breakfastIncluded ? (
-                <p className="flex items-center">
-                  <FaCheckCircle className="mr-2 text-green-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                  <span>Breakfast is included in the room rate</span>
+                <p className={`flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+                  <FaCheckCircle className={`text-green-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  <span>{t('publicHotelPage.policies.breakfastIncluded')}</span>
                 </p>
               ) : (
-                <p>Breakfast is available at the hotel for an additional charge</p>
+                <p>{t('publicHotelPage.policies.breakfastAvailable')}</p>
               )}
             </div>
           </div>
 
           {/* General Policies */}
           <div>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center">
-              <FaUsers className="mr-2 sm:mr-3 text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5" />
-              General Policies
+            <h3 className={`text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center ${isRTL ? 'space-x-reverse' : ''}`}>
+              <FaUsers className={`text-blue-500 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 ${isRTL ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'}`} />
+              {t('publicHotelPage.policies.generalPolicies')}
             </h3>
             <div className="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-100">
-              <p>• Standard hotel check-in/check-out times apply</p>
-              <p>• Cancellation and prepayment policies vary according to room type</p>
-              <p>• Valid photo identification and credit card required at check-in</p>
-              <p>• Special requests are subject to availability upon check-in</p>
+              <p>• {t('publicHotelPage.policies.checkInOut')}</p>
+              <p>• {t('publicHotelPage.policies.cancellation')}</p>
+              <p>• {t('publicHotelPage.policies.photoId')}</p>
+              <p>• {t('publicHotelPage.policies.specialRequests')}</p>
             </div>
           </div>
         </div>
@@ -693,17 +703,19 @@ const PublicHotelPage = () => {
 
       {/* Other Hotels Carousel */}
       {otherHotels.length > 0 && (
-        <OtherHotelsCarousel 
-          hotels={otherHotels}
-          currentHotelId={hotel?._id}
-        />
+        <div dir="ltr">
+          <OtherHotelsCarousel 
+            hotels={otherHotels}
+            currentHotelId={hotel?._id}
+          />
+        </div>
       )}
 
       {/* FAQs Section */}
       <div id="faqs" className="scroll-mt-24"></div>
       {hotel.faqs && hotel.faqs.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Frequently Asked Questions</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.faqs.title')}</h2>
           
           <div className="space-y-3 sm:space-y-4">
             {hotel.faqs.map((faq, index) => (
@@ -711,16 +723,16 @@ const PublicHotelPage = () => {
                 key={index}
                 className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                   activeFaqIndex === index 
-                    ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                    : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                    ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                    : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
                 }`}
               >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                  className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                   aria-expanded={activeFaqIndex === index}
                 >
-                  <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                  <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                     activeFaqIndex === index 
                       ? 'text-blue-700 dark:text-yellow-300' 
                       : 'text-gray-800 dark:text-gray-100'
@@ -774,13 +786,16 @@ const PublicHotelPage = () => {
       <CustomModal
         isOpen={showAmenitiesModal}
         onClose={() => setShowAmenitiesModal(false)}
-        title="Hotel Amenities & Services"
-        subtitle={`All amenities available at ${hotel?.name || ''}`}
+        title={t('publicHotelPage.amenities.modalTitle')}
+        subtitle={isRTL 
+          ? `${hotel?.name || ''} ${t('publicHotelPage.amenities.allAmenities')}`
+          : `${t('publicHotelPage.amenities.allAmenities')} ${hotel?.name || ''}`
+        }
         maxWidth="md:max-w-4xl"
         className="amenities-modal"
       >
         <ModalScrollbar maxHeight="560px">
-          <div className="space-y-4 pb-6">
+          <div className={`space-y-4 pb-6 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
               {(() => {
                 const allAmenities = getAllSelectedAmenities();
                 const amenitiesByCategory = {};
@@ -794,24 +809,28 @@ const PublicHotelPage = () => {
                 });
 
               return Object.entries(amenitiesByCategory).map(([categoryKey, amenities]) => {
-                      const categoryTitle = categoryKey
-                        .replace(/([A-Z])/g, ' $1')
-                        .replace(/^./, str => str.toUpperCase())
-                        .trim()
-                        .replace(/Family Friendly/i, 'Family-Friendly');
+                      // Try to get translation for category title, fallback to formatted key
+                      const categoryTranslationKey = `publicHotelPage.amenities.categories.${categoryKey}`;
+                      const categoryTitle = t(categoryTranslationKey, {
+                        defaultValue: categoryKey
+                          .replace(/([A-Z])/g, ' $1')
+                          .replace(/^./, str => str.toUpperCase())
+                          .trim()
+                          .replace(/Family Friendly/i, 'Family-Friendly')
+                      });
 
                       return (
                   <div key={categoryKey} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                    <h3 className={`text-base font-semibold text-gray-900 dark:text-white mb-3 ${isRTL ? 'text-right' : 'text-left'}`}>
                             {categoryTitle}
                           </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {amenities.map((amenity) => (
-                              <div key={`${categoryKey}-${amenity.key}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <div key={`${categoryKey}-${amenity.key}`} className={`flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 ${isRTL ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
                           <div className="w-5 h-5 flex items-center justify-center">
                                   {getAmenityIcon(amenity.key)}
                                 </div>
-                          <span className="text-gray-800 dark:text-gray-100 text-sm">
+                          <span className={`text-gray-800 dark:text-gray-100 text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
                                   {amenity.name}
                                 </span>
                               </div>

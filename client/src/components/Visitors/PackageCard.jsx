@@ -37,6 +37,7 @@ const PackageCard = ({ pkg, onClick }) => {
         <div 
             onClick={onClick}
             className="group cursor-pointer bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-slate-700 h-full flex flex-col"
+            dir="ltr"
         >
             {/* Image Section - Takes most of the card */}
             <div className="relative h-60 sm:h-72 overflow-hidden">

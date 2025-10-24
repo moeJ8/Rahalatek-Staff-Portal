@@ -1,31 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FaHome, FaSearch, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
-import CustomButton from '../../components/CustomButton';
 
 export default function GuestNotFoundPage({ 
-  title = "Page Not Found",
-  description = "The page you're looking for doesn't exist or has been moved.",
+  title,
+  description,
   type = "page" // "hotel", "voucher", "page", etc.
 }) {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const getTypeSpecificContent = () => {
     switch (type) {
       case 'hotel':
         return {
-          title: "Hotel Not Found",
-          description: "The hotel you're looking for doesn't exist or may have been removed from our listings.",
+          title: t('notFound.hotel.title'),
+          description: t('notFound.hotel.description'),
           icon: FaBuilding
         };
       case 'voucher':
         return {
-          title: "Voucher Not Found", 
-          description: "The voucher you're looking for doesn't exist or may have expired.",
+          title: t('notFound.voucher.title'), 
+          description: t('notFound.voucher.description'),
           icon: FaSearch
         };
       default:
         return {
-          title: title,
-          description: description,
+          title: title || t('notFound.page.title'),
+          description: description || t('notFound.page.description'),
           icon: FaExclamationTriangle
         };
     }
@@ -35,7 +37,7 @@ export default function GuestNotFoundPage({
   const IconComponent = content.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-2xl w-full text-center">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
@@ -78,49 +80,40 @@ export default function GuestNotFoundPage({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center ${isRTL ? 'space-x-reverse' : ''}`}>
           <div className="w-full sm:w-auto">
-            <CustomButton
-              as={Link}
+            <Link
               to="/"
-              variant="rippleBlueToTeal"
-              size="lg"
-              icon={FaHome}
-              className="w-full px-6 py-3"
+              className={`relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:from-blue-700 hover:to-teal-600`}
             >
-              Back to Home
-            </CustomButton>
+              <FaHome className="w-4 h-4" />
+              {t('notFound.buttons.backToHome')}
+            </Link>
           </div>
           <div className="w-full sm:w-auto">
-            <CustomButton
-              as={Link}
+            <Link
               to="/guest/hotels"
-              variant="rippleTealToBlue"
-              size="lg"
-              icon={FaBuilding}
-              className="w-full px-6 py-3"
+              className={`relative text-white bg-teal-500 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:bg-teal-600`}
             >
-              Browse Hotels
-            </CustomButton>
+              <FaBuilding className="w-4 h-4" />
+              {t('notFound.buttons.browseHotels')}
+            </Link>
           </div>
           <div className="w-full sm:w-auto">
-            <CustomButton
-              as={Link}
+            <Link
               to="/guest/tours"
-              variant="rippleGrayToGreen"
-              size="lg"
-              icon={FaMapMarkerAlt}
-              className="w-full px-6 py-3"
+              className={`relative text-white bg-gray-800 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:bg-green-600`}
             >
-              Browse Tours
-            </CustomButton>
+              <FaMapMarkerAlt className="w-4 h-4" />
+              {t('notFound.buttons.browseTours')}
+            </Link>
           </div>
         </div>
 
         {/* Help Text */}
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Explore our available hotels and tours, or try refreshing the page if you believe this is an error.
+            {t('notFound.helpText')}
           </p>
         </div>
 

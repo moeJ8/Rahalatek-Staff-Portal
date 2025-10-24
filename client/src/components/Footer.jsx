@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import { shouldHideLanguageSwitcher } from '../utils/pageUtils';
 import { 
   FaInstagram, 
   FaWhatsapp, 
@@ -21,6 +23,8 @@ import {
 } from 'react-icons/fa';
 
 export default function Footer() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const currentYear = new Date().getFullYear();
   const [user, setUser] = useState(null);
   const darkMode = useSelector((state) => state.theme.darkMode);
@@ -28,6 +32,46 @@ export default function Footer() {
   
   // Check if we're on the About Us page
   const isAboutPage = location.pathname === '/about';
+  
+  // Check if we're on a protected/auth page
+  const isAuthenticated = !!user;
+  const hideLanguageSwitcher = shouldHideLanguageSwitcher(location.pathname, isAuthenticated);
+  
+  // Force English translations for protected/auth pages
+  const getTranslation = (key) => {
+    if (hideLanguageSwitcher) {
+      // Force English translations for protected/auth pages
+      const englishTranslations = {
+        'footer.companyDescription': 'Your trusted partner for unforgettable travel experiences. We specialize in creating personalized tours and hotel bookings across Turkey and Southeast Asia.',
+        'footer.istanbul': 'Istanbul, Turkey',
+        'footer.quickAccess': 'Quick Access',
+        'footer.explore': 'Explore',
+        'footer.home': 'Home',
+        'footer.booking': 'Booking',
+        'footer.vouchers': 'Vouchers',
+        'footer.dashboard': 'Dashboard',
+        'footer.hotels': 'Hotels',
+        'footer.tours': 'Tours',
+        'footer.packages': 'Packages',
+        'footer.blog': 'Blog',
+        'footer.topDestinations': 'Top Destinations',
+        'footer.turkey': 'Turkey',
+        'footer.malaysia': 'Malaysia',
+        'footer.thailand': 'Thailand',
+        'footer.indonesia': 'Indonesia',
+        'footer.company': 'Company',
+        'footer.aboutUs': 'About Us',
+        'footer.contactUs': 'Contact Us',
+        'footer.social': 'Follow Us',
+        'footer.copyright': 'Rahalatek. All rights reserved.',
+        'footer.privacyPolicy': 'Privacy Policy',
+        'footer.termsOfService': 'Terms of Service',
+        'footer.support': 'Support'
+      };
+      return englishTranslations[key] || key;
+    }
+    return t(key);
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -81,8 +125,11 @@ export default function Footer() {
     }
   };
   
+  // Force LTR layout for protected/auth pages
+  const footerDirection = hideLanguageSwitcher ? 'ltr' : (isRTL ? 'rtl' : 'ltr');
+  
   return (
-    <footer className={`bg-gray-25 dark:bg-slate-950 shadow-inner mt-auto transition-all duration-300 border-t border-gray-200 dark:border-gray-800 ${isAboutPage ? 'mt-0' : 'mt-8 md:mt-12'}`}>
+    <footer className={`bg-gray-25 dark:bg-slate-950 shadow-inner mt-auto transition-all duration-300 border-t border-gray-200 dark:border-gray-800 ${isAboutPage ? 'mt-0' : 'mt-8 md:mt-12'}`} dir={footerDirection}>
       <div className="container mx-auto px-4 py-8 md:py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12 ml-0 md:ml-8 lg:ml-24">
@@ -98,7 +145,7 @@ export default function Footer() {
               />
             </Link>
             <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-              Your trusted partner for unforgettable travel experiences across Turkey, Asia, and beyond.
+              {getTranslation('footer.companyDescription')}
             </p>
             
             {/* Contact Info */}
@@ -108,18 +155,18 @@ export default function Footer() {
                 className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}
               >
                 <FaPhone className="text-xs" />
-                <span>+90 501 068 46 57</span>
+                <span dir="ltr">+90 501 068 46 57</span>
               </a>
               <a 
                 href="mailto:info@rahalatek.com"
                 className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}
               >
                 <FaEnvelope className="text-xs" />
-                <span>info@rahalatek.com</span>
+                <span dir="ltr">info@rahalatek.com</span>
               </a>
               <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <FaMapMarkerAlt className="text-xs mt-1 flex-shrink-0" />
-                <span>Istanbul, Turkey</span>
+                <span>{getTranslation('footer.istanbul')}</span>
               </div>
             </div>
           </div>
@@ -127,7 +174,7 @@ export default function Footer() {
           {/* Quick Links Section */}
           <div>
             <h3 className={getHeadingClasses()}>
-              {user ? 'Quick Access' : 'Explore'}
+              {user ? getTranslation('footer.quickAccess') : getTranslation('footer.explore')}
             </h3>
             <ul className="space-y-3">
               {user ? (
@@ -137,19 +184,19 @@ export default function Footer() {
                       <li>
                         <Link to="/home" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaHome className="text-xs" />
-                          <span>Home</span>
+                          <span>{getTranslation('footer.home')}</span>
                         </Link>
                       </li>
                       <li>
                         <Link to="/booking" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaClipboardList className="text-xs" />
-                          <span>Booking</span>
+                          <span>{getTranslation('footer.booking')}</span>
                         </Link>
                       </li>
                       <li>
                         <Link to="/vouchers" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaTicketAlt className="text-xs" />
-                          <span>Vouchers</span>
+                          <span>{getTranslation('footer.vouchers')}</span>
                         </Link>
                       </li>
                     </>
@@ -158,20 +205,20 @@ export default function Footer() {
                     <li>
                       <Link to="/dashboard" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                         <FaChartLine className="text-xs" />
-                        <span>Dashboard</span>
+                        <span>{getTranslation('footer.dashboard')}</span>
                       </Link>
                     </li>
                   )}
                   <li>
                     <Link to="/hotels" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHotel className="text-xs" />
-                      <span>Hotels</span>
+                      <span>{getTranslation('footer.hotels')}</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/tours" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaRoute className="text-xs" />
-                      <span>Tours</span>
+                      <span>{getTranslation('footer.tours')}</span>
                     </Link>
                   </li>
                 </>
@@ -180,31 +227,31 @@ export default function Footer() {
                   <li>
                     <Link to="/" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHome className="text-xs" />
-                      <span>Home</span>
+                      <span>{t('footer.home')}</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/guest/hotels" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHotel className="text-xs" />
-                      <span>Hotels</span>
+                      <span>{getTranslation('footer.hotels')}</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/guest/tours" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaRoute className="text-xs" />
-                      <span>Tours</span>
+                      <span>{getTranslation('footer.tours')}</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/packages" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaBox className="text-xs" />
-                      <span>Packages</span>
+                      <span>{getTranslation('footer.packages')}</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/blog" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaBlog className="text-xs" />
-                      <span>Blog</span>
+                      <span>{getTranslation('footer.blog')}</span>
                     </Link>
                   </li>
                 </>
@@ -215,26 +262,26 @@ export default function Footer() {
           {/* Destinations Section - Only for guests */}
           {!user && (
             <div>
-              <h3 className={getHeadingClasses()}>Top Destinations</h3>
+              <h3 className={getHeadingClasses()}>{getTranslation('footer.topDestinations')}</h3>
               <ul className="space-y-3">
                 <li>
                   <Link to="/country/Turkey" className={`text-sm ${getLinkClasses()}`}>
-                    Turkey
+                    {getTranslation('footer.turkey')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/country/Malaysia" className={`text-sm ${getLinkClasses()}`}>
-                    Malaysia
+                    {getTranslation('footer.malaysia')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/country/Thailand" className={`text-sm ${getLinkClasses()}`}>
-                    Thailand
+                    {getTranslation('footer.thailand')}
                   </Link>
                 </li>
                 <li>
                   <Link to="/country/Indonesia" className={`text-sm ${getLinkClasses()}`}>
-                    Indonesia
+                    {getTranslation('footer.indonesia')}
                   </Link>
                 </li>
                 <li>
@@ -245,25 +292,25 @@ export default function Footer() {
 
           {/* Company Section */}
           <div>
-            <h3 className={getHeadingClasses()}>Company</h3>
+            <h3 className={getHeadingClasses()}>{getTranslation('footer.company')}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/about" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                   <FaInfoCircle className="text-xs" />
-                  <span>About Us</span>
+                  <span>{getTranslation('footer.aboutUs')}</span>
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                   <FaEnvelope className="text-xs" />
-                  <span>Contact Us</span>
+                  <span>{getTranslation('footer.contactUs')}</span>
                 </Link>
               </li>
             </ul>
 
             {/* Social Media Links */}
             <div className="mt-6">
-              <h4 className="text-gray-900 dark:text-white font-medium mb-3 text-sm">Social</h4>
+              <h4 className="text-gray-900 dark:text-white font-medium mb-3 text-sm">{getTranslation('footer.social')}</h4>
               <div className="flex gap-2.5">
                 <a 
                   href="https://www.facebook.com/rahalatek" 
@@ -313,18 +360,18 @@ export default function Footer() {
         {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 ml-0 md:ml-8 lg:ml-24">
           <div className="text-sm text-gray-600 dark:text-gray-400 text-center md:text-left">
-            <p>&copy; {currentYear} Rahalatek. All rights reserved.</p>
+            <p>&copy; {currentYear} {getTranslation('footer.copyright')}</p>
           </div>
           
           <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6 text-sm mr-0 md:mr-8 lg:mr-10">
             <Link to="/about" className={getLinkClasses()}>
-              Privacy Policy
+              {getTranslation('footer.privacyPolicy')}
             </Link>
             <Link to="/about" className={getLinkClasses()}>
-              Terms of Service
+              {getTranslation('footer.termsOfService')}
             </Link>
             <Link to="/contact" className={getLinkClasses()}>
-              Support
+              {getTranslation('footer.support')}
             </Link>
           </div>
         </div>     

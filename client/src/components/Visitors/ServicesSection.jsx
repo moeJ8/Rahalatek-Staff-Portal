@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export default function ServicesSection() {
+  const { t } = useTranslation();
   const services = [
     {
       id: 'tours',
@@ -35,10 +37,10 @@ export default function ServicesSection() {
         {/* Section Header */}
         <div className="text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Our Services
+            {t('home.services.title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            Discover our wide range of premium tourism services
+            {t('home.services.subtitle')}
           </p>
         </div>
 

@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaStar, FaMapMarkerAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const OtherHotelsCarousel = ({ hotels = [], currentHotelId }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const carouselRef = useRef(null);
@@ -155,8 +158,8 @@ const OtherHotelsCarousel = ({ hotels = [], currentHotelId }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Similar Properties
+        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
+          {t('publicHotelPage.similarProperties')}
         </h2>
       </div>
 

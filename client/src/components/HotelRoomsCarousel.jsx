@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaWifi, FaTv, FaSnowflake, FaVolumeDown, FaBaby, FaShower, FaRulerCombined, FaEye, FaUsers, FaBed, FaGlassCheers, FaShieldAlt, FaTshirt, FaDoorOpen } from 'react-icons/fa';
 import { MdDry } from 'react-icons/md';
 import { MdBalcony } from 'react-icons/md';
+import { useTranslation } from 'react-i18next';
 import ImageCarousel from './ImageCarousel';
 import CustomModal from './CustomModal';
 
 const HotelRoomsCarousel = ({ roomTypes = [] }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const carouselRef = useRef(null);
@@ -65,10 +68,10 @@ const HotelRoomsCarousel = ({ roomTypes = [] }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="mb-4 sm:mb-6">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Rooms
+          {t('publicHotelPage.nav.rooms')}
         </h2>
       </div>
 
@@ -109,10 +112,11 @@ const HotelRoomsCarousel = ({ roomTypes = [] }) => {
               {roomTypes
                 .slice(slideIndex * roomsPerSlide, (slideIndex + 1) * roomsPerSlide)
                 .map((roomType, roomIndex) => (
-                  <RoomCard
-                    key={`${slideIndex}-${roomIndex}`}
-                    roomType={roomType}
-                  />
+                  <div key={`${slideIndex}-${roomIndex}`} dir="ltr">
+                    <RoomCard
+                      roomType={roomType}
+                    />
+                  </div>
                 ))
               }
             </div>

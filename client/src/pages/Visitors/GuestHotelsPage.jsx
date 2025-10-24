@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaStar, FaMapMarkerAlt, FaFilter, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
 import Select from '../../components/Select';
@@ -10,6 +11,8 @@ import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const GuestHotelsPage = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -287,6 +290,7 @@ const GuestHotelsPage = () => {
       <div 
         className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
         onClick={() => handleHotelClick(hotel)}
+
       >
         {/* Hotel Image */}
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
@@ -316,7 +320,7 @@ const GuestHotelsPage = () => {
         <div className="p-3 sm:p-4 md:p-6">
 
           {/* Location */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+          <div className={`flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 mb-2 sm:mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-red-500 dark:text-red-500" />
             <span className="text-xs sm:text-sm truncate">
               {hotel.city}{hotel.country ? `, ${hotel.country}` : ''}
@@ -326,7 +330,7 @@ const GuestHotelsPage = () => {
                 code={getCountryCode(hotel.country)} 
                 height="16" 
                 width="20"
-                className="flex-shrink-0 rounded-sm inline-block ml-1 mt-1"
+                className="flex-shrink-0 rounded-sm inline-block mt-1"
                 style={{ maxWidth: '20px', maxHeight: '16px' }}
               />
             )}
@@ -363,15 +367,15 @@ const GuestHotelsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Our Hotels
+            {t('hotelsPage.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Discover our collection of premium hotels and accommodations
+            {t('hotelsPage.subtitle')}
           </p>
         </div>
 
@@ -380,7 +384,7 @@ const GuestHotelsPage = () => {
           {/* Search Bar */}
           <div className="mb-4">
             <Search
-              placeholder="Search by name, city, or description..."
+              placeholder={t('hotelsPage.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearch}
               className="w-full"
@@ -394,14 +398,14 @@ const GuestHotelsPage = () => {
               <Select 
                 value={starFilter}
                 onChange={handleStarFilter}
-                placeholder="Filter by Stars"
+                placeholder={t('hotelsPage.filterByStars')}
                 options={[
-                  { value: '', label: 'Filter by Stars' },
-                  { value: '1', label: '1 Star' },
-                  { value: '2', label: '2 Stars' },
-                  { value: '3', label: '3 Stars' },
-                  { value: '4', label: '4 Stars' },
-                  { value: '5', label: '5 Stars' }
+                  { value: '', label: t('hotelsPage.filterByStars') },
+                  { value: '1', label: `1 ${t('hotelsPage.star')}` },
+                  { value: '2', label: `2 ${t('hotelsPage.stars')}` },
+                  { value: '3', label: `3 ${t('hotelsPage.stars')}` },
+                  { value: '4', label: `4 ${t('hotelsPage.stars')}` },
+                  { value: '5', label: `5 ${t('hotelsPage.stars')}` }
                 ]}
                 className="w-full"
               />
@@ -411,9 +415,9 @@ const GuestHotelsPage = () => {
               <Select 
                 value={countryFilter}
                 onChange={handleCountryFilter}
-                placeholder="Filter by Country"
+                placeholder={t('hotelsPage.filterByCountry')}
                 options={[
-                  { value: '', label: 'Filter by Country' },
+                  { value: '', label: t('hotelsPage.filterByCountry') },
                   ...availableCountries.map(country => ({ value: country, label: country }))
                 ]}
                 className="w-full"
@@ -424,9 +428,9 @@ const GuestHotelsPage = () => {
               <Select 
                 value={cityFilter}
                 onChange={handleCityFilter}
-                placeholder="Filter by City"
+                placeholder={t('hotelsPage.filterByCity')}
                 options={[
-                  { value: '', label: 'Filter by City' },
+                  { value: '', label: t('hotelsPage.filterByCity') },
                   ...availableCities
                     .filter(city => !countryFilter || hotels.some(hotel => hotel.city === city && hotel.country === countryFilter))
                     .map(city => ({ value: city, label: city }))
@@ -444,7 +448,7 @@ const GuestHotelsPage = () => {
                 className="w-full h-[44px] my-0.5"
                 icon={FaFilter}
               >
-                Clear Filters
+                {t('hotelsPage.clearFilters')}
               </CustomButton>
             </div>
           </div>
@@ -452,9 +456,9 @@ const GuestHotelsPage = () => {
           {/* Results count */}
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
             {totalHotels > 0 ? (
-              <>Showing page {page} of {totalPages} ({totalHotels} hotels total)</>
+              <>{t('hotelsPage.showingPage')} {page} {t('hotelsPage.of')} {totalPages} ({totalHotels} {t('hotelsPage.hotelsTotal')})</>
             ) : (
-              <>No hotels found</>
+              <>{t('hotelsPage.noHotelsFound')}</>
             )}
           </div>
         </div>
@@ -488,7 +492,7 @@ const GuestHotelsPage = () => {
                   }`}
                   aria-label="Previous page"
                 >
-                  <FaAngleLeft className="w-4 h-4" />
+                  {isRTL ? <FaAngleRight className="w-4 h-4" /> : <FaAngleLeft className="w-4 h-4" />}
                 </button>
 
                 {/* Page Numbers - Sliding Window */}
@@ -533,15 +537,15 @@ const GuestHotelsPage = () => {
                   }`}
                   aria-label="Next page"
                 >
-                  <FaAngleRight className="w-4 h-4" />
+                  {isRTL ? <FaAngleLeft className="w-4 h-4" /> : <FaAngleRight className="w-4 h-4" />}
                 </button>
               </div>
             )}
           </>
         ) : (
           <div className="text-center py-12">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Hotels Available</h3>
-            <p className="text-gray-600 dark:text-gray-400">Please check back later for our latest hotel offerings.</p>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('hotelsPage.noHotelsAvailable')}</h3>
+            <p className="text-gray-600 dark:text-gray-400">{t('hotelsPage.checkBackLater')}</p>
           </div>
         )}
       </div>

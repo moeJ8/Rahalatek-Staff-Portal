@@ -1,48 +1,51 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaAward, FaHeadset, FaUserTie, FaMoneyBillWave, FaMapMarkedAlt, FaShieldAlt } from 'react-icons/fa';
 
 const WhyChooseUs = () => {
+  const { t } = useTranslation();
+  
   const features = [
     {
       id: 1,
       icon: FaAward,
-      title: 'Years of Experience',
-      description: 'Over a decade of expertise in creating memorable travel experiences',
+      title: t('aboutPage.whyChooseUs.yearsOfExperience'),
+      description: t('aboutPage.whyChooseUs.yearsOfExperienceDesc'),
       color: 'blue'
     },
     {
       id: 2,
       icon: FaHeadset,
-      title: '24/7 Support',
-      description: 'Round-the-clock assistance to ensure your journey is smooth and worry-free',
+      title: t('aboutPage.whyChooseUs.support247'),
+      description: t('aboutPage.whyChooseUs.support247Desc'),
       color: 'green'
     },
     {
       id: 3,
       icon: FaUserTie,
-      title: 'Expert Team',
-      description: 'Professional multilingual guides who bring destinations to life',
+      title: t('aboutPage.whyChooseUs.expertTeam'),
+      description: t('aboutPage.whyChooseUs.expertTeamDesc'),
       color: 'purple'
     },
     {
       id: 4,
       icon: FaMoneyBillWave,
-      title: 'Best Prices',
-      description: 'Competitive rates without compromising on quality and service',
+      title: t('aboutPage.whyChooseUs.bestPrices'),
+      description: t('aboutPage.whyChooseUs.bestPricesDesc'),
       color: 'orange'
     },
     {
       id: 5,
       icon: FaMapMarkedAlt,
-      title: 'Tailored Packages',
-      description: 'Customized itineraries designed specifically for your preferences',
+      title: t('aboutPage.whyChooseUs.tailoredPackages'),
+      description: t('aboutPage.whyChooseUs.tailoredPackagesDesc'),
       color: 'red'
     },
     {
       id: 6,
       icon: FaShieldAlt,
-      title: 'Safety First',
-      description: 'Your safety and security are our highest priorities',
+      title: t('aboutPage.whyChooseUs.safetyFirst'),
+      description: t('aboutPage.whyChooseUs.safetyFirstDesc'),
       color: 'cyan'
     }
   ];
@@ -89,10 +92,10 @@ const WhyChooseUs = () => {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Why Choose Rahalatek?
+            {t('aboutPage.whyChooseUs.title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            Discover what sets us apart and makes us the preferred choice for thousands of travelers worldwide
+            {t('aboutPage.whyChooseUs.subtitle')}
           </p>
         </div>
 
@@ -138,23 +141,23 @@ const WhyChooseUs = () => {
         <div className="mt-16 text-center">
           <div className="inline-block bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-900 dark:to-slate-800 p-8 md:p-10 rounded-2xl border border-blue-200 dark:border-slate-700">
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Experience the Difference
+              {t('aboutPage.whyChooseUs.experienceTitle')}
             </h3>
             <p className="text-gray-700 dark:text-gray-300 text-lg mb-6 max-w-2xl mx-auto">
-              Join thousands of satisfied travelers who have trusted us to create their perfect journey
+              {t('aboutPage.whyChooseUs.experienceText')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="/contact"
                 className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 dark:bg-yellow-600 text-white font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-yellow-700 transition-colors duration-300 shadow-lg hover:shadow-xl"
               >
-                Start Planning Your Trip
+                {t('aboutPage.whyChooseUs.startPlanning')}
               </a>
               <a
                 href="/packages"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-slate-950 text-blue-600 dark:text-yellow-500 font-semibold rounded-lg border-2 border-blue-600 dark:border-yellow-600 hover:bg-blue-50 dark:hover:bg-slate-900 transition-colors duration-300"
               >
-                View Our Packages
+                {t('aboutPage.whyChooseUs.viewPackages')}
               </a>
             </div>
           </div>

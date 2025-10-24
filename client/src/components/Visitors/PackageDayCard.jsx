@@ -1,13 +1,63 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import PackageImagesCarousel from '../PackageImagesCarousel';
 
 const PackageDayCard = ({ day, tourData, onCardClick }) => {
+    const { t, i18n } = useTranslation();
+    const isRTL = i18n.language === 'ar';
+    
     // Don't show tour images for arrival days
     const shouldShowImages = tourData && !day.isArrivalDay;
     const tourImages = shouldShowImages ? (tourData?.images?.map(img => ({
         url: img.url,
         altText: img.altText || `${tourData.name} - Tour image`
     })) || []) : [];
+
+    // Helper function to translate arrival day content
+    const translateArrivalContent = (text) => {
+        if (!text) return text;
+        
+        // Check if this is arrival day content and translate it
+        if (text.includes('Arrival & Transfer')) {
+            return text.replace('Arrival & Transfer', t('publicPackagePage.dayCard.arrivalTransfer'));
+        }
+        if (text.includes('Arrival at airport, meet & greet service, transfer to hotel, check-in and rest.')) {
+            return t('publicPackagePage.dayCard.arrivalDescription');
+        }
+        if (text.includes('Airport reception service')) {
+            return text.replace('Airport reception service', t('publicPackagePage.dayCard.airportReceptionService'));
+        }
+        if (text.includes('Meet & greet with tour representative')) {
+            return text.replace('Meet & greet with tour representative', t('publicPackagePage.dayCard.meetGreetRepresentative'));
+        }
+        if (text.includes('Transfer to hotel')) {
+            return text.replace('Transfer to hotel', t('publicPackagePage.dayCard.transferToHotel'));
+        }
+        if (text.includes('Hotel check-in assistance')) {
+            return text.replace('Hotel check-in assistance', t('publicPackagePage.dayCard.hotelCheckinAssistance'));
+        }
+        if (text.includes('Welcome briefing')) {
+            return text.replace('Welcome briefing', t('publicPackagePage.dayCard.welcomeBriefing'));
+        }
+        if (text.includes('Rest and prepare for upcoming tours')) {
+            return text.replace('Rest and prepare for upcoming tours', t('publicPackagePage.dayCard.restPrepare'));
+        }
+        
+        return text;
+    };
+
+    // Check if content is arrival day content (for RTL styling)
+    const isArrivalContent = (text) => {
+        if (!text) return false;
+        return text.includes('Arrival & Transfer') || 
+               text.includes('Arrival at airport') ||
+               text.includes('Airport reception service') ||
+               text.includes('Meet & greet with tour representative') ||
+               text.includes('Transfer to hotel') ||
+               text.includes('Hotel check-in assistance') ||
+               text.includes('Welcome briefing') ||
+               text.includes('Rest and prepare for upcoming tours');
+    };
 
     return (
         <div 
@@ -31,11 +81,13 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     <h3 className={`text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300 ${
                         tourData && !day.isArrivalDay ? 'group-hover:text-blue-600 dark:group-hover:text-yellow-400' : ''
                     } ${
-                        /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) 
+                        isArrivalContent(day.title) && isRTL 
                             ? 'text-right' 
-                            : (tourData && !day.isArrivalDay) ? 'text-left ml-12' : 'text-left'
+                            : /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) 
+                                ? 'text-right' 
+                                : (tourData && !day.isArrivalDay) ? 'text-left ml-12' : 'text-left'
                     }`}>
-                        {day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim()}
+                        {translateArrivalContent(day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim())}
                     </h3>
                     
                     {/* Location and duration below title */}
@@ -56,9 +108,11 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     {/* Description */}
                     {day.description && (
                         <p className={`text-gray-700 dark:text-gray-300 text-sm font-semibold leading-relaxed mb-4 ${
-                            /[\u0600-\u06FF\u0750-\u077F]/.test(day.description) ? 'text-right' : 'text-left'
+                            isArrivalContent(day.description) && isRTL 
+                                ? 'text-right' 
+                                : /[\u0600-\u06FF\u0750-\u077F]/.test(day.description) ? 'text-right' : 'text-left'
                         }`}>
-                            {day.description}
+                            {translateArrivalContent(day.description)}
                         </p>
                     )}
                     
@@ -77,12 +131,16 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                             <ul className="space-y-2">
                                 {day.activities.slice(0, 4).map((activity, actIndex) => (
                                     <li key={actIndex} className={`flex items-start text-sm text-gray-700 dark:text-gray-300 ${
-                                        /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'flex-row-reverse text-right' : 'text-left'
+                                        isArrivalContent(activity) && isRTL 
+                                            ? 'flex-row-reverse text-right' 
+                                            : /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'flex-row-reverse text-right' : 'text-left'
                                     }`}>
                                         <span className={`w-1.5 h-1.5 bg-blue-500 dark:bg-yellow-400 rounded-full mt-2 flex-shrink-0 ${
-                                            /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'ml-3' : 'mr-3'
+                                            isArrivalContent(activity) && isRTL 
+                                                ? 'ml-3' 
+                                                : /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'ml-3' : 'mr-3'
                                         }`}></span>
-                                        {activity}
+                                        {translateArrivalContent(activity)}
                                     </li>
                                 ))}
                             </ul>

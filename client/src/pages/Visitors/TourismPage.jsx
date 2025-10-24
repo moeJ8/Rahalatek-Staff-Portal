@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   FaMapMarkedAlt, 
   FaUserTie, 
@@ -19,6 +20,8 @@ import ContactForm from '../../components/ContactForm';
 import FloatingContactButtons from '../../components/FloatingContactButtons';
 
 export default function TourismPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [activeFaqIndex, setActiveFaqIndex] = useState(null);
 
   const toggleFaq = (index) => {
@@ -128,46 +131,46 @@ export default function TourismPage() {
   const features = [
     {
       icon: FaMapMarkedAlt,
-      title: 'Diversity of Destinations and Programs',
-      description: 'We offer a wide range of tours in Turkey, covering various tourist attractions from north to south, from historic cities to charming beaches and stunning natural areas.',
+      titleKey: 'tourismPage.features.items.0.title',
+      descriptionKey: 'tourismPage.features.items.0.description',
       color: 'blue'
     },
     {
       icon: FaUserTie,
-      title: 'Professional Tour Guides',
-      description: 'Your tours are accompanied by Arabic and English-speaking guides who possess a deep knowledge of the history and culture of the regions you visit, enriching your experience and making it more enjoyable and beneficial.',
+      titleKey: 'tourismPage.features.items.1.title',
+      descriptionKey: 'tourismPage.features.items.1.description',
       color: 'teal'
     },
     {
       icon: FaCogs,
-      title: 'Personal Service and Flexible Programs',
-      description: 'We tailor trips to your needs, with the option to choose between private or group tours, and the freedom to adjust the program to suit your interests and budget.',
+      titleKey: 'tourismPage.features.items.2.title',
+      descriptionKey: 'tourismPage.features.items.2.description',
       color: 'purple'
     },
     {
       icon: FaCar,
-      title: 'Comfortable Transportation in Modern Cars',
-      description: 'We provide modern, air-conditioned vehicles with professional drivers to ensure safe and comfortable transportation between cities and during tours.',
+      titleKey: 'tourismPage.features.items.3.title',
+      descriptionKey: 'tourismPage.features.items.3.description',
       color: 'green'
     },
     {
       icon: FaHotel,
-      title: 'Carefully Selected Accommodations',
-      description: 'We carefully select the best hotels and resorts that offer excellent service, a strategic location, and facilities that suit your needs.',
+      titleKey: 'tourismPage.features.items.4.title',
+      descriptionKey: 'tourismPage.features.items.4.description',
       color: 'orange'
     },
     {
       icon: FaDollarSign,
-      title: 'Competitive and Transparent Prices',
-      description: 'Our prices are competitive and transparent from the outset, with no hidden fees or unexpected surprises, offering the best value for money.',
+      titleKey: 'tourismPage.features.items.5.title',
+      descriptionKey: 'tourismPage.features.items.5.description',
       color: 'red'
     }
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-950 min-h-screen">
+    <div className="bg-white dark:bg-slate-950 min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
-      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6">
+      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6" dir="ltr">
         <div className="absolute inset-0 w-full h-full">
           <img
             src="https://res.cloudinary.com/dnzqnr6js/image/upload/v1759671111/trabzon_l7xlva.jpg"
@@ -181,10 +184,10 @@ export default function TourismPage() {
         <div className="absolute inset-0 flex items-center justify-center text-center z-10">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight" style={{ fontFamily: 'Jost, sans-serif' }}>
-              Discover the Magic of Türkiye
+              {t('tourismPage.hero.title')}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-100 font-medium max-w-3xl mx-auto leading-relaxed">
-              Experience the best tours in Türkiye with professional guides and unforgettable journeys
+              {t('tourismPage.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -197,49 +200,49 @@ export default function TourismPage() {
             onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Overview
+            {t('tourismPage.nav.overview')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Features
+            {t('tourismPage.nav.features')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('tours')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Tours
+            {t('tourismPage.nav.tours')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Pricing
+            {t('tourismPage.nav.pricing')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('included')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            What's Included
+            {t('tourismPage.nav.included')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Contact
+            {t('tourismPage.nav.contact')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            FAQs
+            {t('tourismPage.nav.faqs')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
         </div>
@@ -269,13 +272,13 @@ export default function TourismPage() {
             {/* Content */}
             <div className="order-1 lg:order-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                Discover the Magic of Türkiye
+                {t('tourismPage.discover.title')}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-4">
-                Embark on an unforgettable journey through Türkiye's rich history, breathtaking landscapes, and vibrant culture. From the ancient wonders of Istanbul to the fairy chimneys of Cappadocia, from the turquoise coasts of Antalya to the misty mountains of Trabzon – experience it all with our expertly curated tours.
+                {t('tourismPage.discover.paragraph1')}
               </p>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
-                Our tours are designed to immerse you in the authentic Turkish experience, combining must-see landmarks with hidden gems that only locals know about. Whether you're seeking adventure, cultural enrichment, or relaxation, we have the perfect tour for you.
+                {t('tourismPage.discover.paragraph2')}
               </p>
             </div>
           </div>
@@ -284,46 +287,46 @@ export default function TourismPage() {
         {/* What is Tour Service Section */}
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">
-            What is a Tour Service?
+            {t('tourismPage.tourService.title')}
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-6 text-center">
-            The tour service from Rehlatak is a complete travel experience that allows you to discover the most beautiful and famous tourist attractions in Turkey without the hassle of planning or worrying about transportation.
+            {t('tourismPage.tourService.intro')}
           </p>
           
           <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-              We take care of your trips:
+              {t('tourismPage.tourService.weHandle')}
             </h3>
             <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Complete organization of your travel itinerary from A to Z</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.0')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Provide transportation between and within cities</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.1')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Book comfortable accommodations according to your preferences</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.2')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Arrange visits to tourist attractions accompanied by professional guides</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.3')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Provide entry tickets to sites and activities</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.4')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>24/7 support in Arabic</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('tourismPage.tourService.services.5')}</span>
               </li>
             </ul>
           </div>
           
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-6 text-center">
-            Whether you are traveling alone, with your partner, as part of a family, or as a large group, we design a tour program in Turkey that meets your aspirations and suits your needs.
+            {t('tourismPage.tourService.conclusion')}
           </p>
           
           {/* Image */}
@@ -343,7 +346,7 @@ export default function TourismPage() {
         <div id="features" className="scroll-mt-24"></div>
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-            Features of Our Tours
+            {t('tourismPage.features.title')}
           </h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -355,15 +358,15 @@ export default function TourismPage() {
                   
                   return (
                     <div key={index} className="flex items-start gap-4">
-                      <div className="flex-shrink-0 mt-1">
+                      <div className={`flex-shrink-0 mt-1 ${isRTL ? 'mr-0 ml-4' : ''}`}>
                         <Icon className="w-5 h-5 text-blue-600 dark:text-yellow-400" />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                          {feature.title}
+                          {t(feature.titleKey)}
                         </h3>
                         <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
-                          {feature.description}
+                          {t(feature.descriptionKey)}
                         </p>
                       </div>
                     </div>
@@ -397,11 +400,11 @@ export default function TourismPage() {
       <section className="py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Cost of Tourist Trips in Türkiye
+            {t('tourismPage.pricing.title')}
           </h2>
           
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-8 text-center">
-            Our Turkey tour packages offer a variety of prices to suit different budgets, while maintaining high-quality services:
+            {t('tourismPage.pricing.intro')}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
@@ -410,24 +413,24 @@ export default function TourismPage() {
               {/* Economy Package */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  1. Economy Packages
+                  {t('tourismPage.pricing.economy.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>Starting from $250</strong> per person (3 days/2 nights)</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('tourismPage.pricing.economy.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Includes accommodation in 3-4-star hotels</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.economy.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Group tours with an Arabic-speaking guide</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.economy.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Transportation between cities and tourist attractions</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.economy.features.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -435,24 +438,24 @@ export default function TourismPage() {
               {/* Classic Package */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  2. Classic Packages
+                  {t('tourismPage.pricing.classic.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>Starting from $450</strong> per person (5 days/4 nights)</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('tourismPage.pricing.classic.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Accommodation in 4-5-star hotels in prime locations</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.classic.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>A combination of private and group tours</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.classic.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Daily breakfasts and some main meals</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.classic.features.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -460,28 +463,28 @@ export default function TourismPage() {
               {/* Luxury Package */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  3. Luxury Packages
+                  {t('tourismPage.pricing.luxury.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>Starting from $750</strong> per person (7 days/6 nights)</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('tourismPage.pricing.luxury.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Accommodation in 5-star hotels and luxury resorts</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.luxury.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Exclusive private tours with a specialized guide</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.luxury.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Unique experiences and distinctive activities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.luxury.features.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Full-board accommodation with gourmet meals</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.pricing.luxury.features.4')}</span>
                   </li>
                 </ul>
               </div>
@@ -503,7 +506,7 @@ export default function TourismPage() {
           {/* Note */}
           <div className="mt-6">
             <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
-              <strong className="text-blue-600 dark:text-yellow-400">Note:</strong> Prices may vary depending on the season, accommodation type, and the specific package. We offer seasonal offers and discounts for groups and early bookings.
+              <strong className="text-blue-600 dark:text-yellow-400">{t('tourismPage.pricing.note.label')}</strong> {t('tourismPage.pricing.note.text')}
             </p>
           </div>
         </div>
@@ -514,11 +517,11 @@ export default function TourismPage() {
       <section className="py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            What does a tour package in Türkiye include?
+            {t('tourismPage.included.title')}
           </h2>
           
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-8 text-center">
-            When you book a tour in Turkey with us, you'll receive a comprehensive package of services that covers all your needs:
+            {t('tourismPage.included.intro')}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
@@ -527,24 +530,24 @@ export default function TourismPage() {
               {/* Before your trip */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  1. Before your trip
+                  {t('tourismPage.included.beforeTrip.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Personal tourism consultation to design the best program for you</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.beforeTrip.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>A detailed travel plan with a clear schedule</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.beforeTrip.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Assistance in choosing suitable hotels</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.beforeTrip.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Advice on the best times to visit and available activities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.beforeTrip.items.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -552,24 +555,24 @@ export default function TourismPage() {
               {/* Upon arrival */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  2. Upon arrival
+                  {t('tourismPage.included.uponArrival.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Airport pick-up and drop-off service</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.uponArrival.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Private car with a professional driver</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.uponArrival.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>A tour guide to accompany you during your tours</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.uponArrival.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Entrance tickets to museums and tourist attractions</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.uponArrival.items.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -577,28 +580,28 @@ export default function TourismPage() {
               {/* During your stay */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  3. During your stay
+                  {t('tourismPage.included.duringStay.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Accommodation in carefully selected hotels</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.duringStay.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Meals according to the chosen package</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.duringStay.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Transportation between and within cities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.duringStay.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Daily tours to major tourist attractions</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.duringStay.items.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Entertainment activities and cultural experiences</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.duringStay.items.4')}</span>
                   </li>
                 </ul>
               </div>
@@ -606,24 +609,24 @@ export default function TourismPage() {
               {/* Additional services */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  4. Additional services
+                  {t('tourismPage.included.additional.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Emergency and inquiry hotline (24/7)</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.additional.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Assistance in your language to communicate with locals</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.additional.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Recommendations for the best restaurants and shopping centers</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.additional.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Optional services such as hot air ballooning, cruises, and folklore shows</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('tourismPage.included.additional.items.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -650,10 +653,10 @@ export default function TourismPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Book Your Dream Tourism Trip in Turkey Now
+              {t('tourismPage.contact.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-3xl mx-auto">
-              Discover the secrets of tourism in Turkey with a complete travel experience that includes everything from start to finish. Contact us now, and let us organize the perfect trip for you according to your budget and preferences.
+              {t('tourismPage.contact.description')}
             </p>
           </div>
 
@@ -670,7 +673,7 @@ export default function TourismPage() {
                   <FaEnvelope className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Email
+                  {t('tourismPage.contact.email')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
                   info@rahalatek.com
@@ -693,10 +696,10 @@ export default function TourismPage() {
                   <FaWhatsapp className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Contact Us Now
+                  {t('tourismPage.contact.contactNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
-                  WhatsApp
+                  {t('tourismPage.contact.whatsapp')}
                 </p>
               </div>
               </a>
@@ -716,10 +719,10 @@ export default function TourismPage() {
                   <FaInstagram className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Follow Us
+                  {t('tourismPage.contact.followUs')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
-                  Instagram
+                  {t('tourismPage.contact.instagram')}
                 </p>
               </div>
               </a>
@@ -737,7 +740,7 @@ export default function TourismPage() {
                   <FaPhone className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Call Us Now
+                  {t('tourismPage.contact.callNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
                   +905010684657
@@ -754,10 +757,10 @@ export default function TourismPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Get in Touch
+              {t('tourismPage.contactForm.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-2xl mx-auto">
-              Have questions about our tours? We're here to help you plan your perfect journey. Send us a message and we'll get back to you as soon as possible.
+              {t('tourismPage.contactForm.description')}
             </p>
           </div>
           
@@ -769,28 +772,28 @@ export default function TourismPage() {
       <div id="faqs" className="scroll-mt-24"></div>
       <section className="py-8 sm:py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">{t('tourismPage.faqs.title')}</h2>
           
           <div className="space-y-3 sm:space-y-4">
             {/* FAQ 1 */}
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 0 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(0)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 0}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 0 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  What is the best month to visit Türkiye?
+                  {t('tourismPage.faqs.items.0.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 0 
@@ -807,7 +810,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  The best time to visit Türkiye is during spring (April to June) and autumn (September to November), where the weather is moderate and the tourist attractions are less crowded. However, Rahalatek organizes tours year-round, with tailored activities for each season to ensure you have a wonderful experience regardless of when you visit.
+                  {t('tourismPage.faqs.items.0.answer')}
                 </div>
               </div>
             </div>
@@ -816,21 +819,21 @@ export default function TourismPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 1 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(1)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 1}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 1 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Is Türkiye expensive for tourism?
+                  {t('tourismPage.faqs.items.1.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 1 
@@ -847,7 +850,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Türkiye is considered an economical tourist destination compared to European countries, offering a variety of options to suit all budgets. With Rahalatek, you can choose from economical packages starting at $250 per person, classic packages, or luxury experiences. We provide transparent pricing and excellent value for money for all our tours.
+                  {t('tourismPage.faqs.items.1.answer')}
                 </div>
               </div>
             </div>
@@ -856,21 +859,21 @@ export default function TourismPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 2 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(2)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 2}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 2 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Is Türkiye safe for tourism?
+                  {t('tourismPage.faqs.items.2.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 2 
@@ -887,7 +890,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Yes, Türkiye is a safe tourist destination. Turkey's major tourist cities are very secure and welcoming to visitors. With Rahalatek, you get additional safety through professional Arabic and English-speaking guides, 24/7 customer support, carefully selected accommodations, and fully insured transportation to ensure your complete peace of mind throughout your journey.
+                  {t('tourismPage.faqs.items.2.answer')}
                 </div>
               </div>
             </div>
@@ -896,21 +899,21 @@ export default function TourismPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 3 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(3)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 3}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 3 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  How far in advance should I book my tour?
+                  {t('tourismPage.faqs.items.3.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 3 
@@ -927,7 +930,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  We recommend booking at least 2-4 weeks in advance to secure the best hotels and tour guides, especially during peak seasons (summer and holidays). However, Rahalatek also accommodates last-minute bookings based on availability. Early booking often comes with special discounts and better options for customization.
+                  {t('tourismPage.faqs.items.3.answer')}
                 </div>
               </div>
             </div>
@@ -936,21 +939,21 @@ export default function TourismPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 4 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(4)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 4}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 4 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Can I customize my tour itinerary?
+                  {t('tourismPage.faqs.items.4.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 4 
@@ -967,7 +970,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Absolutely! One of Rahalatek's key strengths is flexibility and personalization. We can tailor your tour to match your interests, preferences, and budget. Whether you want to add specific destinations, extend your stay, choose particular activities, or adjust the pace of the tour, our team will work with you to create your perfect Turkish adventure.
+                  {t('tourismPage.faqs.items.4.answer')}
                 </div>
               </div>
             </div>
@@ -976,21 +979,21 @@ export default function TourismPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 5 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(5)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 5}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 5 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Do you provide Arabic-speaking tour guides?
+                  {t('tourismPage.faqs.items.5.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 5 
@@ -1007,7 +1010,7 @@ export default function TourismPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Yes! All Rahalatek tours include professional tour guides who speak fluent Arabic and English. Our guides are not only language experts but also have deep knowledge of Turkish history, culture, and local customs. They ensure you have an enriching, informative, and comfortable experience while eliminating any language barriers throughout your journey.
+                  {t('tourismPage.faqs.items.5.answer')}
                 </div>
               </div>
             </div>

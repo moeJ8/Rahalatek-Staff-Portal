@@ -3,6 +3,7 @@ import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem, FaAngleLeft
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
 import CustomButton from '../../components/CustomButton';
@@ -12,6 +13,8 @@ import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const GuestToursPage = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [tours, setTours] = useState([]);
   const [featuredTours, setFeaturedTours] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -318,6 +321,7 @@ const GuestToursPage = () => {
       <div 
         className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col relative"
         onClick={() => handleTourClick(tour)}
+        dir="ltr"
       >
         {/* Tour Image */}
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
@@ -386,7 +390,7 @@ const GuestToursPage = () => {
               >
                 <div className="flex items-center space-x-1">
                   <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
-                  <span className="text-xs sm:text-sm font-medium">Highlights:</span>
+                  <span className="text-xs sm:text-sm font-medium">{t('toursPage.highlights')}</span>
                 </div>
                 {expandedHighlights[tour._id] ? (
                   <HiChevronUp className="text-sm transition-transform duration-200" />
@@ -427,7 +431,7 @@ const GuestToursPage = () => {
                 </span>
               ) : (
                 <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                  Contact for pricing
+                  {t('toursPage.contactForPricing')}
                 </span>
               )}
             </div>
@@ -457,15 +461,15 @@ const GuestToursPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Our Tours
+            {t('toursPage.title')}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Explore our exciting collection of guided tours and experiences
+            {t('toursPage.subtitle')}
           </p>
         </div>
 
@@ -479,11 +483,11 @@ const GuestToursPage = () => {
             <div className="flex items-center gap-2">
               <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Filters
+                {t('toursPage.filters')}
               </span>
               {(searchTerm || countryFilter || cityFilter || durationFilter || tourTypeFilter) && (
                 <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
-                  Active
+                  {t('toursPage.active')}
                 </span>
               )}
             </div>
@@ -502,7 +506,7 @@ const GuestToursPage = () => {
             <div className="flex items-center gap-2">
               <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Featured Tours
+                {t('toursPage.featuredTours')}
               </span>
             </div>
             {isFeaturedOpen ? (
@@ -531,13 +535,13 @@ const GuestToursPage = () => {
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-3">
                           <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('toursPage.searchAndFilter')}</h3>
                         </div>
 
                         {/* Search Bar */}
                         <div className="mb-3">
                           <Search
-                            placeholder="Search tours..."
+                            placeholder={t('toursPage.searchPlaceholder')}
                             value={searchTerm}
                             onChange={handleSearch}
                             className="w-full"
@@ -550,10 +554,10 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={countryFilter}
                             onChange={handleCountryFilter}
-                            placeholder="All Countries"
-                            label="Country"
+                            placeholder={t('toursPage.allCountries')}
+                            label={t('toursPage.country')}
                             options={[
-                              { value: '', label: 'All Countries' },
+                              { value: '', label: t('toursPage.allCountries') },
                               ...availableCountries.map(country => ({ value: country, label: country }))
                             ]}
                           />
@@ -564,10 +568,10 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={cityFilter}
                             onChange={handleCityFilter}
-                            placeholder="All Cities"
-                            label="City"
+                            placeholder={t('toursPage.allCities')}
+                            label={t('toursPage.city')}
                             options={[
-                              { value: '', label: 'All Cities' },
+                              { value: '', label: t('toursPage.allCities') },
                               ...availableCities
                                 .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
                                 .map(city => ({ value: city, label: city }))
@@ -581,12 +585,12 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={tourTypeFilter}
                             onChange={handleTourTypeFilter}
-                            placeholder="All Types"
-                            label="Tour Type"
+                            placeholder={t('toursPage.allTypes')}
+                            label={t('toursPage.tourType')}
                             options={[
-                              { value: '', label: 'All Types' },
-                              { value: 'Group', label: 'Group Tours' },
-                              { value: 'VIP', label: 'VIP Tours' }
+                              { value: '', label: t('toursPage.allTypes') },
+                              { value: 'Group', label: t('toursPage.groupTours') },
+                              { value: 'VIP', label: t('toursPage.vipTours') }
                             ]}
                           />
                         </div>
@@ -596,13 +600,13 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={durationFilter}
                             onChange={handleDurationFilter}
-                            placeholder="All Durations"
-                            label="Duration"
+                            placeholder={t('toursPage.allDurations')}
+                            label={t('toursPage.duration')}
                             options={[
-                              { value: '', label: 'All Durations' },
-                              { value: '1', label: 'Short (up to 3 hours)' },
-                              { value: '2', label: 'Medium (3-6 hours)' },
-                              { value: '3', label: 'Long (6+ hours)' }
+                              { value: '', label: t('toursPage.allDurations') },
+                              { value: '1', label: t('toursPage.shortDuration') },
+                              { value: '2', label: t('toursPage.mediumDuration') },
+                              { value: '3', label: t('toursPage.longDuration') }
                             ]}
                           />
                         </div>
@@ -615,12 +619,12 @@ const GuestToursPage = () => {
                           className="w-full"
                           icon={FaFilter}
                         >
-                          Clear Filters
+                          {t('toursPage.clearFilters')}
                         </CustomButton>
 
                         {/* Results Count */}
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
-                          Showing page {page} of {totalPages} ({totalTours} tours total)
+                          {t('toursPage.showingPage')} {page} {t('toursPage.of')} {totalPages} ({totalTours} {t('toursPage.toursTotal')})
                         </div>
                       </div>
 
@@ -634,7 +638,7 @@ const GuestToursPage = () => {
                         <div className="mb-4">
                           <div className="flex items-center gap-2 mb-3">
                             <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                            <h3 className="text-base font-bold text-gray-900 dark:text-white">Featured Tours</h3>
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('toursPage.featuredTours')}</h3>
                           </div>
                           <div className="space-y-3">
                             {featuredTours.map((tour) => {
@@ -664,7 +668,7 @@ const GuestToursPage = () => {
                                       <span>{tour.duration}h</span>
                                       <span className="text-gray-300 dark:text-gray-600">•</span>
                                       <FaEye className="w-3 h-3" />
-                                      <span>{tour.views || 0} views</span>
+                                      <span>{tour.views || 0} {t('toursPage.views')}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -694,13 +698,13 @@ const GuestToursPage = () => {
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-3">
                           <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                          <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('toursPage.searchAndFilter')}</h3>
                         </div>
 
                         {/* Search Bar */}
                         <div className="mb-3">
                           <Search
-                            placeholder="Search tours..."
+                            placeholder={t('toursPage.searchPlaceholder')}
                             value={searchTerm}
                             onChange={handleSearch}
                             className="w-full"
@@ -713,10 +717,10 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={countryFilter}
                             onChange={handleCountryFilter}
-                            placeholder="All Countries"
-                            label="Country"
+                            placeholder={t('toursPage.allCountries')}
+                            label={t('toursPage.country')}
                             options={[
-                              { value: '', label: 'All Countries' },
+                              { value: '', label: t('toursPage.allCountries') },
                               ...availableCountries.map(country => ({ value: country, label: country }))
                             ]}
                           />
@@ -727,10 +731,10 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={cityFilter}
                             onChange={handleCityFilter}
-                            placeholder="All Cities"
-                            label="City"
+                            placeholder={t('toursPage.allCities')}
+                            label={t('toursPage.city')}
                             options={[
-                              { value: '', label: 'All Cities' },
+                              { value: '', label: t('toursPage.allCities') },
                               ...availableCities
                                 .filter(city => !countryFilter || tours.some(tour => tour.city === city && tour.country === countryFilter))
                                 .map(city => ({ value: city, label: city }))
@@ -744,12 +748,12 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={tourTypeFilter}
                             onChange={handleTourTypeFilter}
-                            placeholder="All Types"
-                            label="Tour Type"
+                            placeholder={t('toursPage.allTypes')}
+                            label={t('toursPage.tourType')}
                             options={[
-                              { value: '', label: 'All Types' },
-                              { value: 'Group', label: 'Group Tours' },
-                              { value: 'VIP', label: 'VIP Tours' }
+                              { value: '', label: t('toursPage.allTypes') },
+                              { value: 'Group', label: t('toursPage.groupTours') },
+                              { value: 'VIP', label: t('toursPage.vipTours') }
                             ]}
                           />
                         </div>
@@ -759,13 +763,13 @@ const GuestToursPage = () => {
                           <SearchableSelect
                             value={durationFilter}
                             onChange={handleDurationFilter}
-                            placeholder="All Durations"
-                            label="Duration"
+                            placeholder={t('toursPage.allDurations')}
+                            label={t('toursPage.duration')}
                             options={[
-                              { value: '', label: 'All Durations' },
-                              { value: '1', label: 'Short (up to 3 hours)' },
-                              { value: '2', label: 'Medium (3-6 hours)' },
-                              { value: '3', label: 'Long (6+ hours)' }
+                              { value: '', label: t('toursPage.allDurations') },
+                              { value: '1', label: t('toursPage.shortDuration') },
+                              { value: '2', label: t('toursPage.mediumDuration') },
+                              { value: '3', label: t('toursPage.longDuration') }
                             ]}
                           />
                         </div>
@@ -778,12 +782,12 @@ const GuestToursPage = () => {
                           className="w-full"
                           icon={FaFilter}
                         >
-                          Clear Filters
+                          {t('toursPage.clearFilters')}
                         </CustomButton>
 
                         {/* Results Count */}
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
-                          Showing page {page} of {totalPages} ({totalTours} tours total)
+                          {t('toursPage.showingPage')} {page} {t('toursPage.of')} {totalPages} ({totalTours} {t('toursPage.toursTotal')})
                         </div>
                       </div>
                       </div>
@@ -808,7 +812,7 @@ const GuestToursPage = () => {
                           <div className="mb-4">
                             <div className="flex items-center gap-2 mb-3">
                               <FaEye className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Featured Tours</h3>
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('toursPage.featuredTours')}</h3>
                             </div>
                             <div className="space-y-3">
                               {featuredTours.map((tour) => {
@@ -838,7 +842,7 @@ const GuestToursPage = () => {
                                         <span>{tour.duration}h</span>
                                         <span className="text-gray-300 dark:text-gray-600">•</span>
                                         <FaEye className="w-3 h-3" />
-                                        <span>{tour.views || 0} views</span>
+                                        <span>{tour.views || 0} {t('toursPage.views')}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -886,7 +890,7 @@ const GuestToursPage = () => {
                       }`}
                       aria-label="Previous page"
                     >
-                      <FaAngleLeft className="w-4 h-4" />
+                      {isRTL ? <FaAngleRight className="w-4 h-4" /> : <FaAngleLeft className="w-4 h-4" />}
                     </button>
 
                     {/* Page Numbers - Sliding Window */}
@@ -931,18 +935,18 @@ const GuestToursPage = () => {
                       }`}
                       aria-label="Next page"
                     >
-                      <FaAngleRight className="w-4 h-4" />
+                      {isRTL ? <FaAngleLeft className="w-4 h-4" /> : <FaAngleRight className="w-4 h-4" />}
                     </button>
                   </div>
                 )}
               </>
             ) : (
               <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl shadow-md">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Tours Available</h3>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('toursPage.noToursAvailable')}</h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   {searchTerm || countryFilter || cityFilter || durationFilter || tourTypeFilter
-                    ? 'No tours match your current filters. Try adjusting your search criteria.'
-                    : 'Please check back later for our latest tour offerings.'}
+                    ? t('toursPage.noToursFiltered')
+                    : t('toursPage.noToursYet')}
                 </p>
               </div>
             )}

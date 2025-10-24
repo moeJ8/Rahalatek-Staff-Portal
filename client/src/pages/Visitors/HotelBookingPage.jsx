@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   FaHotel,
   FaBed,
@@ -19,6 +20,8 @@ import ContactForm from '../../components/ContactForm';
 import FloatingContactButtons from '../../components/FloatingContactButtons';
 
 export default function HotelBookingPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [activeFaqIndex, setActiveFaqIndex] = useState(null);
 
   const toggleFaq = (index) => {
@@ -128,46 +131,46 @@ export default function HotelBookingPage() {
   const features = [
     {
       icon: FaHotel,
-      title: 'Wide Selection of Hotels',
-      description: 'From luxury 5-star resorts to budget-friendly accommodations, we offer a diverse range of hotels across Turkey to suit every traveler\'s needs and budget.',
+      titleKey: 'hotelBookingPage.features.items.0.title',
+      descriptionKey: 'hotelBookingPage.features.items.0.description',
       color: 'blue'
     },
     {
       icon: FaBed,
-      title: 'Quality Accommodations',
-      description: 'All our partner hotels are carefully selected and regularly inspected to ensure the highest standards of comfort, cleanliness, and service quality.',
+      titleKey: 'hotelBookingPage.features.items.1.title',
+      descriptionKey: 'hotelBookingPage.features.items.1.description',
       color: 'teal'
     },
     {
       icon: FaConciergeBell,
-      title: 'Premium Services',
-      description: 'Enjoy exceptional services including room service, concierge assistance, and 24/7 support to make your stay comfortable and memorable.',
+      titleKey: 'hotelBookingPage.features.items.2.title',
+      descriptionKey: 'hotelBookingPage.features.items.2.description',
       color: 'purple'
     },
     {
       icon: FaWifi,
-      title: 'Modern Amenities',
-      description: 'Free Wi-Fi, air conditioning, modern bathrooms, flat-screen TVs, and all the amenities you need for a comfortable stay.',
+      titleKey: 'hotelBookingPage.features.items.3.title',
+      descriptionKey: 'hotelBookingPage.features.items.3.description',
       color: 'green'
     },
     {
       icon: FaSwimmingPool,
-      title: 'Exclusive Facilities',
-      description: 'Access to swimming pools, fitness centers, spa facilities, and recreational areas to enhance your vacation experience.',
+      titleKey: 'hotelBookingPage.features.items.4.title',
+      descriptionKey: 'hotelBookingPage.features.items.4.description',
       color: 'orange'
     },
     {
       icon: FaUtensils,
-      title: 'Dining Options',
-      description: 'Enjoy delicious meals with breakfast included, multiple restaurant options, and special dietary accommodations available.',
+      titleKey: 'hotelBookingPage.features.items.5.title',
+      descriptionKey: 'hotelBookingPage.features.items.5.description',
       color: 'red'
     }
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-950 min-h-screen">
+    <div className="bg-white dark:bg-slate-950 min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero Section */}
-      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6">
+      <div className="relative h-[40vh] sm:h-[45vh] md:h-[60vh] overflow-hidden -mt-6" dir="ltr">
         <div className="absolute inset-0 w-full h-full">
           <img
             src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop&q=95"
@@ -181,10 +184,10 @@ export default function HotelBookingPage() {
         <div className="absolute inset-0 flex items-center justify-center text-center z-10">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight" style={{ fontFamily: 'Jost, sans-serif' }}>
-              Your Perfect Stay with Rahalatek
+              {t('hotelBookingPage.hero.title')}
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-100 font-medium max-w-3xl mx-auto leading-relaxed">
-              Book premium hotels across Türkiye and other countries with the best prices and exceptional service
+              {t('hotelBookingPage.hero.subtitle')}
             </p>
           </div>
         </div>
@@ -197,50 +200,50 @@ export default function HotelBookingPage() {
             onClick={() => document.getElementById('overview')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Overview
+            {t('hotelBookingPage.nav.overview')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            <span className="hidden sm:inline">Why Choose Us</span>
-            <span className="inline sm:hidden">Why Us</span>
+            <span className="hidden sm:inline">{t('hotelBookingPage.nav.whyChooseUsFull')}</span>
+            <span className="inline sm:hidden">{t('hotelBookingPage.nav.whyChooseUsShort')}</span>
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('hotels')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Hotels
+            {t('hotelBookingPage.nav.hotels')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Pricing
+            {t('hotelBookingPage.nav.pricing')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('included')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            What's Included
+            {t('hotelBookingPage.nav.included')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            Contact
+            {t('hotelBookingPage.nav.contact')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
           <button 
             onClick={() => document.getElementById('faqs')?.scrollIntoView({ behavior: 'smooth' })}
             className="flex-shrink-0 font-medium py-1 sm:py-1.5 md:py-2 px-1.5 sm:px-2 md:px-3 rounded-md sm:rounded-lg transition-all duration-300 relative group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 text-xs sm:text-sm md:text-base whitespace-nowrap"
           >
-            FAQs
+            {t('hotelBookingPage.nav.faqs')}
             <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 w-0 group-hover:w-full"></span>
           </button>
         </div>
@@ -267,13 +270,13 @@ export default function HotelBookingPage() {
             {/* Content */}
             <div className="order-1 lg:order-2">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                Your Gateway to Perfect Accommodations
+                {t('hotelBookingPage.introduction.title')}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-4">
-                Experience unparalleled comfort and luxury with our carefully curated hotel selection across Türkiye. From the historic charm of Istanbul to the sun-kissed beaches of Antalya, from the fairy-tale landscapes of Cappadocia to the pristine mountains of Trabzon, we offer premium accommodations that cater to every traveler's dream.
+                {t('hotelBookingPage.introduction.paragraph1')}
               </p>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base">
-                Our extensive portfolio features handpicked hotels ranging from elegant 3-star comfort to opulent 5-star luxury resorts. Whether you're planning a romantic getaway, a family vacation, or a business trip, our hotel booking service ensures you find the perfect accommodation that matches your preferences, budget, and travel style, all backed by competitive prices and exceptional customer service.
+                {t('hotelBookingPage.introduction.paragraph2')}
               </p>
             </div>
           </div>
@@ -282,44 +285,44 @@ export default function HotelBookingPage() {
         {/* What is Hotel Booking Service Section */}
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">
-            What is Our Hotel Booking Service?
+            {t('hotelBookingPage.hotelService.title')}
           </h2>
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-6 text-center">
-            Our hotel booking service from Rahalatek is your complete accommodation solution in Turkey, offering seamless reservations at carefully selected hotels that meet the highest standards of quality, comfort, and hospitality. We handle every aspect of your hotel stay, from finding the perfect room to arranging special requests, ensuring a stress-free and memorable experience.
+            {t('hotelBookingPage.hotelService.description')}
           </p>
           
           <div className="mb-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-              What we provide:
+              {t('hotelBookingPage.hotelService.weProvide')}
             </h3>
             <ul className="space-y-3 text-gray-700 dark:text-gray-300 text-sm sm:text-base">
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Carefully selected 3, 4, and 5-star hotels across all major Turkish cities</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.0')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Multiple room types to suit solo travelers, couples, families, and groups</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.1')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Flexible booking options with breakfast included or room-only arrangements</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.2')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Airport transfer services with comfortable vehicles (Vito, Sprinter, or Bus options)</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.3')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Seasonal pricing with special rates and exclusive deals throughout the year</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.4')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>Family-friendly policies with special rates for children under 6 and ages 6-12</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.5')}</span>
               </li>
               <li className="flex gap-3 items-start">
-                <FaCircle className="w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2" />
-                <span>24/7 customer support in Arabic and English for your convenience</span>
+                <FaCircle className={`w-2 h-2 text-blue-600 dark:text-yellow-400 flex-shrink-0 mt-2 ${isRTL ? 'mr-0 ml-3' : ''}`} />
+                <span>{t('hotelBookingPage.hotelService.services.6')}</span>
               </li>
             </ul>
           </div>
@@ -338,7 +341,7 @@ export default function HotelBookingPage() {
         <div id="features" className="scroll-mt-24"></div>
         <section className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
-            Why Choose Our Hotel Booking Service
+            {t('hotelBookingPage.features.title')}
           </h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -350,15 +353,15 @@ export default function HotelBookingPage() {
                   
                   return (
                     <div key={index} className="flex items-start gap-4">
-                      <div className="flex-shrink-0 mt-1">
+                      <div className={`flex-shrink-0 mt-1 ${isRTL ? 'mr-0 ml-4' : ''}`}>
                         <Icon className="w-5 h-5 text-blue-600 dark:text-yellow-400" />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                          {feature.title}
+                          {t(feature.titleKey)}
                         </h3>
                         <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
-                          {feature.description}
+                          {t(feature.descriptionKey)}
                         </p>
                       </div>
                     </div>
@@ -382,7 +385,7 @@ export default function HotelBookingPage() {
 
       {/* Featured Hotels Section */}
       <div id="hotels" className="scroll-mt-24"></div>
-      <div>
+      <div dir="ltr">
         <FeaturedHotels />
       </div>
 
@@ -391,11 +394,11 @@ export default function HotelBookingPage() {
       <section className="py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Hotel Pricing & Packages
+            {t('hotelBookingPage.pricing.title')}
           </h2>
           
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-8 text-center">
-            Our hotel packages are designed to offer exceptional value with flexible pricing options to match every budget. All rates include taxes and are available in multiple currencies (USD, EUR, TRY) with seasonal variations for the best deals.
+            {t('hotelBookingPage.pricing.intro')}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
@@ -404,28 +407,28 @@ export default function HotelBookingPage() {
               {/* Budget Hotels */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  1. Budget Hotels (3-Star)
+                  {t('hotelBookingPage.pricing.budget.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>From $45-$70</strong> per night per room</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('hotelBookingPage.pricing.budget.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Comfortable rooms with essential amenities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.budget.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Daily breakfast included in most properties</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.budget.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Free Wi-Fi and air conditioning</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.budget.features.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Central locations near major attractions</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.budget.features.4')}</span>
                   </li>
                 </ul>
               </div>
@@ -433,28 +436,28 @@ export default function HotelBookingPage() {
               {/* Standard Hotels */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  2. Standard Hotels (4-Star)
+                  {t('hotelBookingPage.pricing.standard.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>From $80-$140</strong> per night per room</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('hotelBookingPage.pricing.standard.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Superior rooms with premium amenities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.standard.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Full breakfast buffet with international options</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.standard.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Swimming pool and fitness facilities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.standard.features.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Restaurant and room service available</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.standard.features.4')}</span>
                   </li>
                 </ul>
               </div>
@@ -462,32 +465,32 @@ export default function HotelBookingPage() {
               {/* Luxury Hotels */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  3. Luxury Hotels (5-Star)
+                  {t('hotelBookingPage.pricing.luxury.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span><strong>From $150-$400+</strong> per night per room</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span dangerouslySetInnerHTML={{ __html: t('hotelBookingPage.pricing.luxury.features.0') }}></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Luxurious suites with stunning views</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.luxury.features.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Gourmet dining and exclusive breakfast options</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.luxury.features.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Full-service spa, multiple pools, and beach access</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.luxury.features.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Concierge services and exclusive amenities</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.luxury.features.4')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>VIP airport transfers included</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.pricing.luxury.features.5')}</span>
                   </li>
                 </ul>
               </div>
@@ -506,7 +509,7 @@ export default function HotelBookingPage() {
           {/* Note */}
           <div className="mt-6">
             <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed">
-              <strong className="text-blue-600 dark:text-yellow-400">Note:</strong> Prices vary by season, location, and room type. Monthly pricing variations available (June-August peak season, December-January winter rates). We offer special group discounts, extended stay rates, and early booking promotions. Children under 6 stay free in most hotels, ages 6-12 enjoy reduced rates.
+              <strong className="text-blue-600 dark:text-yellow-400">{t('hotelBookingPage.pricing.note.label')}</strong> {t('hotelBookingPage.pricing.note.text')}
             </p>
           </div>
         </div>
@@ -517,11 +520,11 @@ export default function HotelBookingPage() {
       <section className="py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            What's Included in Your Hotel Booking?
+            {t('hotelBookingPage.included.title')}
           </h2>
           
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base mb-8 text-center">
-            When you book a hotel through Rahalatek, you receive a comprehensive package that covers all essential services and amenities for a comfortable and worry-free stay in Turkey.
+            {t('hotelBookingPage.included.intro')}
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
@@ -530,24 +533,24 @@ export default function HotelBookingPage() {
               {/* Before Your Arrival */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  1. Before Your Arrival
+                  {t('hotelBookingPage.included.beforeArrival.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Personalized consultation to select the perfect hotel for your needs</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.beforeArrival.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Detailed hotel information with photos, amenities, and location details</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.beforeArrival.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Confirmed reservation with booking confirmation number</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.beforeArrival.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Pre-arrival communication about check-in procedures</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.beforeArrival.items.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -555,24 +558,24 @@ export default function HotelBookingPage() {
               {/* Airport & Transportation */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  2. Airport & Transportation
+                  {t('hotelBookingPage.included.transportation.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Airport pick-up service with meet & greet</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.transportation.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Comfortable vehicle options: Vito (2-8 passengers), Sprinter (9-16), or Bus</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.transportation.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Professional, licensed drivers with local knowledge</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.transportation.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Return airport transfer for departure</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.transportation.items.3')}</span>
                   </li>
                 </ul>
               </div>
@@ -580,32 +583,32 @@ export default function HotelBookingPage() {
               {/* Room & Amenities */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  3. Room & Amenities
+                  {t('hotelBookingPage.included.roomAmenities.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Choice of room types: Standard, Deluxe, Suite, Family Rooms</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Air conditioning and climate control</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Free high-speed Wi-Fi throughout the property</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Flat-screen TV with satellite channels</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Private bathroom with complimentary toiletries</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.4')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Daily housekeeping service</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.roomAmenities.items.5')}</span>
                   </li>
                 </ul>
               </div>
@@ -613,32 +616,32 @@ export default function HotelBookingPage() {
               {/* Dining & Services */}
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  4. Dining & Additional Services
+                  {t('hotelBookingPage.included.dining.title')}
                 </h3>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Daily breakfast buffet (Turkish and international cuisine)</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.0')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Access to hotel restaurants and bars</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.1')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Swimming pool and fitness center access</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.2')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>24/7 front desk and concierge service</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.3')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>24/7 customer support in Arabic and English</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.4')}</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <FaCheckCircle className="w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0" />
-                    <span>Special assistance for special requests and dietary needs</span>
+                    <FaCheckCircle className={`w-4 h-4 text-blue-600 dark:text-yellow-400 flex-shrink-0 ${isRTL ? 'mr-0 ml-2' : ''}`} />
+                    <span>{t('hotelBookingPage.included.dining.items.5')}</span>
                   </li>
                 </ul>
               </div>
@@ -662,10 +665,10 @@ export default function HotelBookingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Book Your Perfect Hotel in Turkey Now
+              {t('hotelBookingPage.contact.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-3xl mx-auto">
-              Experience the best accommodations in Turkey with premium service and competitive prices. Contact us now to find your ideal hotel.
+              {t('hotelBookingPage.contact.description')}
             </p>
           </div>
 
@@ -682,7 +685,7 @@ export default function HotelBookingPage() {
                   <FaEnvelope className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Email
+                  {t('hotelBookingPage.contact.email')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
                   info@rahalatek.com
@@ -705,10 +708,10 @@ export default function HotelBookingPage() {
                   <FaWhatsapp className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Contact Us Now
+                  {t('hotelBookingPage.contact.contactNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
-                  WhatsApp
+                  {t('hotelBookingPage.contact.whatsapp')}
                 </p>
               </div>
               </a>
@@ -728,10 +731,10 @@ export default function HotelBookingPage() {
                   <FaInstagram className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Follow Us
+                  {t('hotelBookingPage.contact.followUs')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
-                  Instagram
+                  {t('hotelBookingPage.contact.instagram')}
                 </p>
               </div>
               </a>
@@ -749,7 +752,7 @@ export default function HotelBookingPage() {
                   <FaPhone className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Call Us Now
+                  {t('hotelBookingPage.contact.callNow')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 text-base font-medium">
                   +905010684657
@@ -766,10 +769,10 @@ export default function HotelBookingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Get in Touch
+              {t('hotelBookingPage.contactForm.title')}
             </h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm sm:text-base max-w-2xl mx-auto">
-              Have questions about hotel booking? We're here to help you find the perfect accommodation. Send us a message and we'll get back to you as soon as possible.
+              {t('hotelBookingPage.contactForm.description')}
             </p>
           </div>
           
@@ -781,28 +784,28 @@ export default function HotelBookingPage() {
       <div id="faqs" className="scroll-mt-24"></div>
       <section className="py-8 sm:py-12 bg-white dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">Frequently Asked Questions</h2>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 text-center">{t('hotelBookingPage.faqs.title')}</h2>
           
           <div className="space-y-3 sm:space-y-4">
             {/* FAQ 1 */}
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 0 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(0)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 0}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 0 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  How far in advance should I book a hotel?
+                  {t('hotelBookingPage.faqs.items.0.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 0 
@@ -819,7 +822,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  We recommend booking hotels at least 1-2 weeks in advance to secure the best rates and room availability, especially during peak season (June-August) and major holidays. However, Rahalatek can also accommodate last-minute bookings based on hotel availability. Early booking often comes with special discounts and more room type options.
+                  {t('hotelBookingPage.faqs.items.0.answer')}
                 </div>
               </div>
             </div>
@@ -828,21 +831,21 @@ export default function HotelBookingPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 1 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(1)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 1}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 1 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Is breakfast included in the hotel price?
+                  {t('hotelBookingPage.faqs.items.1.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 1 
@@ -859,7 +862,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Most of our hotel packages include daily breakfast buffet with Turkish and international options. The breakfast inclusion is clearly mentioned in the hotel description. Some budget hotels may offer room-only rates, which we can customize based on your preference. We always specify what's included when providing pricing.
+                  {t('hotelBookingPage.faqs.items.1.answer')}
                 </div>
               </div>
             </div>
@@ -868,21 +871,21 @@ export default function HotelBookingPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 2 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(2)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 2}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 2 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Can I cancel or modify my hotel reservation?
+                  {t('hotelBookingPage.faqs.items.2.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 2 
@@ -899,7 +902,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Yes, cancellation and modification policies vary by hotel and booking type. Most hotels offer free cancellation up to 24-72 hours before check-in. Some promotional rates may have stricter cancellation policies. We always inform you of the specific cancellation policy before confirming your booking, and our team is available to assist with any changes to your reservation.
+                  {t('hotelBookingPage.faqs.items.2.answer')}
                 </div>
               </div>
             </div>
@@ -908,21 +911,21 @@ export default function HotelBookingPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 3 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(3)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 3}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 3 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Do children stay free at hotels?
+                  {t('hotelBookingPage.faqs.items.3.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 3 
@@ -939,7 +942,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Most hotels in our selection offer free accommodation for children under 6 years old when sharing the same room with parents. Children aged 6-12 typically receive a 50% discount. These family-friendly policies apply when using existing beds. Extra beds or cribs can be arranged for an additional fee. Specific policies vary by hotel, and we'll provide exact details when booking.
+                  {t('hotelBookingPage.faqs.items.3.answer')}
                 </div>
               </div>
             </div>
@@ -948,21 +951,21 @@ export default function HotelBookingPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 4 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(4)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 4}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 4 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  Is airport transfer included with hotel booking?
+                  {t('hotelBookingPage.faqs.items.4.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 4 
@@ -979,7 +982,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Airport transfer is included with 5-star luxury hotel bookings. For 3-star and 4-star hotels, airport transfer can be added to your package at competitive rates. We offer comfortable vehicle options including Vito (2-8 passengers), Sprinter (9-16 passengers), and luxury buses for larger groups. All transfers include meet & greet service with professional drivers.
+                  {t('hotelBookingPage.faqs.items.4.answer')}
                 </div>
               </div>
             </div>
@@ -988,21 +991,21 @@ export default function HotelBookingPage() {
             <div 
               className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${
                 activeFaqIndex === 5 
-                  ? 'shadow-md border-l-4 border-l-blue-500 dark:border-l-yellow-400' 
-                  : 'hover:shadow-md hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'
+                  ? `shadow-md ${isRTL ? 'border-r-4 border-r-blue-500 dark:border-r-yellow-400' : 'border-l-4 border-l-blue-500 dark:border-l-yellow-400'}` 
+                  : `hover:shadow-md ${isRTL ? 'hover:border-r-4 hover:border-r-blue-500 dark:hover:border-r-yellow-400' : 'hover:border-l-4 hover:border-l-blue-500 dark:hover:border-l-yellow-400'}`
               }`}
             >
               <button
                 onClick={() => toggleFaq(5)}
-                className="flex justify-between items-center w-full px-4 sm:px-6 py-5 text-left transition-colors duration-200"
+                className={`flex justify-between items-center w-full px-4 sm:px-6 py-5 transition-colors duration-200 ${isRTL ? 'text-right' : 'text-left'}`}
                 aria-expanded={activeFaqIndex === 5}
               >
-                <h3 className={`font-semibold text-base sm:text-lg flex-grow pr-3 ${
+                <h3 className={`font-semibold text-base sm:text-lg flex-grow ${isRTL ? 'pl-3' : 'pr-3'} ${
                   activeFaqIndex === 5 
                     ? 'text-blue-700 dark:text-yellow-300' 
                     : 'text-gray-800 dark:text-gray-100'
                 }`}>
-                  What payment methods do you accept?
+                  {t('hotelBookingPage.faqs.items.5.question')}
                 </h3>
                 <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-300 ${
                   activeFaqIndex === 5 
@@ -1019,7 +1022,7 @@ export default function HotelBookingPage() {
                 }`}
               >
                 <div className="px-4 sm:px-6 py-5 border-t border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  We accept multiple payment methods for your convenience: bank transfer, credit/debit cards (Visa, Mastercard), and cash payment in USD, EUR, or Turkish Lira. Payment can be made in advance to secure your booking or at the hotel upon check-in, depending on the hotel's policy. We provide secure payment processing and detailed receipts for all transactions.
+                  {t('hotelBookingPage.faqs.items.5.answer')}
                 </div>
               </div>
             </div>

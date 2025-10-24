@@ -1,40 +1,43 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const BranchesSection = () => {
+  const { t } = useTranslation();
+  
   const branches = [
     {
       id: 1,
-      country: 'Saudi Arabia',
+      country: t('aboutPage.branches.countries.saudiArabia'),
       countryCode: 'SA',
-      city: 'Opening Soon',
+      city: t('aboutPage.branches.openingSoon'),
       status: 'opening'
     },
     {
       id: 2,
-      country: 'Syria',
+      country: t('aboutPage.branches.countries.syria'),
       countryCode: 'SY',
-      city: 'Aleppo',
+      city: t('aboutPage.branches.cities.aleppo'),
       status: 'active'
     },
     {
       id: 3,
-      country: 'Turkey',
+      country: t('aboutPage.branches.countries.turkey'),
       countryCode: 'TR',
-      city: 'Istanbul',
+      city: t('aboutPage.branches.cities.istanbul'),
       status: 'active'
     },
     {
       id: 4,
-      country: 'Morocco',
+      country: t('aboutPage.branches.countries.morocco'),
       countryCode: 'MA',
-      city: 'Tangier',
+      city: t('aboutPage.branches.cities.tangier'),
       status: 'active'
     },
     {
       id: 5,
-      country: 'Kuwait',
+      country: t('aboutPage.branches.countries.kuwait'),
       countryCode: 'KW',
-      city: 'Opening Soon',
+      city: t('aboutPage.branches.openingSoon'),
       status: 'opening'
     }
   ];
@@ -45,10 +48,10 @@ const BranchesSection = () => {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Our Global Presence
+            {t('aboutPage.branches.title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            Serving travelers worldwide from our strategically located branches
+            {t('aboutPage.branches.subtitle')}
           </p>
         </div>
 

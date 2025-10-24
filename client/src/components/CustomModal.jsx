@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import CustomScrollbar from './CustomScrollbar';
+import { useTranslation } from 'react-i18next';
 
 const CustomModal = ({ 
   isOpen, 
@@ -11,6 +12,8 @@ const CustomModal = ({
   className = "",
   maxWidth = "md:max-w-lg"
 }) => {
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [modalEnter, setModalEnter] = useState(false);
 
   useEffect(() => {
@@ -35,8 +38,8 @@ const CustomModal = ({
       <div className={`relative w-full p-4 max-w-md ${maxWidth} ${className}`}>
         <div className={`relative rounded-lg bg-white shadow dark:bg-slate-900 flex flex-col max-h-[85vh] transform transition-all duration-300 overflow-visible ${modalEnter ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
           {/* Header */}
-          <div className="flex items-start justify-between p-3 sm:p-4 border-b rounded-t dark:border-gray-600">
-            <div>
+          <div className={`flex items-start p-3 sm:p-4 border-b rounded-t dark:border-gray-600 ${isRTL ? 'flex-row-reverse' : 'justify-between'}`}>
+            <div className={isRTL ? 'text-right' : 'text-left'}>
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                 {title}
               </h3>
@@ -48,7 +51,7 @@ const CustomModal = ({
             </div>
             <button
               type="button"
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+              className={`text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white ${isRTL ? 'mr-auto' : 'ml-auto'}`}
               onClick={handleClose}
             >
               <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">

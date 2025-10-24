@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const PartnersSection = () => {
+  const { t } = useTranslation();
   const scrollRef = useRef(null);
 
   const partners = [
@@ -94,10 +96,10 @@ const PartnersSection = () => {
         {/* Section Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Our Partners
+            {t('home.partners.title')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            Trusted by leading brands worldwide
+            {t('home.partners.subtitle')}
           </p>
         </div>
 

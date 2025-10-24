@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PackageCard from './PackageCard';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
 import axios from 'axios';
 
 const FeaturedPackages = () => {
+  const { t } = useTranslation();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,7 +97,7 @@ const FeaturedPackages = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Discover Our Programs
+              {t('home.packages.title')}
             </h2>
           </div>
           <div className="flex justify-center">
@@ -112,7 +114,7 @@ const FeaturedPackages = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Discover Our Programs
+              {t('home.packages.title')}
             </h2>
             <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
@@ -131,7 +133,7 @@ const FeaturedPackages = () => {
         {/* Section Header */}
         <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Discover Our Programs
+            {t('home.packages.title')}
           </h2>
         </div>
 

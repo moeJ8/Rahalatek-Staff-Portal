@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaUsers, FaMapMarkedAlt, FaHotel, FaGlobe } from 'react-icons/fa';
 
 const Statistics = () => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef(null);
 
@@ -11,7 +13,7 @@ const Statistics = () => {
       icon: FaUsers,
       count: 2000,
       suffix: '+',
-      label: 'Happy Travelers',
+      label: t('aboutPage.statistics.happyTravelers'),
       color: 'from-blue-500 to-cyan-500'
     },
     {
@@ -19,7 +21,7 @@ const Statistics = () => {
       icon: FaMapMarkedAlt,
       count: 500,
       suffix: '+',
-      label: 'Tours Conducted',
+      label: t('aboutPage.statistics.toursConducted'),
       color: 'from-purple-500 to-pink-500'
     },
     {
@@ -27,7 +29,7 @@ const Statistics = () => {
       icon: FaHotel,
       count: 200,
       suffix: '+',
-      label: 'Hotel Partners',
+      label: t('aboutPage.statistics.hotelPartners'),
       color: 'from-green-500 to-emerald-500'
     }
   ];
@@ -210,10 +212,10 @@ const Statistics = () => {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white dark:text-white mb-4">
-            Our Achievements in Numbers
+            {t('aboutPage.statistics.title')}
           </h2>
           <p className="text-lg text-blue-100 dark:text-gray-400 max-w-2xl mx-auto">
-            Proud milestones that reflect our commitment to excellence
+            {t('aboutPage.statistics.subtitle')}
           </p>
         </div>
 
@@ -249,8 +251,7 @@ const Statistics = () => {
         {/* Additional Info */}
         <div className="mt-12 text-center">
           <p className="text-blue-100 dark:text-gray-400 text-lg max-w-3xl mx-auto">
-            These numbers represent more than just statistics – they represent thousands of smiles, 
-            unforgettable memories, and journeys that have touched hearts around the world.
+            {t('aboutPage.statistics.additionalInfo')}
           </p>
         </div>
       </div>

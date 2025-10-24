@@ -1,0 +1,1952 @@
+{
+    "header": {
+      "home": "Ana Sayfa",
+      "hotels": "Oteller",
+      "tours": "Turlar",
+      "packages": "Paketler",
+      "blog": "Blog",
+      "contact": "İletişim",
+      "about": "Hakkımızda",
+      "signIn": "Giriş Yap",
+      "dashboard": "Kontrol Paneli",
+      "booking": "Rezervasyon",
+      "vouchers": "Voucher'lar",
+      "profile": "Profil",
+      "attendance": "Yoklama",
+      "calendar": "Takvim",
+      "logout": "Çıkış",
+      "publicPages": "Genel Sayfalar",
+      "more": "Daha Fazla",
+      "theme": "Tema"
+    },
+    "search": {
+      "placeholder": "Destinasyonlar, oteller, turlar, yazılar ara...",
+      "placeholderMobile": "Destinasyonlar, oteller, yazılar ara...",
+      "title": "Destinasyonlar, oteller, turlar ve daha fazlasını ara",
+      "searchResults": "Arama Sonuçları",
+      "search": "Ara",
+      "loading": "Yükleniyor...",
+      "searching": "Aranıyor...",
+      "startTyping": "Aramak için yazmaya başlayın",
+      "discoverFull": "Otelleri, turları, paketleri ve destinasyonları keşfedin",
+      "discoverMobile": "Muhteşem otelleri, turları ve destinasyonları keşfedin",
+      "noResults": "Sonuç bulunamadı",
+      "tryDifferent": "Farklı anahtar kelimeler deneyin veya destinasyonlarımıza göz atın",
+      "tryDifferentMobile": "Farklı anahtar kelimeler deneyin veya destinasyonlara göz atın",
+      "found": "bulundu",
+      "result": "sonuç",
+      "results": "sonuçlar",
+      "hotel": "Otel",
+      "tour": "Tur",
+      "package": "Paket",
+      "blogPost": "Blog Yazısı",
+      "city": "Şehir",
+      "country": "Ülke",
+      "stars": "Yıldız",
+      "days": "Gün",
+      "toursCount": "tur",
+      "hotelsCount": "otel",
+      "exploreDestinations": "Destinasyonları keşfedin"
+    },
+    "home": {
+      "destinations": {
+        "title": "Destinasyonlarımızı Keşfedin",
+        "subtitle": "İnanılmaz ülkeleri keşfedin ve unutulmaz anılar yaratın"
+      },
+      "services": {
+        "title": "Hizmetlerimiz",
+        "subtitle": "Geniş premium turizm hizmetleri yelpazemizi keşfedin"
+      },
+      "packages": {
+        "title": "Programlarımızı Keşfedin"
+      },
+      "hotels": {
+        "title": "Öne Çıkan Oteller",
+        "viewAll": "Tüm Otelleri Görüntüle"
+      },
+      "tours": {
+        "title": "Öne Çıkan Turlar",
+        "viewAll": "Tüm Turları Görüntüle"
+      },
+      "blog": {
+        "title": "Son Yazılar",
+        "viewAll": "Tüm Yazıları Görüntüle"
+      },
+      "youtube": {
+        "title": "YouTube Shorts",
+        "scrollHint": "Daha fazlası için kaydırın",
+        "watchOnYoutube": "YouTube'da İzle",
+        "close": "Kapat"
+      },
+      "partners": {
+        "title": "Partnerlerimiz",
+        "subtitle": "Dünya çapında önde gelen markalar tarafından güvenilir"
+      }
+    },
+    "hotelsPage": {
+      "title": "Otellerimiz",
+      "subtitle": "Premium otellerimiz ve konaklama seçeneklerimiz koleksiyonunu keşfedin",
+      "searchPlaceholder": "İsim, şehir veya açıklamaya göre ara...",
+      "filterByStars": "Yıldıza Göre Filtrele",
+      "filterByCountry": "Ülkeye Göre Filtrele",
+      "filterByCity": "Şehre Göre Filtrele",
+      "clearFilters": "Filtreleri Temizle",
+      "star": "Yıldız",
+      "stars": "Yıldız",
+      "showingPage": "Sayfa gösteriliyor",
+      "of": "/",
+      "hotelsTotal": "toplam otel",
+      "noHotelsFound": "Otel bulunamadı",
+      "noHotelsAvailable": "Uygun Otel Yok",
+      "checkBackLater": "Lütfen en son otel tekliflerimiz için daha sonra tekrar kontrol edin."
+    },
+    "packagesPage": {
+      "title": "Seyahat Paketleri",
+      "filters": "Filtreler",
+      "active": "Aktif",
+      "recentPackages": "Son Paketler",
+      "searchAndFilter": "Ara ve Filtrele",
+      "searchPlaceholder": "Paket ara...",
+      "country": "Ülke",
+      "allCountries": "Tüm Ülkeler",
+      "city": "Şehir",
+      "allCities": "Tüm Şehirler",
+      "targetAudience": "Hedef Kitle",
+      "allAudiences": "Tüm Kitleler",
+      "family": "Aile",
+      "couples": "Çiftler",
+      "soloTravelers": "Solo Gezginler",
+      "groups": "Gruplar",
+      "business": "İş",
+      "luxury": "Lüks",
+      "budget": "Ekonomik",
+      "duration": "Süre",
+      "anyDuration": "Herhangi Bir Süre",
+      "shortDuration": "Kısa (3 güne kadar)",
+      "mediumDuration": "Orta (4-7 gün)",
+      "longDuration": "Uzun (8+ gün)",
+      "clearFilters": "Filtreleri Temizle",
+      "showingPage": "Sayfa gösteriliyor",
+      "of": "/",
+      "packagesTotal": "toplam paket",
+      "noPackagesFound": "Paket bulunamadı",
+      "day": "gün",
+      "days": "gün",
+      "noPackagesFoundTitle": "Paket Bulunamadı",
+      "noPackagesFoundMessage": "Mevcut filtrelerinize uygun paket yok. Arama kriterlerinizi ayarlamayı deneyin."
+    },
+    "toursPage": {
+      "title": "Turlarımız",
+      "subtitle": "Heyecan verici rehberli tur ve deneyimler koleksiyonumuzu keşfedin",
+      "filters": "Filtreler",
+      "active": "Aktif",
+      "featuredTours": "Öne Çıkan Turlar",
+      "searchAndFilter": "Ara ve Filtrele",
+      "searchPlaceholder": "Tur ara...",
+      "country": "Ülke",
+      "allCountries": "Tüm Ülkeler",
+      "city": "Şehir",
+      "allCities": "Tüm Şehirler",
+      "tourType": "Tur Tipi",
+      "allTypes": "Tüm Tipler",
+      "groupTours": "Grup Turları",
+      "vipTours": "VIP Turlar",
+      "duration": "Süre",
+      "allDurations": "Tüm Süreler",
+      "shortDuration": "Kısa (3 saate kadar)",
+      "mediumDuration": "Orta (3-6 saat)",
+      "longDuration": "Uzun (6+ saat)",
+      "clearFilters": "Filtreleri Temizle",
+      "showingPage": "Sayfa gösteriliyor",
+      "of": "/",
+      "toursTotal": "toplam tur",
+      "highlights": "Öne Çıkanlar:",
+      "contactForPricing": "Fiyat için iletişime geçin",
+      "views": "görüntülenme",
+      "noToursAvailable": "Uygun Tur Yok",
+      "noToursFiltered": "Mevcut filtrelerinize uygun tur yok. Arama kriterlerinizi ayarlamayı deneyin.",
+      "noToursYet": "Lütfen en son tur tekliflerimiz için daha sonra tekrar kontrol edin."
+    },
+    "blogPage": {
+      "title": "Rahalatek Blog",
+      "filters": "Filtreler",
+      "active": "Aktif",
+      "recentPostsAndTags": "Son Yazılar ve Etiketler",
+      "searchAndFilter": "Ara ve Filtrele",
+      "searchPlaceholder": "Blog ara...",
+      "allCategories": "Tüm Kategoriler",
+      "category": "Kategori",
+      "allTags": "Tüm Etiketler",
+      "tag": "Etiket",
+      "mostPopularPosts": "En Popüler Yazılar",
+      "clearFilters": "Filtreleri Temizle",
+      "showingPage": "Sayfa gösteriliyor",
+      "of": "/",
+      "blogsTotal": "toplam blog",
+      "recentPosts": "Son Yazılar",
+      "popularTags": "Popüler Etiketler",
+      "featuredPosts": "Öne Çıkan Yazılar",
+      "readArticle": "Makaleyi Oku",
+      "min": "dk",
+      "noBlogsFound": "Blog Bulunamadı",
+      "noBlogsMessage": "Mevcut filtrelerinize uygun blog yok. Arama kriterlerinizi ayarlamayı deneyin."
+    },
+    "contactPage": {
+      "title": "İletişime Geçin",
+      "subtitle": "Turlarımız, otellerimiz veya paketlerimiz hakkında sorularınız mı var? Mükemmel yolculuğunuzu planlamanıza yardımcı olmak için buradayız.",
+      "contactInformation": "İletişim Bilgileri",
+      "contactDescription": "Aşağıdaki kanallardan biriyle bize ulaşın. Seyahat ihtiyaçlarınızda size yardımcı olmak için hazırız.",
+      "phone": "Bizi Arayın",
+      "whatsapp": "WhatsApp",
+      "email": "E-posta",
+      "instagram": "Instagram",
+      "followYoutube": "YouTube'da Bizi Takip Edin",
+      "youtubeDescription": "Seyahat ipuçları, destinasyon rehberleri ve özel tur öne çıkanları için kanalımıza abone olun!"
+    },
+    "contactForm": {
+      "title": "Bize Mesaj Gönderin",
+      "subtitle": "Sorularınız mı var? Sizden haber almak isteriz!",
+      "yourName": "Adınız",
+      "namePlaceholder": "Adınızı girin",
+      "emailAddress": "E-posta Adresi",
+      "emailPlaceholder": "E-postanızı girin",
+      "subject": "Konu",
+      "subjectPlaceholder": "Tur sorgusu, rezervasyon talebi, seyahat danışmanlığı vb.",
+      "message": "Mesaj",
+      "messagePlaceholder": "Seyahat planlarınız, tur tercihleriniz veya hizmetlerimiz hakkında sorularınız hakkında bize bilgi verin...",
+      "sending": "Gönderiliyor...",
+      "sendMessage": "Mesaj Gönder",
+      "inquiryAbout": "Hakkında soru",
+      "validationError": "Lütfen tüm gerekli alanları doğru şekilde doldurun",
+      "invalidEmail": "Lütfen geçerli bir e-posta adresi girin",
+      "successMessage": "Mesaj başarıyla gönderildi! Yakında size geri döneceğiz.",
+      "errorMessage": "Mesaj gönderilemedi. Lütfen tekrar deneyin."
+    },
+    "aboutPage": {
+      "companyStory": {
+        "title": "Hikayemiz",
+        "subtitle": "Unutulmaz seyahat deneyimleri yaratma tutkusu ve özveriyle başlayan bir yolculuk",
+        "imageOverlay": "Olağanüstü Hizmet, Unutulmaz Yolculuklar",
+        "paragraph1": "Gezginleri Türkiye'nin ve ötesinin zengin kültürel mirasıyla ve nefes kesici manzaralarıyla buluşturma vizyonuyla kurulan",
+        "rahalatek": "Rahalatek",
+        "paragraph1End": "mütevazı başlangıçlardan turizm sektöründe güvenilir bir isme dönüştü.",
+        "paragraph2": "İstanbul'da küçük bir operasyon olarak başlayan şirket, dünyanın dört bir yanından binlerce memnun gezgine hizmet veren kapsamlı bir seyahat hizmeti sağlayıcısına dönüştü. Mükemmellik ve kişiselleştirilmiş hizmete olan bağlılığımız, bizi otantik ve unutulmaz deneyimler arayan turistler için tercih edilen bir seçenek haline getirdi.",
+        "paragraph3": "Bugün, birden fazla ülkede faaliyet gösteriyor, lüks otel rezervasyonlarından uzman rehberli turlara kadar çeşitli hizmetler sunuyoruz, tüm bunları başlangıçtan beri ayırt edici özelliğimiz olan kişisel dokunuşu koruyarak yapıyoruz."
+      },
+      "missionVision": {
+        "mission": "Misyonumuz",
+        "missionText": "Kalıcı anılar yaratan olağanüstü seyahat deneyimleri sunmak, gezginleri Türkiye'nin ve ötesinin zengin kültürel mirası, doğal güzelliği ve sıcak misafirperverliğiyle buluşturmak. Her yolculuğu kusursuz, zenginleştirici ve unutulmaz kılmaya çalışıyoruz.",
+        "vision": "Vizyonumuz",
+        "visionText": "Mükemmellik, yenilik ve kişiselleştirilmiş hizmete olan bağlılığımızla küresel olarak tanınan önde gelen seyahat acentesi olmak. Her gezginin, özenle düzenlenmiş yolculuklarımız ve memnuniyetlerine olan sarsılmaz bağlılığımız sayesinde keşfin büyüsünü deneyimlediği bir dünya hayal ediyoruz.",
+        "coreValues": "Temel Değerlerimiz",
+        "coreValuesSubtitle": "Her kararımıza ve eylemimize rehberlik eden ilkeler",
+        "customerFirst": "Müşteri Öncelikli",
+        "customerFirstDesc": "Memnuniyetiniz yaptığımız her şeyde en önemli önceliğimizdir",
+        "qualityService": "Kaliteli Hizmet",
+        "qualityServiceDesc": "Yolculuğunuzun her aşamasında mükemmellik sunuyoruz",
+        "trustTransparency": "Güven ve Şeffaflık",
+        "trustTransparencyDesc": "Dürüstlük ve dürüstlük yoluyla kalıcı ilişkiler kurmak",
+        "safetySecurity": "Güvenlik ve Emniyet",
+        "safetySecurityDesc": "Güvenliğiniz ve konforunuz her zaman garanti altındadır"
+      },
+      "statistics": {
+        "title": "Rakamlarla Başarılarımız",
+        "subtitle": "Mükemmellik taahhüdümüzü yansıtan gurur verici kilometre taşları",
+        "happyTravelers": "Mutlu Gezginler",
+        "toursConducted": "Gerçekleştirilen Turlar",
+        "hotelPartners": "Otel Partnerleri",
+        "additionalInfo": "Bu rakamlar sadece istatistiklerden daha fazlasını temsil ediyor - dünya çapında kalplere dokunan binlerce gülümseme, unutulmaz anı ve yolculuğu temsil ediyorlar."
+      },
+      "branches": {
+        "title": "Küresel Varlığımız",
+        "subtitle": "Stratejik olarak konumlandırılmış şubelerimizden dünya çapında gezginlere hizmet veriyoruz",
+        "openingSoon": "Yakında Açılıyor",
+        "countries": {
+          "saudiArabia": "Suudi Arabistan",
+          "syria": "Suriye",
+          "turkey": "Türkiye",
+          "morocco": "Fas",
+          "kuwait": "Kuveyt"
+        },
+        "cities": {
+          "aleppo": "Halep",
+          "istanbul": "İstanbul",
+          "tangier": "Tanca"
+        }
+      },
+      "whyChooseUs": {
+        "title": "Neden Rahalatek'i Seçmelisiniz?",
+        "subtitle": "Bizi farklı kılan ve dünya çapında binlerce gezginin tercih ettiği seçenek yapan özellikleri keşfedin",
+        "yearsOfExperience": "Yıllarca Deneyim",
+        "yearsOfExperienceDesc": "Unutulmaz seyahat deneyimleri yaratmada on yılı aşkın uzmanlık",
+        "support247": "7/24 Destek",
+        "support247Desc": "Yolculuğunuzun sorunsuz ve endişesiz olmasını sağlamak için kesintisiz yardım",
+        "expertTeam": "Uzman Ekip",
+        "expertTeamDesc": "Destinasyonları hayata geçiren profesyonel çok dilli rehberler",
+        "bestPrices": "En İyi Fiyatlar",
+        "bestPricesDesc": "Kalite ve hizmetten ödün vermeden rekabetçi fiyatlar",
+        "tailoredPackages": "Özel Paketler",
+        "tailoredPackagesDesc": "Özellikle tercihlerinize göre tasarlanmış özelleştirilmiş güzergahlar",
+        "safetyFirst": "Güvenlik Öncelikli",
+        "safetyFirstDesc": "Güvenliğiniz ve emniyetiniz en yüksek önceliklerimizdir",
+        "experienceTitle": "Farkı Deneyimleyin",
+        "experienceText": "Mükemmel yolculuklarını yaratmak için bize güvenen binlerce memnun gezgine katılın",
+        "startPlanning": "Seyahatinizi Planlamaya Başlayın",
+        "viewPackages": "Paketlerimizi Görüntüleyin"
+      },
+      "clientReviews": {
+        "title": "Müşteri Yorumları",
+        "subtitle": "Müşterilerimizin Rahalatek ile ilgili deneyimleri hakkında söylediklerini duyun",
+        "review": "Yorum",
+        "scrollHint": "Daha fazlası için kaydırın",
+        "noReviews": "Şu anda müşteri yorumu mevcut değil.",
+        "watchOnYoutube": "YouTube'da İzle",
+        "close": "Kapat"
+      },
+      "cta": {
+        "badge": "✈️ Maceranıza Bugün Başlayın",
+        "title1": "Unutulmaz Anılar",
+        "title2": "Yaratmaya Hazır mısınız?",
+        "description": "Sizin için mükemmel yolculuğu hazırlayalım. Nefes kesici destinasyonlardan olağanüstü hizmete kadar, hayalinizdeki tatil sadece bir tık uzağınızda.",
+        "getStarted": "Hemen Başlayın",
+        "explorePackages": "Paketleri Keşfedin",
+        "reachUs": "Veya bize doğrudan ulaşın:",
+        "whatsapp": "WhatsApp",
+        "email": "E-posta",
+        "call": "Ara"
+      }
+    },
+    "footer": {
+      "companyDescription": "Türkiye, Asya ve ötesinde unutulmaz seyahat deneyimleri için güvenilir ortağınız.",
+      "quickAccess": "Hızlı Erişim",
+      "explore": "Keşfet",
+      "home": "Ana Sayfa",
+      "booking": "Rezervasyon",
+      "vouchers": "Voucher'lar",
+      "dashboard": "Kontrol Paneli",
+      "hotels": "Oteller",
+      "tours": "Turlar",
+      "packages": "Paketler",
+      "blog": "Blog",
+      "topDestinations": "Popüler Destinasyonlar",
+      "turkey": "Türkiye",
+      "malaysia": "Malezya",
+      "thailand": "Tayland",
+      "indonesia": "Endonezya",
+      "company": "Şirket",
+      "aboutUs": "Hakkımızda",
+      "contactUs": "Bize Ulaşın",
+      "social": "Sosyal",
+      "copyright": "Rahalatek. Tüm hakları saklıdır.",
+      "privacyPolicy": "Gizlilik Politikası",
+      "termsOfService": "Hizmet Şartları",
+      "support": "Destek",
+      "istanbul": "İstanbul, Türkiye"
+    },
+  
+  "countryPage": {
+    "backToHomepage": "Ana Sayfaya Dön",
+    "about": "Hakkında",
+    "popularCities": "Popüler Şehirler",
+    "noCitiesAvailable": "Uygun Şehir Yok",
+    "workingOnCities": "için popüler şehirler eklemeye çalışıyoruz",
+    "tour": "tur",
+    "tours": "turlar",
+    "hotel": "otel",
+    "hotels": "oteller",
+    "cities": {
+      "Istanbul": "İstanbul",
+      "Antalya": "Antalya",
+      "Trabzon": "Trabzon",
+      "Bursa": "Bursa",
+      "Izmir": "İzmir",
+      "Ankara": "Ankara",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Marmaris": "Marmaris",
+      "Kusadasi": "Kuşadası",
+      "Cappadocia": "Kapadokya",
+      "Pamukkale": "Pamukkale",
+      "Konya": "Konya",
+      "Alanya": "Alanya",
+      "Side": "Side",
+      "Belek": "Belek",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malaka",
+      "Johor Bahru": "Johor Bahru",
+      "Kota Kinabalu": "Kota Kinabalu",
+      "Bangkok": "Bangkok",
+      "Phuket": "Phuket",
+      "Chiang Mai": "Chiang Mai",
+      "Pattaya": "Pattaya",
+      "Krabi": "Krabi",
+      "Koh Samui": "Koh Samui",
+      "Bali": "Bali",
+      "Jakarta": "Jakarta",
+      "Yogyakarta": "Yogyakarta",
+      "Lombok": "Lombok",
+      "Bandung": "Bandung",
+      "Riyadh": "Riyad",
+      "Jeddah": "Cidde",
+      "Makkah": "Mekke",
+      "Madinah": "Medine",
+      "Dammam": "Dammam",
+      "Taif": "Taif",
+      "AlUla": "AlUla",
+      "Marrakech": "Marakeş",
+      "Casablanca": "Kazablanka",
+      "Fes": "Fas",
+      "Tangier": "Tanca",
+      "Chefchaouen": "Chefchaouen",
+      "Rabat": "Rabat",
+      "Essaouira": "Essaouira",
+      "Cairo": "Kahire",
+      "Luxor": "Luksor",
+      "Aswan": "Aswan",
+      "Alexandria": "İskenderiye",
+      "Sharm El Sheikh": "Sharm El Sheikh",
+      "Hurghada": "Hurghada",
+      "Baku": "Bakü",
+      "Gabala": "Gabala",
+      "Sheki": "Şeki",
+      "Tbilisi": "Tiflis",
+      "Batumi": "Batum",
+      "Kazbegi": "Kazbegi",
+      "Mtskheta": "Mtskheta",
+      "Tirana": "Tiran",
+      "Sarande": "Sarand",
+      "Berat": "Berat",
+      "Gjirokaster": "Gjirokastër",
+      "Ksamil": "Ksamil"
+    },
+    "featuredTours": "Öne Çıkan Turlar",
+    "viewAllTours": "Tüm Turları Görüntüle",
+    "noToursAvailable": "Uygun Tur Yok",
+    "workingOnTours": "için muhteşem turlar eklemeye çalışıyoruz",
+    "checkBackSoon": "Yakında tekrar kontrol edin!",
+    "highlights": "Öne Çıkanlar:",
+    "contactForPricing": "Fiyat için iletişime geçin",
+    "featuredHotels": "Öne Çıkan Oteller",
+    "viewAllHotels": "Tüm Otelleri Görüntüle",
+    "noHotelsAvailable": "Uygun Otel Yok",
+    "workingOnHotels": "için lüks konaklama seçenekleri eklemeye çalışıyoruz",
+    "returnToHomepage": "Ana Sayfaya Dön",
+    "error": "Hata",
+    "countryNames": {
+      "Turkey": "Türkiye",
+      "Malaysia": "Malezya",
+      "Thailand": "Tayland",
+      "Indonesia": "Endonezya",
+      "Saudi Arabia": "Suudi Arabistan",
+      "Morocco": "Fas",
+      "Egypt": "Mısır",
+      "Azerbaijan": "Azerbaycan",
+      "Georgia": "Gürcistan",
+      "Albania": "Arnavutluk"
+    },
+    "countries": {
+      "Turkey": "Doğu ile Batı'nın hayal edilebilecek en muhteşem şekilde buluştuğu Türkiye'yi keşfedin. Bu kıtalararası hazine, Avrupa ve Asya'yı birleştirerek gezginlere antik harikalar, muhteşem kıyı şeritleri ve sıcak Akdeniz misafirperverliğinin büyüleyici bir karışımını sunuyor. Türk maceranıza İstanbul'da başlayın; iki kıtaya yayılan dünyanın tek şehri, burada Bizans kiliseleri Osmanlı camilerinin yanında duruyor ve geleneksel çarşılar modaya uygun çatı barlarıyla komşu. Boğaz'da gezin, görkemli sarayları keşfedin ve kendinizi Kapalı Çarşı'nın labirent sokaklarında kaybedin. Güneşe doyan Türk Rivierası'na gidin; Antalya'nın tertemiz plajları ve antik kalıntıları mükemmel Akdeniz kaçışını yaratıyor - yılda 300 günden fazla güneş mükemmel plaj havasını garanti ediyor. Kapadokya'nın uhrevi manzarasını deneyimleyin; milyonlarca yıllık volkanik aktivite, rüyadan fırlamış gibi görünen peri bacaları ve kaya oluşumları yarattı. Gün doğumunda sıcak hava balonuyla bu büyülü arazinin üzerinde süzülün, lüks mağara otellerinde kalın ve kayaya oyulmuş yeraltı şehirlerini keşfedin. Trabzon'un yemyeşil dağları, uçuruma asılı Sümela Manastırı ve tertemiz alpin gölleri için Karadeniz kıyısına gidin. Süper yatların gösterişli marinalara demirlediği ve plaj kulüplerinin Ege kıyısını çizdiği sofistike Bodrum'da eğlenin. Fethiye'de dünyaca ünlü Mavi Lagün üzerinde paraşütle atlayın, Bursa'da Uludağ'ın birinci sınıf pistlerinde kayak yapın veya yüzyıllık kaplıcalarda rahatlayın. Sokak satıcılarının simit ve döneri ile Michelin yıldızlı restoranların yenilikçi yaratımları arasında inanılmaz Türk mutfağını tadın. Otantik hamam geleneklerini yaşayın, samimi yerel halkla sonsuz çay için oturun ve Türkiye'nin neden bin yıldır gezginleri ağırladığını keşfedin. Mükemmel altyapı, Akdeniz plajlarından dağ yaylalarına kadar çeşitli manzaralar, imparatorluklara yayılan zengin kültürel miras ve olağanüstü değer karşılığında, Türkiye aileler, çiftler, macera arayanlar ve kültür meraklıları için unutulmaz deneyimler sunar.",
+      "Malaysia": "Güneydoğu Asya'nın en çeşitli destinasyonu Malezya'yı deneyimleyin; ultra modern şehirlerin eski yağmur ormanlarıyla buluştuğu ve tertemiz tropik adaların canlı çok kültürlü topluluklarla sınır olduğu yer. Bu büyüleyici ülke, her ziyaretçiyi memnun eden olağanüstü bir kültürel mozaik yaratarak Malay, Çin, Hint ve Avrupa etkilerini benzersiz bir şekilde harmanlıyor. Dinamik Kuala Lumpur'da başlayın; ikonik Petronas İkiz Kuleleri'nin gökyüzünü deldiği, dünya standartlarında alışveriş merkezlerinin alışverişçileri büyülediği ve baharatlı laksa'dan tatlı roti canai'ye her köşede inanılmaz sokak yemeklerinin cazip geldiği yer. Penang'daki George Town'ı keşfedin; sömürge mimarisi, renkli sokak sanatı duvar resimleri ve Asya'nın en iyi seyyar yemekleriyle Malezya'nın mutfak başkenti olarak efsanevi statüsüyle ünlü bir UNESCO Dünya Mirası alanı. 99 adadan oluşan Langkawi'nin tropik cennetine kaçın; vergisiz alışverişin tertemiz plajlarla buluştuğu ve ünlü Sky Bridge'in nefes kesici orman manzaraları sunduğu yer. Portekiz kaleleri, Hollanda binaları ve lezzetli Nyonya mutfağı üreten benzersiz Peranakan kültürüyle Malaka'nın büyüleyici sömürge mirasını keşfedin. Eski yağmur ormanlarına girin - dünyanın en eskilerinden bazıları 130 milyon yaşında - Borneo'da orangutanları gözlemleyin, Cameron Highlands'ın sisli çay plantasyonlarını keşfedin veya Taman Negara Ulusal Parkı'nda yürüyüş yapın. Sipadan Adası açıklarında dünya standartlarında dalalış yapın, Perhentian Adaları'nın pudra gibi beyaz plajlarında rahatlayın veya tertemiz Langkawi takımadalarında ada atlama yapın. Malay rendang ve satay'den Çin dim sum, Hint muz yaprağı körisi ve Peranakan spesiyalitelerine kadar inanılmaz lezzet çeşitliliğinin tadını çıkarın. Batu Mağaraları'nın yüksek Hindu tapınaklarını ziyaret edin, geleneksel kampung köy yaşamını deneyimleyin ve camiler, tapınaklar ve kiliselerin uyum içinde yan yana durduğu karışımına tanık olun. İngilizce'nin yaygın olarak konuşulduğu, mükemmel altyapı, uygun fiyatlar, yıl boyunca tropik hava ve gerçekten sıcak misafirperverlikle, Malezya ilk kez ziyaretçiler ve otantik deneyimler arayan deneyimli gezginler için mükemmel Güneydoğu Asya maceraları sunuyor ve aileler, balayı çiftleri, gurme tutkunları ve doğa meraklıları için ideal.",
+      "Thailand": "Tayland'a, efsanevi misafirperverliğin Güneydoğu Asya'nın en sevilen destinasyonunda egzotik macerayla buluştuğu \"Gülümsemeler Ülkesi\"ne hoş geldiniz. Bu tropik cennet, gezginleri yıllar boyunca geri getiren muhteşem plajlar, antik tapınaklar, lezzetli mutfak ve uygun fiyatlı lüksün yenilmez bir kombinasyonunu sunuyor. Elektrikli Bangkok'ta başlayın; Büyük Saray'ın ve Wat Arun tapınağının altın kuleleri modern gökdelenlerin yanında parlıyor ve dünyanın en iyi sokak yemeği her köşede cızırdıyor - otantik pad Thai, mango yapışkan pirinç ve tom yum çorbasını mükemmelleştirildikleri yerde tadın. 15.000 tezgahlı devasa Chatuchak Pazarı'nda düşene kadar alışveriş yapın, gösterişli çatı barlarında kokteyl yudumlayın ve aydınlatılmış tapınakların yanından geçerek Chao Phraya Nehri'nde gezinin. Tayland'ın ada cennetine kaçın: Phuket, Maya Körfezi'ne Phi Phi Adaları gün gezileriyle birlikte canlı Patong Plajı gece hayatının yanı sıra sakin Kata Plajı aile eğlencesi sunuyor. Koh Samui'nin lüks tatil köyleri ve plaj kulüplerini, Krabi'nin dramatik kireçtaşı kayalıklarını ve gizli lagünlerini veya dünya standartlarında tüplü dalış için sırt çantacıların cenneti Koh Tao'yu keşfedin. Sisli dağlara, tepe kabile köylerine ve bu nazik devleri besleyip yıkayabileceğiniz etik fil barınaklarına açılan kapı olan kültürel Chiang Mai'ye kuzeye yolculuk edin. Uygulamalı derslerde Tayland yemek pişirmeyi öğrenin, 300'den fazla antik tapınağı keşfedin, el sanatları için gece pazarlarında alışveriş yapın ve büyülü Yi Peng Fener Festivali'ni deneyimleyin. Macera tutkunları orman patikalarında yürüyüş yapabilir, yağmur ormanlarında zipline yapabilir, beyaz su raftingi yapabilir veya kırsal kesimde ATV sürebilir. Sahil tatil köyleri, geleneksel Tayland masajı ve imkansız görünen fiyatlarla spa tedavileriyle uygun fiyatlı lükse kapılın. Her yerde sıcak gülümsemeleri deneyimleyin - tuk-tuk sürücülerinden tatil köyü personeline, Taylandlılar ziyaretçileri karşılamayı gerçekten seviyor. Her fiyat noktasında lezzetli yemek, çarpıcı doğal güzellik, zengin Budist kültürü, heyecan verici gece hayatı ve inanılmaz değer karşılığında, Tayland balayı çiftleri, aileler, sırt çantacılar, lüks gezginler ve aralarındaki herkes için mükemmel tropik kaçış sunuyor.",
+      "Indonesia": "17.000'den fazla adadan oluşan dünyanın en büyük takımadası Endonezya'yı keşfedin; Güneydoğu Asya'nın en çeşitli ulusunda nihai tropik macera sunuyor. Bu egzotik cennet, Bali'nin manevi tapınaklarından ve dünya standartlarında sörften Java'nın antik Borobudur Budist anıtına ve aktif yanardağlara kadar her şeyi sunuyor. Endonezya'nın taç mücevheri Bali'de başlayın; çarpıcı pirinç teraslarının yamaçlardan aktığı, plaj kulüplerinin Seminyak'ta şafağa kadar parti yaptığı ve yoga dinlenme merkezlerinin Ubud'un orman ortamında zen bulduğu yer. Uçurum tepesindeki Uluwatu Tapınağı'nda geleneksel Kecak ateş danslarını izleyin, gün doğumunda Batur Dağı yanardağına tırmanın ve Kutsal Maymun Ormanı'nı keşfedin. Jakarta'nın kentsel enerjisini mega alışveriş merkezleri, müzeler ve şnorkelle kaçışlar için Bin Adalar'a geçit olan yer. Java'nın kültürel ruhu Yogyakarta'yı ziyaret edin; muhteşem Borobudur'a - dünyanın en büyük Budist tapınağı - ve dramatik Prambanan Hindu kompleksine ev sahipliği yapıyor. Ramayana balesi gösterilerini izleyin, batik yapımını öğrenin ve yaşayan Sultan'ın sarayını keşfedin. Endonezya'nın endemik dev kertenkelesi olan tarih öncesi Komodo ejderhalarını görmek için Komodo Ulusal Parkı'na macera yapın. Raja Ampat'ın tertemiz mercan resiflerinde dalış veya şnorkel yapın; Dünya'nın en biyoçeşitli deniz ekosistemi olarak kabul ediliyor. Orangutanları gözlemleyerek eski Sumatra yağmur ormanlarında yürüyüş yapın, Gili Adaları'nın arabasız plajlarında rahatlayın veya Uluwatu'dan Desert Point'e dünyaca ünlü dalgalarda sörf yapın. Bali babi guling'den Cava nasi goreng'e, Padang'ın baharatlı rendang'ından plajlarda ızgara yapılan taze deniz ürünlerine kadar inanılmaz derecede çeşitli mutfağın tadını çıkarın. Sıcak Endonezya misafirperverliğini, uygun fiyatlı lüks tatil köylerini, geleneksel törenleri ve gamelan müziğini deneyimleyin. Yüzlerce etnik grup, dil ve kültürel gelenekle, çarpıcı volkanik manzaralar, tertemiz plajlar, inanılmaz biyoçeşitlilik ve her bütçeyi genişleten fiyatlarla, Endonezya maceracılar, plaj severler, kültür arayanlar ve Güneydoğu Asya'nın en büyüleyici takımadalarını keşfeden manevi gezginler için sınırsız keşif sunuyor.",
+      "Saudi Arabia": "Onlarca yıllık münhasırlıktan sonra hazinelerini uluslararası turizme açan Arap Yarımadası'nın en büyük ülkesi Suudi Arabistan'ı deneyimleyin. Bu dönüştürücü ulus, cesur gezginlere antik miras alanlarına, fütüristik mega şehirlere, tertemiz Kızıldeniz dalışına ve geniş çöl manzaralarına benzersiz erişim sunuyor. İkonik Kingdom Centre Tower, dramatik Dünyanın Sonu kayalık oluşumları ve geleneksel kerpiç mimarisiyle Suudi devletinin doğum yeri olan UNESCO alanı Diriyah ile Riyad'ın modern başkentini keşfedin. Kozmopolit Cidde'yi keşfedin; tarihi Al-Balad'ın mercan taşı evleriyle (UNESCO alanı), dünyanın en yüksek çeşmesi ve 30 km'lik Corniche sahil şeridi promenadıyla tanınan geçit şehri. Mısır'ınkilerle rekabet eden tertemiz mercan resiflerinde, dokunulmamış alanlar ve bol deniz yaşamıyla Kızıldeniz'de dalış yapın. Muhteşem kaya oluşumlarını ve Al-Ula'nın antik Nabat mezarlarını ziyaret edin (Suudi Arabistan'ın Petra'ya cevabı), çölde dünyanın en büyük aynalı binası Maraya'da konserlere katılın. Boş Çeyrek'i (Rub' al Khali), Dünya'nın en büyük sürekli kum çölünü, yıldız dolu gökyüzü altındaki Bedevi kamplarına 4x4 maceraları veya deve yürüyüşleriyle deneyimleyin. Taif'in serin dağ iklimini, gül bahçelerini ve meyve pazarlarını keşfedin - çöl sıcağından rahatlama arayan Suudiler için yaz kaçışı. Altın, günlük, hurma ve halı satan geleneksel çarşıları keşfedin, kabsa ve mandi gibi otantik Suudi mutfağını tadın ve Arap kahvesi ve hurma üzerinden efsanevi Arap misafirperverliğini deneyimleyin. Zengin kültürel geleneklere saygı gösterirken eğlence bölgeleri, müzik festivalleri ve modern cazibe merkezleriyle ulusun hızlı dönüşümüne tanık olun. Suudi Arabistan, maceraperest gezginlere kalabalıklar bu gizli mücevheri keşfetmeden önce antik miras, dramatik doğal güzellik, modern lüks ve otantik Arap kültürünü birleştiren yeni bir destinasyonu keşfetmek için nadir bir fırsat sunuyor.",
+      "Morocco": "Kuzey Afrika'nın en büyüleyici destinasyonu Fas'a yolculuk edin; antik medinalar, Sahra Çölü maceraları ve Atlantik plajlarının Avrupa'dan sadece birkaç saat uzakta egzotik bir kaçış yarattığı yer. Bu büyüleyici krallık, Arap, Berber, Afrika ve Avrupa etkilerini renkli çarşılar, aromatik baharatlar, karmaşık çini işi ve sıcak misafirperverliğin duyusal bir şölenine harmanlar. Büyülü Marakeş'te başlayın; Jemaa el-Fnaa meydanının yılan büyücüleri, hikaye anlatıcıları ve cızırdayan yemek tezgahlarıyla canlandığı ve labirent medina çarşılarının el dokuma halılardan kokulu argan yağına kadar her şeyi sattığı yer. Geleneksel riadlarda - butik otellere dönüştürülmüş süslü avlulu evlerde - kalın ve elektrik mavisi duvarlarıyla muhteşem Majorelle Bahçesi'ni keşfedin. Fas'ın ortaçağ medinasında gezinin; dünyanın en büyük arabasız kentsel bölgesi ve UNESCO alanı, deri tabakahanelerin yüzyıllardır değişmeyen yöntemlerle çalıştığı ve zanaatkarların karmaşık mozaikler ve metal işleri yarattığı yer. Rif Dağları'nda Instagram için mükemmel arka planlar yaratan mavi tonlarda boyanmış tüm mahallelerin bulunduğu Chefchaouen'in \"Mavi İncisi\"ni keşfedin. Görkemli saraylar ve tarihi kapılar sergileyen Rabat ve Meknès gibi imparatorluk şehirlerini ziyaret edin. Nihai çöl macerasını yaşayın - gün batımında develere binerek Sahra'ya girin, sonsuz yıldızlar altında lüks Berber kamplarında geceler geçirin ve gün doğumunun kumları altın boyamasını izleyin. Dramatik Atlas Dağları'nı keşfedin, geleneksel Berber köylerini ziyaret edin, manzaralı vadilerde yürüyüş yapın ve Kuzey Afrika'nın en yüksek zirvelerini görün. Rahat Essaouira ve Taghazout'ta Atlantik dalgalarında sörf yapın veya Tanca'daki Akdeniz plajlarında rahatlayın. İnanılmaz Fas mutfağına kapılın - kokulu tajinler, kabarık kuskus, tatlı pastilla, naneli çay ve ortak fırınlardan taze ekmek. Otantik hamamları deneyimleyin, deri ürünleri ve fenerler için alışveriş yapın ve çarşılarda pazarlık yapmayı öğrenin. Muhteşem riadlar, lüks oteller ve bütçe dostu konaklama, dağlardan çöle, kıyıya kadar çeşitli manzaralar, zengin sanatsal gelenekler ve gerçek sıcaklıkla, Fas hem yabancı hem de misafirperver hissettiren egzotik bir macera sunuyor; çiftler, aileler, macera gezginleri ve kültür meraklıları için mükemmel.",
+      "Egypt": "Medeniyetin beşiği ve 5.000 yıllık tarihe yayılan insanlığın en ikonik antik anıtlarına ev sahipliği yapan Mısır'a girin. Bu efsanevi destinasyon, piramitleri keşfetme, hiyeroglifleri çözme ve tıpkı firavunlar gibi Nil Nehri'nde gezinme çocukluk hayallerini gerçekleştiriyor. 4.500 yıldır Büyük Piramit ve esrarengiz Sfenks'in nöbet tuttuğu Antik Dünyanın hayatta kalan son harikası Giza Piramitleri'nde başlayın. Kral Tutankhamun'un altın hazinelerini ve mumyalarla dolu odaları barındıran Kahire'nin dünyaca ünlü Mısır Müzesi'ni keşfedin, ardından papirüs, mücevher ve baharatlar için atmosferik Khan el-Khalili çarşısında pazarlık yapın. Lüks teknelerde veya geleneksel felukkalarda hayat damarı Nil Nehri'nde gezinin, çiftçilerin, balıkçıların ve antik tapınakların geçip gittiği zamansız sahneleri izleyin. Dünyanın en büyük açık hava müzesi Luksor'a seyahat edin; devasa Karnak Tapınağı kompleksi, güzel Luksor Tapınağı ve Krallar Vadisi'ndeki kraliyet mezarları (Tutankhamun'un da dahil) bir arkeolog cenneti yaratıyor. Bu antik anıtların üzerinde unutulmaz sıcak hava balonu uçuşları için şafaktan önce kalkın. Adasındaki muhteşem Philae Tapınağı ve Abu Simbel'deki II. Ramses'in devasa heykelleri için günlük geziler için Aswan'a maceralara çıkın. Dünya standartlarında dalış ve şnorkelle için Kızıldeniz kıyısına kaçın - Sharm El Sheikh, Hurghada ve Dahab'daki tertemiz mercan resifleri herhangi bir tropik destinasyonla rekabet ediyor. Plaj tatil köylerinde rahatlayın, rüzgar sörfü öğrenin veya su altı enkazlarını keşfedin. Göbek dansı gösterileri, geleneksel müzik, aromatik nargile kafeler ve koshari sokak yemeğinden taze deniz ürünlerine lezzetli mutfak aracılığıyla canlı Mısır kültürünü deneyimleyin. Kıpti kiliselerini, İslami camileri ve Bedevi çöl kamplarını ziyaret edin. Uygun fiyatlar, geliştirilmiş altyapı, miraslarını paylaşmaya istekli misafirperver insanlar ve insan medeniyetini tanımlayan anıtlarla, Mısır modern konforlar sunarken sizi zamanda taşıyan kova listesi deneyimleri sunuyor - tarih meraklıları, aileler, macera arayanlar ve antik harikalarla hayal kuran herkes için mükemmel.",
+      "Azerbaijan": "Fütüristik mimarinin Avrupa ve Asya'nın kesiştiği noktada antik geleneklerle buluştuğu yeni bir destinasyon \"Ateş Ülkesi\" Azerbaycan'ı keşfedin. Bu büyüleyici Kafkas ulusu, ziyaretçileri dramatik kontrastlarıyla şaşırtıyor - Bakü'nün ultra modern Alev Kuleleri ve Zaha Hadid tasarımlı Haydar Aliyev Merkezi'nden UNESCO listesindeki Eski Şehir'in ortaçağ taş sokaklarına. Bakü'nün Icherisheher surlu şehrinde gizemli Kız Kulesi'ni keşfederek gezin, Şirvanşahlar Sarayı'nı ziyaret edin ve parkları ve cazibe merkezleriyle uzun Hazar Denizi Bulvarı'nda gezinin. Yerden sızan doğal gazın binlerce yıldır yandığı antik Zerdüşt ateş tapınaklarında ülkenin \"ebedi alevlerini\" deneyimleyin. 40.000 yıllık kaya sanatı petrogliflerini ve tuhaf köpüren çamur yanardağlarını görmek için Gobustan'a maceralara çıkın. Ortaçağ kaleleri, renkli köyler ve muhteşem Kafkas manzarasıyla dağlık bölgeleri keşfedin. Ülkenin ünlü dokuma geleneklerini sergileyen Azerbaycan Halı Müzesi'ni ziyaret edin. Türk, Fars ve Rus etkilerini harmanlayan lezzetli Azerbaycan mutfağını tadın - aromatik çayla plov (safran pilav), dolma, kebap ve tatlı pakhlava deneyin. Sıcak Kafkas misafirperverliğini deneyimleyin, modern alışveriş merkezlerinde ve geleneksel pazarlarda alışveriş yapın ve turizm altyapısına büyük yatırım yapan bir ülke keşfedin. Petrol fonlu modernliğin ve antik İpek Yolu mirasının karışımıyla, Hazar plajlarından dağ köylerine dramatik manzaralar, zengin kültürel gelenekler ve nispeten keşfedilmemiş statüsüyle, Azerbaycan maceraperest gezginlere şaşırtıcı uygun fiyatlarla Doğu gizemini Avrupa sofistikeliğiyle birleştiren benzersiz bir destinasyon sunuyor - yolun dışındaki destinasyonlar arayanlar için mükemmel.",
+      "Georgia": "Kafkasların mücevheri ve antik şarap kültürünün dramatik dağ manzaralarıyla ve efsanevi misafirperverlikle buluştuğu Avrupa'nın en büyüleyici yükselen destinasyonlarından biri Gürcistan'a hoş geldiniz. Bu küçük ülke muazzam çeşitlilik barındırıyor - büyüleyici Tiflis'in parke taşlı Eski Şehir'i ve doğal kükürt banyolarından yükselen Kafkas zirvelerine ve Karadeniz plajlarına. Gürcistan'ın neden şarabın doğum yeri olduğunu iddia ettiğini keşfedin - arkeolojik kanıtlar, geleneksel qvevri (toprağa gömülü kil kaplar) kullanılarak 8.000 yıllık şarap yapımını kanıtlıyor. Kakheti şarap bölgesinin bağlarını gezin, benzersiz kehribar şarapları tadın ve tüm masayı kaplayan sonsuz kadeh kaldırma ve yemeklerle geleneksel Gürcü ziyafetlerini (supra) deneyimleyin. Ortaçağ kiliseleri, Art Nouveau malikâneleri ve Sovyet binalarını karıştıran Tiflis'in eklektik mimarisini keşfedin; hepsi modern cam Barış Köprüsü ile bağlanmış. Panoramik şehir manzaraları için antik Narikala Kalesi'ne teleferikle çıkın, sonra otantik Gürcü spa deneyimleri için tarihi hamamlar bölgesine inin. Arkasında yükselen Kazbek Dağı ile tepe üzerinde yer alan ikonik Gergeti Teslis Kilisesi'ni görmek için Kazbegi'ye yolculuk edin - dünyanın en çok fotoğraflanan dağ kiliselerinden biri. Yürüyüş, at binme ve nefes kesici Kafkas manzarası için Stepantsminda'yı ziyaret edin. Palmiye ağaçlı plajlar, modern mimari, botanik bahçeleri ve canlı gece hayatı sunan subtropikal Batum'un bulunduğu Karadeniz kıyısına gidin. Gürcistan'ın eski başkenti ve tepedeki muhteşem manastırlarla UNESCO alanı Mtskheta'yı keşfedin. Alazani Vadisi'ne bakan Sighnaghi gibi kale kasabalarını, uçurumlara oyulmuş mağara şehirlerini ve dağ köylerini süsleyen ortaçağ savunma kulelerini keşfedin. İnanılmaz Gürcü mutfağını tadın - khinkali (çorba böreği), khachapuri (peynirli ekmek) ve Gürcü şarabı veya chacha (üzüm votka) eşliğinde sayısız benzersiz yemek. Yerel halkın misafirleri Tanrı'dan armağan olarak gördüğü eşsiz Gürcü misafirperverliğini deneyimleyin. Dramatik dağ manzarası, antik kültür, olağanüstü yemek ve şarap, terapötik kükürt banyoları, kayaktan yamaç paraşütüne macera aktiviteleri, inanılmaz uygun fiyatlar ve sıcak, misafirperver insanlarla, Gürcistan her ziyaretçiyi dönüş ziyaretini planlamaya bırakan otantik deneyimler, doğal güzellik ve kültürel zenginlik sunuyor.",
+      "Albania": "Avrupa'nın son gizli mücevheri ve Balkanların en iyi saklanan sırrı Arnavutluk'u ortaya çıkarın; tertemiz plajların Yunan adalarıyla rekabet ettiği, antik miras alanlarının dramatik dağları süslediği ve otantik kültürün turist kalabalıkları olmadan geliştiği yer - tümü Batı Avrupa fiyatlarının bir kısmına. Onlarca yıllık izolasyondan çıkan bu Akdeniz mücevheri, şimdi gezginleri UNESCO Dünya Mirası alanlarını, muhteşem Riviera kıyı şeridini ve sıcak Arnavut misafirperverliğini keşfetmeye davet ediyor. Komünist dönem sığınaklarının sanat müzelerine dönüştüğü ve modaya uygun Blloku bölgesinin kafeleri ve gece hayatıyla kontrast oluşturduğu renkli başkent Tiran'ı keşfedin. Muhteşem manzaralar için Dajti Dağı teleferikine binin, ardından müzeler ve camilerle çevrili canlı İskender Meydanı'nda gezinin. \"Bin Pencereli Şehir\" Berat'a yolculuk edin; beyaz Osmanlı evlerinin yamaçlardan aktığı ve antik kale kalıntılarının Osum Nehri'ne baktığı yer - zamanın içinde donmuş gibi görünen mükemmel korunmuş bir UNESCO kasabası. Otantik Arnavut dağ kültürünü sergileyen başka bir UNESCO alanı olan Gjirokastër'in taş kalesini ve geleneksel mimarisini ziyaret edin. Beyaz kum ve Korfu'ya bakan turkuaz sularla Karayiplerle rekabet eden kartpostal mükemmelliğindeki Ksamil plajlarının bulunduğu Arnavut Rivierası'na güneye gidin. Sarand'ın sahildeki otellerinde konaklaın, imkansız mavi suya sahip muhteşem Mavi Göz doğal kaynağını ziyaret edin ve denizdeki Butrint Ulusal Parkı'nın Yunan ve Roma kalıntılarını keşfedin. Dramatik Arnavut Alpleri'nde yürüyüş yapın, geleneklerin sürdüğü uzak dağ köylerini ziyaret edin ve Komani Gölü'nün turkuaz sularını keşfedin. Ülke genelinde antik İllirya kalıntılarını, Osmanlı köprülerini ve ortaçağ kalelerini keşfedin. Lezzetli Arnavut mutfağını tadın - byrek (tuzlu börekler), tavë kosi (yoğurtlu kuzu), taze deniz ürünleri ve yerel raki. Ülkelerini paylaşmaktan heyecan duyan yerel halkın gerçek sıcaklığını deneyimleyin, Akdeniz ikliminin tadını çıkarın ve dağlardan tertemiz kıyı şeridine muhteşem doğayı keşfedin. İnanılmaz değer (Avrupa'nın en ucuz ülkesi), çeşitli manzaralar, zengin tarih, otantik deneyimler ve turist kalabalıklarının yokluğuyla, Arnavutluk fiyat etiketi veya kalabalıklar olmadan Akdeniz rüyasını sunan keşfedilmemiş destinasyonlar arayan maceraperest gezginleri ödüllendiriyor - bütçe gezginleri, çiftler ve herkes bu Balkan hazinesini keşfetmeden önce keşfetmek isteyenler için mükemmel."
+    }
+  },
+  "cityPage": {
+    "backTo": "Geri dön",
+    "about": "Hakkında",
+    "topAttractions": "Başlıca Cazibe Merkezleri ve Özellikler",
+    "toursIn": "içinde Turlar",
+    "viewAllTours": "Tüm Turları Görüntüle",
+    "hotelsIn": "içinde Oteller",
+    "viewAllHotels": "Tüm Otelleri Görüntüle",
+    "highlights": "Öne Çıkanlar:",
+    "contactForPricing": "Fiyat için iletişime geçin",
+    "error": "Hata",
+    "returnTo": "Dönüş",
+    "cities": {
+      "Istanbul": {
+        "description": "Doğu ile Batı'nın buluştuğu büyüyü İstanbul'da deneyimleyin; dünyanın iki kıtaya yayılan tek şehri. Bu muhteşem metropol, antik tarih ve modern sofistikeliğin sarhoş edici bir karışımını sunuyor. Günlerinize Ayasofya ve Sultanahmet Camii gibi Bizans başyapıtlarını keşfederek başlayın, 4.000 dükkanıyla labirent Kapalı Çarşı'da gezinin ve Osmanlı padişahlarının bir zamanlar hüküm sürdüğü görkemli Topkapı Sarayı'na hayran kalın. Avrupa ve Asya arasında manzaralı bir Boğaz gezisi yapın, sahildeki sarayları ve kaleleri seyrederek geçin. Akşam çökerken, Taksim Meydanı'na gidin ve mağazalar, restoranlar ve tarihi tramvayla dolu hareketli İstiklal Caddesi'nde gezinin. Çarpıcı silüet manzaralı çatı barlarının tadını çıkarın, sokak satıcılarından Michelin yıldızlı restoranlara otantik Türk mutfağını tadın ve büyüleyici kafelerde efsanevi Türk çay kültürünü deneyimleyin. Gizemli Yerebatan Sarnıcı'nı, canlı Mısır Çarşısı'nı, modaya uygun Karaköy'deki çağdaş sanat galerilerini ve geleneksel hamam deneyimlerini kaçırmayın. El yapımı halılar için alışveriş yapıyor, Haliç üzerinde nefes kesici gün batımlarını fotoğraflıyor veya şafağa kadar gece kulüplerinde dans ediyor olun, İstanbul her adımda unutulmaz anılar sunar. Şehrin sıcak misafirperverliği, zengin kültürel mozaiği ve gelenek ile modernitenin mükemmel karışımı, onu her gezgin için vazgeçilmez bir destinasyon haline getiriyor.",
+        "features": [
+          "Ayasofya - Etkileyici kubbe ve mozaiklerle muhteşem Bizans başyapıtı",
+          "Sultanahmet Camii - Altı yükselen minaresiyle muhteşem Osmanlı mimarisi",
+          "Topkapı Sarayı - Hazine, Harem ve Boğaz manzaralı imparatorluk sarayı",
+          "Kapalı Çarşı - Dünyanın en eski kapalı pazarında 4.000 dükkan",
+          "Boğaz Turu - Avrupa ve Asya arasında manzaralı tekne turu",
+          "Galata Kulesi - Şehir silüetinin 360° panoramik manzaraları",
+          "Yerebatan Sarnıcı - Atmosferik yeraltı su sarayı",
+          "Taksim Meydanı ve İstiklal Caddesi - Alışveriş, yemek ve gece hayatı merkezi",
+          "Dolmabahçe Sarayı - Kristal merdivenli görkemli sahildeki saray",
+          "Mısır Çarşısı - Türk lokumu ve baharatlar için aromatik pazar"
+        ]
+      },
+      "Antalya": {
+        "description": "Türkiye'nin Akdeniz kıyısının taç mücevheri ve Türk Rivierası'nın geçidi Antalya'ya hoş geldiniz. Yılda 300 günden fazla güneşle kutsanan bu muhteşem sahil cenneti, kristal berraklığında turkuaz suları, tertemiz plajları ve dramatik Toros Dağları arka planını birleştiriyor. Maceranıza, Osmanlı dönemi evlerinin, butik otellerin ve otantik restoranların eski Roma limanına giden dar parke taşlı sokakları çizdiği büyüleyici Eski Şehir Kaleiçi'nde başlayın. Modern plaj kulüplerinin aile dostu kıyılarla buluştuğu Konyaaltı ve Lara gibi dünyaca ünlü plajlarda güneşli günler geçirin. Macera tutkunları, olağanüstü korunmuş Aspendos Tiyatrosu ve muhteşem Perge şehri dahil olmak üzere muhteşem antik kalıntıları keşfedebilir. Akdeniz'e dramatik bir şekilde akan muhteşem Düden Şelaleleri'nde serinleyin. Aileler rekor kıran tüneli ile Antalya Akvaryumu'nu seviyor, heyecan arayanlar ise su kaydırakları ve gösteriler için Land of Legends Tema Parkı'na gidiyor. Liman restoranlarında taze Akdeniz deniz ürünlerinin tadını çıkarın, modern alışveriş merkezlerinde ve geleneksel pazarlarda alışveriş yapın ve plaj barlarından gece kulüplerine canlı gece hayatını deneyimleyin. Dağ tepesindeki Termessos, büyüleyici sahil kasabası Kaş veya güzel Kemer marinası gibi yakındaki cazibe merkezlerine günlük geziler yapın. Her şey dahil lüks tatil köyleri, bütçe dostu oteller, mükemmel altyapı ve sıcak Türk misafirperverliğiyle Antalya, her gezgin ve bütçe için mükemmel Akdeniz tatilini sunuyor.",
+        "features": [
+          "Kaleiçi Eski Şehir - Butik oteller ve restoranlarla büyüleyici Osmanlı mahallesi",
+          "Düden Şelaleleri - Akdeniz'e dökülen nefes kesici şelaleler",
+          "Konyaaltı Plajı - Toros Dağları arka planlı 7 km çakıl plaj",
+          "Lara Plajı - Lüks tatil köyleriyle ünlü altın kum plajı",
+          "Antalya Akvaryumu - Dünyanın en uzun tünel akvaryumu",
+          "Antik Perge - Muhteşem Greko-Romen şehir kalıntıları",
+          "Aspendos Tiyatrosu - En iyi korunmuş Roma amfitiyatrosu, opera festivallerine ev sahipliği yapıyor",
+          "Land of Legends Tema Parkı - Su kaydırakları ve gösterilerle aile eğlencesi",
+          "Termessos - Muhteşem manzaralı dağ tepesindeki antik şehir",
+          "Kemer Marinası - Yelken, yat turları ve sahilde yemek"
+        ]
+      },
+      "Cappadocia": {
+        "description": "Dünyanın en olağanüstü destinasyonlarından biri ve UNESCO Dünya Mirası alanı Kapadokya'da bir peri masalı manzarasına girin. Bu dünya dışı bölge, milyonlarca yıllık volkanik aktivite ve erozyon tarafından yaratılan muhteşem peri bacaları, antik mağara konutları ve gerçeküstü kaya oluşumlarına sahip. Ömür boyu bir deneyim için şafaktan önce uyanın - yüzlerce renkli balonun gün doğumu gökyüzünde süzüldüğü ve dünyanın en çok fotoğraflanan sahnelerinden birini yarattığı büyülü manzara üzerinde sıcak hava balonuyla süzülün. 10. yüzyıla kadar uzanan muhteşem fresklerle süslenmiş Bizans kaya oyma kiliselerine sahip inanılmaz Göreme Açık Hava Müzesi'ni keşfedin. Antik medeniyetlerin kiliseler, şarap mahzenleri ve havalandırma sistemleriyle tamamlanmış ayrıntılı 8 seviyeli yeraltı kompleksleri yarattığı Derinkuyu gibi büyüleyici yeraltı şehirlerine inin. Yumuşak volkanik kayaya oyulmuş, antik duvarlar içinde modern lüks sunan otantik mağara otellerinde kalın. Muhteşem vadilerde yürüyüş yapın - pembe tonlu kayalıklarıyla Gül Vadisi, benzersiz oluşumlarla Aşk Vadisi ve kaya kiliseleriyle çevrili 14 km'lik boğazı İhlara Vadisi. Geleneksel Türk kültürünü çömlekçilik kasabası Avanos'ta deneyimleyin, ay manzaralarında ATV veya ata binin ve geleneksel dans ve müzikle muhteşem Türk Gecesi gösterilerinin tadını çıkarın. Bölgenin en yüksek noktası olan ve bu rüya gibi arazi boyunca panoramik manzaralar sunan Uçhisar Kalesi'nden gün batımını izleyin. Benzersiz mağara konaklamaları, macera aktiviteleri, antik miras ve Dünya'da başka hiçbir yere benzemeyen fotojenik manzaralarıyla Kapadokya gerçekten büyülü bir Türk deneyimi vaat ediyor.",
+        "features": [
+          "Sıcak Hava Balonu Uçuşları - Peri bacaları üzerinde unutulmaz gün doğumu balon gezileri",
+          "Göreme Açık Hava Müzesi - Bizans freskleriyle antik kaya oyma kiliseler",
+          "Derinkuyu Yeraltı Şehri - 85 m derinliğe ulaşan 8 seviyeli yeraltı şehri",
+          "Aşk Vadisi - Benzersiz kaya oluşumları ve manzaralı yürüyüş parkurları",
+          "Uçhisar Kalesi - Panoramik vadi manzaralarıyla en yüksek nokta",
+          "Mağara Oteller - Lüks dönüştürülmüş mağara konutlarında uyuyun",
+          "İhlara Vadisi - Yürüyüş parkuru ve kaya kiliseli 14 km kanyon",
+          "Avanos - Çömlekçilik atölyeleri ve geleneksel Türk el sanatları",
+          "ATV ve Jeep Safarileri - Vadiler ve kaya oluşumları boyunca macera turları",
+          "Türk Gecesi Gösterileri - Geleneksel dans, müzik ve akşam yemeği eğlencesi"
+        ]
+      },
+      "Trabzon": {
+        "description": "Pontus Alpleri'nin zümrüt dağlarının Türkiye'nin muhteşem Karadeniz kıyısına dramatik bir şekilde aktığı Trabzon'u keşfedin. Bu büyüleyici bölge, daha serin iklimi, yemyeşil manzaraları ve otantik Türk dağ kültürüyle Türkiye'nin plaj tatil köylerine ferahlatıcı bir alternatif sunuyor. Yıldız çekicilik, deniz seviyesinden 1.200 metre yükseklikte bir uçurumda asılı gibi görünen 4. yüzyıldan kalma Rum Ortodoks manastırı olan nefes kesici Sümela Manastırı'dır - Türkiye'nin en ikonik ve en çok fotoğraflanan sitelerinden biri. Sık çam ormanları ve geleneksel ahşap evlerle çevrili, sabah sisinin mistik bir atmosfer yarattığı bir alpin gölü olan resim gibi mükemmel Uzungöl'e yolculuk edin. Ayder Yaylası'nın doğal kaplıcalarını ve yayla misafirperverliğini deneyimleyin; yerel halk taze hamsi, mısır ekmeği ve yerel peynirler içeren geleneksel Karadeniz mutfağı sunuyor. Yamaçları canlı yeşille kaplayan çalışan çay plantasyonlarını keşfedin, kahve geleneğiyle rekabet eden Türkiye'nin çay kültürü hakkında bilgi edinin. Huzurlu bahçeler içinde güzel bir şekilde korunmuş Atatürk Köşkü malikânesini ziyaret edin ve olağanüstü freskleriyle 13. yüzyıldan kalma Ayasofya'da Trabzon'un Bizans mirasını keşfedin. Muhteşem dağ manzaralarıyla Zigana gibi yüksek yaylalarda yürüyüş yapın, şehre ve denize bakan antik Trabzon Kalesi'ni keşfedin ve sahildeki restoranlarda taze balığın tadını çıkarın. Bölgenin daha serin yaz sıcaklıkları, bozulmamış doğa, samimi yerel halk ve çıkmış yolun cazibesi, Trabzon'u kitle turizminden uzakta otantik Türkiye arayan gezginler için mükemmel kılıyor; gerçek kültürel deneyimler ve muhteşem doğal güzellik sunuyor.",
+        "features": [
+          "Sümela Manastırı - Muhteşem fresklerle dramatik uçurum kenarı manastırı",
+          "Uzungöl - Çam ormanlarıyla çevrili resim gibi mükemmel alpin gölü",
+          "Ayder Yaylası - Kaplıcalar ve yürüyüş parkurlarıyla dağ sığınağı",
+          "Zigana Dağı - Geleneksel köylerle manzaralı yüksek yayla",
+          "Atatürk Köşkü - Güzel bahçelerde tarihi malikâne",
+          "Trabzon Ayasofyası - Olağanüstü fresklerle Bizans kilisesi",
+          "Trabzon Kalesi - Şehir ve deniz manzaralı antik kale",
+          "Yerel Çay Plantasyonları - Çalışan çay bahçelerini ziyaret edin ve taze Türk çayının tadını çıkarın",
+          "Sera Gölü - Sakin göl kenarı parkları ve yürüyüş yolları",
+          "Geleneksel Karadeniz Mutfağı - Benzersiz yerel yemeklerin ve taze balığın tadını çıkarın"
+        ]
+      },
+      "Bodrum": {
+        "description": "Muhteşem Ege kıyısındaki Türkiye'nin en gösterişli ve sofistike tatil destinasyonu Bodrum'a hoş geldiniz. Bu kozmopolit yarımada, ünlüleri, yatçıları ve nihai Türk sahil deneyimini arayan seçici gezginleri çekerek antik tarihi jet-set lüksüyle mükemmel şekilde dengeler. Şehrin taç mücevheri, şu anda dünyaca ünlü Sualtı Arkeolojisi Müzesi'ne ev sahipliği yapan 15. yüzyıldan kalma Knights Hospitaller kalesi olan muhteşem Bodrum Kalesi'dir. Antik Dünyanın Yedi Harikası'ndan biri olan Halikarnas Mozolesi'nin büyüleyici kalıntılarını keşfedin ve nefes kesici deniz manzaralarıyla olağanüstü korunmuş antik amfitiyatroda gezin. Bodrum'un kıyı şeridi tertemiz plajlar ve özel plaj kulüpleriyle süslü - Gümbet'in canlı kıyılarından Bitez'in sakin koylarına, rüzgar sörfü cenneti Türkbükü'nden ayaklarınızı kuma sokarak yemek yediğiniz bohem balıkçı köyü Gümüşlük'e. Pırıltılı marina, Bodrum'un sosyal sahnesinin kalbidir; süper yatların geleneksel guletlerin yanına demirlediği ve sahildeki restoranların rakı eşliğinde taze Ege deniz ürünleri servis ettiği yer. Şık butiklerde tasarımcı modası için alışveriş yapın, el yapımı deri sandaletler için yerel pazarlara göz atın ve yarımadaya bakan ikonik beyaza boyanmış yel değirmenlerini keşfedin. Gece çöktükçe, Bodrum dünya standartlarında gece kulüpleri, plaj barları ve çatı salonlarıyla Türkiye'nin parti başkentine dönüşüyor. Gizli koylar, yakındaki Yunan adaları için tekne turları yapın veya imkansız derecede berrak turkuaz sularda yüzün. 5 yıldızlı lüks otellerinin, büyüleyici butik mülklerin, antik kültürün, tertemiz plajların ve elektrikli gece hayatının mükemmel karışımıyla Bodrum, tarih meraklılarını, plaj severleri ve parti müdavimlerini tatmin eden unutulmaz bir Ege kaçışı sunuyor.",
+        "features": [
+          "Bodrum Kalesi - Sualtı arkeoloji müzeli etkileyici ortaçağ kalesi",
+          "Antik Mozole Alanı - Antik Dünyanın Yedi Harikası'ndan birinin kalıntıları",
+          "Bodrum Marinası - Sahildeki restoranlar ve barlarla lüks yat limanı",
+          "Bodrum Plajları - Tertemiz koylar, plaj kulüpleri ve su sporları",
+          "Gümbet - Canlı gece hayatıyla popüler plaj tatil köyü",
+          "Turgutreis - Muhteşem gün batımlarıyla uzun kumlu plaj",
+          "Gümüşlük - Sahildeki restoranlarla büyüleyici balıkçı köyü",
+          "Bodrum Yel Değirmenleri - Denize bakan ikonik beyaza boyanmış yel değirmenleri",
+          "Tekne Turları - Gizli koylara ve Yunan adalarına günlük geziler",
+          "Alışveriş ve Gece Hayatı - Tasarımcı butikler, barlar ve plaj kulüpleri"
+        ]
+      },
+      "Fethiye": {
+        "description": "Çam kaplı dağların kristal berraklığında Akdeniz'e daldığı Türkiye'nin muhteşem Turkuaz Sahili'nin geçidi Fethiye'yi keşfedin. Bu muhteşem bölge, turkuaz ve gök mavisi sularının Instagram için mükemmel bir cennet yarattığı ünlü Mavi Lagünü ile dünya'nın en güzel plajları arasında sürekli olarak derecelendirilen Ölüdeniz'e ev sahipliği yapıyor. Babadağ Dağı'ndan yamaç paraşütünün adrenalin heyecanını deneyimleyin - dünyanın önde gelen tandem yamaç paraşütü sitelerinden biri - lagün ve dağların nefes kesici kuş bakışı manzaralarıyla sahil şeridinin 1.960 metre üzerinde süzülme. Antik Likya halkı, Fethiye limanına bakan kayalıklara oyulmuş etkileyici kaya mezarlarıyla izlerini bıraktı; geleneksel ahşap gulet tekneleriyle dolu hareketli marinaya dramatik bir arka plan oluşturdu. İkonik 12 Ada tekne turuna çıkın, gizli yüzme noktalarına ada atlama, tertemiz koylarda şnorkel yapma ve gemide taze ızgara balığın tadını çıkarma ile bir gün geçirin. Muhteşem Kelebekler Vadisi'ne maceralara çıkın; sadece tekneyle erişilebilen izole bir kanyon plajı veya buzlu dağ sularında yürüyebileceğiniz 18 kilometre uzunluğundaki bir kanyon olan Saklıkent Boğazı'nda serinleyin. 500 terk edilmiş taş eviyle ürkütücü Kayaköy Hayalet Köyü'nü keşfedin, efsanevi Likya Yolu sahil yolunun bölümlerinde yürüyüş yapın ve dünya standartlarında tüplü dalış yoluyla sualtı harikalarını keşfedin. Büyüleyici şehir merkezi otantik Türk yaşamıyla canlı - geleneksel pazarlar, günün avını servis eden aile işletmesi restoranlar ve limandaki canlı balık pazarı. Muhteşem gün batımlarıyla Çalış Plajı'nda rahat plaj yaşamını deneyimleyin, jet ski'den rüzgar sörfüne su sporlarının tadını çıkarın ve butik otellerde ve bütçe pansiyonlarında rahatlayın. Doğal güzellik, macera aktiviteleri, antik kültür ve gerçek Türk misafirperverliğinin yenilmez kombinasyonuyla Fethiye, otantik bir Akdeniz cenneti vaat ediyor.",
+        "features": [
+          "Ölüdeniz Mavi Lagün - Dünyaca ünlü turkuaz plaj ve lagün",
+          "Babadağ'dan Yamaç Paraşütü - Nefes kesici sahil manzaralarıyla tandem uçuşlar",
+          "Kelebekler Vadisi - Sadece tekneyle erişilebilen izole plaj kanyonu",
+          "Saklıkent Kanyonu - Yürüyüş ve rafting için dramatik 18 km kanyon",
+          "Likya Kaya Mezarları - Marinaya bakan antik oyma mezarlar",
+          "12 Ada Tekne Turu - Gizli koyları keşfeden tam gün gezisi",
+          "Kayaköy Hayalet Köyü - Taş evlerle terk edilmiş Rum köyü",
+          "Fethiye Marinası - Restoranlar ve alışverişle sahil promenadı",
+          "Çalış Plajı - Gün batımı manzaralarıyla uzun kumlu plaj",
+          "Tüplü Dalış ve Şnorkel - Zengin Akdeniz deniz yaşamını keşfedin"
+        ]
+      },
+      "Bursa": {
+        "description": "Osmanlı İmparatorluğu'nun doğum yeri ve Türkiye'nin en kültürel açıdan zengin şehri Bursa'yı, görkemli Uludağ'ın eteğinde muhteşem bir şekilde konumlandırılmış olarak deneyimleyin. Bu tarihi hazine, mükemmel bir yıl boyu destinasyon sunuyor - kışın dünya standartlarında kayak ve yazın ferahlatıcı dağ dinlenme yerleri. Bursa'nın Osmanlı mirası, 20 kubbeli Ulu Cami ve erken Osmanlı mimarisinin en iyi örneklerini ve karmaşık İznik çini işlerini sergileyen nefis Yeşil Cami ve Yeşil Türbe'nin olduğu muhteşem imparatorluk camileri aracılığıyla parlıyor. Şehir, terapötik doğal kaplıcaları ve geleneksel Türk hamamları için efsanevi - yüzyıllık hamamlarda veya modern termal spa tesislerinde rahatlayın, nesillerden nesillere aktarılan otantik sağlıklı yaşam geleneklerini deneyimleyin. Nefes kesici panoramik manzaralarla şehir seviyesinden alpin yüksekliklerine çıkan muhteşem Uludağ teleferik yolculuğuna çıkın. Kışın, Uludağ Milli Parkı mükemmel pistler, modern liftler ve rahat dağ otelleriyle Türkiye'nin önde gelen kayak tesisine dönüşüyor. Yaz, yürüyüşçüleri, dağ bisikletçilerini ve doğa severlerini serin dağ havasına ve manzaralı patikalara getiriyor. Yemek tutkunları, Bursa'ya İskender kebabın doğum yeri olarak akın ediyor - pide ekmeği üzerine domates sosu, yoğurt ve eritilmiş tereyağı ile servis edilen ince döner et dilimleri - tarifi mükemmelleştiren tarihi restoranlarda mutlaka denenmeli. İpek Çarşısı'nda (Koza Han) tarihi İpek Yolu mirasını keşfedin; tüccarlar 600 yıldır ince ipek ürünleri ticareti yapıyor. Geleneksel ahşap evler ve otantik köy yaşamıyla mükemmel korunmuş bir Osmanlı köyü olan UNESCO Dünya Mirası köyü Cumalıkızık'ı ziyaret edin. Güzel parklarda ve bahçelerde gezinin, 600 yıllık devasa İnkaya Çınarı altında rahatlayın ve sahildeki balık restoranlarıyla yakındaki Mudanya'nın sahil cazibesinin tadını çıkarın. Modern alışveriş merkezlerinde ve geleneksel pazarlarda mükemmel alışveriş, uygun fiyatlar, minimum kalabalık ve İstanbul'dan kolay erişimle Bursa, turist kitleler olmadan otantik Türk kültürü, doğal güzellik ve tarihi öneme sahip.",
+        "features": [
+          "Uludağ - Kışın önde gelen kayak merkezi, yazın yürüyüş cenneti",
+          "Tarihi Osmanlı Camileri - Muhteşem çinilerle Ulu Cami ve Yeşil Cami",
+          "Termal Banyolar - Doğal kaplıcalar ve geleneksel Türk hamamları",
+          "Bursa Teleferik - Panoramik şehir ve dağ manzaraları sunan manzaralı yolculuk",
+          "Yeşil Türbe - Güzel bahçelerde ikonik turkuaz çinili türbe",
+          "İpek Çarşısı - İpek şallar ve tekstiller için tarihi kapalı pazar",
+          "Cumalıkızık Köyü - Geleneksel evlerle UNESCO Osmanlı köyü",
+          "İskender Kebap - Ünlü Türk yemeğinin doğum yeri",
+          "İnkaya Çınarı - Huzurlu parkta 600 yıllık dev ağaç",
+          "Mudanya - Balık restoranları ve sahil promenadıyla sahil kasabası"
+        ]
+      },
+      "Kuala Lumpur": {
+        "description": "Malezya'nın dinamik başkenti Kuala Lumpur, fütüristik gökdelenler, canlı sokak pazarları ve çeşitli kültürel mirasla göz kamaştırıyor. İkonik Petronas İkiz Kuleleri, dünya standartlarında alışveriş merkezleri ve inanılmaz sokak yemeklerine ev sahipliği yapıyor. Malay, Çin ve Hint kültürlerini deneyimleyin, sömürge mimarisini keşfedin ve bu kozmopolit Güneydoğu Asya merkezinde tropik bahçelerin tadını çıkarın.",
+        "features": [
+          "Petronas İkiz Kuleleri - Gökyüzü köprüsü ve gözlem güvertesiyle ikonik 88 katlı kuleler",
+          "Batu Mağaraları - Dev altın heykel ile kireçtaşı mağaralarında Hindu tapınağı",
+          "KL Kulesi - 360° şehir manzaraları ve döner restoran sunan 421 m kule",
+          "Bukit Bintang - Önde gelen alışveriş ve eğlence bölgesi",
+          "Çin Mahallesi ve Petaling Caddesi - Hareketli pazarlar ve otantik sokak yemeği",
+          "KLCC Parkı - Çeşmeler, yürüyüş yolları ve kule manzaralarıyla kentsel vaha",
+          "Merdeka Meydanı - Tarihi sömürge binaları ve Bağımsızlık anıtı",
+          "Jalan Alor Yemek Caddesi - Yüzlerce yemek standıyla ünlü gece pazarı",
+          "İslam Sanatları Müzesi - Dünya standartlarında İslam sanatı ve eserleri koleksiyonu",
+          "Kuş Parkı ve Kelebek Parkı - Şehir merkezinde tropik yaban hayatı deneyimleri"
+        ]
+      },
+      "Penang": {
+        "description": "Penang, Malezya'nın mutfak başkenti ve UNESCO Dünya Mirası alanıdır; sokak sanatı, sömürge mimarisi ve inanılmaz yemekleriyle ünlüdür. George Town'ın tarihi sokakları Çin tapınaklarını, Hint camilerini ve İngiliz binalarını harmanlar. Plaj tatil köyleri, baharat bahçeleri, tropik tepeler ve Asya'nın en iyi sokak yemeklerinden bazıları Penang'ı kaçırılmaz kılıyor.",
+        "features": [
+          "George Town - Sokak sanatı ve sömürge mimarisine sahip UNESCO miras şehri",
+          "Sokak Yemeği Cenneti - Char kway teow, laksa ve daha fazlasını servis eden seyyar merkezleri",
+          "Penang Tepesi - Panoramik ada manzaralarıyla tepeye teleferik",
+          "Kek Lok Si Tapınağı - Güneydoğu Asya'nın en büyük Budist tapınağı",
+          "Sokak Sanatı Parkuru - Ernest Zacharevic ve yerel sanatçılar tarafından ünlü duvar resimleri",
+          "Batu Ferringhi Plajı - Gece pazarıyla popüler plaj tatil bölgesi",
+          "Tropikal Baharat Bahçesi - Egzotik bitkiler ve yemek pişirme dersleriyle güzel bahçeler",
+          "Klan İskeleleri - Kazıklar üzerinde geleneksel Çin su köyleri",
+          "Penang Milli Parkı - Plajlar, orman parkurları ve taç yürüyüş yolları",
+          "Gurney Drive - Restoranlar ve alışverişle sahil promenadı"
+        ]
+      },
+      "Langkawi": {
+        "description": "Langkawi, Andaman Denizi'nde tertemiz plajlar, vergisiz alışveriş ve doğal harikalar sunan 99 adadan oluşan bir tropik cennettir. Dünyaca ünlü SkyBridge'e binin, gizli plajlara ada atlama yapın, kartalları gözlemleyin ve lüks tatil köylerinde rahatlayın. Kristal berraklığında sular, ormanla kaplı dağlar ve efsanevi folklor, Langkawi'yi romantik kaçamaklar ve aile tatilleri için mükemmel kılıyor.",
+        "features": [
+          "Langkawi Gökyüzü Köprüsü - Panoramik orman manzaralarıyla kavisli asma köprü",
+          "Mat Cincang Dağı'na Teleferik - İkinci en yüksek zirveye manzaralı yolculuk",
+          "Pantai Cenang - Tatil köyleri, restoranlar ve su sporlarıyla ana plaj",
+          "Ada Atlama Turları - Issız adaları, plajları ve şnorkel noktalarını ziyaret edin",
+          "Mangrov Kanosu - Eski mangrov ormanları ve mağaralardan kürek çekin",
+          "Kartal Meydanı - Sahilde 12 m kartal heykelli ikonik yer işareti",
+          "Langkawi Sualtı Dünyası - Deniz yaşamı sergilerine sahip büyük akvaryum",
+          "Vergisiz Alışveriş - Vergisiz çikolatalar, alkol ve lüks mallar",
+          "Kilim Jeopark - Kireçtaşı oluşumlarıyla UNESCO jeoparkı",
+          "Gün Batımı Gezileri - Akşam yemeği ve eğlenceyle romantik yat turları"
+        ]
+      },
+      "Malacca": {
+        "description": "Malaka, Malezya'nın sömürge geçmişinin yaşayan bir müzesidir; Portekiz, Hollanda ve İngiliz mirasının canlı Peranakan kültürüyle buluştuğu yer. Tarihi nehir boyunca gezinin, renkli tapınakları ziyaret edin, sömürge binalarındaki müzeleri keşfedin ve benzersiz Nyonya mutfağının tadını çıkarın. Bu UNESCO Dünya Mirası şehri, büyüleyici gece pazarları, nehir gezileri ve otantik kültürel deneyimler sunuyor.",
+        "features": [
+          "Jonker Caddesi Gece Pazarı - Antikalar ve sokak yemekleriyle Cuma-Pazar pazarı",
+          "A Famosa Kalesi - 16. yüzyıldan kalma Portekiz kalesi kalıntıları",
+          "Christ Church ve Hollanda Meydanı - Sömürge döneminden ikonik kırmızı binalar",
+          "Malaka Nehir Gezisi - Sokak sanatı ve restoranların yanından akşam tekne gezileri",
+          "Baba ve Nyonya Miras Müzesi - Peranakan kültürü ve yaşam tarzı sergileri",
+          "St. Paul Tepesi - Panoramik şehir ve deniz manzaralı kalıntılar",
+          "Straits Çin Mücevher Müzesi - Peranakan mücevherlerinin benzersiz koleksiyonu",
+          "Malaka Hayvanat Bahçesi - Gece hayvanlı safari deneyimleri",
+          "Nyonya Mutfağı - Çin ve Malay lezzetlerini harmanlayan geleneksel Peranakan yemekleri",
+          "Trishaw Turları - Müzik ve ışıklarla süslenmiş bisiklet rikşaları"
+        ]
+      }
+    }
+  },
+  "tourismPage": {
+    "hero": {
+      "title": "Türkiye'nin Büyüsünü Keşfedin",
+      "subtitle": "Profesyonel rehberler ve unutulmaz yolculuklarla Türkiye'deki en iyi turları deneyimleyin"
+    },
+    "nav": {
+      "overview": "Genel Bakış",
+      "features": "Özellikler",
+      "tours": "Turlar",
+      "pricing": "Fiyatlandırma",
+      "included": "Neler Dahil",
+      "contact": "İletişim",
+      "faqs": "SSS"
+    },
+    "discover": {
+      "title": "Türkiye'nin Büyüsünü Keşfedin",
+      "paragraph1": "Türkiye'nin zengin tarihi, nefes kesici manzaraları ve canlı kültürü boyunca unutulmaz bir yolculuğa çıkın. İstanbul'un antik harikalarından Kapadokya'nın peri bacalarına, Antalya'nın turkuaz kıyılarından Trabzon'un sisli dağlarına kadar – uzman şekilde hazırlanmış turlarımızla hepsini deneyimleyin.",
+      "paragraph2": "Turlarımız, sizi otantik Türk deneyimine daldırmak için tasarlanmıştır; görülmesi gereken önemli yerleri yalnızca yerlilerin bildiği gizli hazinelerle birleştirir. Macera, kültürel zenginleşme veya rahatlama arıyorsanız, sizin için mükemmel tura sahibiz."
+    },
+    "tourService": {
+      "title": "Tur Hizmeti Nedir?",
+      "intro": "Rehlatak'tan tur hizmeti, planlama veya ulaşım endişesi olmadan Türkiye'deki en güzel ve ünlü turistik yerleri keşfetmenizi sağlayan eksiksiz bir seyahat deneyimidir.",
+      "weHandle": "Seyahatlerinizi hallediyoruz:",
+      "services": [
+        "Seyahat programınızın A'dan Z'ye tam organizasyonu",
+        "Şehirler arası ve şehir içi ulaşım sağlama",
+        "Tercihlerinize göre rahat konaklama rezervasyonu",
+        "Profesyonel rehberler eşliğinde turistik mekanları ziyaret düzenleme",
+        "Yerlere ve etkinliklere giriş biletleri sağlama",
+        "7/24 Arapça destek"
+      ],
+      "conclusion": "İster yalnız, ister partnerinizle, ister aile olarak veya büyük bir grup olarak seyahat ediyor olun, beklentilerinizi karşılayan ve ihtiyaçlarınıza uygun Türkiye'de bir tur programı tasarlıyoruz."
+    },
+    "features": {
+      "title": "Turlarımızın Özellikleri",
+      "items": [
+        {
+          "title": "Hedef ve Program Çeşitliliği",
+          "description": "Kuzeyden güneye, tarihi şehirlerden büyüleyici plajlara ve çarpıcı doğal alanlara kadar çeşitli turistik yerleri kapsayan Türkiye'de geniş bir tur yelpazesi sunuyoruz."
+        },
+        {
+          "title": "Profesyonel Tur Rehberleri",
+          "description": "Turlarınıza, ziyaret ettiğiniz bölgelerin tarihi ve kültürü hakkında derin bilgiye sahip Arapça ve İngilizce konuşan rehberler eşlik eder, deneyiminizi zenginleştirir ve daha keyifli ve faydalı hale getirir."
+        },
+        {
+          "title": "Kişisel Hizmet ve Esnek Programlar",
+          "description": "İhtiyaçlarınıza göre gezileri uyarlıyoruz, özel veya grup turları arasında seçim yapma ve programı ilgi alanlarınıza ve bütçenize göre ayarlama özgürlüğü ile."
+        },
+        {
+          "title": "Modern Araçlarda Konforlu Ulaşım",
+          "description": "Şehirler arası ve turlar sırasında güvenli ve rahat ulaşım sağlamak için profesyonel sürücülü modern, klimalı araçlar sağlıyoruz."
+        },
+        {
+          "title": "Özenle Seçilmiş Konaklama",
+          "description": "Mükemmel hizmet, stratejik konum ve ihtiyaçlarınıza uygun tesisler sunan en iyi otelleri ve tatil köylerini özenle seçiyoruz."
+        },
+        {
+          "title": "Rekabetçi ve Şeffaf Fiyatlar",
+          "description": "Fiyatlarımız baştan itibaren rekabetçi ve şeffaftır, gizli ücretler veya beklenmedik sürprizler olmadan, en iyi değeri sunar."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Türkiye'de Turistik Gezilerin Maliyeti",
+      "intro": "Türkiye tur paketlerimiz, yüksek kaliteli hizmetleri korurken farklı bütçelere uygun çeşitli fiyatlar sunar:",
+      "economy": {
+        "title": "1. Ekonomik Paketler",
+        "features": [
+          "<strong>Kişi başı 250$'dan başlayan</strong> (3 gün/2 gece)",
+          "3-4 yıldızlı otellerde konaklama dahil",
+          "Arapça konuşan rehberle grup turları",
+          "Şehirler arası ve turistik mekanlar arasında ulaşım"
+        ]
+      },
+      "classic": {
+        "title": "2. Klasik Paketler",
+        "features": [
+          "<strong>Kişi başı 450$'dan başlayan</strong> (5 gün/4 gece)",
+          "Ana konumlarda 4-5 yıldızlı otellerde konaklama",
+          "Özel ve grup turlarının birleşimi",
+          "Günlük kahvaltılar ve bazı ana yemekler"
+        ]
+      },
+      "luxury": {
+        "title": "3. Lüks Paketler",
+        "features": [
+          "<strong>Kişi başı 750$'dan başlayan</strong> (7 gün/6 gece)",
+          "5 yıldızlı otellerde ve lüks tatil köylerinde konaklama",
+          "Uzman rehberle özel özel turlar",
+          "Benzersiz deneyimler ve ayırt edici aktiviteler",
+          "Gurme yemeklerle tam pansiyon konaklama"
+        ]
+      },
+      "note": {
+        "label": "Not:",
+        "text": "Fiyatlar sezona, konaklama türüne ve belirli pakete göre değişebilir. Gruplar ve erken rezervasyonlar için mevsimsel teklifler ve indirimler sunuyoruz."
+      }
+    },
+    "included": {
+      "title": "Türkiye'de bir tur paketi neleri içerir?",
+      "intro": "Bizimle Türkiye'de bir tur rezervasyonu yaptığınızda, tüm ihtiyaçlarınızı karşılayan kapsamlı bir hizmet paketi alırsınız:",
+      "beforeTrip": {
+        "title": "1. Seyahatinizden Önce",
+        "items": [
+          "Sizin için en iyi programı tasarlamak için kişisel turizm danışmanlığı",
+          "Net bir zaman çizelgesi ile ayrıntılı seyahat planı",
+          "Uygun otelleri seçmede yardım",
+          "Ziyaret için en iyi zamanlar ve mevcut aktiviteler hakkında tavsiye"
+        ]
+      },
+      "uponArrival": {
+        "title": "2. Varışta",
+        "items": [
+          "Havaalanı karşılama ve uğurlama hizmeti",
+          "Profesyonel sürücülü özel araç",
+          "Turlarınız sırasında size eşlik edecek tur rehberi",
+          "Müzelere ve turistik yerlere giriş biletleri"
+        ]
+      },
+      "duringStay": {
+        "title": "3. Konaklamanız Sırasında",
+        "items": [
+          "Özenle seçilmiş otellerde konaklama",
+          "Seçilen pakete göre yemekler",
+          "Şehirler arası ve şehir içi ulaşım",
+          "Büyük turistik yerlere günlük turlar",
+          "Eğlence aktiviteleri ve kültürel deneyimler"
+        ]
+      },
+      "additional": {
+        "title": "4. Ek Hizmetler",
+        "items": [
+          "Acil durum ve sorgulama hattı (7/24)",
+          "Yerel halkla iletişim kurmak için dilinizde yardım",
+          "En iyi restoranlar ve alışveriş merkezleri için öneriler",
+          "Sıcak hava balonu, tekne gezileri ve folklor gösterileri gibi isteğe bağlı hizmetler"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Türkiye'deki Rüya Turizm Gezinizi Şimdi Rezerve Edin",
+      "description": "Baştan sona her şeyi içeren eksiksiz bir seyahat deneyimiyle Türkiye turizminin sırlarını keşfedin. Şimdi bizimle iletişime geçin ve bütçenize ve tercihlerinize göre sizin için mükemmel geziyi organize edelim.",
+      "email": "E-posta",
+      "whatsapp": "WhatsApp",
+      "contactNow": "Şimdi Bize Ulaşın",
+      "followUs": "Bizi Takip Edin",
+      "instagram": "Instagram",
+      "callNow": "Şimdi Arayın"
+    },
+    "contactForm": {
+      "title": "İletişime Geçin",
+      "description": "Turlarımız hakkında sorularınız mı var? Mükemmel yolculuğunuzu planlamanıza yardımcı olmak için buradayız. Bize bir mesaj gönderin, en kısa sürede size geri döneceğiz."
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular",
+      "items": [
+        {
+          "question": "Türkiye'yi ziyaret etmek için en iyi ay hangisidir?",
+          "answer": "Türkiye'yi ziyaret etmek için en iyi zaman, havanın ılıman olduğu ve turistik yerlerin daha az kalabalık olduğu ilkbahar (Nisan-Haziran) ve sonbahardır (Eylül-Kasım). Ancak, Rahalatek yıl boyunca turlar düzenler, her sezonu için özel aktivitelerle ne zaman ziyaret ederseniz edin harika bir deneyim yaşamanızı sağlar."
+        },
+        {
+          "question": "Türkiye turizm için pahalı mı?",
+          "answer": "Türkiye, Avrupa ülkelerine kıyasla ekonomik bir turist destinasyonu olarak kabul edilir ve tüm bütçelere uygun çeşitli seçenekler sunar. Rahalatek ile kişi başı 250$'dan başlayan ekonomik paketler, klasik paketler veya lüks deneyimler arasından seçim yapabilirsiniz. Tüm turlarımız için şeffaf fiyatlandırma ve mükemmel değer sunuyoruz."
+        },
+        {
+          "question": "Türkiye turizm için güvenli mi?",
+          "answer": "Evet, Türkiye güvenli bir turist destinasyonudur. Türkiye'nin büyük turist şehirleri çok güvenli ve ziyaretçilere karşı misafirperverdir. Rahalatek ile profesyonel Arapça ve İngilizce konuşan rehberler, 7/24 müşteri desteği, özenle seçilmiş konaklama ve tam sigortalı ulaşım sayesinde yolculuğunuz boyunca tam gönül rahatlığı için ek güvenlik elde edersiniz."
+        },
+        {
+          "question": "Turumu ne kadar önceden rezerve etmeliyim?",
+          "answer": "Özellikle yoğun sezonda (yaz ve tatiller) en iyi otelleri ve tur rehberlerini güvence altına almak için en az 2-4 hafta önceden rezervasyon yapmanızı öneririz. Ancak, Rahalatek müsaitlik durumuna göre son dakika rezervasyonlarını da karşılar. Erken rezervasyon genellikle özel indirimler ve daha iyi özelleştirme seçenekleriyle birlikte gelir."
+        },
+        {
+          "question": "Tur programımı özelleştirebilir miyim?",
+          "answer": "Kesinlikle! Rahalatek'in temel güçlü yönlerinden biri esneklik ve kişiselleştirmedir. Turunuzu ilgi alanlarınıza, tercihlerinize ve bütçenize uyacak şekilde uyarlayabiliriz. Belirli destinasyonlar eklemek, konaklamanızı uzatmak, belirli aktiviteler seçmek veya turun hızını ayarlamak istiyorsanız, ekibimiz mükemmel Türk maceranızı yaratmak için sizinle çalışacaktır."
+        },
+        {
+          "question": "Arapça konuşan tur rehberleri sağlıyor musunuz?",
+          "answer": "Evet! Tüm Rahalatek turları, akıcı Arapça ve İngilizce konuşan profesyonel tur rehberleri içerir. Rehberlerimiz sadece dil uzmanı değil, aynı zamanda Türk tarihi, kültürü ve yerel gelenekleri hakkında derin bilgiye sahiptirler. Yolculuğunuz boyunca zenginleştirici, bilgilendirici ve rahat bir deneyim yaşamanızı sağlarken dil engellerini ortadan kaldırırlar."
+        }
+      ]
+    }
+  },
+  "hotelBookingPage": {
+    "hero": {
+      "title": "Rahalatek ile Mükemmel Konaklamanız",
+      "subtitle": "Türkiye ve diğer ülkelerde en iyi fiyatlar ve olağanüstü hizmetle premium oteller rezerve edin"
+    },
+    "nav": {
+      "overview": "Genel Bakış",
+      "whyChooseUsFull": "Neden Bizi Seçmelisiniz",
+      "whyChooseUsShort": "Neden Biz",
+      "hotels": "Oteller",
+      "pricing": "Fiyatlandırma",
+      "included": "Neler Dahil",
+      "contact": "İletişim",
+      "faqs": "SSS"
+    },
+    "introduction": {
+      "title": "Mükemmel Konaklamalara Açılan Kapınız",
+      "paragraph1": "Türkiye genelinde özenle seçilmiş otel seçimimizle benzersiz konfor ve lüks deneyimi yaşayın. İstanbul'un tarihi cazibesinden Antalya'nın güneşli plajlarına, Kapadokya'nın peri masalı manzaralarından Trabzon'un bozulmamış dağlarına kadar, her gezginin rüyasına hitap eden premium konaklama sunuyoruz.",
+      "paragraph2": "Geniş portföyümüz, şık 3 yıldızlı konfordan görkemli 5 yıldızlı lüks tatil köylerine kadar özenle seçilmiş oteller içerir. Romantik bir kaçamak, aile tatili veya iş gezisi planlıyor olun, otel rezervasyon hizmetimiz tercihlerinize, bütçenize ve seyahat tarzınıza uygun mükemmel konaklamayı bulmanızı sağlar; tümü rekabetçi fiyatlar ve olağanüstü müşteri hizmetiyle desteklenir."
+    },
+    "hotelService": {
+      "title": "Otel Rezervasyon Hizmetimiz Nedir?",
+      "description": "Rahalatek'tan otel rezervasyon hizmetimiz, en yüksek kalite, konfor ve misafirperverlik standartlarını karşılayan özenle seçilmiş otellerde sorunsuz rezervasyonlar sunarak Türkiye'deki eksiksiz konaklama çözümünüzdür. Mükemmel odayı bulmaktan özel istekleri düzenlemeye kadar otel konaklamanızın her yönünü halleder, stressiz ve unutulmaz bir deneyim sağlarız.",
+      "weProvide": "Sağladıklarımız:",
+      "services": [
+        "Türkiye'nin tüm büyük şehirlerinde özenle seçilmiş 3, 4 ve 5 yıldızlı oteller",
+        "Solo gezginler, çiftler, aileler ve gruplar için uygun birden fazla oda türü",
+        "Kahvaltı dahil veya sadece oda düzenlemeleriyle esnek rezervasyon seçenekleri",
+        "Konforlu araçlarla havaalanı transfer hizmetleri (Vito, Sprinter veya Otobüs seçenekleri)",
+        "Yıl boyunca özel fiyatlar ve özel tekliflerle mevsimsel fiyatlandırma",
+        "6 yaş altı ve 6-12 yaş arası çocuklar için özel oranlarla aile dostu politikalar",
+        "Kolaylığınız için Arapça ve İngilizce 7/24 müşteri desteği"
+      ]
+    },
+    "features": {
+      "title": "Otel Rezervasyon Hizmetimizi Neden Seçmelisiniz",
+      "items": [
+        {
+          "title": "Geniş Otel Seçimi",
+          "description": "Lüks 5 yıldızlı tatil köylerinden bütçe dostu konaklamalara kadar, her gezginin ihtiyaçlarına ve bütçesine uygun Türkiye genelinde çeşitli otel yelpazesi sunuyoruz."
+        },
+        {
+          "title": "Kaliteli Konaklama",
+          "description": "Tüm ortak otellerimiz, en yüksek konfor, temizlik ve hizmet kalitesi standartlarını sağlamak için özenle seçilir ve düzenli olarak denetlenir."
+        },
+        {
+          "title": "Premium Hizmetler",
+          "description": "Konaklamanızı rahat ve unutulmaz kılmak için oda servisi, concierge yardımı ve 7/24 destek dahil olağanüstü hizmetlerin tadını çıkarın."
+        },
+        {
+          "title": "Modern Olanaklar",
+          "description": "Ücretsiz Wi-Fi, klima, modern banyolar, düz ekran TV'ler ve rahat bir konaklama için ihtiyacınız olan tüm olanaklar."
+        },
+        {
+          "title": "Özel Tesisler",
+          "description": "Tatil deneyiminizi geliştirmek için yüzme havuzlarına, fitness merkezlerine, spa tesislerine ve rekreasyon alanlarına erişim."
+        },
+        {
+          "title": "Yemek Seçenekleri",
+          "description": "Kahvaltı dahil, birden fazla restoran seçeneği ve özel diyet düzenlemeleriyle lezzetli yemeklerin tadını çıkarın."
+        }
+      ]
+    },
+    "pricing": {
+      "title": "Otel Fiyatlandırması ve Paketleri",
+      "intro": "Otel paketlerimiz, her bütçeye uyacak esnek fiyatlandırma seçenekleriyle olağanüstü değer sunmak için tasarlanmıştır. Tüm fiyatlar vergiler dahildir ve en iyi teklifler için mevsimsel farklılıklarla birden fazla para biriminde (USD, EUR, TRY) mevcuttur.",
+      "budget": {
+        "title": "1. Bütçe Otelleri (3 Yıldız)",
+        "features": [
+          "<strong>Oda başı gecelik 45-70$'dan</strong>",
+          "Temel olanaklarla rahat odalar",
+          "Çoğu tesiste günlük kahvaltı dahil",
+          "Ücretsiz Wi-Fi ve klima",
+          "Ana turistik yerlere yakın merkezi konumlar"
+        ]
+      },
+      "standard": {
+        "title": "2. Standart Oteller (4 Yıldız)",
+        "features": [
+          "<strong>Oda başı gecelik 80-140$'dan</strong>",
+          "Premium olanaklarla üstün odalar",
+          "Uluslararası seçeneklerle tam kahvaltı büfesi",
+          "Yüzme havuzu ve fitness tesisleri",
+          "Restoran ve oda servisi mevcut"
+        ]
+      },
+      "luxury": {
+        "title": "3. Lüks Oteller (5 Yıldız)",
+        "features": [
+          "<strong>Oda başı gecelik 150-400$+'dan</strong>",
+          "Çarpıcı manzaralı lüks süitler",
+          "Gurme yemekler ve özel kahvaltı seçenekleri",
+          "Tam hizmet spa, birden fazla havuz ve plaj erişimi",
+          "Concierge hizmetleri ve özel olanaklar",
+          "VIP havaalanı transferleri dahil"
+        ]
+      },
+      "note": {
+        "label": "Not:",
+        "text": "Fiyatlar sezona, konuma ve oda türüne göre değişir. Aylık fiyat farklılıkları mevcuttur (Haziran-Ağustos yoğun sezon, Aralık-Ocak kış fiyatları). Özel grup indirimleri, uzun süreli konaklama fiyatları ve erken rezervasyon promosyonları sunuyoruz. Çoğu otelde 6 yaş altı çocuklar ücretsiz kalır, 6-12 yaş arası indirimli fiyatlardan yararlanır."
+      }
+    },
+    "included": {
+      "title": "Otel Rezervasyonunuzda Neler Dahil?",
+      "intro": "Rahalatek aracılığıyla bir otel rezervasyonu yaptığınızda, Türkiye'de rahat ve endişesiz bir konaklama için tüm temel hizmetleri ve olanakları kapsayan kapsamlı bir paket alırsınız.",
+      "beforeArrival": {
+        "title": "1. Varışınızdan Önce",
+        "items": [
+          "İhtiyaçlarınız için mükemmel oteli seçmek için kişiselleştirilmiş danışmanlık",
+          "Fotoğraflar, olanaklar ve konum detaylarıyla ayrıntılı otel bilgisi",
+          "Rezervasyon onay numarasıyla onaylanmış rezervasyon",
+          "Check-in prosedürleri hakkında varış öncesi iletişim"
+        ]
+      },
+      "transportation": {
+        "title": "2. Havaalanı ve Ulaşım",
+        "items": [
+          "Karşılama ve selamlamayla havaalanı alım hizmeti",
+          "Konforlu araç seçenekleri: Vito (2-8 yolcu), Sprinter (9-16) veya Otobüs",
+          "Yerel bilgiye sahip profesyonel, lisanslı sürücüler",
+          "Kalkış için dönüş havaalanı transferi"
+        ]
+      },
+      "roomAmenities": {
+        "title": "3. Oda ve Olanaklar",
+        "items": [
+          "Oda türü seçimi: Standart, Deluxe, Süit, Aile Odaları",
+          "Klima ve iklim kontrolü",
+          "Tesis genelinde ücretsiz yüksek hızlı Wi-Fi",
+          "Uydu kanallı düz ekran TV",
+          "Ücretsiz banyo malzemeleriyle özel banyo",
+          "Günlük temizlik hizmeti"
+        ]
+      },
+      "dining": {
+        "title": "4. Yemek ve Ek Hizmetler",
+        "items": [
+          "Günlük kahvaltı büfesi (Türk ve uluslararası mutfak)",
+          "Otel restoranlarına ve barlara erişim",
+          "Yüzme havuzu ve fitness merkezi erişimi",
+          "7/24 ön büro ve concierge hizmeti",
+          "Arapça ve İngilizce 7/24 müşteri desteği",
+          "Özel istekler ve diyet ihtiyaçları için özel yardım"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Türkiye'de Mükemmel Otelinizi Şimdi Rezerve Edin",
+      "description": "Premium hizmet ve rekabetçi fiyatlarla Türkiye'deki en iyi konaklamaları deneyimleyin. İdeal otelinizi bulmak için şimdi bizimle iletişime geçin.",
+      "email": "E-posta",
+      "whatsapp": "WhatsApp",
+      "contactNow": "Şimdi Bize Ulaşın",
+      "followUs": "Bizi Takip Edin",
+      "instagram": "Instagram",
+      "callNow": "Şimdi Arayın"
+    },
+    "contactForm": {
+      "title": "İletişime Geçin",
+      "description": "Otel rezervasyonu hakkında sorularınız mı var? Mükemmel konaklamayı bulmanıza yardımcı olmak için buradayız. Bize bir mesaj gönderin, en kısa sürede size geri döneceğiz."
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular",
+      "items": [
+        {
+          "question": "Oteli ne kadar önceden rezerve etmeliyim?",
+          "answer": "Özellikle yoğun sezonda (Haziran-Ağustos) ve önemli tatillerde en iyi fiyatları ve oda müsaitliğini güvence altına almak için otelleri en az 1-2 hafta önceden rezerve etmenizi öneririz. Ancak, Rahalatek otel müsaitliğine göre son dakika rezervasyonlarını da karşılayabilir. Erken rezervasyon genellikle özel indirimler ve daha fazla oda türü seçeneğiyle birlikte gelir."
+        },
+        {
+          "question": "Otel fiyatına kahvaltı dahil mi?",
+          "answer": "Otel paketlerimizin çoğu, Türk ve uluslararası seçeneklerle günlük kahvaltı büfesi içerir. Kahvaltı dahil olması otel açıklamasında açıkça belirtilir. Bazı bütçe otelleri tercihinize göre özelleştirebileceğimiz sadece oda fiyatları sunabilir. Fiyatlandırma sağlarken nelerin dahil olduğunu her zaman belirtiriz."
+        },
+        {
+          "question": "Otel rezervasyonumu iptal edebilir veya değiştirebilir miyim?",
+          "answer": "Evet, iptal ve değiştirme politikaları otele ve rezervasyon türüne göre değişir. Çoğu otel check-in'den 24-72 saat öncesine kadar ücretsiz iptal sunar. Bazı promosyon fiyatları daha katı iptal politikalarına sahip olabilir. Rezervasyonunuzu onaylamadan önce size her zaman belirli iptal politikasını bildiririz ve ekibimiz rezervasyonunuzda yapılacak değişiklikler için yardımcı olmaya hazırdır."
+        },
+        {
+          "question": "Çocuklar otellerde ücretsiz mi kalıyor?",
+          "answer": "Seçimimizdeki çoğu otel, ebeveynlerle aynı odayı paylaşırken 6 yaş altı çocuklar için ücretsiz konaklama sunar. 6-12 yaş arası çocuklar genellikle %50 indirim alır. Bu aile dostu politikalar mevcut yataklarda geçerlidir. Ekstra yataklar veya beşikler ek ücret karşılığında düzenlenebilir. Belirli politikalar otele göre değişir ve rezervasyon yaparken size tam detayları sağlayacağız."
+        },
+        {
+          "question": "Otel rezervasyonuna havaalanı transferi dahil mi?",
+          "answer": "Havaalanı transferi 5 yıldızlı lüks otel rezervasyonlarına dahildir. 3 yıldızlı ve 4 yıldızlı oteller için havaalanı transferi paketinize rekabetçi fiyatlarla eklenebilir. Vito (2-8 yolcu), Sprinter (9-16 yolcu) ve büyük gruplar için lüks otobüsler dahil konforlu araç seçenekleri sunuyoruz. Tüm transferler profesyonel sürücülerle karşılama ve selamlama hizmeti içerir."
+        },
+        {
+          "question": "Hangi ödeme yöntemlerini kabul ediyorsunuz?",
+          "answer": "Kolaylığınız için birden fazla ödeme yöntemini kabul ediyoruz: banka transferi, kredi/banka kartları (Visa, Mastercard) ve USD, EUR veya Türk Lirası ile nakit ödeme. Rezervasyonunuzu güvence altına almak için önceden veya otelin politikasına bağlı olarak check-in'de otelde ödeme yapılabilir. Güvenli ödeme işleme ve tüm işlemler için ayrıntılı makbuzlar sağlıyoruz."
+        }
+      ]
+    }
+  },
+  "luxurySuitesPage": {
+    "hero": {
+      "title": "Lüks Süitler",
+      "subtitle": "Benzersiz lüks ve konforu deneyimleyin"
+    },
+    "nav": {
+      "overview": "Genel Bakış",
+      "whyChooseUsFull": "Neden Bizi Seçmelisiniz",
+      "whyChooseUsShort": "Neden Biz",
+      "apartmentTypes": "Daire Türleri",
+      "destinations": "Destinasyonlar",
+      "contact": "İletişim",
+      "faqs": "SSS"
+    },
+    "introduction": {
+      "title": "Türkiye'nin en güzel turistik yerlerinin büyüleyici manzaralarıyla gizlilik ve konforun tadını çıkarın.",
+      "subtitle": "Geleneksel otellerde kalırken bu sorunlarla karşılaşıyor musunuz?",
+      "problems": [
+        "Bir aile için yeterli olmayan veya gizlilik eksikliği olan küçük, sıkışık odalar.",
+        "Restorandan çamaşırhaneye kadar her hizmet için fahiş ek maliyetler.",
+        "Mutfak eksikliği, her zaman dışarıda yemek yemenizi zorlar.",
+        "Bitişik odalarda büyük aileleri barındırma zorluğu.",
+        "Arapça konuşmayan otel personeliyle dil engeli.",
+        "Otel lobisinde, restoranlarda ve misafirler arasında gizlilik eksikliği."
+      ]
+    },
+    "serviceSection": {
+      "title": "Seyahatlerinizin servisleri daireleri hizmeti nedir?",
+      "description": "Seyahatlerinizin servisleri daireleri, evin konforunu ve otelin hizmetlerini arayanlar için mükemmel çözümdür. Türkiye'de konaklamayı seçtiğinizde, seyahatlerinizle sıradan bir turist gibi değil, gerçeği deneyimleyen bir yerleşik gibi hissetmek istersiniz.",
+      "offersTitle": "Seyahatlerinizin servisleri daireleri sunar:",
+      "offers": [
+        "Aileler ve gruplar için uygun geniş alanlar ve birden fazla oda",
+        "Favori yemeklerinizi hazırlamak ve restoran masraflarından tasarruf etmek için tam donanımlı mutfaklar",
+        "Rahatlama ve aile toplantıları için özel oturma odası",
+        "Temizlik ve 7/24 resepsiyon gibi otel hizmetleri",
+        "Kendi evinizde gibi mutlak gizlilik",
+        "Özellikle uzun konaklamalar için en iyi değer"
+      ]
+    },
+    "features": {
+      "title": "Rehlatak Dairelerinin Özellikleri",
+      "subtitle": "Türkiye'de konaklama için Rehlatak Daireleri neden en iyi seçimdir?",
+      "strategic": {
+        "title": "Türk Şehirlerinin Kalbinde Stratejik Konumlar",
+        "description": "Rehlatak Daireleri, Türkiye'nin en iyi turistik bölgelerinde bulunur – şunlardan sadece birkaç dakikalık yürüme mesafesinde:",
+        "points": [
+          "Türkiye'nin en ünlü turistik yerleri ve tarihi anıtları",
+          "Ana alışveriş merkezleri ve popüler pazarlar",
+          "Toplu taşıma istasyonları",
+          "En iyi restoranlar ve kafeler"
+        ]
+      },
+      "amenities": {
+        "title": "Beklentilerinizi aşan lüks olanaklar",
+        "points": [
+          "Premium ortopedik yatak takımlarıyla rahat yataklar",
+          "Sıcaklık kontrolü ile merkezi klima",
+          "Çamaşır makinesi, buzdolabı ve mikrodalga dahil modern ev aletleri",
+          "Favori yemeklerinizi hazırlamak için eksiksiz mutfak malzemeleri",
+          "Ücretsiz yüksek hızlı internet",
+          "Arapça ve uluslararası kanallar"
+        ]
+      },
+      "services": {
+        "title": "Rehlatak ekibinden Arapça ve İngilizce kapsamlı hizmetler",
+        "points": [
+          "7/24 Arapça ve İngilizce destek ekibi",
+          "Havaalanı alım ve bırakma hizmeti",
+          "Talep üzerine düzenli temizlik",
+          "Gerektiğinde tıbbi yardım",
+          "En iyi yerlere ve restoranlara tur rehberliği",
+          "Seyahat programınıza uyacak esnek varış prosedürleri"
+        ]
+      }
+    },
+    "apartmentTypes": {
+      "title": "Tüm İhtiyaçlara Uygun Rehlatak'tan Otel Dairesi Seçenekleri",
+      "description": "Tüm ihtiyaçlarınıza uyacak şekilde Rehlatak'tan çeşitli otel daireleri sunuyoruz ve ayrıca çeşitli daire koleksiyonu sağlıyoruz",
+      "studio": {
+        "title": "Stüdyo Daire | Gecelik 35$'dan başlayan",
+        "features": [
+          "Solo gezginler veya çiftler için ideal",
+          "Tüm temel olanaklarla kompakt alan",
+          "Şehir merkezinde merkezi konum"
+        ]
+      },
+      "oneBedroom": {
+        "title": "Bir Yatak Odalı Daire | Gecelik 55$'dan başlayan",
+        "features": [
+          "Aileler veya küçük gruplar için uygun (2-3 kişi)",
+          "Geniş oturma alanıyla ayrı yatak odası",
+          "Aile yemekleri için tam donanımlı mutfak"
+        ]
+      },
+      "twoBedroom": {
+        "title": "İki Yatak Odalı Daire | Gecelik 75$'dan başlayan",
+        "features": [
+          "Aileler için uygun (4-6 kişi)",
+          "Geniş oturma alanıyla iki geniş yatak odası",
+          "Tam donanımlı mutfak ve eksiksiz yemek alanı"
+        ]
+      },
+      "luxury": {
+        "title": "Rahalatek Lüks Daireler | Gecelik 120$'dan başlayan",
+        "features": [
+          "Benzersiz premium eğlence deneyimi",
+          "Modern olanaklarla lüks banyolar",
+          "Özel modern mobilyalarla geniş alanlar",
+          "Jakuzi veya özel sauna ile birlikte gelir"
+        ]
+      }
+    },
+    "destinations": {
+      "title": "Lüks Süitler için Popüler Destinasyonlar",
+      "istanbul": {
+        "title": "İstanbul - Medeniyetlerin Başkenti",
+        "features": [
+          "Boğaz manzaralı lüks daireler",
+          "Büyük tarihi simge yapılara yakın konumda",
+          "Alışveriş merkezlerine ve restoranlara kolay erişim"
+        ]
+      },
+      "trabzon": {
+        "title": "Trabzon - Kuzey'in İncisi",
+        "features": [
+          "Dağ manzaralı lüks daireler",
+          "Uzungöl ve doğal turistik yerlere yakın",
+          "Çarpıcı deniz manzaralarıyla premium olanaklar"
+        ]
+      },
+      "antalya": {
+        "title": "Antalya - Türk Rivierası",
+        "features": [
+          "Sahil kenarı lüks daireler",
+          "Antik kalıntılara ve turistik yerlere yakın",
+          "Geleneksel Türk cazibesinde modern olanaklar"
+        ]
+      },
+      "bursa": {
+        "title": "Bursa - Yeşil Şehir",
+        "features": [
+          "Dağ manzaralı lüks daireler",
+          "Doğal kaplıcalara ve kayak merkezlerine yakın",
+          "Çarpıcı yeşil manzaralarla premium tesisler"
+        ]
+      }
+    },
+    "contact": {
+      "title": "Lüks Süitinizi Şimdi Rezerve Edin",
+      "description": "Otelin lüksüyle evin konforunu deneyimleyin. Mükemmel servisleri dairenizi rezerve etmek için şimdi bizimle iletişime geçin.",
+      "email": "E-posta",
+      "contactNow": "Şimdi Bize Ulaşın",
+      "whatsapp": "WhatsApp",
+      "followUs": "Bizi Takip Edin",
+      "instagram": "Instagram",
+      "callNow": "Şimdi Arayın"
+    },
+    "contactForm": {
+      "title": "İletişime Geçin",
+      "description": "Lüks süitlerimiz hakkında sorularınız mı var? Konaklamanız için mükemmel konaklamayı bulmanıza yardımcı olmak için buradayız. Bize bir mesaj gönderin, en kısa sürede size geri döneceğiz."
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular",
+      "items": [
+        {
+          "question": "Rahalatek ile hangi tür otel daireleri mevcuttur?",
+          "answer": "Rahalatek, tüm ihtiyaçlara uyacak çeşitli otel daireleri sunar:\n\n• Stüdyo Daireler (25-40m²): Küçük mutfaklı açık kompakt alan, 1-2 kişi için uygun.\n• Bir Yatak Odalı Daire (70-80m²): Oturma odası, ayrı mutfak ve banyo içerir, 3-4 kişi için ideal.\n• İki Yatak Odalı Daire (100-70m²): Oturma odası, tam mutfakla iki ayrı yatak odası, 6 kişiye kadar aileler için uygun.\n• Üç Yatak Odalı Daire (150-100m²): Üç ayrı yatak odası, geniş oturma odası, tam mutfak, büyük gruplar için uygun.\n• Dubleks ve Penthaus (150+m²): İki katta veya binanın en üstünde panoramik manzaralı lüks daireler, olağanüstü bir deneyim.\n\nTüm Rahalatek daireleri, size rahat bir konaklama sağlamak için tam döşenmiş ve uluslararası standartlarla donatılmıştır."
+        },
+        {
+          "question": "Rahalatek'in otel daireleri ile servisleri daireler arasındaki fark nedir?",
+          "answer": "Rahalatek'ten Otel Daireleri, sürekli resepsiyon, düzenli temizlik, çamaşır hizmeti ve bazen spor salonu ve havuz gibi ortak olanaklar gibi otel hizmetleri sunar.\n\nServisleri Daireler genellikle düzenli daireler gibi daha bağımsızdır, genellikle resepsiyon veya günlük hizmetler olmadan ve sürekli resepsiyon gibi olanakları içermeyebilir.\n\nRahalatek ile, tüm otel hizmetleri, alan özgürlüğü ve daireleri ayırt eden gizlilik ve konforla tam servisleri daireler elde edersiniz."
+        },
+        {
+          "question": "Rahalatek'in otel daireleri ile oteller arasındaki fark nedir?",
+          "answer": "Rahalatek'in otel daireleri şunları sunar:\n\n• Küçük otel odalarına kıyasla (15-30m²) daha büyük alanlar (150-25m²)\n• Restoran gerekmeksizin tam donanımlı mutfak\n• Otelle karşılaştırılabilir birden fazla ayrı oda ve bir veya daha fazla banyo\n• Yalnızca otel restoranlarına bağımlı olmak yerine yemekleri hazırlamada esneklik\n• Uzun konaklamalar için uygun, otel konaklaması kısa konaklamalar için uygun\n• Oteldeki birden fazla odanın daha yüksek maliyetlerine kıyasla aileler ve gruplar için daha düşük maliyet\n• Rahalatek ile ticari ve turistik hisse kıyasla rahat ev ortamı\n\nRahalatek'in otel dairelerinin ana avantajı, özellikle 3 geceyi aşan konaklamalar için özgürlük, gizlilik ve değerdir."
+        }
+      ]
+    }
+  },
+  "airportServicePage": {
+    "hero": {
+      "title": "Sorunsuz Havaalanı Transferleri",
+      "subtitle": "VIP muamelesi ile profesyonel havaalanı karşılama ve uğurlama hizmetleri"
+    },
+    "nav": {
+      "overview": "Genel Bakış",
+      "whyChooseUsFull": "Neden Bizi Seçmelisiniz",
+      "whyChooseUsShort": "Neden Biz",
+      "pricing": "Fiyatlandırma",
+      "whatsIncluded": "Neler Dahil",
+      "contact": "İletişim",
+      "faqs": "SSS"
+    },
+    "introduction": {
+      "title": "Yolculuğunuz Konforla Başlar",
+      "paragraph1": "Türkiye genelinde premium havaalanı transfer hizmetimizle en üst düzey kolaylığı deneyimleyin. İndiğiniz andan kalkışınıza kadar, sorunsuz, rahat ve stressiz bir yolculuk sağlarız. VIP karşılama hizmetimiz kişiselleştirilmiş karşılama ve selamlama, bagaj yardımı ve otelinize veya varış noktanıza doğrudan transferi içerir.",
+      "paragraph2": "İstanbul, Antalya, Trabzon veya herhangi bir büyük Türk havaalanına varışınızda, profesyonel ekibimiz sizi karşılamaya hazırdır. Tüm şehirlere hizmet veriyoruz ve modern araçlar, deneyimli sürücüler ve seyahat deneyiminizi istisnai kılmak için 7/24 müşteri desteği ile kapıdan kapıya hizmet sağlıyoruz."
+    },
+    "serviceSection": {
+      "title": "Havaalanı Transfer Hizmetimiz Nedir?",
+      "description": "Rahalatek'tan havaalanı transfer hizmetimiz, sorunsuz varış ve kalkışlar sağlayan eksiksiz havaalanı karşılama ve uğurlama çözümleri sunar. Uçuş takibinden bagaj taşımaya kadar havaalanı transferinizin tüm yönlerini halleder, inişten kalkışa kadar premium bir deneyim sunarız.",
+      "whatWeProvide": "Sağladıklarımız:",
+      "items": {
+        "item1": "İsim tabelası ile varış kapısında kişiselleştirilmiş karşılama ve selamlama",
+        "item2": "Gümrük, göç işlemleri ve bagaj talebi konusunda profesyonel yardım",
+        "item3": "Modern araç filosu: Vito (2-8 yolcu), Sprinter (9-16 yolcu) veya lüks otobüsler",
+        "item4": "Mükemmel yerel bilgi ve çok dilli becerilere sahip lisanslı sürücüler",
+        "item5": "Gecikmeler için uçuş takibi ve otomatik alış zamanı ayarlamaları",
+        "item6": "Havaalanından otele ve otelden havaalanına kapıdan kapıya hizmet",
+        "item7": "Arapça, İngilizce ve Türkçe 7/24 müşteri desteği"
+      },
+      "closing": "Seyahatin en stresli kısmını sizin ve aileniz için sorunsuz ve rahat bir deneyime dönüştürüyoruz."
+    },
+    "features": {
+      "title": "Havaalanı Transfer Hizmetimizi Neden Seçmelisiniz",
+      "items": {
+        "feature1": {
+          "title": "Karşılama ve Selamlama Hizmeti",
+          "description": "Profesyonel ekibimiz, kişiselleştirilmiş isim tabelası ile havaalanı varış kapısında sizi karşılar, bagajda yardımcı olur ve gerekirse gümrük ve göç işlemlerinde size rehberlik eder."
+        },
+        "feature2": {
+          "title": "Konforlu Araçlar",
+          "description": "Modern, klimalı araç filomuzdan seçim yapın: Vito (2-8 yolcu), Sprinter (9-16 yolcu) veya büyük gruplar için lüks otobüsler, tümü en yüksek standartlarda korunur."
+        },
+        "feature3": {
+          "title": "Profesyonel Sürücüler",
+          "description": "Yerel rotalar ve trafik düzenleri hakkında mükemmel bilgiye sahip lisanslı, deneyimli sürücüler. Sorunsuz iletişim için çok dilli sürücüler mevcuttur (İngilizce, Arapça, Türkçe)."
+        },
+        "feature4": {
+          "title": "7/24 Müsaitlik",
+          "description": "Herhangi bir varış veya kalkış zamanı için günün her saati hizmet. Uçuş takibi gecikmeleri izler ve alış zamanlarını otomatik olarak ayarlar, böylece asla beklemezsiniz."
+        },
+        "feature5": {
+          "title": "Sürekli Uçuş Durumu Takibi",
+          "description": "Gecikmeler veya varış saatinizdeki değişiklikler durumunda bile zamanında olmamızı sağlamak için uçuş durumunuzu sürekli izleriz."
+        },
+        "feature6": {
+          "title": "Güvenli ve Güvenilir",
+          "description": "Tüm güvenlik protokollerini takip eden deneyimli sürücülerle tam sigortalı araçlar. GPS takibi ve gerçek zamanlı güncellemeler yolculuğunuz boyunca sizi bilgilendirmeye devam eder."
+        },
+        "feature7": {
+          "title": "Bagaj Yardımı",
+          "description": "Havaalanı alımından otel bırakılmasına kadar eksiksiz bagaj taşıma. Eşyalarınızın yolculuk boyunca güvenli bir şekilde taşındığından ve özenle kullanıldığından emin oluruz."
+        },
+        "feature8": {
+          "title": "Sürprizsiz Şeffaf Fiyatlandırma",
+          "description": "Fiyatlandırmamız baştan itibaren açık ve şeffaftır, gizli maliyetler veya varışta sürpriz ek ücretler yoktur."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Havaalanı Transfer Fiyatlandırması",
+      "intro": "Şeffaf fiyatlandırma yapımız gizli ücretler olmadan mükemmel değer sunar. Fiyatlar araç türüne, mesafeye ve yolcu sayısına göre değişir. Tüm fiyatlar karşılama ve selamlama, bagaj yardımı ve profesyonel sürücü hizmeti içerir.",
+      "vito": {
+        "title": "1. Vito Transfer (2-8 Yolcu)",
+        "feature1": "Mesafe ve konuma bağlı olarak 30-50$'dan",
+        "feature2": "Çiftler, küçük aileler veya iş gezginleri için mükemmel",
+        "feature3": "Klimalı modern Mercedes Vito",
+        "feature4": "Geniş bagaj alanıyla rahat koltuklar"
+      },
+      "sprinter": {
+        "title": "2. Sprinter Transfer (9-16 Yolcu)",
+        "feature1": "Mesafe ve konuma bağlı olarak 50-70$'dan",
+        "feature2": "Orta büyüklükteki gruplar ve aileler için ideal",
+        "feature3": "Premium konfor özellikleriyle Mercedes Sprinter",
+        "feature4": "Grup gezginleri için ekstra bagaj kapasitesi"
+      },
+      "bus": {
+        "title": "3. Otobüs Transfer (17+ Yolcu)",
+        "feature1": "Mesafe ve yolcu sayısına bağlı olarak 180-300$+'dan",
+        "feature2": "Büyük tur grupları ve kurumsal etkinlikler için mükemmel",
+        "feature3": "İklim kontrolü ile modern lüks otobüs",
+        "feature4": "Profesyonel sürücü ve tur rehberi mevcut"
+      },
+      "note": {
+        "label": "Not:",
+        "text": "Fiyatlar havaalanına, varış şehrine ve günün saatine göre değişir. Gece transferleri (23:00 - 06:00) ek ücrete tabi olabilir. Gidiş-dönüş rezervasyonları özel indirimler alır. 3+ araç için grup fiyatları mevcuttur. Tüm fiyatlar karşılama ve selamlama, uçuş takibi ve bagaj yardımı içerir."
+      }
+    },
+    "included": {
+      "title": "Havaalanı Transferinizde Neler Dahil?",
+      "intro": "Kapsamlı havaalanı transfer hizmetimiz, inişten otel check-in'e ve otelden kalkış kapısına kadar yolculuğunuzun her yönünü kapsar.",
+      "arrival": {
+        "title": "1. Havaalanı Karşılama (Varış)",
+        "item1": "Kişiselleştirilmiş isim tabelası ile varış kapısında karşılama ve selamlama",
+        "item2": "Bagaj talebi ve bagaj taşımada yardım",
+        "item3": "Gerekirse gümrük ve göç işlemlerinde yardım",
+        "item4": "Bagaj arabası yardımıyla araca eşlik"
+      },
+      "journey": {
+        "title": "2. Transfer Yolculuğu",
+        "item1": "Modern, klimalı araç (Vito, Sprinter veya Otobüs)",
+        "item2": "Yerel uzmanlığa sahip profesyonel, lisanslı sürücü",
+        "item3": "Ücretsiz şişe su ve Wi-Fi (belirli araçlarda)",
+        "item4": "Otelinize veya varış noktanıza güvenli, doğrudan rota",
+        "item5": "Güvenlik ve gerçek zamanlı güncellemeler için GPS takibi"
+      },
+      "departure": {
+        "title": "3. Havaalanı Uğurlama (Kalkış)",
+        "item1": "Uçuş takibi ile planlanmış zamanda otel alımı",
+        "item2": "Bagaj yükleme ve check-in tezgahına yardım",
+        "item3": "Kalkış kapısı bölgesinde terminal bırakma",
+        "item4": "Gerekirse havayolu check-in'de yardım"
+      },
+      "additional": {
+        "title": "4. Ek Hizmetler",
+        "item1": "Uçuş takibi ve otomatik gecikme ayarlamaları",
+        "item2": "Birden fazla dilde 7/24 müşteri destek hattı",
+        "item3": "Talep üzerine çocuk koltukları ve özel ekipman",
+        "item4": "Ekstra duraklar veya rota değişiklikleri mevcut",
+        "item5": "Belirli havaalanlarında VIP hızlı geçiş hizmetleri (ek ücret)"
+      }
+    },
+    "contact": {
+      "title": "Havaalanı Transferinizi Şimdi Rezerve Edin",
+      "description": "Profesyonel hizmet ve konforlu araçlarla sorunsuz havaalanı transferleri deneyimleyin. VIP karşılama veya uğurlama hizmetinizi düzenlemek için şimdi bizimle iletişime geçin.",
+      "email": "E-posta",
+      "contactUsNow": "Şimdi Bize Ulaşın",
+      "whatsapp": "WhatsApp",
+      "followUs": "Bizi Takip Edin",
+      "instagram": "Instagram",
+      "callUsNow": "Şimdi Arayın"
+    },
+    "contactForm": {
+      "title": "İletişime Geçin",
+      "description": "Havaalanı transfer hizmetimiz hakkında sorularınız mı var? Sorunsuz varış ve kalkışınızı planlamanıza yardımcı olmak için buradayız. Bize bir mesaj gönderin, en kısa sürede size geri döneceğiz."
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular",
+      "items": {
+        "faq1": {
+          "question": "Önceden rezervasyon yapmam gerekiyor mu?",
+          "answer": "Evet, en az 24 saat önceden rezervasyon yapmanızı öneririz. Bu, doğru aracın mevcut olmasını ve size en iyi hizmeti sunmamızı sağlar. Ancak, müsaitlik durumuna göre son dakika rezervasyonlarını da kabul ediyoruz."
+        },
+        "faq2": {
+          "question": "Hizmet 7/24 mevcut mu?",
+          "answer": "Evet, hafta sonları, tatiller ve yoğun seyahat zamanları dahil günde 24 saat, haftada 7 gün havaalanı karşılama hizmeti sağlıyoruz. Ekibimiz ne zaman gelirseniz gelin sizi karşılamaya her zaman hazırdır."
+        },
+        "faq3": {
+          "question": "Uçuşum gecikirse ne olur?",
+          "answer": "Endişelenmeyin! Uçuş durumunuzu sürekli izleriz ve varışınız gecikse veya değişse bile zamanında orada oluruz. Sürücümüz makul gecikmeler için ekstra ücret olmadan gerçek varış saatinizde sizi karşılayacaktır."
+        },
+        "faq4": {
+          "question": "Varışta ödeme kabul ediyor musunuz?",
+          "answer": "Evet, varışta USD, EUR veya Türk Lirası ile nakit ödeme kabul ediyoruz. Ayrıca kolaylığınız için banka transferi veya kredi kartı ile önceden ödeme seçenekleri sunuyoruz. Fiyatlar önceden kararlaştırılır ve gizli ücretler yoktur."
+        },
+        "faq5": {
+          "question": "Büyük gruplar için hizmet sağlıyor musunuz?",
+          "answer": "Kesinlikle! Gruplar için özel olarak Mercedes Sprinter (9-16 yolcu) ve lüks otobüsler (17+ yolcu) gibi büyük araçlarımız var. Daha büyük gruplar için birden fazla aracı da koordine edebiliriz. 3+ araç için toplu indirimler mevcuttur."
+        },
+        "faq6": {
+          "question": "Araçlarda çocuk koltuğu sağlıyor musunuz?",
+          "answer": "Evet, talep üzerine ücretsiz çocuk koltuğu ve yükseltici koltuk sağlıyoruz. Lütfen rezervasyon sırasında çocuğun yaşı ve gerekli koltuk sayısı hakkında bizi bilgilendirin, böylece buna göre hazırlanabiliriz."
+        }
+      }
+    }
+  },
+  "publicTourPage": {
+    "tourLabel": "Tur",
+    "nav": {
+      "overview": "Genel Bakış",
+      "highlights": "Öne Çıkanlar",
+      "information": "Bilgi",
+      "policies": "Politikalar",
+      "faqs": "SSS"
+    },
+    "overview": {
+      "title": "Genel Bakış"
+    },
+    "highlights": {
+      "title": "Tur Öne Çıkanları"
+    },
+    "details": {
+      "title": "Tur Bilgisi",
+      "tourType": "Tur Türü",
+      "duration": "Süre",
+      "hour": "saat",
+      "hours": "saat",
+      "location": "Konum",
+      "vehicle": "Araç"
+    },
+    "policies": {
+      "title": "Tur Politikaları",
+      "childrenPolicy": "Çocuk Politikası",
+      "under3": "3 yaş altı çocuklar",
+      "above3": "3+ yaş çocuklar",
+      "free": "Ücretsiz",
+      "adultPrice": "Yetişkin fiyatı",
+      "bookingCancellation": "Rezervasyon ve İptal"
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular"
+    },
+    "tourTypes": {
+      "VIP": "VIP",
+      "Standard": "Standart",
+      "Group": "Grup"
+    },
+    "tourTypeCombined": {
+      "VIP": "VIP Tur",
+      "Standard": "Standart Tur",
+      "Group": "Grup Turu"
+    },
+    "vehicleTypes": {
+      "Vito": "Vito",
+      "Sprinter": "Sprinter",
+      "Bus": "Otobüs"
+    },
+    "vehicleCapacity": "kişi",
+    "cities": {
+      "Istanbul": "İstanbul",
+      "Antalya": "Antalya",
+      "Cappadocia": "Kapadokya",
+      "Trabzon": "Trabzon",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Bursa": "Bursa",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malaka"
+    },
+    "countries": {
+      "Turkey": "Türkiye",
+      "Malaysia": "Malezya"
+    }
+  },
+  "publicHotelPage": {
+    "starProperty": "Yıldızlı Tesis",
+    "nav": {
+      "overview": "Genel Bakış",
+      "rooms": "Odalar",
+      "amenities": "Olanaklar",
+      "transportation": "Ulaşım",
+      "location": "Konum",
+      "policies": "Politikalar",
+      "faqs": "SSS"
+    },
+    "transportation": {
+      "title": "Ulaşım",
+      "airport": "Havaalanı",
+      "vehicles": {
+        "vito": "Vito",
+        "sprinter": "Sprinter",
+        "bus": "Otobüs"
+      },
+      "vitoCapacity": "2-8 yolcu",
+      "sprinterCapacity": "9-16 yolcu",
+      "busCapacity": "17+ yolcu",
+      "airportReception": "Havaalanı Karşılama",
+      "airportFarewell": "Havaalanı Uğurlama"
+    },
+    "location": {
+      "title": "Konum"
+    },
+    "policies": {
+      "title": "Politikalar",
+      "childrenPolicy": "Çocuk Politikası",
+      "under6": "6 yaş altı çocuklar",
+      "age6to12": "6-12 yaş çocuklar",
+      "above12": "12 yaş üstü çocuklar",
+      "free": "Ücretsiz",
+      "additionalCharge": "Oda türüne göre ek ücret",
+      "adultPrice": "Yetişkin fiyatı",
+      "breakfastPolicy": "Kahvaltı Politikası",
+      "breakfastIncluded": "Kahvaltı oda fiyatına dahildir",
+      "breakfastAvailable": "Kahvaltı otelde ek ücret karşılığında mevcuttur",
+      "generalPolicies": "Genel Politikalar",
+      "checkInOut": "Standart otel check-in/check-out saatleri geçerlidir",
+      "cancellation": "İptal ve ön ödeme politikaları oda türüne göre değişir",
+      "photoId": "Check-in'de geçerli fotoğraflı kimlik ve kredi kartı gereklidir",
+      "specialRequests": "Özel istekler check-in sırasında müsaitlik durumuna tabidir"
+    },
+    "faqs": {
+      "title": "Sıkça Sorulan Sorular"
+    },
+    "cities": {
+      "Istanbul": "İstanbul",
+      "Antalya": "Antalya",
+      "Cappadocia": "Kapadokya",
+      "Trabzon": "Trabzon",
+      "Bodrum": "Bodrum",
+      "Fethiye": "Fethiye",
+      "Bursa": "Bursa",
+      "Kuala Lumpur": "Kuala Lumpur",
+      "Penang": "Penang",
+      "Langkawi": "Langkawi",
+      "Malacca": "Malaka",
+      "Johor Bahru": "Johor Bahru",
+      "Kota Kinabalu": "Kota Kinabalu",
+      "Kuching": "Kuching",
+      "Cameron Highlands": "Cameron Yaylaları",
+      "Genting Highlands": "Genting Yaylaları",
+      "Bangkok": "Bangkok",
+      "Phuket": "Phuket",
+      "Pattaya": "Pattaya",
+      "Chiang Mai": "Chiang Mai",
+      "Krabi": "Krabi",
+      "Koh Samui": "Koh Samui",
+      "Hua Hin": "Hua Hin",
+      "Ayutthaya": "Ayutthaya",
+      "Chiang Rai": "Chiang Rai",
+      "Kanchanaburi": "Kanchanaburi",
+      "Jakarta": "Jakarta",
+      "Bali": "Bali",
+      "Yogyakarta": "Yogyakarta",
+      "Bandung": "Bandung",
+      "Surabaya": "Surabaya",
+      "Medan": "Medan",
+      "Lombok": "Lombok",
+      "Bogor": "Bogor",
+      "Malang": "Malang",
+      "Solo": "Solo",
+      "Ubud": "Ubud",
+      "Sanur": "Sanur",
+      "Seminyak": "Seminyak",
+      "Riyadh": "Riyad",
+      "Jeddah": "Cidde",
+      "Mecca": "Mekke",
+      "Medina": "Medine",
+      "Dammam": "Dammam",
+      "Khobar": "Khobar",
+      "Taif": "Taif",
+      "Abha": "Abha",
+      "Tabuk": "Tebük",
+      "Al Khobar": "Al Khobar",
+      "Casablanca": "Kazablanka",
+      "Marrakech": "Marakeş",
+      "Rabat": "Rabat",
+      "Fez": "Fas",
+      "Tangier": "Tanca",
+      "Agadir": "Agadir",
+      "Meknes": "Meknes",
+      "Essaouira": "Essaouira",
+      "Chefchaouen": "Şefşavan",
+      "Ouarzazate": "Ouarzazate",
+      "Cairo": "Kahire",
+      "Alexandria": "İskenderiye",
+      "Luxor": "Luksor",
+      "Aswan": "Asvan",
+      "Hurghada": "Hurghada",
+      "Sharm El Sheikh": "Şarm El-Şeyh",
+      "Dahab": "Dahab",
+      "Marsa Alam": "Marsa Alam",
+      "Taba": "Taba",
+      "Giza": "Giza",
+      "Baku": "Bakü",
+      "Ganja": "Gence",
+      "Sumgayit": "Sumgayıt",
+      "Mingachevir": "Mingəçevir",
+      "Qabalah": "Qəbələ",
+      "Shaki": "Şəki",
+      "Lankaran": "Lənkəran",
+      "Shamakhi": "Şamaxı",
+      "Quba": "Quba",
+      "Gabala": "Qəbələ",
+      "Tbilisi": "Tiflis",
+      "Batumi": "Batum",
+      "Kutaisi": "Kutaisi",
+      "Rustavi": "Rustavi",
+      "Zugdidi": "Zugdidi",
+      "Gori": "Gori",
+      "Telavi": "Telavi",
+      "Mestia": "Mestia",
+      "Kazbegi": "Kazbegi",
+      "Sighnaghi": "Sighnaghi",
+      "Mtskheta": "Mtskheta",
+      "Borjomi": "Borjomi",
+      "Tirana": "Tiran",
+      "Durres": "Dıraç",
+      "Vlore": "Vlorë",
+      "Shkoder": "İşkodra",
+      "Fier": "Fier",
+      "Korce": "Korçë",
+      "Berat": "Berat",
+      "Gjirokaster": "Gjirokastër",
+      "Sarande": "Sarandë",
+      "Kruje": "Krujë"
+    },
+    "countries": {
+      "Turkey": "Türkiye",
+      "Malaysia": "Malezya",
+      "Thailand": "Tayland",
+      "Indonesia": "Endonezya",
+      "Saudi Arabia": "Suudi Arabistan",
+      "Morocco": "Fas",
+      "Egypt": "Mısır",
+      "Azerbaijan": "Azerbaycan",
+      "Georgia": "Gürcistan",
+      "Albania": "Arnavutluk"
+    },
+    "similarProperties": "Benzer Tesisler",
+    "amenities": {
+      "title": "Popüler olanaklar",
+      "seeAll": "Tümünü gör",
+      "amenities": "olanaklar",
+      "allAmenities": "Tüm olanaklar mevcut",
+      "modalTitle": "Otel Olanakları ve Hizmetleri",
+      "categories": {
+        "topFamilyFriendlyAmenities": "En İyi Aile Dostu Olanaklar",
+        "popularAmenities": "Popüler Olanaklar",
+        "businessServices": "İş Hizmetleri",
+        "parkingAndTransportation": "Park ve Ulaşım",
+        "foodAndDrink": "Yiyecek ve İçecek",
+        "internet": "İnternet",
+        "thingsToDo": "Yapılacak Şeyler",
+        "familyFriendly": "Aile Dostu",
+        "conveniences": "Kolaylıklar",
+        "guestServices": "Misafir Hizmetleri",
+        "outdoors": "Açık Alanlar",
+        "accessibility": "Erişilebilirlik",
+        "fullServiceSpaDetails": "Tam Hizmet Spa",
+        "languagesSpoken": "Konuşulan Diller",
+        "more": "Daha Fazla",
+        "restaurantsOnSite": "Tesiste Restoranlar"
+      },
+      "topFamilyFriendlyAmenities": {
+        "gameRoom": "Oyun odası",
+        "toysGames": "Oyuncaklar/Oyunlar",
+        "waterslide": "Su kaydırağı",
+        "kidsClub": "Çocuk kulübü",
+        "kidsPool": "Çocuk havuzu",
+        "babysitting": "Bebek bakımı",
+        "tennisCourt": "Tenis kortu",
+        "soundproofRooms": "Ses yalıtımlı odalar",
+        "groceryConvenienceStore": "Market/Büfe"
+      },
+      "popularAmenities": {
+        "bar": "Bar",
+        "pool": "Havuz",
+        "allInclusive": "Her şey dahil",
+        "breakfastIncluded": "Kahvaltı dahil",
+        "gym": "Spor salonu",
+        "roomService": "Oda servisi",
+        "laundry": "Çamaşırhane",
+        "housekeeping": "Temizlik",
+        "frontDesk24h": "7/24 ön büro",
+        "spa": "Spa",
+        "airConditioning": "Klima",
+        "parkingIncluded": "Park dahil",
+        "freeWiFi": "Ücretsiz WiFi",
+        "restaurant": "Restoran"
+      },
+      "businessServices": {
+        "businessCenter24h": "24 saat iş merkezi",
+        "conferenceSpace": "425 feet kare konferans alanı",
+        "computerStation": "Bilgisayar istasyonu",
+        "coworkingSpace": "Ortak çalışma alanı",
+        "meetingRoom": "Toplantı odası"
+      },
+      "parkingAndTransportation": {
+        "airportShuttle24h": "Talep üzerine ek ücretli 24 saat gidiş-dönüş havaalanı servisi",
+        "freeSelfParking": "Tesiste ücretsiz self park"
+      },
+      "foodAndDrink": {
+        "buffetBreakfast": "Her gün 07:00 - 10:30 arası ücretsiz büfe kahvaltı",
+        "poolsideBars": "3 havuz kenarı bar",
+        "restaurants": "5 restoran",
+        "barsLounges": "7 bar/salon",
+        "beachBar": "Plaj barı",
+        "coffeeTeaCommonAreas": "Ortak alanlarda kahve ve çay",
+        "snackBarDeli": "Snack bar/şarküteri"
+      },
+      "internet": {
+        "freeWiFiPublicAreas": "Bazı ortak alanlarda mevcut: Ücretsiz WiFi"
+      },
+      "thingsToDo": {
+        "outdoorTennisCourts": "4 açık tenis kortu",
+        "outdoorPools": "5 açık havuz",
+        "arcadeGameRoom": "Atari/oyun odası",
+        "beachVolleyball": "Plaj voleybolu",
+        "billiardsPoolTable": "Bilardo/pool masası",
+        "bowlingAlley": "Bowling salonu",
+        "childrensPool": "Çocuk havuzu",
+        "concertsLiveShows": "Konserler/canlı gösteriler",
+        "eveningEntertainment": "Akşam eğlencesi",
+        "fitnessClasses": "Fitness dersleri",
+        "freeBicycleRentals": "Ücretsiz bisiklet kiralama",
+        "freeChildrensClub": "Ücretsiz çocuk kulübü",
+        "fullServiceSpa": "Tam hizmet spa",
+        "games": "Oyunlar",
+        "gymFacility": "Spor salonu",
+        "indoorPool": "Kapalı havuz",
+        "karaoke": "Karaoke",
+        "nightclub": "Gece kulübü",
+        "parasailing": "Paraşütlü kayak",
+        "playground": "Oyun alanı",
+        "racquetballSquash": "Raketbol/squash",
+        "sailing": "Yelkencilik",
+        "saunaFacility": "Sauna",
+        "scubaDiving": "Tüplü dalış",
+        "shopping": "Alışveriş",
+        "steamRoom": "Buhar odası",
+        "tableTennis": "Masa tenisi",
+        "tennisLessons": "Tenis dersleri",
+        "tvCommonAreas": "Ortak alanlarda TV",
+        "waterSkiing": "Su kayağı",
+        "waterslideFacility": "Su kaydırağı",
+        "windsurfing": "Rüzgar sörfü",
+        "yogaClasses": "Yoga dersleri"
+      },
+      "familyFriendly": {
+        "outdoorPoolsFamily": "5 açık havuz",
+        "arcadeGameRoomFamily": "Atari/oyun odası",
+        "bowlingAlleyFamily": "Bowling salonu",
+        "childrensGames": "Çocuk oyunları",
+        "childrensPoolFamily": "Çocuk havuzu",
+        "childrensToys": "Çocuk oyuncakları",
+        "freeChildrensClubFamily": "Ücretsiz çocuk kulübü",
+        "freeSupervisedActivities": "Çocuklar için ücretsiz gözetimli aktiviteler",
+        "groceryConvenienceStoreFamily": "Market/büfe",
+        "inRoomBabysitting": "Oda içi bebek bakımı (ek ücret)",
+        "indoorPoolFamily": "Kapalı havuz",
+        "laundryFacilities": "Çamaşırhane tesisleri",
+        "playgroundFamily": "Oyun alanı",
+        "snackBarDeliFamily": "Snack bar/şarküteri",
+        "soundproofedRooms": "Ses yalıtımlı odalar",
+        "stroller": "Bebek arabası",
+        "waterslideFamily": "Su kaydırağı"
+      },
+      "conveniences": {
+        "frontDesk24hConvenience": "7/24 ön büro",
+        "giftShopNewsstand": "Hediyelik eşya dükkanı/gazete bayii",
+        "groceryConvenienceStoreConvenience": "Market/büfe",
+        "hairSalon": "Kuaför salonu",
+        "laundryFacilitiesConvenience": "Çamaşırhane tesisleri",
+        "lockers": "Kilitli dolaplar",
+        "safeFrontDesk": "Ön büroda kasa"
+      },
+      "guestServices": {
+        "changeOfBedsheets": "Çarşaf değişimi (talep üzerine)",
+        "changeOfTowels": "Talep üzerine havlu değişimi",
+        "conciergeServices": "Concierge hizmetleri",
+        "dryCleaningLaundry": "Kuru temizleme/çamaşırhane hizmeti",
+        "housekeepingDaily": "Temizlik (günlük)",
+        "multilingualStaff": "Çok dilli personel",
+        "porterBellhop": "Hamal/bellboy",
+        "proposalRomancePackages": "Evlilik teklifi/romantik paketler",
+        "tourTicketAssistance": "Tur ve bilet yardımı",
+        "weddingServices": "Düğün hizmetleri"
+      },
+      "outdoors": {
+        "beachLoungers": "Plaj şezlongları",
+        "beachTowels": "Plaj havluları",
+        "beachUmbrellas": "Plaj şemsiyeleri",
+        "garden": "Bahçe",
+        "onTheBay": "Koyda",
+        "onTheBeach": "Plajda",
+        "outdoorEntertainmentArea": "Açık hava eğlence alanı",
+        "outdoorFurniture": "Açık hava mobilyaları",
+        "poolLoungers": "Havuz şezlongları",
+        "poolUmbrellas": "Havuz şemsiyeleri",
+        "terrace": "Teras"
+      },
+      "accessibility": {
+        "accessibleAirportShuttle": "Erişilebilir havaalanı servisi",
+        "elevator": "Asansör",
+        "poolHoist": "Tesiste havuz kaldırıcı",
+        "wellLitPath": "Girişe aydınlatılmış yol",
+        "wheelchairAccessible": "Tekerlekli sandalye erişilebilir (sınırlamalar olabilir)",
+        "wheelchairAccessiblePath": "Asansöre tekerlekli sandalye erişilebilir yol",
+        "wheelchairAccessibleWashroom": "Tekerlekli sandalye erişilebilir genel tuvalet",
+        "wheelchairAccessibleDesk": "Tekerlekli sandalye erişilebilir kayıt masası"
+      },
+      "fullServiceSpaDetails": {
+        "bodyScrubs": "Vücut peelingleri",
+        "bodyWraps": "Vücut sarmaları",
+        "facials": "Cilt bakımları",
+        "manicuresPedicures": "Manikür/pedikür",
+        "massage": "Masaj",
+        "saunaService": "Sauna",
+        "spaOpenDaily": "Spa her gün açık",
+        "turkishBath": "Türk hamamı"
+      },
+      "languagesSpoken": {
+        "dutch": "Hollandaca",
+        "english": "İngilizce",
+        "french": "Fransızca",
+        "german": "Almanca",
+        "russian": "Rusça",
+        "turkish": "Türkçe"
+      },
+      "more": {
+        "twoFloors": "2 kat",
+        "ledLighting80Percent": "Aydınlatmanın en az %80'i LED'den",
+        "locallySourcedFood80Percent": "Yiyeceklerin en az %80'i yerel kaynaklı",
+        "banquetHall": "Banket salonu",
+        "builtIn1999": "1999'da inşa edildi",
+        "designatedSmokingAreas": "Belirlenmiş sigara içme alanları (para cezası uygulanır)",
+        "mediterraneanArchitecture": "Akdeniz mimarisi",
+        "vegetarianBreakfast": "Vejetaryen kahvaltı mevcut",
+        "vegetarianDining": "Vejetaryen yemek seçenekleri"
+      },
+      "restaurantsOnSite": {
+        "italian": "İtalyan",
+        "buffetMeals": "Büfe Yemekler",
+        "seafood": "Deniz ürünleri",
+        "sevenTwentyFour": "Yedi Yirmi Dört",
+        "turkish": "Türk"
+      }
+    }
+  },
+  "notFound": {
+    "page": {
+      "title": "Sayfa Bulunamadı",
+      "description": "Aradığınız sayfa mevcut değil veya taşınmış."
+    },
+    "hotel": {
+      "title": "Otel Bulunamadı",
+      "description": "Aradığınız otel mevcut değil veya listelerimizden kaldırılmış olabilir."
+    },
+    "voucher": {
+      "title": "Voucher Bulunamadı",
+      "description": "Aradığınız voucher mevcut değil veya süresi dolmuş olabilir."
+    },
+    "buttons": {
+      "backToHome": "Ana Sayfaya Dön",
+      "browseHotels": "Otellere Göz At",
+      "browseTours": "Turlara Göz At"
+    },
+    "helpText": "Mevcut otellerimizi ve turlarımızı keşfedin veya bunun bir hata olduğunu düşünüyorsanız sayfayı yenilemeyi deneyin."
+  },
+  "publicPackagePage": {
+    "nav": {
+      "overview": "Genel Bakış",
+      "itinerary": "Program",
+      "hotels": "Oteller",
+      "included": "Neler Dahil",
+      "contact": "Bize Ulaşın",
+      "faqs": "SSS"
+    },
+    "sections": {
+      "overview": "Paket Genel Bakış",
+      "itinerary": "Günlük Program",
+      "hotels": "Paketteki Oteller",
+      "included": "Neler Dahil",
+      "faqs": "Sıkça Sorulan Sorular"
+    },
+    "hotel": {
+      "starHotel": "Yıldızlı Otel",
+      "nights": "gece",
+      "nights_other": "gece",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "breakfast": "Kahvaltı",
+      "airportReception": "Havaalanı Karşılama",
+      "airportFarewell": "Havaalanı Uğurlama"
+    },
+    "included": {
+      "title": "Pakete Dahil"
+    },
+    "excluded": {
+      "title": "Dahil Değil"
+    },
+    "dayCard": {
+      "days": "Günler",
+      "moreActivities": "daha fazla aktivite",
+      "breakfast": "Kahvaltı",
+      "lunch": "Öğle Yemeği",
+      "dinner": "Akşam Yemeği",
+      "arrivalTransfer": "Varış ve Transfer",
+      "arrivalDescription": "Havaalanına varış, karşılama ve selamlama hizmeti, otele transfer, check-in ve dinlenme.",
+      "airportReceptionService": "Havaalanı karşılama hizmeti",
+      "meetGreetRepresentative": "Tur temsilcisi ile karşılama ve selamlama",
+      "transferToHotel": "Otele transfer",
+      "hotelCheckinAssistance": "Otel check-in yardımı",
+      "welcomeBriefing": "Hoş geldin brifing",
+      "restPrepare": "Dinlenme ve yaklaşan turlar için hazırlık"
+    }
+  },
+  "signIn": {
+    "loginTitle": "Hesabınıza Giriş Yapın",
+    "registerTitle": "Hesabınızı Oluşturun",
+    "resetPasswordTitle": "Şifre Sıfırlama",
+    "securityVerificationTitle": "Güvenlik Doğrulaması",
+    "createNewPasswordTitle": "Yeni Şifre Oluştur",
+    "emailOrUsername": "E-posta veya Kullanıcı Adı",
+    "emailOrUsernamePlaceholder": "E-posta veya kullanıcı adınızı girin",
+    "password": "Şifre",
+    "passwordPlaceholder": "Şifrenizi girin",
+    "emailOptional": "E-posta (İsteğe Bağlı)",
+    "emailPlaceholder": "E-posta adresinizi girin",
+    "phoneNumber": "Telefon Numarası (İsteğe Bağlı)",
+    "countryCodePlaceholder": "Ülke kodu seçin",
+    "phonePlaceholder": "Telefon numarasını girin",
+    "securityQuestion": "Güvenlik Sorusu",
+    "securityQuestionPlaceholder": "Bir güvenlik sorusu seçin",
+    "securityAnswer": "Güvenlik Cevabı",
+    "securityAnswerPlaceholder": "Cevabınızı girin",
+    "securityAnswerHelp": "Bu, şifrenizi sıfırlamanız gerekirse kimliğinizi doğrulamak için kullanılacaktır.",
+    "registerAsPublisher": "Yayıncı Olarak Kayıt Ol",
+    "loginButton": "GİRİŞ YAP",
+    "registerButton": "KAYIT OL",
+    "nextButton": "İLERİ",
+    "verifyButton": "DOĞRULA",
+    "resetPasswordButton": "ŞİFREYİ SIFIRLA",
+    "newPassword": "Yeni Şifre",
+    "newPasswordPlaceholder": "Yeni şifre girin",
+    "confirmPassword": "Şifreyi Onayla",
+    "confirmPasswordPlaceholder": "Yeni şifreyi onaylayın",
+    "newStaffMember": "Yeni personel üyesi? Kayıt Ol",
+    "alreadyHaveAccount": "Zaten hesabınız var mı?",
+    "forgotPassword": "Şifrenizi mi Unuttunuz?",
+    "backToSignIn": "Giriş Sayfasına Dön",
+    "back": "← Geri",
+    "exploreTheWorld": "DÜNYAYI KEŞFEDİN",
+    "withRahalatek": "İLE",
+    "yourJourneyBeginsHere": "Yolculuğunuz Burada Başlıyor",
+    "errors": {
+      "enterEmailOrUsername": "Lütfen e-postanızı veya kullanıcı adınızı girin",
+      "enterPassword": "Lütfen şifrenizi girin",
+      "selectSecurityQuestion": "Lütfen bir güvenlik sorusu seçin",
+      "provideSecurityAnswer": "Lütfen güvenlik sorunuza bir cevap verin",
+      "validEmail": "Lütfen geçerli bir e-posta adresi girin (örnek@domain.com)",
+      "answerSecurityQuestion": "Lütfen güvenlik sorusunu cevaplayın",
+      "passwordMinLength": "Şifre en az 6 karakter uzunluğunda olmalıdır",
+      "passwordsDoNotMatch": "Şifreler eşleşmiyor",
+      "userNotFound": "Kullanıcı bulunamadı. Lütfen e-postanızı veya kullanıcı adınızı kontrol edin.",
+      "unableToRetrieveQuestion": "Güvenlik sorusu alınamıyor",
+      "incorrectSecurityAnswer": "Yanlış güvenlik cevabı",
+      "passwordResetSuccess": "Şifre başarıyla sıfırlandı",
+      "failedToResetPassword": "Şifre sıfırlanamadı",
+      "noResponseFromServer": "Sunucudan yanıt yok. Lütfen daha sonra tekrar deneyin.",
+      "anErrorOccurred": "Bir hata oluştu. Lütfen tekrar deneyin.",
+      "accountCreated": "Hesabınız oluşturuldu. Giriş yapmak için lütfen yönetici onayını bekleyin.",
+      "accountPendingApproval": "Hesabınız yönetici onayı bekliyor.",
+      "anErrorOccurredGeneric": "Bir hata oluştu"
+    },
+    "securityQuestions": {
+      "childhoodNickname": "Çocukluk takma adınız neydi?",
+      "firstPet": "İlk evcil hayvanınızın adı nedir?",
+      "motherMaidenName": "Annenizin kızlık soyadı nedir?",
+      "firstCar": "İlk arabanızın modeli neydi?",
+      "birthCity": "Hangi şehirde doğdunuz?"
+    }
+  }
+}
+

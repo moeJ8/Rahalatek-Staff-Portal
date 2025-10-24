@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { FaFilter, FaSearch, FaTags, FaCalendarAlt, FaUser, FaBook, FaEye, FaClock, FaCrown, FaChevronLeft, FaChevronRight, FaAngleLeft, FaAngleRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import RahalatekLoader from '../../components/RahalatekLoader';
@@ -12,6 +13,8 @@ import SearchableSelect from '../../components/SearchableSelect';
 import PublicBlogCard from '../../components/Visitors/PublicBlogCard';
 
 export default function BlogListPage() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [blogs, setBlogs] = useState([]);
@@ -398,12 +401,12 @@ export default function BlogListPage() {
         <link rel="canonical" href={`${window.location.origin}/blog`} />
       </Helmet>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="max-w-8xl mx-auto px-2 sm:px-3 lg:px-2 xl:px-3 py-2 sm:py-3 md:py-4">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Rahalatek Blog
+            {t('blogPage.title')}
           </h1>
 
         </div>
@@ -418,11 +421,11 @@ export default function BlogListPage() {
             <div className="flex items-center gap-2">
               <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Filters
+                {t('blogPage.filters')}
               </span>
               {(searchTerm || selectedCategory || selectedTag) && (
                 <span className="px-2 py-0.5 text-xs bg-blue-500 dark:bg-yellow-500 text-white dark:text-gray-900 rounded-full">
-                  Active
+                  {t('blogPage.active')}
                 </span>
               )}
             </div>
@@ -441,7 +444,7 @@ export default function BlogListPage() {
             <div className="flex items-center gap-2">
               <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                Recent Posts & Tags
+                {t('blogPage.recentPostsAndTags')}
               </span>
             </div>
             {isRecentOpen ? (
@@ -471,13 +474,13 @@ export default function BlogListPage() {
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-3">
                     <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.searchAndFilter')}</h3>
             </div>
 
           {/* Search Bar */}
           <div className="mb-3">
             <Search
-                      placeholder="Search blogs..."
+                      placeholder={t('blogPage.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearch}
               className="w-full"
@@ -490,10 +493,10 @@ export default function BlogListPage() {
               <SearchableSelect 
                 value={selectedCategory}
                 onChange={handleCategoryFilter}
-                      placeholder="All Categories"
-                      label="Category"
+                      placeholder={t('blogPage.allCategories')}
+                      label={t('blogPage.category')}
                 options={[
-                  { value: '', label: 'All Categories' },
+                  { value: '', label: t('blogPage.allCategories') },
                   ...categories.map(category => ({ value: category, label: category }))
                 ]}
               />
@@ -504,10 +507,10 @@ export default function BlogListPage() {
               <SearchableSelect 
                 value={selectedTag}
                 onChange={handleTagFilter}
-                      placeholder="All Tags"
-                      label="Tag"
+                      placeholder={t('blogPage.allTags')}
+                      label={t('blogPage.tag')}
                 options={[
-                  { value: '', label: 'All Tags' },
+                  { value: '', label: t('blogPage.allTags') },
                   ...tags.map(tag => ({ value: tag, label: `#${tag}` }))
                 ]}
                 disabled={tags.length === 0}
@@ -518,7 +521,7 @@ export default function BlogListPage() {
                   <div className="mb-3">
                     <CustomCheckbox
                       id="sort-by-popular"
-                      label="Most Popular Posts"
+                      label={t('blogPage.mostPopularPosts')}
                       checked={sortByPopular}
                       onChange={setSortByPopular}
                     />
@@ -532,12 +535,12 @@ export default function BlogListPage() {
                     className="w-full"
                 icon={FaFilter}
               >
-                    Clear Filters
+                    {t('blogPage.clearFilters')}
               </CustomButton>
           
           {/* Results count */}
                   <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
-            Showing page {page} of {totalPages} ({totalBlogs} blogs total)
+            {t('blogPage.showingPage')} {page} {t('blogPage.of')} {totalPages} ({totalBlogs} {t('blogPage.blogsTotal')})
           </div>
         </div>
 
@@ -551,7 +554,7 @@ export default function BlogListPage() {
                   <div className="mb-4">
                     <div className="flex items-center gap-2 mb-3">
                       <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Posts</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.recentPosts')}</h3>
                     </div>
                     <div className="space-y-3">
                       {recentBlogs.map((blog) => (
@@ -597,7 +600,7 @@ export default function BlogListPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <FaTags className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                      <h3 className="text-base font-bold text-gray-900 dark:text-white">Popular Tags</h3>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.popularTags')}</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {tags.slice(0, 6).map((tag) => (
@@ -641,13 +644,13 @@ export default function BlogListPage() {
                 <div className="mb-4">
                   <div className="flex items-center gap-2 mb-3">
                     <FaFilter className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Search & Filter</h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.searchAndFilter')}</h3>
             </div>
 
           {/* Search Bar */}
           <div className="mb-3">
             <Search
-                      placeholder="Search blogs..."
+                      placeholder={t('blogPage.searchPlaceholder')}
               value={searchTerm}
               onChange={handleSearch}
               className="w-full"
@@ -660,10 +663,10 @@ export default function BlogListPage() {
               <SearchableSelect 
                 value={selectedCategory}
                 onChange={handleCategoryFilter}
-                      placeholder="All Categories"
-                      label="Category"
+                      placeholder={t('blogPage.allCategories')}
+                      label={t('blogPage.category')}
                 options={[
-                  { value: '', label: 'All Categories' },
+                  { value: '', label: t('blogPage.allCategories') },
                   ...categories.map(category => ({ value: category, label: category }))
                 ]}
               />
@@ -674,10 +677,10 @@ export default function BlogListPage() {
               <SearchableSelect 
                 value={selectedTag}
                 onChange={handleTagFilter}
-                      placeholder="All Tags"
-                      label="Tag"
+                      placeholder={t('blogPage.allTags')}
+                      label={t('blogPage.tag')}
                 options={[
-                  { value: '', label: 'All Tags' },
+                  { value: '', label: t('blogPage.allTags') },
                   ...tags.map(tag => ({ value: tag, label: `#${tag}` }))
                 ]}
                 disabled={tags.length === 0}
@@ -688,7 +691,7 @@ export default function BlogListPage() {
                   <div className="mb-3">
                     <CustomCheckbox
                       id="sort-by-popular-mobile"
-                      label="Most Popular Posts"
+                      label={t('blogPage.mostPopularPosts')}
                       checked={sortByPopular}
                       onChange={setSortByPopular}
                     />
@@ -702,12 +705,12 @@ export default function BlogListPage() {
                     className="w-full"
                 icon={FaFilter}
               >
-                    Clear Filters
+                    {t('blogPage.clearFilters')}
               </CustomButton>
           
           {/* Results count */}
                   <div className="text-xs text-gray-600 dark:text-gray-400 mt-3 text-center">
-            Showing page {page} of {totalPages} ({totalBlogs} blogs total)
+            {t('blogPage.showingPage')} {page} {t('blogPage.of')} {totalPages} ({totalBlogs} {t('blogPage.blogsTotal')})
           </div>
         </div>
                       </div>
@@ -733,7 +736,7 @@ export default function BlogListPage() {
                           <div className="mb-4">
                             <div className="flex items-center gap-2 mb-3">
                               <FaBook className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Recent Posts</h3>
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.recentPosts')}</h3>
                             </div>
                             <div className="space-y-3">
                               {recentBlogs.map((blog) => (
@@ -779,7 +782,7 @@ export default function BlogListPage() {
                           <div>
                             <div className="flex items-center gap-2 mb-3">
                               <FaTags className="text-blue-600 dark:text-yellow-400 w-4 h-4" />
-                              <h3 className="text-base font-bold text-gray-900 dark:text-white">Popular Tags</h3>
+                              <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.popularTags')}</h3>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {tags.slice(0, 6).map((tag) => (
@@ -814,12 +817,12 @@ export default function BlogListPage() {
             {/* Featured Posts Carousel */}
             {featuredBlogs.length > 0 && (
               <section className="mb-8">
-                <div className="relative h-[200px] sm:h-[220px] md:h-[250px] lg:h-[280px] rounded-xl overflow-hidden shadow-lg group">
+                <div className="relative h-[200px] sm:h-[220px] md:h-[250px] lg:h-[280px] rounded-xl overflow-hidden shadow-lg group" dir="ltr">
                   {/* Heading Inside Carousel */}
-                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6 z-30">
+                  <div className={`absolute top-3 sm:top-4 md:top-6 z-30 ${isRTL ? 'right-3 sm:right-4 md:right-6' : 'left-3 sm:left-4 md:left-6'}`} dir={isRTL ? 'rtl' : 'ltr'}>
                     <h2 className="text-sm sm:text-lg md:text-xl lg:text-2xl font-bold text-white flex items-center gap-1.5 sm:gap-2 drop-shadow-lg">
                       <FaCrown className="text-yellow-400 w-3 h-3 sm:w-4 sm:h-4" />
-                      Featured Posts
+                      {t('blogPage.featuredPosts')}
                     </h2>
                   </div>
                   
@@ -862,7 +865,7 @@ export default function BlogListPage() {
                             className="h-full w-full object-cover brightness-75 pointer-events-none select-none"
                             draggable={false}
                           />
-                          <div className="absolute inset-0 flex flex-col justify-end px-8 sm:px-12 md:px-16 lg:px-20 xl:px-24 py-3 sm:py-4 md:py-6 lg:py-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+                          <div className="absolute inset-0 flex flex-col justify-end px-8 sm:px-12 md:px-16 lg:px-20 xl:px-24 py-3 sm:py-4 md:py-6 lg:py-8 bg-gradient-to-t from-black/90 via-black/60 to-transparent" dir={isRTL ? 'rtl' : 'ltr'}>
                             <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 text-gray-200 text-[10px] sm:text-xs mb-1.5 sm:mb-2">
                               <div className="flex items-center gap-0.5 sm:gap-1">
                                 <FaCalendarAlt className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -874,7 +877,7 @@ export default function BlogListPage() {
                               </div>
                               <div className="flex items-center gap-0.5 sm:gap-1">
                                 <FaClock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                {blog.readingTime || 5} min
+                                {blog.readingTime || 5} {t('blogPage.min')}
                               </div>
                             </div>
                             
@@ -906,7 +909,7 @@ export default function BlogListPage() {
                               }}
                               className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-yellow-600 dark:to-yellow-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:from-blue-700 hover:to-blue-800 dark:hover:from-yellow-700 dark:hover:to-yellow-800 transition duration-300 w-fit text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105"
                             >
-                              Read Article
+                              {t('blogPage.readArticle')}
                             </Link>
                           </div>
                         </div>
@@ -979,10 +982,10 @@ export default function BlogListPage() {
               <div className="bg-white dark:bg-slate-900 rounded-xl p-12 shadow-md border border-gray-200 dark:border-gray-700 text-center">
                 <FaSearch className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No Blogs Found
+                  {t('blogPage.noBlogsFound')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 text-lg">
-                  No blogs match your current filters. Try adjusting your search criteria.
+                  {t('blogPage.noBlogsMessage')}
                 </p>
                 {(searchTerm || selectedCategory || selectedTag) && (
                   <CustomButton
@@ -991,7 +994,7 @@ export default function BlogListPage() {
                     size="md"
                     className="mt-4"
                   >
-                    Clear Filters
+                    {t('blogPage.clearFilters')}
                   </CustomButton>
                 )}
               </div>
@@ -1023,7 +1026,7 @@ export default function BlogListPage() {
                       }`}
                       aria-label="Previous page"
                     >
-                      <FaAngleLeft className="w-4 h-4" />
+                      {isRTL ? <FaAngleRight className="w-4 h-4" /> : <FaAngleLeft className="w-4 h-4" />}
                     </button>
 
                     {/* Page Numbers - Sliding Window */}
@@ -1069,7 +1072,7 @@ export default function BlogListPage() {
                       }`}
                       aria-label="Next page"
                     >
-                      <FaAngleRight className="w-4 h-4" />
+                      {isRTL ? <FaAngleLeft className="w-4 h-4" /> : <FaAngleRight className="w-4 h-4" />}
                     </button>
                   </div>
                 )}
