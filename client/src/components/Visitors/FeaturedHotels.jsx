@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaStar, FaMapMarkerAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getTranslatedText } from '../../utils/translationUtils';
 import Flag from 'react-world-flags';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
@@ -9,7 +10,7 @@ import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
 
 const FeaturedHotels = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +24,10 @@ const FeaturedHotels = () => {
     const fetchFeaturedHotels = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/hotels/featured?limit=9');
+        // Add language parameter to the API request
+        const lang = i18n.language;
+        const langParam = (lang === 'ar' || lang === 'fr') ? `&lang=${lang}` : '';
+        const response = await axios.get(`/api/hotels/featured?limit=9${langParam}`);
         setHotels(response.data);
       } catch (error) {
         console.error('Error fetching featured hotels:', error);
@@ -34,7 +38,7 @@ const FeaturedHotels = () => {
     };
 
     fetchFeaturedHotels();
-  }, []);
+  }, [i18n.language]);
 
   // Screen size detection
   const updateScreenSize = () => {
@@ -87,8 +91,10 @@ const FeaturedHotels = () => {
       console.error('Error incrementing hotel views:', error);
     }
     
-    // Navigate to hotel page
-    navigate(`/hotels/${hotel.slug}`);
+    // Navigate to hotel page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    const url = (lang === 'ar' || lang === 'fr') ? `/${lang}/hotels/${hotel.slug}` : `/hotels/${hotel.slug}`;
+    navigate(url);
   };
 
   const renderStars = (rating) => {
@@ -131,6 +137,10 @@ const FeaturedHotels = () => {
     // Get primary image or first image
     const primaryImage = hotel.images?.find(img => img.isPrimary) || hotel.images?.[0];
     const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.hotel;
+    
+    // Get translated hotel name and description
+    const translatedName = getTranslatedText(hotel, 'name', i18n.language);
+    const translatedDescription = getTranslatedText(hotel, 'description', i18n.language);
 
     return (
       <div 
@@ -141,7 +151,7 @@ const FeaturedHotels = () => {
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
           <img
             src={imageUrl}
-            alt={hotel.name}
+            alt={translatedName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {/* Gradient overlay */}
@@ -154,9 +164,9 @@ const FeaturedHotels = () => {
           {/* Hotel Name - Inside image at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
-              /[\u0600-\u06FF\u0750-\u077F]/.test(hotel.name) ? 'text-right' : 'text-left'
+              /[\u0600-\u06FF\u0750-\u077F]/.test(translatedName) ? 'text-right' : 'text-left'
             }`}>
-              {hotel.name}
+              {translatedName}
             </h3>
           </div>
         </div>
@@ -182,9 +192,9 @@ const FeaturedHotels = () => {
           </div>
 
           {/* Description */}
-          {hotel.description && (
+          {translatedDescription && (
             <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
-              {truncateDescription(hotel.description)}
+              {truncateDescription(translatedDescription)}
             </p>
           )}
         </div>

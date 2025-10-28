@@ -24,6 +24,7 @@ import ModalScrollbar from '../../components/ModalScrollbar';
 import CustomModal from '../../components/CustomModal';
 import GuestNotFoundPage from './GuestNotFoundPage';
 import NotFoundPage from '../NotFoundPage';
+import { getTranslatedText } from '../../utils/translationUtils';
 
 const PublicHotelPage = () => {
   const { slug } = useParams();
@@ -62,7 +63,9 @@ const PublicHotelPage = () => {
           return;
         }
 
-        const response = await axios.get(`/api/hotels/public/${slug}`);
+        // Add language parameter to the API request (only for ar/fr)
+        const langParam = (i18n.language === 'ar' || i18n.language === 'fr') ? `?lang=${i18n.language}` : '';
+        const response = await axios.get(`/api/hotels/public/${slug}${langParam}`);
         const hotelData = response.data;
         setHotel(hotelData);
         
@@ -94,11 +97,49 @@ const PublicHotelPage = () => {
 
           const ogDescription = document.querySelector('meta[property="og:description"]');
           if (ogDescription) {
-            const ogDesc = hotelData.description 
+            const ogDesc = hotelData.description
               ? hotelData.description.substring(0, 200) + '...'
               : `Experience luxury at ${hotelData.name} with Rahalatek. ${hotelData.stars}-star hotel in ${hotelData.city}, ${hotelData.country}.`;
             ogDescription.setAttribute('content', ogDesc);
           }
+
+          // Add hreflang tags for SEO
+          const currentPath = window.location.pathname;
+          const pathWithoutLang = currentPath.replace(/^\/(ar|fr)/, '') || '/hotels';
+
+          // Remove existing hreflang tags
+          const existingTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+          existingTags.forEach(tag => tag.remove());
+
+          // Add hreflang tags for all language versions
+          const languages = [
+            { code: 'en', name: 'English' },
+            { code: 'ar', name: 'Arabic' },
+            { code: 'fr', name: 'French' }
+          ];
+
+          languages.forEach(({ code }) => {
+            const link = document.createElement('link');
+            link.rel = 'alternate';
+            link.hreflang = code;
+
+            // Build the full URL for this language
+            const baseUrl = window.location.origin;
+            if (code === 'en') {
+              link.href = `${baseUrl}${pathWithoutLang}`;
+            } else {
+              link.href = `${baseUrl}/${code}${pathWithoutLang}`;
+            }
+
+            document.head.appendChild(link);
+          });
+
+          // Add x-default hreflang for English
+          const defaultLink = document.createElement('link');
+          defaultLink.rel = 'alternate';
+          defaultLink.hreflang = 'x-default';
+          defaultLink.href = `${window.location.origin}${pathWithoutLang}`;
+          document.head.appendChild(defaultLink);
         }
         
         if (hotelData.roomTypes && hotelData.roomTypes.length > 0) {
@@ -116,7 +157,7 @@ const PublicHotelPage = () => {
     };
 
     fetchHotel();
-  }, [slug, navigate]);
+  }, [slug, navigate, i18n.language]);
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -473,7 +514,7 @@ const PublicHotelPage = () => {
       {hotel.description && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <p className="text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base">
-            {hotel.description}
+            {getTranslatedText(hotel, 'description', i18n.language)}
           </p>
         </div>
       )}
@@ -527,9 +568,20 @@ const PublicHotelPage = () => {
       {/* Hotel Rooms Carousel */}
       <div id="rooms" className="scroll-mt-24"></div>
       {hotel.roomTypes && hotel.roomTypes.length > 0 && (
-        <HotelRoomsCarousel 
-          roomTypes={hotel.roomTypes}
-        />
+        <div>
+          {/* Heading with RTL support for Arabic */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" dir={isRTL ? 'rtl' : 'ltr'}>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
+              {t('publicHotelPage.nav.rooms')}
+            </h2>
+          </div>
+          {/* Carousel with forced LTR layout */}
+          <div dir="ltr">
+            <HotelRoomsCarousel 
+              roomTypes={hotel.roomTypes}
+            />
+          </div>
+        </div>
       )}
 
       {/* Transportation */}
@@ -641,7 +693,7 @@ const PublicHotelPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicHotelPage.location.title')}</h2>
           <p className="text-gray-800 dark:text-gray-100 leading-relaxed text-sm sm:text-base lg:text-lg">
-            {hotel.locationDescription}
+            {getTranslatedText(hotel, 'locationDescription', i18n.language)}
           </p>
         </div>
       )}

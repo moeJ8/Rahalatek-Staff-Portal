@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaFilter, FaAngleLeft, FaAngleRight, FaGlobe, FaCity, FaClock, FaUsers, FaBox, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getTranslatedText } from '../../utils/translationUtils';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import Search from '../../components/Search';
 import CustomButton from '../../components/CustomButton';
@@ -194,9 +195,13 @@ const PublicPackagesPage = () => {
       if (durationFilter) params.append('duration', durationFilter);
       if (debouncedSearchTerm.trim()) params.append('search', debouncedSearchTerm.trim());
       
+      // Get the translation language (ar, fr, or en)
+      const lang = i18n.language === 'ar' ? 'ar' : i18n.language === 'fr' ? 'fr' : 'en';
+      const langParam = lang !== 'en' ? `?lang=${lang}` : '';
+
       // For public pages, we need to use the featured packages endpoint
       // Since the public API doesn't support pagination yet, we'll fetch all and paginate client-side
-      const response = await axios.get('/api/packages/featured?limit=100');
+      const response = await axios.get(`/api/packages/featured?limit=100${langParam}`);
       
       if (response.data?.success) {
         const allPackages = response.data.data || [];
@@ -260,7 +265,7 @@ const PublicPackagesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, screenType, countryFilter, cityFilter, targetAudienceFilter, durationFilter, debouncedSearchTerm, getItemsPerPage, packages.length]);
+  }, [page, screenType, countryFilter, cityFilter, targetAudienceFilter, durationFilter, debouncedSearchTerm, getItemsPerPage, packages.length, i18n.language]);
 
   // Fetch filter options and recent packages on mount
   useEffect(() => {
@@ -313,10 +318,15 @@ const PublicPackagesPage = () => {
     } catch (error) {
       console.error('Error incrementing package views:', error);
     }
-    
-    // Navigate to package page
-    navigate(`/packages/${pkg.slug}`);
-  }, [navigate]);
+
+    // Navigate to package page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/packages/${pkg.slug}`);
+    } else {
+      navigate(`/packages/${pkg.slug}`);
+    }
+  }, [navigate, i18n.language]);
 
   if (loading) {
     return (
@@ -732,7 +742,7 @@ const PublicPackagesPage = () => {
                                   })()}
                                   <div className="flex-1 min-w-0 flex flex-col">
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
-                                      {pkg.name}
+                                      {getTranslatedText(pkg, 'name', i18n.language)}
                                     </h4>
                                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                                       {pkg.cities?.join(', ')}

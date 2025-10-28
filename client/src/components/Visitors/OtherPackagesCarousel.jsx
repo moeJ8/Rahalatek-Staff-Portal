@@ -5,7 +5,7 @@ import axios from 'axios';
 import PackageCard from './PackageCard';
 
 const OtherPackagesCarousel = ({ packages = [], currentPackageId }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
   const carouselRef = useRef(null);
   const navigate = useNavigate();
@@ -72,8 +72,13 @@ const OtherPackagesCarousel = ({ packages = [], currentPackageId }) => {
       console.error('Error incrementing package views:', error);
     }
     
-    // Navigate to package page
-    navigate(`/packages/${pkg.slug}`);
+    // Navigate to package page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/packages/${pkg.slug}`);
+    } else {
+      navigate(`/packages/${pkg.slug}`);
+    }
   };
 
   return (

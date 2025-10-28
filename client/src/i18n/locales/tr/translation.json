@@ -55,7 +55,11 @@
       },
       "services": {
         "title": "Hizmetlerimiz",
-        "subtitle": "Geniş premium turizm hizmetleri yelpazemizi keşfedin"
+        "subtitle": "Geniş premium turizm hizmetleri yelpazemizi keşfedin",
+        "tours": "Turlar",
+        "hotelBooking": "Otel Rezervasyonu",
+        "luxurySuites": "Lüks Süitler",
+        "airportService": "Havaalanı Karşılama ve Uğurlama"
       },
       "packages": {
         "title": "Programlarımızı Keşfedin"
@@ -1405,6 +1409,7 @@
     "faqs": {
       "title": "Sıkça Sorulan Sorular"
     },
+    "otherTours": "Diğer Turlar",
     "tourTypes": {
       "VIP": "VIP",
       "Standard": "Standart",

@@ -7,7 +7,7 @@ import RahalatekLoader from '../RahalatekLoader';
 import axios from 'axios';
 
 const FeaturedPackages = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,8 +87,13 @@ const FeaturedPackages = () => {
       console.error('Error incrementing package views:', error);
     }
     
-    // Navigate to package page
-    navigate(`/packages/${pkg.slug}`);
+    // Navigate to package page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/packages/${pkg.slug}`);
+    } else {
+      navigate(`/packages/${pkg.slug}`);
+    }
   };
 
   if (loading) {

@@ -37,6 +37,37 @@ export default function Header() {
   const isAuthenticated = !!user;
   const hideLanguageSwitcher = shouldHideLanguageSwitcher(location.pathname, isAuthenticated);
   
+  // Helper function to add language prefix to URLs for public pages
+  const getLocalizedUrl = (path) => {
+    // Check if we're on a protected/auth page (don't add language prefix)
+    const isProtectedPage = location.pathname.startsWith('/dashboard') || 
+                            location.pathname.startsWith('/home') || 
+                            location.pathname.startsWith('/booking') ||
+                            location.pathname.startsWith('/vouchers') ||
+                            location.pathname.startsWith('/profile') ||
+                            location.pathname.startsWith('/tours') && !location.pathname.includes('/tours/') ||
+                            location.pathname.startsWith('/hotels') && !location.pathname.includes('/hotels/') ||
+                            location.pathname.startsWith('/attendance') ||
+                            location.pathname === '/signin' ||
+                            location.pathname === '/verify-email';
+    
+    // If on protected page, return path as is
+    if (isProtectedPage) {
+      return path;
+    }
+    
+    // Get current language from URL or i18n
+    const urlLang = location.pathname.match(/^\/(ar|fr)/)?.[1];
+    const lang = urlLang || i18n.language;
+    
+    // Add language prefix for Arabic and French
+    if (lang === 'ar' || lang === 'fr') {
+      return `/${lang}${path === '/' ? '' : path}`;
+    }
+    
+    return path;
+  };
+  
   // Force English translations for protected/auth pages
   const getTranslation = (key) => {
     if (hideLanguageSwitcher) {
@@ -381,11 +412,11 @@ export default function Header() {
               <>
                 {/* Guest Navigation Links */}
                 <Link 
-                  to="/" 
+                  to={getLocalizedUrl('/')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/') 
+                      : isActive('/') || isActive('/ar') || isActive('/fr')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -393,16 +424,16 @@ export default function Header() {
                   {getTranslation('header.home')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/') || isActive('/ar') || isActive('/fr') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/guest/hotels" 
+                  to={getLocalizedUrl('/guest/hotels')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/guest/hotels') 
+                      : isActive('/guest/hotels') || isActive('/ar/guest/hotels') || isActive('/fr/guest/hotels')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -410,16 +441,16 @@ export default function Header() {
                   {getTranslation('header.hotels')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/guest/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/guest/hotels') || isActive('/ar/guest/hotels') || isActive('/fr/guest/hotels') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/guest/tours" 
+                  to={getLocalizedUrl('/guest/tours')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/guest/tours') 
+                      : isActive('/guest/tours') || isActive('/ar/guest/tours') || isActive('/fr/guest/tours')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -427,12 +458,12 @@ export default function Header() {
                   {getTranslation('header.tours')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/guest/tours') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/guest/tours') || isActive('/ar/guest/tours') || isActive('/fr/guest/tours') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/packages" 
+                  to={getLocalizedUrl('/packages')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -449,11 +480,11 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to="/blog" 
+                  to={getLocalizedUrl('/blog')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/blog') || location.pathname.startsWith('/blog/')
+                      : isActive('/blog') || isActive('/ar/blog') || isActive('/fr/blog') || location.pathname.startsWith('/blog/') || location.pathname.startsWith('/ar/blog/') || location.pathname.startsWith('/fr/blog/')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -461,16 +492,16 @@ export default function Header() {
                   {getTranslation('header.blog')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/blog') || location.pathname.startsWith('/blog/') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/blog') || isActive('/ar/blog') || isActive('/fr/blog') || location.pathname.startsWith('/blog/') || location.pathname.startsWith('/ar/blog/') || location.pathname.startsWith('/fr/blog/') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/contact" 
+                  to={getLocalizedUrl('/contact')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/contact') 
+                      : isActive('/contact') || isActive('/ar/contact') || isActive('/fr/contact')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -478,16 +509,16 @@ export default function Header() {
                   {getTranslation('header.contact')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/contact') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/contact') || isActive('/ar/contact') || isActive('/fr/contact') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>
                 <Link 
-                  to="/about" 
+                  to={getLocalizedUrl('/about')} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
-                      : isActive('/about') 
+                      : isActive('/about') || isActive('/ar/about') || isActive('/fr/about')
                         ? 'text-blue-600 dark:text-yellow-400 bg-blue-50/80 dark:bg-yellow-900/20' 
                         : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10'
                   }`}
@@ -495,7 +526,7 @@ export default function Header() {
                   {getTranslation('header.about')}
                   {!isSignInPage && (
                     <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-yellow-400 transition-all duration-300 ${
-                      isActive('/about') ? 'w-full' : 'w-0 group-hover:w-full'
+                      isActive('/about') || isActive('/ar/about') || isActive('/fr/about') ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}></span>
                   )}
                 </Link>

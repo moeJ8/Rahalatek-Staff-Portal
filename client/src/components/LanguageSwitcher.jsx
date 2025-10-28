@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Flag from 'react-world-flags';
 import { FaGlobe, FaTimes } from 'react-icons/fa';
 
 export default function LanguageSwitcher({ variant = 'default' }) {
   const { i18n } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const currentLanguage = i18n.language;
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -65,6 +68,25 @@ export default function LanguageSwitcher({ variant = 'default' }) {
     };
   }, [showMobileModal, isMobile]);
 
+  // Detect language from URL and sync with i18n
+  useEffect(() => {
+    const urlPath = location.pathname;
+    const urlLangMatch = urlPath.match(/^\/(ar|fr)/);
+
+    if (urlLangMatch) {
+      const urlLang = urlLangMatch[1];
+      // Only change i18n language if it doesn't match the URL language
+      if (i18n.language !== urlLang) {
+        i18n.changeLanguage(urlLang);
+      }
+    } else {
+      // No language prefix in URL, ensure we're using English
+      if (i18n.language !== 'en') {
+        i18n.changeLanguage('en');
+      }
+    }
+  }, [location.pathname, i18n]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -77,7 +99,42 @@ export default function LanguageSwitcher({ variant = 'default' }) {
   }, []);
 
   const changeLanguage = (lang) => {
+    // Update i18n language
     i18n.changeLanguage(lang);
+    
+    // Update URL based on current page
+    const path = location.pathname;
+    let newPath = path;
+    
+    // Remove existing language prefix if present
+    const pathWithoutLang = path.replace(/^\/(ar|fr)/, '') || '/';
+    
+    // Check if we're on a protected/authenticated page (don't add language prefix)
+    const isProtectedPage = path.startsWith('/dashboard') || 
+                            path.startsWith('/home') || 
+                            path.startsWith('/booking') ||
+                            path.startsWith('/vouchers') ||
+                            path.startsWith('/profile') ||
+                            path.startsWith('/tours') && !path.includes('/tours/') ||
+                            path.startsWith('/hotels') && !path.includes('/hotels/') ||
+                            path.startsWith('/attendance') ||
+                            path === '/signin' ||
+                            path === '/verify-email';
+    
+    // Only add language prefix for public pages
+    if (!isProtectedPage) {
+      if (lang === 'ar' || lang === 'fr') {
+        newPath = `/${lang}${pathWithoutLang === '/' ? '' : pathWithoutLang}`;
+      } else {
+        newPath = pathWithoutLang;
+      }
+    }
+    
+    // Only navigate if the path changed
+    if (newPath !== path) {
+      navigate(newPath, { replace: true });
+    }
+    
     setIsOpen(false);
     
     if (isMobile && showMobileModal) {
@@ -105,15 +162,19 @@ export default function LanguageSwitcher({ variant = 'default' }) {
   // Variant styles for sign-in page
   const isLightVariant = variant === 'light';
 
-  const languages = [
+  const allLanguages = [
     { code: 'en', name: 'English', flagCode: 'GB' },
     { code: 'ar', name: 'العربية', flagCode: 'SA' },
     { code: 'fr', name: 'Français', flagCode: 'FR' },
-    { code: 'tr', name: 'Türkçe', flagCode: 'TR' },
-    { code: 'de', name: 'Deutsch', flagCode: 'DE' }
+    { code: 'tr', name: 'Türkçe', flagCode: 'TR' }, // Hidden for future support
+    { code: 'de', name: 'Deutsch', flagCode: 'DE' } // Hidden for future support
   ];
 
-  const currentLangData = languages.find(lang => lang.code === currentLanguage);
+  // Filter to only show visible languages (en, ar, fr)
+  const visibleLanguages = ['en', 'ar', 'fr'];
+  const languages = allLanguages.filter(lang => visibleLanguages.includes(lang.code));
+
+  const currentLangData = allLanguages.find(lang => lang.code === currentLanguage);
 
   return (
     <div className="relative" ref={dropdownRef}>

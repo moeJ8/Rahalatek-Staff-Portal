@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { Card, Label } from 'flowbite-react'
-import { HiPlus, HiX, HiDuplicate, HiTrash } from 'react-icons/hi'
+import { HiPlus, HiX, HiDuplicate, HiTrash, HiChevronDown, HiChevronUp } from 'react-icons/hi'
 import toast from 'react-hot-toast'
 import CustomButton from '../CustomButton'
 import CustomSelect from '../Select'
@@ -34,7 +34,23 @@ export default function Tours() {
         highlights: [],
         policies: [],
         faqs: [],
-        images: []
+        images: [],
+        translations: {
+            name: { ar: '', fr: '' },
+            description: { ar: '', fr: '' },
+            detailedDescription: { ar: '', fr: '' },
+            highlights: [],
+            policies: [],
+            faqs: []
+        }
+    });
+    const [translationCollapse, setTranslationCollapse] = useState({
+        name: false,
+        description: false,
+        detailedDescription: false,
+        highlights: false,
+        policies: false,
+        faqs: false
     });
     const [tours, setTours] = useState([]);
     const [highlightInput, setHighlightInput] = useState('');
@@ -101,7 +117,11 @@ export default function Tours() {
         if (highlightInput.trim()) {
             setTourData({
                 ...tourData,
-                highlights: [...tourData.highlights, highlightInput.trim()]
+                highlights: [...tourData.highlights, highlightInput.trim()],
+                translations: {
+                    ...tourData.translations,
+                    highlights: [...tourData.translations.highlights, { ar: '', fr: '' }]
+                }
             });
             setHighlightInput('');
         }
@@ -109,10 +129,16 @@ export default function Tours() {
 
     const handleRemoveHighlight = (index) => {
         const updatedHighlights = [...tourData.highlights];
+        const updatedTranslationHighlights = [...tourData.translations.highlights];
         updatedHighlights.splice(index, 1);
+        updatedTranslationHighlights.splice(index, 1);
         setTourData({
             ...tourData,
-            highlights: updatedHighlights
+            highlights: updatedHighlights,
+            translations: {
+                ...tourData.translations,
+                highlights: updatedTranslationHighlights
+            }
         });
     };
 
@@ -120,7 +146,11 @@ export default function Tours() {
         if (policyInput.trim()) {
             setTourData({
                 ...tourData,
-                policies: [...tourData.policies, policyInput.trim()]
+                policies: [...tourData.policies, policyInput.trim()],
+                translations: {
+                    ...tourData.translations,
+                    policies: [...tourData.translations.policies, { ar: '', fr: '' }]
+                }
             });
             setPolicyInput('');
         }
@@ -128,10 +158,51 @@ export default function Tours() {
 
     const handleRemovePolicy = (index) => {
         const updatedPolicies = [...tourData.policies];
+        const updatedTranslationPolicies = [...tourData.translations.policies];
         updatedPolicies.splice(index, 1);
+        updatedTranslationPolicies.splice(index, 1);
         setTourData({
             ...tourData,
-            policies: updatedPolicies
+            policies: updatedPolicies,
+            translations: {
+                ...tourData.translations,
+                policies: updatedTranslationPolicies
+            }
+        });
+    };
+
+    const toggleTranslationCollapse = (section) => {
+        setTranslationCollapse(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
+
+    const handleTranslationChange = (field, language, value) => {
+        setTourData({
+            ...tourData,
+            translations: {
+                ...tourData.translations,
+                [field]: {
+                    ...tourData.translations[field],
+                    [language]: value
+                }
+            }
+        });
+    };
+
+    const handleArrayTranslationChange = (field, index, language, value) => {
+        const updatedTranslations = [...tourData.translations[field]];
+        if (!updatedTranslations[index]) {
+            updatedTranslations[index] = { ar: '', fr: '' };
+        }
+        updatedTranslations[index][language] = value;
+        setTourData({
+            ...tourData,
+            translations: {
+                ...tourData.translations,
+                [field]: updatedTranslations
+            }
         });
     };
 
@@ -139,16 +210,26 @@ export default function Tours() {
     const handleAddFaq = () => {
         setTourData({
             ...tourData,
-            faqs: [...tourData.faqs, { question: '', answer: '' }]
+            faqs: [...tourData.faqs, { question: '', answer: '' }],
+            translations: {
+                ...tourData.translations,
+                faqs: [...tourData.translations.faqs, { question: { ar: '', fr: '' }, answer: { ar: '', fr: '' } }]
+            }
         });
     };
 
     const handleRemoveFaq = (index) => {
         const updatedFaqs = [...tourData.faqs];
+        const updatedTranslationFaqs = [...tourData.translations.faqs];
         updatedFaqs.splice(index, 1);
+        updatedTranslationFaqs.splice(index, 1);
         setTourData({
             ...tourData,
-            faqs: updatedFaqs
+            faqs: updatedFaqs,
+            translations: {
+                ...tourData.translations,
+                faqs: updatedTranslationFaqs
+            }
         });
     };
 
@@ -219,7 +300,15 @@ export default function Tours() {
                 highlights: [],
                 policies: [],
                 faqs: [],
-                images: []
+                images: [],
+                translations: {
+                    name: { ar: '', fr: '' },
+                    description: { ar: '', fr: '' },
+                    detailedDescription: { ar: '', fr: '' },
+                    highlights: [],
+                    policies: [],
+                    faqs: []
+                }
             });
             setSlugError('');
             fetchTours(); // Refresh tours list
@@ -298,7 +387,22 @@ export default function Tours() {
             highlights: tourToDuplicate.highlights ? [...tourToDuplicate.highlights] : [],
             policies: tourToDuplicate.policies ? [...tourToDuplicate.policies] : [],
             faqs: tourToDuplicate.faqs ? [...tourToDuplicate.faqs] : [],
-            images: tourToDuplicate.images ? [...tourToDuplicate.images] : []
+            images: tourToDuplicate.images ? [...tourToDuplicate.images] : [],
+            translations: tourToDuplicate.translations ? {
+                name: tourToDuplicate.translations.name || { ar: '', fr: '' },
+                description: tourToDuplicate.translations.description || { ar: '', fr: '' },
+                detailedDescription: tourToDuplicate.translations.detailedDescription || { ar: '', fr: '' },
+                highlights: tourToDuplicate.translations.highlights ? [...tourToDuplicate.translations.highlights] : [],
+                policies: tourToDuplicate.translations.policies ? [...tourToDuplicate.translations.policies] : [],
+                faqs: tourToDuplicate.translations.faqs ? [...tourToDuplicate.translations.faqs] : []
+            } : {
+                name: { ar: '', fr: '' },
+                description: { ar: '', fr: '' },
+                detailedDescription: { ar: '', fr: '' },
+                highlights: [],
+                policies: [],
+                faqs: []
+            }
         });
         
         // Close modal
@@ -339,9 +443,17 @@ export default function Tours() {
                 
                 <form onSubmit={handleTourSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <div className="mb-2 block">
+                        <div className="col-span-1">
+                            <div className="mb-2 flex items-center justify-between">
                                 <Label htmlFor="tourName" value="Tour Name" />
+                                <button
+                                    type="button"
+                                    onClick={() => toggleTranslationCollapse('name')}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                >
+                                    Translations
+                                    {translationCollapse.name ? <HiChevronUp /> : <HiChevronDown />}
+                                </button>
                             </div>
                             <TextInput
                                 id="tourName"
@@ -350,6 +462,25 @@ export default function Tours() {
                                 onChange={handleTourChange}
                                 required
                             />
+                            {translationCollapse.name && (
+                                <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                    </p>
+                                    <TextInput
+                                        label="Arabic Translation (Optional)"
+                                        placeholder="Leave empty to use English"
+                                        value={tourData.translations.name.ar}
+                                        onChange={(e) => handleTranslationChange('name', 'ar', e.target.value)}
+                                    />
+                                    <TextInput
+                                        label="French Translation (Optional)"
+                                        placeholder="Leave empty to use English"
+                                        value={tourData.translations.name.fr}
+                                        onChange={(e) => handleTranslationChange('name', 'fr', e.target.value)}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -485,8 +616,16 @@ export default function Tours() {
                     )}
                     
                     <div>
-                        <div className="mb-2 block">
+                        <div className="mb-2 flex items-center justify-between">
                             <Label htmlFor="tourDesc" value="Brief Description" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('description')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.description ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
                         </div>
                         <TextInput
                             id="tourDesc"
@@ -494,9 +633,43 @@ export default function Tours() {
                             value={tourData.description}
                             onChange={handleTourChange}
                         />
+                        {translationCollapse.description && (
+                            <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                </p>
+                                <TextInput
+                                    as="textarea"
+                                    rows={2}
+                                    label="Arabic Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={tourData.translations.description.ar}
+                                    onChange={(e) => handleTranslationChange('description', 'ar', e.target.value)}
+                                />
+                                <TextInput
+                                    as="textarea"
+                                    rows={2}
+                                    label="French Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={tourData.translations.description.fr}
+                                    onChange={(e) => handleTranslationChange('description', 'fr', e.target.value)}
+                                />
+                            </div>
+                        )}
                     </div>
                     
                     <div>
+                        <div className="mb-2 flex items-center justify-between">
+                            <Label htmlFor="tourDetailDesc" value="Detailed Description" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('detailedDescription')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.detailedDescription ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <TextInput
                             id="tourDetailDesc"
                             name="detailedDescription"
@@ -504,12 +677,44 @@ export default function Tours() {
                             rows={4}
                             value={tourData.detailedDescription}
                             onChange={handleTourChange}
-                            label="Detailed Description"
                         />
+                        {translationCollapse.detailedDescription && (
+                            <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                </p>
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="Arabic Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={tourData.translations.detailedDescription.ar}
+                                    onChange={(e) => handleTranslationChange('detailedDescription', 'ar', e.target.value)}
+                                />
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="French Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={tourData.translations.detailedDescription.fr}
+                                    onChange={(e) => handleTranslationChange('detailedDescription', 'fr', e.target.value)}
+                                />
+                            </div>
+                        )}
                     </div>
                                         
                     <div>
-                        <Label value="Tour Highlights" className="mb-2 block" />
+                        <div className="mb-2 flex items-center justify-between">
+                            <Label value="Tour Highlights" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('highlights')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.highlights ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <div className="flex gap-2 mb-3">
                             <TextInput
                                 placeholder="Add a highlight"
@@ -531,17 +736,35 @@ export default function Tours() {
                         {tourData.highlights.length > 0 && (
                             <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
                                 <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Highlights:</h4>
-                                <ul className="space-y-2">
+                                <ul className="space-y-3">
                                     {tourData.highlights.map((highlight, index) => (
-                                        <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
-                                            <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
-                                            <CustomButton
-                                                variant="red"
-                                                size="xs"
-                                                onClick={() => handleRemoveHighlight(index)}
-                                                icon={HiX}
-                                                title="Remove highlight"
-                                            />
+                                        <li key={index} className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-800 dark:text-gray-200">• {highlight}</span>
+                                                <CustomButton
+                                                    variant="red"
+                                                    size="xs"
+                                                    onClick={() => handleRemoveHighlight(index)}
+                                                    icon={HiX}
+                                                    title="Remove highlight"
+                                                />
+                                            </div>
+                                            {translationCollapse.highlights && tourData.translations.highlights[index] && (
+                                                <div className="pl-6 mt-1 space-y-2 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-100 dark:bg-slate-800">
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="Arabic translation (optional)"
+                                                        value={tourData.translations.highlights[index]?.ar || ''}
+                                                        onChange={(e) => handleArrayTranslationChange('highlights', index, 'ar', e.target.value)}
+                                                    />
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="French translation (optional)"
+                                                        value={tourData.translations.highlights[index]?.fr || ''}
+                                                        onChange={(e) => handleArrayTranslationChange('highlights', index, 'fr', e.target.value)}
+                                                    />
+                                                </div>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -551,7 +774,17 @@ export default function Tours() {
                     
                     {/* Tour Policies */}
                     <div>
-                        <Label value="Tour Policies" className="mb-2 block" />
+                        <div className="mb-2 flex items-center justify-between">
+                            <Label value="Tour Policies" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('policies')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.policies ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <div className="flex gap-2 mb-3">
                             <TextInput
                                 placeholder="Add a policy"
@@ -573,17 +806,35 @@ export default function Tours() {
                         {tourData.policies.length > 0 && (
                             <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
                                 <h4 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Added Policies:</h4>
-                                <ul className="space-y-2">
+                                <ul className="space-y-3">
                                     {tourData.policies.map((policy, index) => (
-                                        <li key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800">
-                                            <span className="text-gray-800 dark:text-gray-200">• {policy}</span>
-                                            <CustomButton
-                                                variant="red"
-                                                size="xs"
-                                                onClick={() => handleRemovePolicy(index)}
-                                                icon={HiX}
-                                                title="Remove policy"
-                                            />
+                                        <li key={index} className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-800 dark:text-gray-200">• {policy}</span>
+                                                <CustomButton
+                                                    variant="red"
+                                                    size="xs"
+                                                    onClick={() => handleRemovePolicy(index)}
+                                                    icon={HiX}
+                                                    title="Remove policy"
+                                                />
+                                            </div>
+                                            {translationCollapse.policies && tourData.translations.policies[index] && (
+                                                <div className="pl-6 mt-1 space-y-2 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-100 dark:bg-slate-800">
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="Arabic translation (optional)"
+                                                        value={tourData.translations.policies[index]?.ar || ''}
+                                                        onChange={(e) => handleArrayTranslationChange('policies', index, 'ar', e.target.value)}
+                                                    />
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="French translation (optional)"
+                                                        value={tourData.translations.policies[index]?.fr || ''}
+                                                        onChange={(e) => handleArrayTranslationChange('policies', index, 'fr', e.target.value)}
+                                                    />
+                                                </div>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
@@ -593,7 +844,17 @@ export default function Tours() {
                     
                     {/* Tour FAQs */}
                     <div>
-                        <Label htmlFor="faqs" value="Tour FAQs" className="mb-3 block" />
+                        <div className="mb-3 flex items-center justify-between">
+                            <Label htmlFor="faqs" value="Tour FAQs" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('faqs')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.faqs ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <div className="space-y-4">
                             {(tourData.faqs || []).map((faq, index) => (
                                 <div key={index} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -619,6 +880,40 @@ export default function Tours() {
                                                 placeholder="Enter FAQ question"
                                                 required
                                             />
+                                            {translationCollapse.faqs && tourData.translations.faqs[index] && (
+                                                <div className="mt-2 space-y-2 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-100 dark:bg-slate-800">
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="Arabic question translation (optional)"
+                                                        value={tourData.translations.faqs[index]?.question?.ar || ''}
+                                                        onChange={(e) => {
+                                                            const updatedTranslations = [...tourData.translations.faqs];
+                                                            if (!updatedTranslations[index]) updatedTranslations[index] = { question: { ar: '', fr: '' }, answer: { ar: '', fr: '' } };
+                                                            if (!updatedTranslations[index].question) updatedTranslations[index].question = { ar: '', fr: '' };
+                                                            updatedTranslations[index].question.ar = e.target.value;
+                                                            setTourData({
+                                                                ...tourData,
+                                                                translations: { ...tourData.translations, faqs: updatedTranslations }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <TextInput
+                                                        size="sm"
+                                                        placeholder="French question translation (optional)"
+                                                        value={tourData.translations.faqs[index]?.question?.fr || ''}
+                                                        onChange={(e) => {
+                                                            const updatedTranslations = [...tourData.translations.faqs];
+                                                            if (!updatedTranslations[index]) updatedTranslations[index] = { question: { ar: '', fr: '' }, answer: { ar: '', fr: '' } };
+                                                            if (!updatedTranslations[index].question) updatedTranslations[index].question = { ar: '', fr: '' };
+                                                            updatedTranslations[index].question.fr = e.target.value;
+                                                            setTourData({
+                                                                ...tourData,
+                                                                translations: { ...tourData.translations, faqs: updatedTranslations }
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         
                                         <div>
@@ -631,6 +926,44 @@ export default function Tours() {
                                                 placeholder="Enter FAQ answer"
                                                 required
                                             />
+                                            {translationCollapse.faqs && tourData.translations.faqs[index] && (
+                                                <div className="mt-2 space-y-2 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-100 dark:bg-slate-800">
+                                                    <TextInput
+                                                        size="sm"
+                                                        as="textarea"
+                                                        rows={2}
+                                                        placeholder="Arabic answer translation (optional)"
+                                                        value={tourData.translations.faqs[index]?.answer?.ar || ''}
+                                                        onChange={(e) => {
+                                                            const updatedTranslations = [...tourData.translations.faqs];
+                                                            if (!updatedTranslations[index]) updatedTranslations[index] = { question: { ar: '', fr: '' }, answer: { ar: '', fr: '' } };
+                                                            if (!updatedTranslations[index].answer) updatedTranslations[index].answer = { ar: '', fr: '' };
+                                                            updatedTranslations[index].answer.ar = e.target.value;
+                                                            setTourData({
+                                                                ...tourData,
+                                                                translations: { ...tourData.translations, faqs: updatedTranslations }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <TextInput
+                                                        size="sm"
+                                                        as="textarea"
+                                                        rows={2}
+                                                        placeholder="French answer translation (optional)"
+                                                        value={tourData.translations.faqs[index]?.answer?.fr || ''}
+                                                        onChange={(e) => {
+                                                            const updatedTranslations = [...tourData.translations.faqs];
+                                                            if (!updatedTranslations[index]) updatedTranslations[index] = { question: { ar: '', fr: '' }, answer: { ar: '', fr: '' } };
+                                                            if (!updatedTranslations[index].answer) updatedTranslations[index].answer = { ar: '', fr: '' };
+                                                            updatedTranslations[index].answer.fr = e.target.value;
+                                                            setTourData({
+                                                                ...tourData,
+                                                                translations: { ...tourData.translations, faqs: updatedTranslations }
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

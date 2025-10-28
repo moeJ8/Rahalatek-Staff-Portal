@@ -18,6 +18,25 @@ const packageSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    // Translation fields (Arabic and French only - English is the base field)
+    translations: {
+        name: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        description: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        includes: [{
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        }],
+        excludes: [{
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        }]
+    },
     countries: [{
         type: String,
         required: true,

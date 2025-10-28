@@ -1,13 +1,64 @@
 const Package = require('../models/Package');
 const Hotel = require('../models/Hotel');
 const Tour = require('../models/Tour');
-const { 
-    invalidateDashboardCache, 
+const {
+    invalidateDashboardCache,
     invalidatePublicCache,
     featuredPackagesCache,
     packageDetailsCache,
     allPackagesCache
 } = require('../utils/redis');
+
+// Helper function to translate a single package
+const translatePackage = (pkg, lang) => {
+  if (lang === 'en' || !pkg.translations) {
+    return pkg.toObject ? pkg.toObject() : pkg;
+  }
+
+  const translations = pkg.translations;
+  const translatedPackage = pkg.toObject ? pkg.toObject() : { ...pkg };
+
+  // Helper function to get translated text or fallback to base
+  const getTranslated = (baseValue, translationValue) => {
+    return translationValue && translationValue.trim() ? translationValue : baseValue;
+  };
+
+  // Helper function for arrays
+  const getTranslatedArray = (baseArray, translationArray) => {
+    if (!translationArray || translationArray.length === 0) return baseArray;
+
+    return baseArray.map((item, index) => {
+      if (index < translationArray.length) {
+        const translated = translationArray[index][lang];
+        return getTranslated(item, translated);
+      }
+      return item;
+    });
+  };
+
+  // Translate simple fields
+  if (translations.name && translations.name[lang]) {
+    translatedPackage.name = getTranslated(pkg.name, translations.name[lang]);
+  }
+  if (translations.description && translations.description[lang]) {
+    translatedPackage.description = getTranslated(pkg.description, translations.description[lang]);
+  }
+
+  // Translate arrays
+  if (translations.includes && translations.includes.length > 0 && pkg.includes) {
+    translatedPackage.includes = getTranslatedArray(pkg.includes, translations.includes);
+  }
+  if (translations.excludes && translations.excludes.length > 0 && pkg.excludes) {
+    translatedPackage.excludes = getTranslatedArray(pkg.excludes, translations.excludes);
+  }
+
+  return translatedPackage;
+};
+
+// Helper function to translate multiple packages
+const translatePackages = (packages, lang) => {
+  return packages.map(pkg => translatePackage(pkg, lang));
+};
 
 // Create a new package
 exports.createPackage = async (req, res) => {
@@ -27,7 +78,8 @@ exports.createPackage = async (req, res) => {
             excludes,
             pricing,
             targetAudience,
-            images
+            images,
+            translations
         } = req.body;
 
         // Validate required fields
@@ -61,6 +113,12 @@ exports.createPackage = async (req, res) => {
             pricing,
             targetAudience: targetAudience || ['Family'],
             images: images || [],
+            translations: translations || {
+                name: { ar: '', fr: '' },
+                description: { ar: '', fr: '' },
+                includes: [],
+                excludes: []
+            },
             createdBy: req.user.userId
         });
 
@@ -93,7 +151,7 @@ exports.createPackage = async (req, res) => {
 // Get all packages (with optional pagination and search)
 exports.getAllPackages = async (req, res) => {
   try {
-    const { country, city, search, targetAudience, duration, isActive, createdBy, page, limit } = req.query;
+    const { country, city, search, targetAudience, duration, isActive, createdBy, page, limit, lang = 'en' } = req.query;
     
     let query = {};
     if (country) query.countries = { $in: [country] };
@@ -142,11 +200,14 @@ exports.getAllPackages = async (req, res) => {
         .populate('createdBy', 'username')
         .populate('updatedBy', 'username');
       
-      if (!country && !city && !search && !targetAudience && !duration && !isActive && !createdBy) {
-        await allPackagesCache.set(packages);
+      // Apply translation to packages
+      const translatedPackages = translatePackages(packages, lang);
+
+      if (!country && !city && !search && !targetAudience && !duration && !isActive && !createdBy && lang === 'en') {
+        await allPackagesCache.set(translatedPackages);
       }
-      
-      return res.status(200).json(packages);
+
+      return res.status(200).json(translatedPackages);
     }
     
     // PAGINATION MODE
@@ -162,11 +223,14 @@ exports.getAllPackages = async (req, res) => {
         .populate('updatedBy', 'username'),
       Package.countDocuments(query)
     ]);
-    
+
+    // Apply translation to packages
+    const translatedPackages = translatePackages(packages, lang);
+
     res.status(200).json({
       success: true,
       data: {
-        packages,
+        packages: translatedPackages,
         pagination: {
           currentPage: pageNum,
           totalPages: Math.ceil(totalPackages / limitNum),
@@ -417,41 +481,49 @@ exports.getPackageStats = async (req, res) => {
 exports.getPackageBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-        
-        // Check Redis cache first
-        const cachedPackage = await packageDetailsCache.get(slug);
-        if (cachedPackage) {
-            console.log(`✅ Serving package ${slug} from Redis cache`);
-            return res.status(200).json({
-                success: true,
-                data: cachedPackage
-            });
+        const { lang = 'en' } = req.query; // Get language from query parameter, default to 'en'
+
+        // Check Redis cache first (only for English to avoid cache pollution)
+        if (lang === 'en') {
+            const cachedPackage = await packageDetailsCache.get(slug);
+            if (cachedPackage) {
+                console.log(`✅ Serving package ${slug} from Redis cache`);
+                return res.status(200).json({
+                    success: true,
+                    data: cachedPackage
+                });
+            }
         }
 
-        console.log(`📦 Fetching fresh package data for ${slug}...`);
+        console.log(`📦 Fetching fresh package data for ${slug} (lang: ${lang})...`);
         const package = await Package.findOne({ slug: slug })
             .populate('hotels.hotelId')
             .populate('tours.tourId')
             .populate('createdBy', 'username')
             .populate('updatedBy', 'username');
-        
+
         if (!package) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                message: 'Package not found' 
+                message: 'Package not found'
             });
         }
-        
-        // Cache the result
-        await packageDetailsCache.set(slug, package);
-        
+
+        // Translate the package using the helper function
+        const translatedPackage = translatePackage(package, lang);
+
+        // Cache the result only for English
+        if (lang === 'en') {
+            await packageDetailsCache.set(slug, translatedPackage);
+        }
+
         res.status(200).json({
             success: true,
-            data: package
+            data: translatedPackage
         });
     } catch (error) {
         console.error('Error fetching package by slug:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
             message: 'Failed to fetch package',
             error: error.message

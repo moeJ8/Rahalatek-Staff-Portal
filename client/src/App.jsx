@@ -76,6 +76,8 @@ const ConditionalFloatingContact = () => {
                       location.pathname === '/airport-service' ||
                       location.pathname === '/luxury-suites' ||
                       location.pathname.startsWith('/guest/') ||
+                      location.pathname.startsWith('/ar/') ||
+                      location.pathname.startsWith('/fr/') ||
                       location.pathname.startsWith('/hotels/') ||
                       location.pathname.startsWith('/tours/') ||
                       location.pathname.startsWith('/packages/') ||
@@ -197,6 +199,44 @@ function App() {
               </Route>
               
               {/* Public Routes - Accessible to everyone (authenticated or not) */}
+              
+              {/* Language-specific public pages for SEO (Arabic and French) */}
+              <Route path="/ar" element={<GuestHomePage />} />
+              <Route path="/fr" element={<GuestHomePage />} />
+              <Route path="/ar/guest/tours" element={<GuestToursPage />} />
+              <Route path="/fr/guest/tours" element={<GuestToursPage />} />
+              <Route path="/ar/guest/hotels" element={<GuestHotelsPage />} />
+              <Route path="/fr/guest/hotels" element={<GuestHotelsPage />} />
+              <Route path="/ar/tourism" element={<TourismPage />} />
+              <Route path="/fr/tourism" element={<TourismPage />} />
+              <Route path="/ar/hotel-booking" element={<HotelBookingPage />} />
+              <Route path="/fr/hotel-booking" element={<HotelBookingPage />} />
+              <Route path="/ar/airport-service" element={<AirportServicePage />} />
+              <Route path="/fr/airport-service" element={<AirportServicePage />} />
+              <Route path="/ar/luxury-suites" element={<LuxurySuitesPage />} />
+              <Route path="/fr/luxury-suites" element={<LuxurySuitesPage />} />
+              <Route path="/ar/packages" element={<PublicPackagesPage />} />
+              <Route path="/fr/packages" element={<PublicPackagesPage />} />
+              <Route path="/ar/contact" element={<ContactUsPage />} />
+              <Route path="/fr/contact" element={<ContactUsPage />} />
+              <Route path="/ar/about" element={<AboutUsPage />} />
+              <Route path="/fr/about" element={<AboutUsPage />} />
+              <Route path="/ar/blog" element={<BlogListPage />} />
+              <Route path="/fr/blog" element={<BlogListPage />} />
+              <Route path="/ar/blog/:slug" element={<BlogDetailPage />} />
+              <Route path="/fr/blog/:slug" element={<BlogDetailPage />} />
+              <Route path="/ar/country/:country" element={<GuestCountryPage />} />
+              <Route path="/fr/country/:country" element={<GuestCountryPage />} />
+              <Route path="/ar/country/:country/city/:city" element={<GuestCityPage />} />
+              <Route path="/fr/country/:country/city/:city" element={<GuestCityPage />} />
+              <Route path="/ar/tours/:slug" element={<PublicTourPage />} />
+              <Route path="/fr/tours/:slug" element={<PublicTourPage />} />
+              <Route path="/ar/hotels/:slug" element={<PublicHotelPage />} />
+              <Route path="/fr/hotels/:slug" element={<PublicHotelPage />} />
+              <Route path="/ar/packages/:slug" element={<PublicPackagePage />} />
+              <Route path="/fr/packages/:slug" element={<PublicPackagePage />} />
+              
+              {/* Regular public pages (English/default) */}
               <Route path="/" element={<GuestHomePage />} />
               <Route path="/guest/hotels" element={<GuestHotelsPage />} />
               <Route path="/guest/tours" element={<GuestToursPage />} />
@@ -211,6 +251,8 @@ function App() {
               <Route path="/blog/:slug" element={<BlogDetailPage />} />
               <Route path="/country/:country" element={<GuestCountryPage />} />
               <Route path="/country/:country/city/:city" element={<GuestCityPage />} />
+              
+              {/* Regular detail routes (English/default) */}
               <Route path="/hotels/:slug" element={<PublicHotelPage />} />
               <Route path="/tours/:slug" element={<PublicTourPage />} />
               <Route path="/packages/:slug" element={<PublicPackagePage />} />

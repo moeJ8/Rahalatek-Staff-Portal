@@ -7,25 +7,25 @@ export default function ServicesSection() {
   const services = [
     {
       id: 'tours',
-      name: 'Tours',
+      nameKey: 'home.services.tours',
       image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759789335/Istanbul-1_eqyqij.jpg',
       link: '/tourism'
     },
     {
       id: 'hotel-booking',
-      name: 'Hotel Booking',
+      nameKey: 'home.services.hotelBooking',
       image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1758985729/hotels/1758985728978_0.jpg',
       link: '/hotel-booking'
     },
     {
       id: 'luxury-suites',
-      name: 'Luxury Suites',
+      nameKey: 'home.services.luxurySuites',
       image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759855915/492475786-960x630_kjybmn.jpg',
       link: '/luxury-suites'
     },
     {
       id: 'airport-service',
-      name: 'Airport Reception & Farewell',
+      nameKey: 'home.services.airportService',
       image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759859381/photo-1449965408869-eaa3f722e40d_gbhlay.jpg',
       link: '/airport-service'
     }
@@ -56,7 +56,7 @@ export default function ServicesSection() {
               <div className="relative aspect-[5/3] overflow-hidden">
                 <img
                   src={service.image}
-                  alt={service.name}
+                  alt={t(service.nameKey)}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 {/* Gradient Overlay */}
@@ -65,7 +65,7 @@ export default function ServicesSection() {
                 {/* Service Name on Image */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-white leading-tight group-hover:text-yellow-400 dark:group-hover:text-yellow-400 transition-colors duration-300 drop-shadow-lg">
-                    {service.name}
+                    {t(service.nameKey)}
                   </h3>
                 </div>
               </div>

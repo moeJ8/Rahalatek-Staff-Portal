@@ -8,9 +8,10 @@ import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
 import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
+import { getTranslatedText, getTranslatedArray } from '../../utils/translationUtils';
 
 const FeaturedTours = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +26,10 @@ const FeaturedTours = () => {
     const fetchFeaturedTours = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/tours/featured?limit=9');
+        // Add language parameter to the API request
+        const lang = i18n.language;
+        const langParam = (lang === 'ar' || lang === 'fr') ? `?lang=${lang}&limit=9` : `?limit=9`;
+        const response = await axios.get(`/api/tours/featured${langParam}`);
         setTours(response.data);
       } catch (error) {
         console.error('Error fetching featured tours:', error);
@@ -36,7 +40,7 @@ const FeaturedTours = () => {
     };
 
     fetchFeaturedTours();
-  }, []);
+  }, [i18n.language]);
 
   // Screen size detection
   const updateScreenSize = () => {
@@ -89,8 +93,13 @@ const FeaturedTours = () => {
       console.error('Error incrementing tour views:', error);
     }
     
-    // Navigate to tour page
-    navigate(`/tours/${tour.slug}`);
+    // Navigate to tour page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/tours/${tour.slug}`);
+    } else {
+      navigate(`/tours/${tour.slug}`);
+    }
   };
 
   const getCountryCode = (country) => {
@@ -121,6 +130,12 @@ const FeaturedTours = () => {
     const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
     const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
 
+    // Get translated content
+    const translatedName = getTranslatedText(tour, 'name', i18n.language);
+    const translatedDescription = getTranslatedText(tour, 'description', i18n.language);
+    const translatedHighlights = getTranslatedArray(tour, 'highlights', i18n.language);
+    const isRTL = i18n.language === 'ar';
+
     return (
       <div 
         className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col relative"
@@ -130,7 +145,7 @@ const FeaturedTours = () => {
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
           <img
             src={imageUrl}
-            alt={tour.name}
+            alt={translatedName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {/* Gradient overlay */}
@@ -147,10 +162,8 @@ const FeaturedTours = () => {
 
           {/* Tour Name - Inside image at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
-              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.name) ? 'text-right' : 'text-left'
-            }`}>
-              {tour.name}
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${isRTL ? 'text-right' : 'text-left'}`}>
+              {translatedName}
             </h3>
           </div>
         </div>
@@ -182,16 +195,16 @@ const FeaturedTours = () => {
           </div>
 
           {/* Highlights */}
-          {tour.highlights && tour.highlights.length > 0 && (
-            <div className="mb-2">
+          {translatedHighlights && translatedHighlights.length > 0 && (
+            <div className="mb-2" dir={isRTL ? 'rtl' : 'ltr'}>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleHighlights(tour._id);
                 }}
-                className="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className={`w-full flex items-center ${isRTL ? 'space-x-reverse' : 'space-x-1'} justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800`}
               >
-                <div className="flex items-center space-x-1">
+                <div className={`flex items-center ${isRTL ? 'space-x-reverse' : 'space-x-1'}`}>
                   <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
                   <span className="text-xs sm:text-sm font-medium">Highlights:</span>
                 </div>
@@ -204,9 +217,9 @@ const FeaturedTours = () => {
               
               {/* Expanded Highlights */}
               <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedHighlights[tour._id] ? 'max-h-screen opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
-                <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-1">
-                  {tour.highlights.map((highlight, index) => (
-                    <div key={index} className="flex items-start space-x-2 text-xs">
+                <div className={`bg-gray-50 dark:bg-slate-800 rounded-lg p-3 ${isRTL ? 'space-y-reverse' : 'space-y-1'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                  {translatedHighlights.map((highlight, index) => (
+                    <div key={index} className={`flex items-start ${isRTL ? 'space-x-reverse' : 'space-x-2'} text-xs`}>
                       <span className="text-blue-500 dark:text-yellow-400 mt-0.5">•</span>
                       <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{highlight}</span>
                     </div>
@@ -217,11 +230,9 @@ const FeaturedTours = () => {
           )}
 
           {/* Description */}
-          {tour.description && (
-            <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-2 ${
-              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.description) ? 'text-right' : 'text-left'
-            }`}>
-              {tour.description}
+          {translatedDescription && (
+            <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+              {translatedDescription}
             </p>
           )}
 
@@ -287,7 +298,14 @@ const FeaturedTours = () => {
           {/* View All Button - Desktop Only in Header */}
           <div className="hidden lg:block lg:absolute lg:right-16 lg:top-0">
             <CustomButton
-              onClick={() => navigate('/guest/tours')}
+              onClick={() => {
+                const lang = i18n.language;
+                if (lang === 'ar' || lang === 'fr') {
+                  navigate(`/${lang}/guest/tours`);
+                } else {
+                  navigate('/guest/tours');
+                }
+              }}
               variant="rippleBlueToYellowTeal"
               size="md"
               className="px-6 py-2 text-sm"
@@ -383,7 +401,14 @@ const FeaturedTours = () => {
             {/* View All Button - Mobile/Tablet Only */}
             <div className="flex justify-center mt-8 lg:hidden">
               <CustomButton
-                onClick={() => navigate('/guest/tours')}
+                onClick={() => {
+                  const lang = i18n.language;
+                  if (lang === 'ar' || lang === 'fr') {
+                    navigate(`/${lang}/guest/tours`);
+                  } else {
+                    navigate('/guest/tours');
+                  }
+                }}
                 variant="rippleBlueToYellowTeal"
                 size="md"
                 className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"

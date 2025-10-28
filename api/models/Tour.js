@@ -7,6 +7,39 @@ const tourSchema = new mongoose.Schema({
         trim: true,
         maxlength: [100, 'A tour name cannot exceed 100 characters']
     },
+    // Translation fields (Arabic and French only - English is the base field)
+    translations: {
+        name: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        description: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        detailedDescription: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        highlights: [{
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        }],
+        policies: [{
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        }],
+        faqs: [{
+            question: {
+                ar: { type: String, default: '' },
+                fr: { type: String, default: '' }
+            },
+            answer: {
+                ar: { type: String, default: '' },
+                fr: { type: String, default: '' }
+            }
+        }]
+    },
     slug: { 
         type: String, 
         unique: true,

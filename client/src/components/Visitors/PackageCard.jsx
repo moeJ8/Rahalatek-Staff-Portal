@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaCalendarAlt, FaDollarSign, FaChevronRight, FaBed, FaRoute, FaCrown, FaUsers, FaStar } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
+import { getTranslatedText } from '../../utils/translationUtils';
 import Flag from 'react-world-flags';
 import CustomModal from '../CustomModal';
 
 const PackageCard = ({ pkg, onClick }) => {
+    const { i18n } = useTranslation();
     const [showHotelsModal, setShowHotelsModal] = useState(false);
     const [showToursModal, setShowToursModal] = useState(false);
     const primaryImage = pkg.images?.find(img => img.isPrimary) || pkg.images?.[0];
+    const translatedName = getTranslatedText(pkg, 'name', i18n.language);
+    const translatedDescription = getTranslatedText(pkg, 'description', i18n.language);
     
     // Country code mapping
     const getCountryCode = (country) => {
@@ -43,9 +48,9 @@ const PackageCard = ({ pkg, onClick }) => {
             <div className="relative h-60 sm:h-72 overflow-hidden">
                 {primaryImage ? (
                     <>
-                        <img 
-                            src={primaryImage.url} 
-                            alt={primaryImage.altText || pkg.name}
+                        <img
+                            src={primaryImage.url}
+                            alt={primaryImage.altText || translatedName}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         {/* Gradient overlay */}
@@ -60,9 +65,9 @@ const PackageCard = ({ pkg, onClick }) => {
                         {/* Package Name - Inside image at bottom */}
                         <div className="absolute bottom-0 left-0 right-0 p-4">
                             <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
-                                /[\u0600-\u06FF\u0750-\u077F]/.test(pkg.name) ? 'text-right' : 'text-left'
+                                /[\u0600-\u06FF\u0750-\u077F]/.test(translatedName) ? 'text-right' : 'text-left'
                             }`}>
-                                {pkg.name}
+                                {translatedName}
                             </h3>
                         </div>
                     </>
@@ -106,11 +111,11 @@ const PackageCard = ({ pkg, onClick }) => {
                 </div>
 
                 {/* Description */}
-                {pkg.description && (
+                {translatedDescription && (
                     <p className={`text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2 flex-grow ${
-                        /[\u0600-\u06FF\u0750-\u077F]/.test(pkg.description) ? 'text-right' : 'text-left'
+                        /[\u0600-\u06FF\u0750-\u077F]/.test(translatedDescription) ? 'text-right' : 'text-left'
                     }`}>
-                        {pkg.description}
+                        {translatedDescription}
                     </p>
                 )}
 

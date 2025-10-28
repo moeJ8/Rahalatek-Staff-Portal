@@ -68,12 +68,7 @@ const HotelRoomsCarousel = ({ roomTypes = [] }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          {t('publicHotelPage.nav.rooms')}
-        </h2>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8" dir="ltr">
 
       {/* Carousel Container with Side Arrows */}
       <div className="relative flex items-center">
@@ -196,6 +191,7 @@ const HotelRoomsCarousel = ({ roomTypes = [] }) => {
 const RoomCard = ({ roomType }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   const details = roomType.details || {};
   const highlights = roomType.highlights || [];
@@ -209,6 +205,20 @@ const RoomCard = ({ roomType }) => {
   const roomImages = roomType.images && roomType.images.length > 0 
     ? [...roomType.images].sort((a, b) => b.isPrimary - a.isPrimary)
     : [defaultImage];
+  
+  const handleMouseDown = () => {
+    setIsDragging(false);
+  };
+  
+  const handleMouseMove = () => {
+    setIsDragging(true);
+  };
+  
+  const handleClick = () => {
+    if (!isDragging) {
+      setIsDetailsModalOpen(true);
+    }
+  };
 
   // Function to get amenity icon
   const getAmenityIcon = (amenity) => {
@@ -225,9 +235,14 @@ const RoomCard = ({ roomType }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
+    <div 
+      className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onClick={handleClick}
+    >
       {/* Room Image Carousel */}
-      <div className="relative h-48 sm:h-56 md:h-64">
+      <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
         <ImageCarousel
           images={roomImages}
           title={`${roomType.type} Room`}
@@ -235,90 +250,55 @@ const RoomCard = ({ roomType }) => {
           currentImageIndex={selectedImageIndex}
           onImageChange={setSelectedImageIndex}
         />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none"></div>
+        
+        {/* Room Name - Inside image at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+          <h3 className="text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300">
+            {roomType.type}
+          </h3>
+        </div>
       </div>
 
       {/* Room Details */}
-      <div className="p-4 sm:p-5 md:p-6">
-        {/* Room Type and Rating */}
-        <div className="mb-3 sm:mb-4">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3">
-            {roomType.type}
-          </h3>
-          
-          {/* Highlights Section */}
-          {highlights.length > 0 && (
-            <div className="mb-3 sm:mb-4">
-              <div className="flex items-center mb-2">
-                <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  Highlights
-                </span>
-              </div>
-              <div className="bg-gray-50 dark:bg-slate-700 rounded-3xl p-2 sm:p-3 mb-2 sm:mb-3">
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {highlights.slice(0, 6).map((highlight, index) => (
-                    <span key={index} className="text-xs text-gray-700 dark:text-gray-300">
-                      {highlight}
-                    </span>
-                  ))}
-                  {highlights.length > 6 && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      +{highlights.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
+      <div className="p-3 sm:p-4 md:p-6">
+        {/* Room details */}
+        <div className="grid grid-cols-2 gap-2 mb-2 sm:mb-3">
+          {details.size?.value && (
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <FaRulerCombined className="w-3 h-3 mr-1.5 sm:mr-2 text-gray-500 dark:text-gray-500 flex-shrink-0" />
+              <span className="truncate">{details.size.value} {details.size.unit}</span>
             </div>
           )}
-
-          {/* Room details */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            {details.size?.value && (
-              <div className="flex items-center text-xs sm:text-sm text-gray-800 dark:text-gray-200">
-                <FaRulerCombined className="w-3 h-3 mr-2 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate">{details.size.value} {details.size.unit}</span>
-              </div>
-            )}
-            {details.view && (
-              <div className="flex items-center text-xs sm:text-sm text-gray-800 dark:text-gray-200">
-                <FaEye className="w-3 h-3 mr-2 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate">{details.view}</span>
-              </div>
-            )}
-            {details.sleeps && (
-              <div className="flex items-center text-xs sm:text-sm text-gray-800 dark:text-gray-200">
-                <FaUsers className="w-3 h-3 mr-2 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate">Sleeps {details.sleeps}</span>
-              </div>
-            )}
-            {details.bedType && (
-              <div className="flex items-center text-xs sm:text-sm text-gray-800 dark:text-gray-200">
-                <FaBed className="w-3 h-3 mr-2 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate">{details.bedType}</span>
-              </div>
-            )}
-          </div>
+          {details.view && (
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <FaEye className="w-3 h-3 mr-1.5 sm:mr-2 text-gray-500 dark:text-gray-500 flex-shrink-0" />
+              <span className="truncate">{details.view}</span>
+            </div>
+          )}
+          {details.sleeps && (
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <FaUsers className="w-3 h-3 mr-1.5 sm:mr-2 text-gray-500 dark:text-gray-500 flex-shrink-0" />
+              <span className="truncate">Sleeps {details.sleeps}</span>
+            </div>
+          )}
+          {details.bedType && (
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              <FaBed className="w-3 h-3 mr-1.5 sm:mr-2 text-gray-500 dark:text-gray-500 flex-shrink-0" />
+              <span className="truncate">{details.bedType}</span>
+            </div>
+          )}
         </div>
-
-        {/* More Details Button */}
-        <div className="mt-3 sm:mt-4">
-          <button
-            onClick={() => setIsDetailsModalOpen(true)}
-            className="text-blue-600 dark:text-teal-400 hover:text-blue-800 dark:hover:text-teal-200 text-xs sm:text-sm font-medium flex items-center"
-          >
-            More details
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Image Counter */}
-        {roomImages.length > 1 && (
-          <div className="mt-2 sm:mt-3 text-center">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {selectedImageIndex + 1} of {roomImages.length} photos
-            </span>
+        
+        {/* Amenities - First 3 items */}
+        {highlights.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {highlights.slice(0, 3).map((highlight, index) => (
+              <span key={index} className="text-xs text-gray-700 dark:text-gray-300">
+                {highlight}
+              </span>
+            ))}
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import { useTranslation } from 'react-i18next';
+import { getTranslatedText, getTranslatedArray } from '../../utils/translationUtils';
 import PublicPackageHero from '../../components/PublicPackageHero';
 import PackageDayCard from '../../components/Visitors/PackageDayCard';
 import ContactForm from '../../components/ContactForm';
@@ -10,9 +11,17 @@ import OtherPackagesCarousel from '../../components/Visitors/OtherPackagesCarous
 import RahalatekLoader from '../../components/RahalatekLoader';
 
 export default function PublicPackagePage() {
-    const { slug } = useParams();
+    const params = useParams();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
+
+    // Extract slug and language from URL
+    // URL can be: /packages/:slug OR /ar/packages/:slug OR /fr/packages/:slug
+    const slug = params.slug;
+    const urlPath = window.location.pathname;
+    const langMatch = urlPath.match(/^\/(ar|fr)\/packages\//);
+    const urlLang = langMatch ? langMatch[1] : null; // 'ar', 'fr', or null for English
+
     const isRTL = i18n.language === 'ar';
     const [packageData, setPackageData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -40,10 +49,12 @@ export default function PublicPackagePage() {
     useEffect(() => {
         const fetchPackage = async () => {
             setLoading(true);
-            
+
             try {
-                const response = await axios.get(`/api/packages/public/${slug}`);
-                
+                // Send language parameter to backend for SEO (only for ar/fr)
+                const langParam = urlLang ? `?lang=${urlLang}` : '';
+                const response = await axios.get(`/api/packages/public/${slug}${langParam}`);
+
                 if (response.data?.success) {
                     setPackageData(response.data.data);
                     // Fetch other packages after getting the main package
@@ -53,7 +64,7 @@ export default function PublicPackagePage() {
                 }
             } catch (error) {
                 console.error('Error fetching package:', error);
-                
+
                 // Redirect to 404 (wildcard route will handle showing correct page based on auth)
                 navigate('/package-not-found', { replace: true });
             } finally {
@@ -64,19 +75,23 @@ export default function PublicPackagePage() {
         if (slug) {
             fetchPackage();
         }
-    }, [slug, navigate]);
+    }, [slug, navigate, urlLang]);
 
     // SEO Meta Tags
     useEffect(() => {
         if (!packageData) return;
 
+        // Get translated name and description
+        const translatedName = getTranslatedText(packageData, 'name', i18n.language);
+        const translatedDescription = getTranslatedText(packageData, 'description', i18n.language);
+
         // Set page title
-        document.title = `${packageData.name} | Rahalatek`;
-        
+        document.title = `${translatedName} | Rahalatek`;
+
         // Create description from package data
-        const description = packageData.description 
-            ? packageData.description.substring(0, 155) + '...'
-            : `Discover ${packageData.name} - ${packageData.duration} days tour package in Turkey. Book your unforgettable journey with Rahalatek.`;
+        const description = translatedDescription
+            ? translatedDescription.substring(0, 155) + '...'
+            : `Discover ${translatedName} - ${packageData.duration} days tour package in Turkey. Book your unforgettable journey with Rahalatek.`;
 
         // Update meta description
         const metaDescription = document.querySelector('meta[name="description"]');
@@ -88,7 +103,7 @@ export default function PublicPackagePage() {
         const metaKeywords = document.querySelector('meta[name="keywords"]');
         if (metaKeywords) {
             const keywords = [
-                packageData.name,
+                translatedName,
                 'Turkey tour package',
                 'tour package Turkey',
                 packageData.destination?.name,
@@ -105,7 +120,7 @@ export default function PublicPackagePage() {
         // Update Open Graph
         const ogTitle = document.querySelector('meta[property="og:title"]');
         if (ogTitle) {
-            ogTitle.setAttribute('content', `${packageData.name} - Tour Package | Rahalatek`);
+            ogTitle.setAttribute('content', `${translatedName} - Tour Package | Rahalatek`);
         }
 
         const ogDescription = document.querySelector('meta[property="og:description"]');
@@ -131,7 +146,7 @@ export default function PublicPackagePage() {
 
         const twitterTitle = document.querySelector('meta[name="twitter:title"]');
         if (twitterTitle) {
-            twitterTitle.setAttribute('content', `${packageData.name} - Tour Package | Rahalatek`);
+            twitterTitle.setAttribute('content', `${translatedName} - Tour Package | Rahalatek`);
         }
 
         const twitterDescription = document.querySelector('meta[name="twitter:description"]');
@@ -157,8 +172,8 @@ export default function PublicPackagePage() {
         const structuredData = {
             "@context": "https://schema.org",
             "@type": "TouristTrip",
-            "name": packageData.name,
-            "description": packageData.description || description,
+            "name": translatedName,
+            "description": translatedDescription || description,
             "image": packageData.images || [],
             "touristType": "International",
             "itinerary": {
@@ -201,7 +216,46 @@ export default function PublicPackagePage() {
             // Reset to default on unmount
             document.title = 'Rahalatek';
         };
-    }, [packageData]);
+    }, [packageData, i18n.language]);
+
+    // Add hreflang tags for SEO
+    useEffect(() => {
+        if (!slug) return;
+
+        const baseUrl = window.location.origin;
+
+        // Remove existing hreflang tags
+        const existingTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+        existingTags.forEach(tag => tag.remove());
+
+        // Add hreflang tags for all language versions
+        const languages = [
+            { code: 'en', path: `/packages/${slug}` },
+            { code: 'ar', path: `/ar/packages/${slug}` },
+            { code: 'fr', path: `/fr/packages/${slug}` }
+        ];
+
+        languages.forEach(({ code, path }) => {
+            const link = document.createElement('link');
+            link.rel = 'alternate';
+            link.hreflang = code;
+            link.href = `${baseUrl}${path}`;
+            document.head.appendChild(link);
+        });
+
+        // Add x-default (fallback for unspecified languages)
+        const defaultLink = document.createElement('link');
+        defaultLink.rel = 'alternate';
+        defaultLink.hreflang = 'x-default';
+        defaultLink.href = `${baseUrl}/packages/${slug}`;
+        document.head.appendChild(defaultLink);
+
+        // Cleanup function
+        return () => {
+            const allTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+            allTags.forEach(tag => tag.remove());
+        };
+    }, [slug]);
 
     if (loading) {
         return (
@@ -276,13 +330,13 @@ export default function PublicPackagePage() {
 
                 {/* Overview Section */}
                 <div id="overview" className="scroll-mt-24"></div>
-                {packageData.description && (
+                {getTranslatedText(packageData, 'description', i18n.language) && (
                     <div className="py-4 sm:py-6">
                         <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
                             {t('publicPackagePage.sections.overview')}
                         </h2>
                         <p className={`text-gray-900 dark:text-gray-100 leading-relaxed text-sm sm:text-base ${isRTL ? 'text-right' : 'text-left'}`}>
-                            {packageData.description}
+                            {getTranslatedText(packageData, 'description', i18n.language)}
                         </p>
                     </div>
                 )}
@@ -305,7 +359,11 @@ export default function PublicPackagePage() {
                                         key={index}
                                         day={day}
                                         tourData={tourData}
-                                        onCardClick={(slug) => window.open(`/tours/${slug}`, '_blank')}
+                                        onCardClick={(slug) => {
+                                            const lang = i18n.language;
+                                            const url = (lang === 'ar' || lang === 'fr') ? `/${lang}/tours/${slug}` : `/tours/${slug}`;
+                                            window.open(url, '_blank');
+                                        }}
                                     />
                                 );
                             })}
@@ -331,7 +389,12 @@ export default function PublicPackagePage() {
                                     <div 
                                         key={index} 
                                         className={`flex flex-col md:flex-row gap-6 items-start cursor-pointer group ${isRTL ? 'md:flex-row-reverse' : ''}`}
-                                        onClick={() => hotelData?.slug && window.open(`/hotels/${hotelData.slug}`, '_blank')}
+                                        onClick={() => {
+                                            if (!hotelData?.slug) return;
+                                            const lang = i18n.language;
+                                            const url = (lang === 'ar' || lang === 'fr') ? `/${lang}/hotels/${hotelData.slug}` : `/hotels/${hotelData.slug}`;
+                                            window.open(url, '_blank');
+                                        }}
                                     >
                                         {/* Hotel Image */}
                                         {primaryImage && (
@@ -439,7 +502,7 @@ export default function PublicPackagePage() {
                                     {t('publicPackagePage.included.title')}
                                 </h3>
                                 <ul className={`space-y-3 ${isRTL ? 'mr-12' : 'ml-12'}`}>
-                                    {packageData.includes.map((item, index) => (
+                                    {getTranslatedArray(packageData, 'includes', i18n.language).map((item, index) => (
                                         <li key={index} className={`flex items-start group transition-transform duration-200 ${isRTL ? 'hover:translate-x-[-4px] space-x-reverse' : 'hover:translate-x-1'}`}>
                                             <span className={`w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -465,7 +528,7 @@ export default function PublicPackagePage() {
                                     {t('publicPackagePage.excluded.title')}
                                 </h3>
                                 <ul className={`space-y-3 ${isRTL ? 'mr-12' : 'ml-12'}`}>
-                                    {packageData.excludes.map((item, index) => (
+                                    {getTranslatedArray(packageData, 'excludes', i18n.language).map((item, index) => (
                                         <li key={index} className={`flex items-start group transition-transform duration-200 ${isRTL ? 'hover:translate-x-[-4px] space-x-reverse' : 'hover:translate-x-1'}`}>
                                             <span className={`w-5 h-5 bg-red-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform shadow-sm ${isRTL ? 'ml-3' : 'mr-3'}`}>
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">

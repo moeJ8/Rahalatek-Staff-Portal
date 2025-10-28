@@ -9,6 +9,7 @@ import Select from '../../components/Select';
 import CustomButton from '../../components/CustomButton';
 import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
+import { getTranslatedText } from '../../utils/translationUtils';
 
 const GuestHotelsPage = () => {
   const { t, i18n } = useTranslation();
@@ -145,7 +146,9 @@ const GuestHotelsPage = () => {
   // Fetch filter options (only once on mount)
   const fetchFilterOptions = useCallback(async () => {
     try {
-      const response = await axios.get('/api/hotels');
+      // Add language parameter to the API request (only for ar/fr)
+      const langParam = (i18n.language === 'ar' || i18n.language === 'fr') ? `?lang=${i18n.language}` : '';
+      const response = await axios.get(`/api/hotels${langParam}`);
       const allHotels = response.data;
       
       // Extract unique countries and cities for filters
@@ -171,7 +174,12 @@ const GuestHotelsPage = () => {
         page: page.toString(),
         limit: getItemsPerPage(screenType).toString()
       });
-      
+
+      // Add language parameter (only for ar/fr)
+      if (i18n.language === 'ar' || i18n.language === 'fr') {
+        params.append('lang', i18n.language);
+      }
+
       if (countryFilter) params.append('country', countryFilter);
       if (cityFilter) params.append('city', cityFilter);
       if (starFilter) params.append('stars', starFilter);
@@ -239,10 +247,15 @@ const GuestHotelsPage = () => {
     } catch (error) {
       console.error('Error incrementing hotel views:', error);
     }
-    
-    // Navigate to hotel page
-    navigate(`/hotels/${hotel.slug}`);
-  }, [navigate]);
+
+    // Navigate to hotel page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/hotels/${hotel.slug}`);
+    } else {
+      navigate(`/hotels/${hotel.slug}`);
+    }
+  }, [navigate, i18n.language]);
 
   const truncateDescription = (description, screenType) => {
     if (!description) return '';
@@ -339,7 +352,7 @@ const GuestHotelsPage = () => {
           {/* Description */}
           {hotel.description && (
             <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
-              {truncateDescription(hotel.description, screenType)}
+              {truncateDescription(getTranslatedText(hotel, 'description', i18n.language), screenType)}
             </p>
           )}
         </div>

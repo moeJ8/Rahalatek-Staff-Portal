@@ -1,10 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers } from 'react-icons/fa';
+import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaGem, FaCircle } from 'react-icons/fa';
+import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { getTranslatedText, getTranslatedArray } from '../utils/translationUtils';
+import PLACEHOLDER_IMAGES from '../utils/placeholderImage';
 
 const OtherToursCarousel = ({ tours = [], currentTourId }) => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [expandedHighlights, setExpandedHighlights] = useState({});
   const carouselRef = useRef(null);
   const navigate = useNavigate();
 
@@ -66,7 +73,9 @@ const OtherToursCarousel = ({ tours = [], currentTourId }) => {
   };
 
   const handleTourClick = (tour) => {
-    navigate(`/tours/${tour.slug}`);
+    const lang = i18n.language;
+    const langPrefix = (lang === 'ar' || lang === 'fr') ? `/${lang}` : '';
+    navigate(`${langPrefix}/tours/${tour.slug}`);
   };
 
   const truncateDescription = (description, screenType) => {
@@ -77,15 +86,28 @@ const OtherToursCarousel = ({ tours = [], currentTourId }) => {
     return description.substring(0, maxLength).trim() + '...';
   };
 
+  const toggleHighlights = (tourId) => {
+    setExpandedHighlights(prev => ({
+      ...prev,
+      [tourId]: !prev[tourId]
+    }));
+  };
+
   const TourCard = ({ tour }) => {
     // Get primary image or first image
     const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
-    const imageUrl = primaryImage?.url || 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Tour+Image';
+    const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
+
+    // Get translated content
+    const translatedName = getTranslatedText(tour, 'name', i18n.language);
+    const translatedDescription = getTranslatedText(tour, 'description', i18n.language);
+    const translatedHighlights = getTranslatedArray(tour, 'highlights', i18n.language);
 
     return (
       <div 
-        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group"
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col relative"
         onClick={() => handleTourClick(tour)}
+        dir="ltr"
       >
         {/* Tour Image */}
         <div className="relative h-48 sm:h-56 md:h-64 overflow-hidden">
@@ -94,54 +116,102 @@ const OtherToursCarousel = ({ tours = [], currentTourId }) => {
             alt={tour.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-2 sm:top-3 md:top-4 right-2 sm:right-3 md:right-4 bg-black/60 backdrop-blur-sm rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1">
-            <div className="flex items-center space-x-1 text-white">
-              {tour.tourType === 'VIP' ? (
-                <FaCrown className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-              ) : (
-                <FaUsers className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
-              )}
-              <span className="text-xs sm:text-sm font-medium">{tour.tourType}</span>
-            </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+          
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white rounded-full px-3 py-1.5 shadow-md">
+            {tour.tourType === 'VIP' ? (
+              <FaCrown className="w-4 h-4 text-yellow-400" />
+            ) : (
+              <FaUsers className="w-4 h-4 text-blue-400" />
+            )}
+            <span className="text-sm font-medium">{tour.tourType}</span>
+          </div>
+
+          {/* Tour Name - Inside image at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(translatedName) ? 'text-right' : 'text-left'
+            }`}>
+              {translatedName}
+            </h3>
           </div>
         </div>
 
         {/* Tour Details */}
-        <div className="p-3 sm:p-4 md:p-6">
-          {/* Tour Name */}
-          <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white mb-1.5 sm:mb-2 group-hover:text-blue-600 dark:group-hover:text-teal-400 transition-colors line-clamp-2">
-            {tour.name}
-          </h3>
+        <div className="p-3 sm:p-4 md:p-6 flex flex-col flex-1">
 
           {/* Location and Duration */}
-          <div className="flex items-center justify-between text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
+          <div className="flex items-center justify-between text-gray-600 dark:text-gray-400 mb-2">
             <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              <span className="text-xs sm:text-sm truncate">{tour.city}, {tour.country}</span>
+              <FaMapMarkerAlt className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-red-500 dark:text-red-500" />
+              <span className="text-xs sm:text-sm truncate">
+                {tour.city}{tour.country ? `, ${tour.country}` : ''}
+              </span>
             </div>
             <div className="flex items-center space-x-1">
-              <FaClock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <FaClock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 text-blue-500 dark:text-yellow-400" />
               <span className="text-xs sm:text-sm">{tour.duration}h</span>
             </div>
           </div>
 
+          {/* Highlights */}
+          {translatedHighlights && translatedHighlights.length > 0 && (
+            <div className="mb-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleHighlights(tour._id);
+                }}
+                className="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                dir={isRTL ? 'rtl' : 'ltr'}
+              >
+                <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-1' : 'space-x-1'}`}>
+                  <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
+                  <span className="text-xs sm:text-sm font-medium">{t('toursPage.highlights')}</span>
+                </div>
+                {expandedHighlights[tour._id] ? (
+                  <HiChevronUp className="text-sm transition-transform duration-200" />
+                ) : (
+                  <HiChevronDown className="text-sm transition-transform duration-200" />
+                )}
+              </button>
+              
+              {/* Expanded Highlights */}
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedHighlights[tour._id] ? 'max-h-screen opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-1" dir={isRTL ? 'rtl' : 'ltr'}>
+                  {translatedHighlights.map((highlight, index) => (
+                    <div key={index} className={`flex items-start ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'} text-xs`}>
+                      <FaCircle className="text-blue-500 dark:text-yellow-400 w-1.5 h-1.5 mt-1.5 flex-shrink-0" />
+                      <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{highlight}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Description */}
-          {tour.description && (
-            <p className="text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
-              {truncateDescription(tour.description, screenType)}
+          {translatedDescription && (
+            <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-2 ${
+              /[\u0600-\u06FF\u0750-\u077F]/.test(translatedDescription) ? 'text-right' : 'text-left'
+            }`}>
+              {translatedDescription}
             </p>
           )}
 
-          {/* View Tour Button */}
-          <div className="flex items-center justify-between">
-            <span className="text-blue-600 dark:text-teal-400 hover:text-blue-800 dark:hover:text-teal-200 text-xs sm:text-sm font-medium flex items-center group-hover:underline">
-              View Tour
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-            <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
-              <span className="text-xs">{tour.tourType} Tour</span>
+          {/* Price Display */}
+          <div className="mt-auto">
+            <div className="text-right">
+              {tour.totalPrice && Number(tour.totalPrice) > 0 ? (
+                <span className="text-base sm:text-lg font-bold text-green-600 dark:text-green-400">
+                  ${tour.totalPrice}
+                </span>
+              ) : (
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  {t('toursPage.contactForPricing')}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -150,10 +220,10 @@ const OtherToursCarousel = ({ tours = [], currentTourId }) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-          Other Tours
+        <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white ${isRTL ? 'text-right' : 'text-left'}`}>
+          {t('publicTourPage.otherTours')}
         </h2>
       </div>
 

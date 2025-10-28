@@ -1,5 +1,5 @@
 const Hotel = require('../models/Hotel');
-const { 
+const {
     invalidateDashboardCache,
     invalidatePublicCache,
     featuredHotelsCache,
@@ -7,10 +7,40 @@ const {
     allHotelsCache
 } = require('../utils/redis');
 
+// Helper function to translate a single hotel
+const translateHotel = (hotel, lang) => {
+  if (lang === 'en' || !hotel.translations) {
+    return hotel.toObject ? hotel.toObject() : hotel;
+  }
+
+  const translations = hotel.translations;
+  const translatedHotel = hotel.toObject ? hotel.toObject() : { ...hotel };
+
+  // Helper function to get translated text or fallback to base
+  const getTranslated = (baseValue, translationValue) => {
+    return translationValue && translationValue.trim() ? translationValue : baseValue;
+  };
+
+  // Translate simple fields
+  if (translations.description && translations.description[lang]) {
+    translatedHotel.description = getTranslated(hotel.description, translations.description[lang]);
+  }
+  if (translations.locationDescription && translations.locationDescription[lang]) {
+    translatedHotel.locationDescription = getTranslated(hotel.locationDescription, translations.locationDescription[lang]);
+  }
+
+  return translatedHotel;
+};
+
+// Helper function to translate multiple hotels
+const translateHotels = (hotels, lang) => {
+  return hotels.map(hotel => translateHotel(hotel, lang));
+};
+
 // Get all hotels (with optional pagination and search)
 exports.getAllHotels = async (req, res) => {
   try {
-    const { country, city, search, stars, page, limit } = req.query;
+    const { country, city, search, stars, page, limit, lang = 'en' } = req.query;
     
     let query = {};
     if (country) query.country = country;
@@ -34,18 +64,20 @@ exports.getAllHotels = async (req, res) => {
         const cachedHotels = await allHotelsCache.get();
         if (cachedHotels) {
           console.log('✅ Serving all hotels from Redis cache');
-          return res.status(200).json(cachedHotels);
+          const translatedHotels = translateHotels(cachedHotels, lang);
+          return res.status(200).json(translatedHotels);
         }
       }
       
       console.log('🏨 Fetching all hotels from database...');
       const hotels = await Hotel.find(query).sort({ updatedAt: -1 });
-      
+
       if (!country && !city && !search && !stars) {
         await allHotelsCache.set(hotels);
       }
-      
-      return res.status(200).json(hotels);
+
+      const translatedHotels = translateHotels(hotels, lang);
+      return res.status(200).json(translatedHotels);
     }
     
     // PAGINATION MODE
@@ -57,11 +89,13 @@ exports.getAllHotels = async (req, res) => {
       Hotel.find(query).sort({ updatedAt: -1 }).skip(skip).limit(limitNum),
       Hotel.countDocuments(query)
     ]);
-    
+
+    const translatedHotels = translateHotels(hotels, lang);
+
     res.status(200).json({
       success: true,
       data: {
-        hotels,
+        hotels: translatedHotels,
         pagination: {
           currentPage: pageNum,
           totalPages: Math.ceil(totalHotels / limitNum),
@@ -125,13 +159,15 @@ exports.getHotelsByCity = async (req, res) => {
 exports.getHotelBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
+        const { lang = 'en' } = req.query;
         const hotel = await Hotel.findOne({ slug: slug });
-        
+
         if (!hotel) {
             return res.status(404).json({ message: 'Hotel not found' });
         }
-        
-        res.json(hotel);
+
+        const translatedHotel = translateHotel(hotel, lang);
+        res.json(translatedHotel);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -161,13 +197,15 @@ exports.incrementHotelViews = async (req, res) => {
 exports.getFeaturedHotels = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
-        
+        const { lang = 'en' } = req.query;
+
         // Check Redis cache first (only for default limit)
         if (limit === 9) {
             const cachedHotels = await featuredHotelsCache.get();
             if (cachedHotels) {
                 console.log('✅ Serving featured hotels from Redis cache');
-                return res.json(cachedHotels);
+                const translatedHotels = translateHotels(cachedHotels, lang);
+                return res.json(translatedHotels);
             }
         }
 
@@ -175,13 +213,14 @@ exports.getFeaturedHotels = async (req, res) => {
         const hotels = await Hotel.find({})
             .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
             .limit(limit);
-        
+
         // Cache the result (only for default limit)
         if (limit === 9) {
             await featuredHotelsCache.set(hotels);
         }
-        
-        res.json(hotels);
+
+        const translatedHotels = translateHotels(hotels, lang);
+        res.json(translatedHotels);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -191,8 +230,10 @@ exports.getFeaturedHotels = async (req, res) => {
 exports.getHotelsByCountry = async (req, res) => {
     try {
         const { country } = req.params;
+        const { lang = 'en' } = req.query;
         const hotels = await Hotel.find({ country }).sort({ updatedAt: -1 });
-        res.json(hotels);
+        const translatedHotels = translateHotels(hotels, lang);
+        res.json(translatedHotels);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -221,11 +262,13 @@ exports.getCountries = async (req, res) => {
 
 exports.getHotelById = async (req, res) => {
     try {
+        const { lang = 'en' } = req.query;
         const hotel = await Hotel.findById(req.params.id);
         if (!hotel) {
             return res.status(404).json({ message: 'Hotel not found' });
         }
-        res.json(hotel);
+        const translatedHotel = translateHotel(hotel, lang);
+        res.json(translatedHotel);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

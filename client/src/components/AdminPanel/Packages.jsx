@@ -46,7 +46,7 @@ export default function Packages({ user }) {
     const [page, setPage] = useState(1);
     const [screenType, setScreenType] = useState('desktop');
     const [totalPages, setTotalPages] = useState(1);
-    const [totalPackages, setTotalPackages] = useState(0);
+    const [_totalPackages, setTotalPackages] = useState(0);
     
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -68,10 +68,18 @@ export default function Packages({ user }) {
     const totalSteps = 4;
     const stepTitles = {
         1: 'Basic Information',
-        2: 'Hotels Selection', 
+        2: 'Hotels Selection',
         3: 'Tours & Daily Itinerary',
         4: 'Final Details & Images'
     };
+
+    // Translation collapse states
+    const [translationCollapse, setTranslationCollapse] = useState({
+        name: false,
+        description: false,
+        includes: false,
+        excludes: false
+    });
 
     // Step navigation functions
     const nextStep = () => {
@@ -94,6 +102,45 @@ export default function Packages({ user }) {
         if (stepNumber >= 1 && stepNumber <= totalSteps) {
             setCurrentStep(stepNumber);
         }
+    };
+
+    // Translation functions
+    const handleTranslationChange = (field, language, value) => {
+        setFormData({
+            ...formData,
+            translations: {
+                ...formData.translations,
+                [field]: {
+                    ...formData.translations[field],
+                    [language]: value
+                }
+            }
+        });
+    };
+
+    const toggleTranslationCollapse = (field) => {
+        setTranslationCollapse({
+            ...translationCollapse,
+            [field]: !translationCollapse[field]
+        });
+    };
+
+    // Handle array translations (for includes/excludes)
+    const handleArrayTranslationChange = (field, index, language, value) => {
+        setFormData(prev => {
+            const newTranslations = { ...prev.translations };
+            if (!newTranslations[field]) {
+                newTranslations[field] = [];
+            }
+            if (!newTranslations[field][index]) {
+                newTranslations[field][index] = { ar: '', fr: '' };
+            }
+            newTranslations[field][index][language] = value;
+            return {
+                ...prev,
+                translations: newTranslations
+            };
+        });
     };
 
     // Package management functions
@@ -190,6 +237,12 @@ export default function Packages({ user }) {
             pricing: {
                 ...pkg.pricing,
                 basePrice: pkg.pricing?.basePrice || 0
+            },
+            translations: pkg.translations || {
+                name: { ar: '', fr: '' },
+                description: { ar: '', fr: '' },
+                includes: [],
+                excludes: []
             }
         };
         
@@ -461,7 +514,13 @@ export default function Packages({ user }) {
             targetAudience: ['Family'],
             images: [],
             faqs: [],
-            isActive: true
+            isActive: true,
+            translations: {
+                name: { ar: '', fr: '' },
+                description: { ar: '', fr: '' },
+                includes: [],
+                excludes: []
+            }
         };
     }
 
@@ -488,6 +547,7 @@ export default function Packages({ user }) {
     // Fetch initial data (hotels, tours, airports only)
     useEffect(() => {
         fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchInitialData = async () => {
@@ -564,7 +624,7 @@ export default function Packages({ user }) {
         if (page > 0) { // Only fetch if page is set
             fetchPackages();
         }
-    }, [fetchPackages]);
+    }, [fetchPackages, page]);
 
     // Form handlers
     const handleInputChange = (field, value) => {
@@ -617,17 +677,42 @@ export default function Packages({ user }) {
     };
 
     const addArrayItem = (field, item = '') => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: [...prev[field], item]
-        }));
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [field]: [...prev[field], item]
+            };
+
+            // Handle translations for includes and excludes
+            if (field === 'includes' || field === 'excludes') {
+                newData.translations = {
+                    ...prev.translations,
+                    [field]: [...(prev.translations[field] || []), { ar: '', fr: '' }]
+                };
+            }
+
+            return newData;
+        });
     };
 
     const removeArrayItem = (field, index) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: prev[field].filter((_, i) => i !== index)
-        }));
+        setFormData(prev => {
+            const newData = {
+                ...prev,
+                [field]: prev[field].filter((_, i) => i !== index)
+            };
+
+            // Handle translations for includes and excludes
+            if (field === 'includes' || field === 'excludes') {
+                const translationArray = prev.translations[field] || [];
+                newData.translations = {
+                    ...prev.translations,
+                    [field]: translationArray.filter((_, i) => i !== index)
+                };
+            }
+
+            return newData;
+        });
     };
 
     // Hotel management
@@ -1256,6 +1341,10 @@ export default function Packages({ user }) {
                         };
                         handleInputChange('faqs', updatedFaqs);
                     }}
+                    translationCollapse={translationCollapse}
+                    toggleTranslationCollapse={toggleTranslationCollapse}
+                    handleTranslationChange={handleTranslationChange}
+                    handleArrayTranslationChange={handleArrayTranslationChange}
                 />
             </MultiStepModal>
 
@@ -1307,6 +1396,10 @@ export default function Packages({ user }) {
                         };
                         handleInputChange('faqs', updatedFaqs);
                     }}
+                    translationCollapse={translationCollapse}
+                    toggleTranslationCollapse={toggleTranslationCollapse}
+                    handleTranslationChange={handleTranslationChange}
+                    handleArrayTranslationChange={handleArrayTranslationChange}
                 />
             </MultiStepModal>
 
@@ -1346,7 +1439,11 @@ function PackageFormSteps({
     slugError,
     handleAddFaq,
     handleRemoveFaq,
-    handleFaqChange
+    handleFaqChange,
+    translationCollapse,
+    toggleTranslationCollapse,
+    handleTranslationChange,
+    handleArrayTranslationChange
 }) {
     // Collapsed days state
     const [collapsedDays, setCollapsedDays] = useState(new Set());
@@ -1373,7 +1470,17 @@ function PackageFormSteps({
                         <h3 className="text-lg font-semibold dark:text-white mb-4">Basic Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="name" value="Package Name *" className="dark:text-white" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <Label htmlFor="name" value="Package Name *" className="dark:text-white" />
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleTranslationCollapse('name')}
+                                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    >
+                                        Translations
+                                        {translationCollapse.name ? <FaChevronUp /> : <FaChevronDown />}
+                                    </button>
+                                </div>
                                 <TextInput
                                     id="name"
                                     value={formData.name}
@@ -1381,6 +1488,25 @@ function PackageFormSteps({
                                     placeholder="Enter package name..."
                                     required
                                 />
+                                {translationCollapse.name && (
+                                    <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                            Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                        </p>
+                                        <TextInput
+                                            label="Arabic Translation (Optional)"
+                                            placeholder="Leave empty to use English"
+                                            value={formData.translations.name.ar}
+                                            onChange={(e) => handleTranslationChange('name', 'ar', e.target.value)}
+                                        />
+                                        <TextInput
+                                            label="French Translation (Optional)"
+                                            placeholder="Leave empty to use English"
+                                            value={formData.translations.name.fr}
+                                            onChange={(e) => handleTranslationChange('name', 'fr', e.target.value)}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <Label htmlFor="duration" value="Duration (Days) *" className="dark:text-white" />
@@ -1437,7 +1563,17 @@ function PackageFormSteps({
                         </div>
                         
                         <div className="mt-4">
-                            <Label htmlFor="description" value="Description" className="dark:text-white" />
+                            <div className="flex items-center justify-between mb-2">
+                                <Label htmlFor="description" value="Description" className="dark:text-white" />
+                                <button
+                                    type="button"
+                                    onClick={() => toggleTranslationCollapse('description')}
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                >
+                                    Translations
+                                    {translationCollapse.description ? <FaChevronUp /> : <FaChevronDown />}
+                                </button>
+                            </div>
                             <TextInput
                                 id="description"
                                 value={formData.description}
@@ -1446,6 +1582,29 @@ function PackageFormSteps({
                                 as="textarea"
                                 rows={4}
                             />
+                            {translationCollapse.description && (
+                                <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                    </p>
+                                    <TextInput
+                                        label="Arabic Translation (Optional)"
+                                        placeholder="Leave empty to use English"
+                                        value={formData.translations.description.ar}
+                                        onChange={(e) => handleTranslationChange('description', 'ar', e.target.value)}
+                                        as="textarea"
+                                        rows={3}
+                                    />
+                                    <TextInput
+                                        label="French Translation (Optional)"
+                                        placeholder="Leave empty to use English"
+                                        value={formData.translations.description.fr}
+                                        onChange={(e) => handleTranslationChange('description', 'fr', e.target.value)}
+                                        as="textarea"
+                                        rows={3}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
@@ -1990,7 +2149,17 @@ function PackageFormSteps({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card className="dark:bg-slate-900">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold dark:text-white">Package Includes</h3>
+                                <div className="flex items-center gap-4">
+                                    <h3 className="text-lg font-semibold dark:text-white">Package Includes</h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleTranslationCollapse('includes')}
+                                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    >
+                                        Translations
+                                        {translationCollapse.includes ? <FaChevronUp /> : <FaChevronDown />}
+                                    </button>
+                                </div>
                                 <CustomButton
                                     onClick={() => addArrayItem('includes', '')}
                                     variant="green"
@@ -2002,20 +2171,43 @@ function PackageFormSteps({
                             </div>
                             <div className="space-y-2">
                                 {formData.includes.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <TextInput
-                                            value={item}
-                                            onChange={(e) => onArrayInputChange('includes', index, e.target.value)}
-                                            placeholder="What's included in the package..."
-                                            className="flex-1"
-                                        />
-                                        <CustomButton
-                                            onClick={() => removeArrayItem('includes', index)}
-                                            variant="red"
-                                            size="sm"
-                                            shape="circular"
-                                            icon={FaTimes}
-                                        />
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <TextInput
+                                                value={item}
+                                                onChange={(e) => onArrayInputChange('includes', index, e.target.value)}
+                                                placeholder="What's included in the package..."
+                                                className="flex-1"
+                                            />
+                                            <CustomButton
+                                                onClick={() => removeArrayItem('includes', index)}
+                                                variant="red"
+                                                size="sm"
+                                                shape="circular"
+                                                icon={FaTimes}
+                                            />
+                                        </div>
+                                        {translationCollapse.includes && (
+                                            <div className="ml-4 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                                    Translations for item #{index + 1}
+                                                </p>
+                                                <TextInput
+                                                    label="Arabic Translation (Optional)"
+                                                    placeholder="Leave empty to use English"
+                                                    value={formData.translations.includes[index]?.ar || ''}
+                                                    onChange={(e) => handleArrayTranslationChange('includes', index, 'ar', e.target.value)}
+                                                    size="sm"
+                                                />
+                                                <TextInput
+                                                    label="French Translation (Optional)"
+                                                    placeholder="Leave empty to use English"
+                                                    value={formData.translations.includes[index]?.fr || ''}
+                                                    onChange={(e) => handleArrayTranslationChange('includes', index, 'fr', e.target.value)}
+                                                    size="sm"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -2023,7 +2215,17 @@ function PackageFormSteps({
 
                         <Card className="dark:bg-slate-900">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold dark:text-white">Package Excludes</h3>
+                                <div className="flex items-center gap-4">
+                                    <h3 className="text-lg font-semibold dark:text-white">Package Excludes</h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleTranslationCollapse('excludes')}
+                                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                    >
+                                        Translations
+                                        {translationCollapse.excludes ? <FaChevronUp /> : <FaChevronDown />}
+                                    </button>
+                                </div>
                                 <CustomButton
                                     onClick={() => addArrayItem('excludes', '')}
                                     variant="orange"
@@ -2035,20 +2237,43 @@ function PackageFormSteps({
                             </div>
                             <div className="space-y-2">
                                 {formData.excludes.map((item, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <TextInput
-                                            value={item}
-                                            onChange={(e) => onArrayInputChange('excludes', index, e.target.value)}
-                                            placeholder="What's not included..."
-                                            className="flex-1"
-                                        />
-                                        <CustomButton
-                                            onClick={() => removeArrayItem('excludes', index)}
-                                            variant="red"
-                                            size="sm"
-                                            shape="circular"
-                                            icon={FaTimes}
-                                        />
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <TextInput
+                                                value={item}
+                                                onChange={(e) => onArrayInputChange('excludes', index, e.target.value)}
+                                                placeholder="What's not included..."
+                                                className="flex-1"
+                                            />
+                                            <CustomButton
+                                                onClick={() => removeArrayItem('excludes', index)}
+                                                variant="red"
+                                                size="sm"
+                                                shape="circular"
+                                                icon={FaTimes}
+                                            />
+                                        </div>
+                                        {translationCollapse.excludes && (
+                                            <div className="ml-4 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                                    Translations for item #{index + 1}
+                                                </p>
+                                                <TextInput
+                                                    label="Arabic Translation (Optional)"
+                                                    placeholder="Leave empty to use English"
+                                                    value={formData.translations.excludes[index]?.ar || ''}
+                                                    onChange={(e) => handleArrayTranslationChange('excludes', index, 'ar', e.target.value)}
+                                                    size="sm"
+                                                />
+                                                <TextInput
+                                                    label="French Translation (Optional)"
+                                                    placeholder="Leave empty to use English"
+                                                    value={formData.translations.excludes[index]?.fr || ''}
+                                                    onChange={(e) => handleArrayTranslationChange('excludes', index, 'fr', e.target.value)}
+                                                    size="sm"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

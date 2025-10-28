@@ -6,7 +6,7 @@ import axios from 'axios';
 import CustomScrollbar from './CustomScrollbar';
 
 const PublicSearchbar = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hotels, setHotels] = useState([]);
   const [tours, setTours] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -65,6 +65,7 @@ const PublicSearchbar = () => {
   // Fetch all data on mount
   useEffect(() => {
     fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Exact substring search (more specific, less fuzzy)
@@ -83,12 +84,16 @@ const PublicSearchbar = () => {
     const query = debouncedQuery.toLowerCase().trim();
     const results = [];
 
-    // Search Hotels - only in name, city, and country (not description for specificity)
+    // Search Hotels - in name, city, country, and translations
     hotels.forEach(hotel => {
       const matches = 
         matchesSearch(hotel.name, query) ||
         matchesSearch(hotel.city, query) ||
-        matchesSearch(hotel.country, query);
+        matchesSearch(hotel.country, query) ||
+        (hotel.translations?.name?.ar && matchesSearch(hotel.translations.name.ar, query)) ||
+        (hotel.translations?.name?.fr && matchesSearch(hotel.translations.name.fr, query)) ||
+        (hotel.translations?.description?.ar && matchesSearch(hotel.translations.description.ar, query)) ||
+        (hotel.translations?.description?.fr && matchesSearch(hotel.translations.description.fr, query));
       
       if (matches) {
         results.push({
@@ -101,12 +106,16 @@ const PublicSearchbar = () => {
       }
     });
 
-    // Search Tours - only in name, city, and country (not description for specificity)
+    // Search Tours - in name, city, country, and translations
     tours.forEach(tour => {
       const matches = 
         matchesSearch(tour.name, query) ||
         matchesSearch(tour.city, query) ||
-        matchesSearch(tour.country, query);
+        matchesSearch(tour.country, query) ||
+        (tour.translations?.name?.ar && matchesSearch(tour.translations.name.ar, query)) ||
+        (tour.translations?.name?.fr && matchesSearch(tour.translations.name.fr, query)) ||
+        (tour.translations?.description?.ar && matchesSearch(tour.translations.description.ar, query)) ||
+        (tour.translations?.description?.fr && matchesSearch(tour.translations.description.fr, query));
       
       if (matches) {
         results.push({
@@ -119,12 +128,16 @@ const PublicSearchbar = () => {
       }
     });
 
-    // Search Packages - only in name, countries, and cities (not description for specificity)
+    // Search Packages - in name, countries, cities, and translations
     packages.forEach(pkg => {
       const matches = 
         matchesSearch(pkg.name, query) ||
         pkg.countries?.some(country => matchesSearch(country, query)) ||
-        pkg.cities?.some(city => matchesSearch(city, query));
+        pkg.cities?.some(city => matchesSearch(city, query)) ||
+        (pkg.translations?.name?.ar && matchesSearch(pkg.translations.name.ar, query)) ||
+        (pkg.translations?.name?.fr && matchesSearch(pkg.translations.name.fr, query)) ||
+        (pkg.translations?.description?.ar && matchesSearch(pkg.translations.description.ar, query)) ||
+        (pkg.translations?.description?.fr && matchesSearch(pkg.translations.description.fr, query));
       
       if (matches) {
         results.push({
@@ -223,9 +236,14 @@ const PublicSearchbar = () => {
         axios.get('/api/blogs/published?limit=30').catch(() => ({ data: { data: { docs: [] } } }))
       ]);
 
-      // Hotels and tours return arrays directly, packages and blogs are wrapped
-      const hotelsData = Array.isArray(hotelsRes.data) ? hotelsRes.data : [];
-      const toursData = Array.isArray(toursRes.data) ? toursRes.data : [];
+      // Hotels and tours might be paginated, check for data.hotels/data.tours arrays
+      const hotelsData = Array.isArray(hotelsRes.data) 
+        ? hotelsRes.data 
+        : (hotelsRes.data?.data?.hotels || hotelsRes.data?.hotels || []);
+      // Tours might be paginated, check for data.tours array
+      const toursData = Array.isArray(toursRes.data) 
+        ? toursRes.data 
+        : (toursRes.data?.data?.tours || toursRes.data?.tours || []);
       const packagesData = packagesRes.data.data || [];
       const blogsData = blogsRes.data.data?.docs || [];
 
@@ -359,18 +377,21 @@ const PublicSearchbar = () => {
   };
 
   const handleResultClick = (result) => {
+    const lang = i18n.language;
+    const langPrefix = (lang === 'ar' || lang === 'fr') ? `/${lang}` : '';
+    
     if (result.type === 'hotel') {
-      navigate(`/hotels/${result.slug}`);
+      navigate(`${langPrefix}/hotels/${result.slug}`);
     } else if (result.type === 'tour') {
-      navigate(`/tours/${result.slug}`);
+      navigate(`${langPrefix}/tours/${result.slug}`);
     } else if (result.type === 'package') {
-      navigate(`/packages/${result.slug}`);
+      navigate(`${langPrefix}/packages/${result.slug}`);
     } else if (result.type === 'blog') {
-      navigate(`/blog/${result.slug}`);
+      navigate(`${langPrefix}/blog/${result.slug}`);
     } else if (result.type === 'city') {
-      navigate(`/country/${encodeURIComponent(result.country)}/city/${encodeURIComponent(result.name)}`);
+      navigate(`${langPrefix}/country/${encodeURIComponent(result.country)}/city/${encodeURIComponent(result.name)}`);
     } else if (result.type === 'country') {
-      navigate(`/country/${encodeURIComponent(result.name)}`);
+      navigate(`${langPrefix}/country/${encodeURIComponent(result.name)}`);
     }
     setShowDropdown(false);
     setSearchQuery('');
@@ -467,6 +488,21 @@ const PublicSearchbar = () => {
         {badge.label}
       </span>
     );
+  };
+
+  const getResultName = (result) => {
+    const lang = i18n.language;
+    
+    if (result.type === 'blog') {
+      return result.title;
+    }
+    
+    // For tours, hotels, and packages, check for translations
+    if (result.translations?.name?.[lang]) {
+      return result.translations.name[lang];
+    }
+    
+    return result.name;
   };
 
   const getResultSubtitle = (result) => {
@@ -654,7 +690,7 @@ const PublicSearchbar = () => {
                                 <p className="text-sm font-semibold text-gray-900 dark:text-white 
                                   group-hover:text-blue-600 dark:group-hover:text-yellow-400 
                                   transition-colors truncate">
-                                  {result.type === 'blog' ? result.title : result.name}
+                                  {getResultName(result)}
                                 </p>
                                 
                                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
@@ -828,7 +864,7 @@ const PublicSearchbar = () => {
                                 {getTypeBadge(result.type)}
                               </div>
                               <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white line-clamp-1 truncate">
-                                {result.type === 'blog' ? result.title : result.name}
+                                {getResultName(result)}
                               </p>
                               
                               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1 line-clamp-1 truncate">

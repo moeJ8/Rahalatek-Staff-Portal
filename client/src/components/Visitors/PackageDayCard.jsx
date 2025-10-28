@@ -1,16 +1,23 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { getTranslatedText, getTranslatedArray } from '../../utils/translationUtils';
 import PackageImagesCarousel from '../PackageImagesCarousel';
 
 const PackageDayCard = ({ day, tourData, onCardClick }) => {
     const { t, i18n } = useTranslation();
     const isRTL = i18n.language === 'ar';
     
+    // Translate tour data if it exists
+    const translatedTourName = tourData ? getTranslatedText(tourData, 'name', i18n.language) : '';
+    const translatedTourDescription = tourData ? getTranslatedText(tourData, 'description', i18n.language) : '';
+    const translatedDetailedDescription = tourData ? getTranslatedText(tourData, 'detailedDescription', i18n.language) : '';
+    const translatedHighlights = tourData ? getTranslatedArray(tourData, 'highlights', i18n.language) : [];
+    
     // Don't show tour images for arrival days
     const shouldShowImages = tourData && !day.isArrivalDay;
     const tourImages = shouldShowImages ? (tourData?.images?.map(img => ({
         url: img.url,
-        altText: img.altText || `${tourData.name} - Tour image`
+        altText: img.altText || `${translatedTourName} - Tour image`
     })) || []) : [];
 
     // Helper function to translate arrival day content
@@ -83,17 +90,17 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     } ${
                         isArrivalContent(day.title) && isRTL 
                             ? 'text-right' 
-                            : /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) 
+                            : /[\u0600-\u06FF\u0750-\u077F]/.test(tourData && !day.isArrivalDay ? translatedTourName : day.title) 
                                 ? 'text-right' 
                                 : (tourData && !day.isArrivalDay) ? 'text-left ml-12' : 'text-left'
                     }`}>
-                        {translateArrivalContent(day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim())}
+                        {tourData && !day.isArrivalDay ? translatedTourName : translateArrivalContent(day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim())}
                     </h3>
                     
                     {/* Location and duration below title */}
                     {tourData && !day.isArrivalDay && (
                         <div className={`flex items-center gap-2 text-sm text-blue-600 dark:text-yellow-400 font-semibold mb-4 ${
-                            /[\u0600-\u06FF\u0750-\u077F]/.test(day.title) ? 'justify-end' : 'justify-start ml-12'
+                            isRTL || /[\u0600-\u06FF\u0750-\u077F]/.test(translatedTourName) ? 'justify-end' : 'justify-start ml-12'
                         }`}>
                             <span>📍 {tourData.city}</span>
                             {tourData.duration && (
@@ -105,23 +112,23 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                         </div>
                     )}
                     
-                    {/* Description */}
-                    {day.description && (
+                    {/* Description - Show tour description if available, otherwise day description */}
+                    {((tourData && !day.isArrivalDay && translatedTourDescription) || day.description) && (
                         <p className={`text-gray-700 dark:text-gray-300 text-sm font-semibold leading-relaxed mb-4 ${
-                            isArrivalContent(day.description) && isRTL 
+                            isArrivalContent(tourData && !day.isArrivalDay ? translatedTourDescription : day.description) && isRTL 
                                 ? 'text-right' 
-                                : /[\u0600-\u06FF\u0750-\u077F]/.test(day.description) ? 'text-right' : 'text-left'
+                                : /[\u0600-\u06FF\u0750-\u077F]/.test(tourData && !day.isArrivalDay ? translatedTourDescription : day.description) ? 'text-right' : 'text-left'
                         }`}>
-                            {translateArrivalContent(day.description)}
+                            {tourData && !day.isArrivalDay && translatedTourDescription ? translatedTourDescription : translateArrivalContent(day.description)}
                         </p>
                     )}
                     
                     {/* Tour detailed description */}
-                    {tourData?.detailedDescription && !day.isArrivalDay && (
+                    {translatedDetailedDescription && !day.isArrivalDay && (
                         <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2 ${
-                            /[\u0600-\u06FF\u0750-\u077F]/.test(tourData.detailedDescription) ? 'text-right' : 'text-left'
+                            /[\u0600-\u06FF\u0750-\u077F]/.test(translatedDetailedDescription) ? 'text-right' : 'text-left'
                         }`}>
-                            {tourData.detailedDescription}
+                            {translatedDetailedDescription}
                         </p>
                     )}
                     
@@ -129,20 +136,31 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     {day.activities && day.activities.length > 0 && (
                         <div className="mb-4">
                             <ul className="space-y-2">
-                                {day.activities.slice(0, 4).map((activity, actIndex) => (
-                                    <li key={actIndex} className={`flex items-start text-sm text-gray-700 dark:text-gray-300 ${
-                                        isArrivalContent(activity) && isRTL 
-                                            ? 'flex-row-reverse text-right' 
-                                            : /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'flex-row-reverse text-right' : 'text-left'
-                                    }`}>
-                                        <span className={`w-1.5 h-1.5 bg-blue-500 dark:bg-yellow-400 rounded-full mt-2 flex-shrink-0 ${
-                                            isArrivalContent(activity) && isRTL 
-                                                ? 'ml-3' 
-                                                : /[\u0600-\u06FF\u0750-\u077F]/.test(activity) ? 'ml-3' : 'mr-3'
-                                        }`}></span>
-                                        {translateArrivalContent(activity)}
-                                    </li>
-                                ))}
+                                {day.activities.slice(0, 4).map((activity, actIndex) => {
+                                    // Try to match activity with tour highlights and translate
+                                    let translatedActivity = activity;
+                                    if (tourData && tourData.highlights && translatedHighlights.length > 0) {
+                                        const index = tourData.highlights.findIndex(h => h === activity);
+                                        if (index >= 0 && translatedHighlights[index]) {
+                                            translatedActivity = translatedHighlights[index];
+                                        }
+                                    }
+                                    
+                                    return (
+                                        <li key={actIndex} className={`flex items-start text-sm text-gray-700 dark:text-gray-300 ${
+                                            isArrivalContent(translatedActivity) && isRTL 
+                                                ? 'flex-row-reverse text-right' 
+                                                : /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) ? 'flex-row-reverse text-right' : 'text-left'
+                                        }`}>
+                                            <span className={`w-1.5 h-1.5 bg-blue-500 dark:bg-yellow-400 rounded-full mt-2 flex-shrink-0 ${
+                                                isArrivalContent(translatedActivity) && isRTL 
+                                                    ? 'ml-3' 
+                                                    : /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) ? 'ml-3' : 'mr-3'
+                                            }`}></span>
+                                            {translateArrivalContent(translatedActivity)}
+                                        </li>
+                                    );
+                                })}
                             </ul>
                             {day.activities.length > 4 && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
@@ -188,7 +206,7 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     >
                         <PackageImagesCarousel
                             images={tourImages}
-                            title={tourData.name}
+                            title={translatedTourName}
                             className="h-64 lg:h-full w-full rounded-none lg:rounded-r-xl overflow-hidden"
                         />
                     </div>

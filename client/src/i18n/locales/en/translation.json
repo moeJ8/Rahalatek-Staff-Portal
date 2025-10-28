@@ -55,7 +55,11 @@
     },
     "services": {
       "title": "Our Services",
-      "subtitle": "Discover our wide range of premium tourism services"
+      "subtitle": "Discover our wide range of premium tourism services",
+      "tours": "Tours",
+      "hotelBooking": "Hotel Booking",
+      "luxurySuites": "Luxury Suites",
+      "airportService": "Airport Reception & Farewell"
     },
     "packages": {
       "title": "Discover Our Programs"
@@ -1404,6 +1408,7 @@
     "faqs": {
       "title": "Frequently Asked Questions"
     },
+    "otherTours": "Other Tours",
     "tourTypes": {
       "VIP": "VIP",
       "Standard": "Standard",

@@ -11,11 +11,30 @@ import RahalatekLoader from '../../components/RahalatekLoader';
 import OtherToursCarousel from '../../components/OtherToursCarousel';
 import GuestNotFoundPage from './GuestNotFoundPage';
 import NotFoundPage from '../NotFoundPage';
+import { getTranslatedText, getTranslatedArray, getTranslatedFaqs } from '../../utils/translationUtils';
 
+/**
+ * PublicTourPage - Tour detail page with SEO enhancements
+ * 
+ * Features:
+ * - Language-based URL structure (/tours/:slug, /ar/tours/:slug, /fr/tours/:slug)
+ * - Dynamic meta tags based on tour content and language
+ * - hreflang tags for Google to index all language versions
+ * - Translation support for tour name, description, highlights, policies, FAQs
+ * - RTL support for Arabic content
+ */
 const PublicTourPage = () => {
-  const { slug } = useParams();
+  const params = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  
+  // Extract slug and language from URL
+  // URL can be: /tours/:slug OR /ar/tours/:slug OR /fr/tours/:slug
+  const slug = params.slug;
+  const urlPath = window.location.pathname;
+  const langMatch = urlPath.match(/^\/(ar|fr)\/tours\//);
+  const urlLang = langMatch ? langMatch[1] : null; // 'ar', 'fr', or null for English
+  
   const isRTL = i18n.language === 'ar';
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +62,9 @@ const PublicTourPage = () => {
           return user ? <NotFoundPage /> : <GuestNotFoundPage type="voucher" />;
         }
 
-        const response = await axios.get(`/api/tours/public/${slug}`);
+        // Send language parameter to backend for SEO (only for ar/fr)
+        const langParam = urlLang ? `?lang=${urlLang}` : '';
+        const response = await axios.get(`/api/tours/public/${slug}${langParam}`);
         const tourData = response.data;
         setTour(tourData);
 
@@ -94,7 +115,46 @@ const PublicTourPage = () => {
     };
 
     fetchTour();
-  }, [slug, navigate]);
+  }, [slug, navigate, urlLang]);
+
+  // Add hreflang tags for SEO
+  useEffect(() => {
+    if (!slug) return;
+
+    const baseUrl = window.location.origin;
+    
+    // Remove existing hreflang tags
+    const existingTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingTags.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: `/tours/${slug}` },
+      { code: 'ar', path: `/ar/tours/${slug}` },
+      { code: 'fr', path: `/fr/tours/${slug}` }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default (fallback for unspecified languages)
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/tours/${slug}`;
+    document.head.appendChild(defaultLink);
+
+    // Cleanup function
+    return () => {
+      const allTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+      allTags.forEach(tag => tag.remove());
+    };
+  }, [slug]);
 
   const getCarTypeDisplay = (carType, capacity) => {
     if (carType === 'Vito') {
@@ -125,7 +185,7 @@ const PublicTourPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
         {/* Tour Title */}
         <div className="mb-3 sm:mb-4">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">{tour.name}</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">{getTranslatedText(tour, 'name', i18n.language)}</h1>
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
             <div className={`flex items-center text-gray-600 dark:text-gray-400 ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
               <FaMapMarkerAlt className={`w-3 h-3 sm:w-4 sm:h-4 ${isRTL ? 'mr-0 ml-2' : ''}`} />
@@ -203,11 +263,11 @@ const PublicTourPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicTourPage.overview.title')}</h2>
         <div className="text-gray-700 dark:text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed mb-4 sm:mb-6">
-          {tour.description}
+          {getTranslatedText(tour, 'description', i18n.language)}
         </div>
-        {tour.detailedDescription && (
+        {getTranslatedText(tour, 'detailedDescription', i18n.language) && (
           <div className="text-gray-700 dark:text-gray-300 text-sm sm:text-base lg:text-lg leading-relaxed">
-            {tour.detailedDescription}
+            {getTranslatedText(tour, 'detailedDescription', i18n.language)}
           </div>
         )}
       </div>
@@ -219,7 +279,7 @@ const PublicTourPage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicTourPage.highlights.title')}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-              {tour.highlights.map((highlight, index) => (
+              {getTranslatedArray(tour, 'highlights', i18n.language).map((highlight, index) => (
                 <div key={index} className={`flex items-start ${isRTL ? 'space-x-reverse space-x-3 sm:space-x-4' : 'space-x-3 sm:space-x-4'}`}>
                   <FaCheck className={`text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0 ${isRTL ? 'mr-0 ml-3 sm:ml-4' : ''}`} />
                   <span className="text-gray-800 dark:text-gray-200 text-sm sm:text-base">{highlight}</span>
@@ -322,11 +382,11 @@ const PublicTourPage = () => {
           </div>
 
           {/* Tour Policies - Dynamic from backend */}
-          {tour.policies && tour.policies.length > 0 && (
+          {getTranslatedArray(tour, 'policies', i18n.language).length > 0 && (
             <div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4">{t('publicTourPage.policies.bookingCancellation')}</h3>
               <div className="space-y-2 sm:space-y-3">
-                {tour.policies.map((policy, index) => (
+                {getTranslatedArray(tour, 'policies', i18n.language).map((policy, index) => (
                   <div key={index} className={`flex items-start ${isRTL ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
                     <FaCheckCircle className={`text-blue-600 dark:text-yellow-400 w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0 ${isRTL ? 'mr-0 ml-2 sm:ml-3' : 'mr-2 sm:mr-3'}`} />
                     <span className="text-gray-800 dark:text-gray-200 text-sm sm:text-base">{policy}</span>
@@ -355,7 +415,7 @@ const PublicTourPage = () => {
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{t('publicTourPage.faqs.title')}</h2>
           
           <div className="space-y-3 sm:space-y-4">
-            {tour.faqs.map((faq, index) => (
+            {getTranslatedFaqs(tour, i18n.language).map((faq, index) => (
               <div 
                 key={index}
                 className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-sm transition-all duration-300 ${

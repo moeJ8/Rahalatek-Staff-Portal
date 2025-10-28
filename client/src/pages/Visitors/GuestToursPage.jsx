@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem, FaAngleLeft, FaAngleRight, FaEye, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaClock, FaMapMarkerAlt, FaCrown, FaUsers, FaFilter, FaGem, FaAngleLeft, FaAngleRight, FaEye, FaChevronDown, FaChevronUp, FaCircle } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Flag from 'react-world-flags';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,7 @@ import CustomScrollbar from '../../components/CustomScrollbar';
 import SearchableSelect from '../../components/SearchableSelect';
 import axios from 'axios';
 import PLACEHOLDER_IMAGES from '../../utils/placeholderImage';
+import { getTranslatedText, getTranslatedArray } from '../../utils/translationUtils';
 
 const GuestToursPage = () => {
   const { t, i18n } = useTranslation();
@@ -285,9 +286,14 @@ const GuestToursPage = () => {
       console.error('Error incrementing tour views:', error);
     }
     
-    // Navigate to tour page
-    navigate(`/tours/${tour.slug}`);
-  }, [navigate]);
+    // Navigate to tour page with language prefix for SEO (only for ar/fr)
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      navigate(`/${lang}/tours/${tour.slug}`);
+    } else {
+      navigate(`/tours/${tour.slug}`);
+    }
+  }, [navigate, i18n.language]);
 
   const getCountryCode = useCallback((country) => {
     const codes = {
@@ -317,6 +323,11 @@ const GuestToursPage = () => {
     const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
     const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
 
+    // Get translated content
+    const translatedName = getTranslatedText(tour, 'name', i18n.language);
+    const translatedDescription = getTranslatedText(tour, 'description', i18n.language);
+    const translatedHighlights = getTranslatedArray(tour, 'highlights', i18n.language);
+
     return (
       <div 
         className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer group flex flex-col relative"
@@ -345,9 +356,9 @@ const GuestToursPage = () => {
           {/* Tour Name - Inside image at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className={`text-lg font-bold text-white mb-0 line-clamp-2 group-hover:text-yellow-400 dark:group-hover:text-blue-400 transition-colors duration-300 ${
-              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.name) ? 'text-right' : 'text-left'
+              /[\u0600-\u06FF\u0750-\u077F]/.test(translatedName) ? 'text-right' : 'text-left'
             }`}>
-              {tour.name}
+              {translatedName}
             </h3>
           </div>
         </div>
@@ -378,47 +389,48 @@ const GuestToursPage = () => {
             </div>
           </div>
 
-          {/* Highlights */}
-          {tour.highlights && tour.highlights.length > 0 && (
-            <div className="mb-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleHighlights(tour._id);
-                }}
-                className="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <div className="flex items-center space-x-1">
-                  <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
-                  <span className="text-xs sm:text-sm font-medium">{t('toursPage.highlights')}</span>
-                </div>
-                {expandedHighlights[tour._id] ? (
-                  <HiChevronUp className="text-sm transition-transform duration-200" />
-                ) : (
-                  <HiChevronDown className="text-sm transition-transform duration-200" />
-                )}
-              </button>
+                     {/* Highlights */}
+           {translatedHighlights && translatedHighlights.length > 0 && (
+             <div className="mb-2">
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   toggleHighlights(tour._id);
+                 }}
+                 className="w-full flex items-center justify-between py-2 px-3 rounded-lg transition-all duration-300 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                 dir={isRTL ? 'rtl' : 'ltr'}
+               >
+                 <div className={`flex items-center ${isRTL ? 'space-x-reverse space-x-1' : 'space-x-1'}`}>
+                   <FaGem className="text-blue-500 dark:text-yellow-400 w-3 h-3" />
+                   <span className="text-xs sm:text-sm font-medium">{t('toursPage.highlights')}</span>
+                 </div>
+                 {expandedHighlights[tour._id] ? (
+                   <HiChevronUp className="text-sm transition-transform duration-200" />
+                 ) : (
+                   <HiChevronDown className="text-sm transition-transform duration-200" />
+                 )}
+               </button>
               
-              {/* Expanded Highlights */}
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedHighlights[tour._id] ? 'max-h-screen opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
-                <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-1">
-                  {tour.highlights.map((highlight, index) => (
-                    <div key={index} className="flex items-start space-x-2 text-xs">
-                      <span className="text-blue-500 dark:text-yellow-400 mt-0.5">•</span>
-                      <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{highlight}</span>
-                    </div>
-                  ))}
+                                            {/* Expanded Highlights */}
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedHighlights[tour._id] ? 'max-h-screen opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                  <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 space-y-1" dir={isRTL ? 'rtl' : 'ltr'}>
+                    {translatedHighlights.map((highlight, index) => (
+                      <div key={index} className={`flex items-start ${isRTL ? 'space-x-reverse space-x-2' : 'space-x-2'} text-xs`}>
+                        <FaCircle className="text-blue-500 dark:text-yellow-400 w-1.5 h-1.5 mt-1.5 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{highlight}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
             </div>
           )}
 
           {/* Description */}
-          {tour.description && (
+          {translatedDescription && (
             <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed mb-2 line-clamp-2 ${
-              /[\u0600-\u06FF\u0750-\u077F]/.test(tour.description) ? 'text-right' : 'text-left'
+              /[\u0600-\u06FF\u0750-\u077F]/.test(translatedDescription) ? 'text-right' : 'text-left'
             }`}>
-              {tour.description}
+              {translatedDescription}
             </p>
           )}
 
@@ -644,6 +656,7 @@ const GuestToursPage = () => {
                             {featuredTours.map((tour) => {
                               const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
                               const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
+                              const translatedName = getTranslatedText(tour, 'name', i18n.language);
                               
                               return (
                                 <div
@@ -653,12 +666,12 @@ const GuestToursPage = () => {
                                 >
                                   <img
                                     src={imageUrl}
-                                    alt={tour.name}
+                                    alt={translatedName}
                                     className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
                                   />
                                   <div className="flex-1 min-w-0 flex flex-col">
                                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
-                                      {tour.name}
+                                      {translatedName}
                                     </h4>
                                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                                       {tour.city}, {tour.country}
@@ -818,6 +831,7 @@ const GuestToursPage = () => {
                               {featuredTours.map((tour) => {
                                 const primaryImage = tour.images?.find(img => img.isPrimary) || tour.images?.[0];
                                 const imageUrl = primaryImage?.url || PLACEHOLDER_IMAGES.tour;
+                                const translatedName = getTranslatedText(tour, 'name', i18n.language);
                                 
                                 return (
                                   <div
@@ -827,12 +841,12 @@ const GuestToursPage = () => {
                                   >
                                     <img
                                       src={imageUrl}
-                                      alt={tour.name}
+                                      alt={translatedName}
                                       className="w-20 h-20 object-cover rounded-lg flex-shrink-0 group-hover:ring-2 group-hover:ring-blue-500 dark:group-hover:ring-yellow-400 transition-all"
                                     />
                                     <div className="flex-1 min-w-0 flex flex-col">
                                       <h4 className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 mb-1">
-                                        {tour.name}
+                                        {translatedName}
                                       </h4>
                                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                                         {tour.city}, {tour.country}

@@ -7,10 +7,78 @@ const {
     allToursCache
 } = require('../utils/redis');
 
+// Helper function to translate a single tour
+const translateTour = (tour, lang) => {
+  if (lang === 'en' || !tour.translations) {
+    return tour.toObject ? tour.toObject() : tour;
+  }
+
+  const translations = tour.translations;
+  const translatedTour = tour.toObject ? tour.toObject() : { ...tour };
+
+  // Helper function to get translated text or fallback to base
+  const getTranslated = (baseValue, translationValue) => {
+    return translationValue && translationValue.trim() ? translationValue : baseValue;
+  };
+
+  // Helper function for arrays
+  const getTranslatedArray = (baseArray, translationArray) => {
+    if (!translationArray || translationArray.length === 0) return baseArray;
+
+    return baseArray.map((item, index) => {
+      if (index < translationArray.length) {
+        const translated = translationArray[index][lang];
+        return getTranslated(item, translated);
+      }
+      return item;
+    });
+  };
+
+  // Translate simple fields
+  if (translations.name && translations.name[lang]) {
+    translatedTour.name = getTranslated(tour.name, translations.name[lang]);
+  }
+  if (translations.description && translations.description[lang]) {
+    translatedTour.description = getTranslated(tour.description, translations.description[lang]);
+  }
+  if (translations.detailedDescription && translations.detailedDescription[lang]) {
+    translatedTour.detailedDescription = getTranslated(tour.detailedDescription, translations.detailedDescription[lang]);
+  }
+
+  // Translate arrays
+  if (translations.highlights && translations.highlights.length > 0 && tour.highlights) {
+    translatedTour.highlights = getTranslatedArray(tour.highlights, translations.highlights);
+  }
+  if (translations.policies && translations.policies.length > 0 && tour.policies) {
+    translatedTour.policies = getTranslatedArray(tour.policies, translations.policies);
+  }
+
+  // Translate FAQs
+  if (translations.faqs && translations.faqs.length > 0 && tour.faqs) {
+    translatedTour.faqs = tour.faqs.map((faq, index) => {
+      if (index < translations.faqs.length) {
+        const translatedFaq = translations.faqs[index];
+        return {
+          question: getTranslated(faq.question, translatedFaq.question?.[lang]),
+          answer: getTranslated(faq.answer, translatedFaq.answer?.[lang])
+        };
+      }
+      return faq;
+    });
+  }
+
+  return translatedTour;
+};
+
+// Helper function to translate multiple tours
+const translateTours = (tours, lang) => {
+  return tours.map(tour => translateTour(tour, lang));
+};
+
 // Get all tours (with optional pagination and search)
 exports.getAllTours = async (req, res) => {
   try {
-    const { country, city, search, tourType, page, limit } = req.query;
+    const { country, city, search, tourType, page, limit, lang = 'en' } = req.query;
     
     let query = {};
     if (country) query.country = country;
@@ -35,7 +103,8 @@ exports.getAllTours = async (req, res) => {
         const cachedTours = await allToursCache.get();
         if (cachedTours) {
           console.log('✅ Serving all tours from Redis cache');
-          return res.status(200).json(cachedTours);
+          const translatedTours = translateTours(cachedTours, lang);
+          return res.status(200).json(translatedTours);
         }
       }
       
@@ -43,10 +112,13 @@ exports.getAllTours = async (req, res) => {
       const tours = await Tour.find(query).sort({ updatedAt: -1 });
       
       if (!country && !city && !search && !tourType) {
-        await allToursCache.set(tours);
+        // Only cache English tours
+        const englishTours = tours.map(tour => tour.toObject());
+        await allToursCache.set(englishTours);
       }
       
-      return res.status(200).json(tours);
+      const translatedTours = translateTours(tours, lang);
+      return res.status(200).json(translatedTours);
     }
     
     // PAGINATION MODE
@@ -59,10 +131,12 @@ exports.getAllTours = async (req, res) => {
       Tour.countDocuments(query)
     ]);
     
+    const translatedTours = translateTours(tours, lang);
+    
     res.status(200).json({
       success: true,
       data: {
-        tours,
+        tours: translatedTours,
         pagination: {
           currentPage: pageNum,
           totalPages: Math.ceil(totalTours / limitNum),
@@ -218,13 +292,18 @@ exports.deleteTour = async (req, res) => {
 exports.getTourBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
+    const { lang = 'en' } = req.query; // Get language from query parameter, default to 'en'
+    
     const tour = await Tour.findOne({ slug: slug });
     
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
     
-    res.json(tour);
+    // Translate the tour using the helper function
+    const translatedTour = translateTour(tour, lang);
+    
+    res.json(translatedTour);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -254,13 +333,15 @@ exports.incrementTourViews = async (req, res) => {
 exports.getFeaturedTours = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel (3 slides x 3 cards)
+    const { lang = 'en' } = req.query; // Get language from query parameter, default to 'en'
     
     // Check Redis cache first (only for default limit)
     if (limit === 9) {
         const cachedTours = await featuredToursCache.get();
         if (cachedTours) {
             console.log('✅ Serving featured tours from Redis cache');
-            return res.json(cachedTours);
+            const translatedTours = translateTours(cachedTours, lang);
+            return res.json(translatedTours);
         }
     }
 
@@ -269,12 +350,14 @@ exports.getFeaturedTours = async (req, res) => {
       .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
       .limit(limit);
     
-    // Cache the result (only for default limit)
+    // Cache the result (only for default limit) - only cache English tours
     if (limit === 9) {
-        await featuredToursCache.set(tours);
+        const englishTours = tours.map(tour => tour.toObject());
+        await featuredToursCache.set(englishTours);
     }
     
-    res.json(tours);
+    const translatedTours = translateTours(tours, lang);
+    res.json(translatedTours);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

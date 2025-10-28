@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import { Card, Label, Textarea, Select, Checkbox, Tabs, Accordion } from 'flowbite-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiPlus, HiTrash, HiCalendar, HiX } from 'react-icons/hi';
+import { HiPlus, HiTrash, HiCalendar, HiX, HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import CustomButton from '../components/CustomButton';
 import CustomSelect from '../components/Select';
 import TextInput from '../components/TextInput';
@@ -39,6 +39,10 @@ export default function EditHotelPage() {
         airportTransportation: [],
         description: '',
         locationDescription: '',
+        translations: {
+            description: { ar: '', fr: '' },
+            locationDescription: { ar: '', fr: '' }
+        },
         images: [],
         amenities: {},
         faqs: []
@@ -95,7 +99,13 @@ export default function EditHotelPage() {
     const [slugError, setSlugError] = useState('');
     const [airports, setAirports] = useState([]);
     const [amenitiesModalOpen, setAmenitiesModalOpen] = useState(false);
-    
+
+    // Translation state
+    const [translationCollapse, setTranslationCollapse] = useState({
+        description: false,
+        locationDescription: false
+    });
+
     // Room highlights and details state
     const [roomHighlights, setRoomHighlights] = useState({});
     const [roomDetails, setRoomDetails] = useState({});
@@ -127,6 +137,27 @@ export default function EditHotelPage() {
         setHotelData({
             ...hotelData,
             faqs: updatedFaqs
+        });
+    };
+
+    // Translation handling functions
+    const toggleTranslationCollapse = (section) => {
+        setTranslationCollapse(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
+
+    const handleTranslationChange = (field, language, value) => {
+        setHotelData({
+            ...hotelData,
+            translations: {
+                ...hotelData.translations,
+                [field]: {
+                    ...hotelData.translations[field],
+                    [language]: value
+                }
+            }
         });
     };
 
@@ -169,6 +200,10 @@ export default function EditHotelPage() {
                     city: fetchedHotel.city || '',
                     description: fetchedHotel.description || '',
                     locationDescription: fetchedHotel.locationDescription || '',
+                    translations: fetchedHotel.translations || {
+                        description: { ar: '', fr: '' },
+                        locationDescription: { ar: '', fr: '' }
+                    },
                     airport: fetchedHotel.airport || '',
                     breakfastPrice: fetchedHotel.breakfastPrice || 0,
                     transportation: {
@@ -1085,6 +1120,17 @@ export default function EditHotelPage() {
                     </div>
                     
                     <div>
+                        <div className="mb-2 flex items-center justify-between">
+                            <Label htmlFor="hotelDesc" value="Description" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('description')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.description ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <TextInput
                             id="hotelDesc"
                             name="description"
@@ -1092,11 +1138,44 @@ export default function EditHotelPage() {
                             rows={4}
                             value={hotelData.description || ''}
                             onChange={handleHotelChange}
-                            label="Description"
                         />
+                        {translationCollapse.description && (
+                            <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                </p>
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="Arabic Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={hotelData.translations.description.ar}
+                                    onChange={(e) => handleTranslationChange('description', 'ar', e.target.value)}
+                                />
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="French Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={hotelData.translations.description.fr}
+                                    onChange={(e) => handleTranslationChange('description', 'fr', e.target.value)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
+                        <div className="mb-2 flex items-center justify-between">
+                            <Label htmlFor="locationDescription" value="Location Description" />
+                            <button
+                                type="button"
+                                onClick={() => toggleTranslationCollapse('locationDescription')}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                                Translations
+                                {translationCollapse.locationDescription ? <HiChevronUp /> : <HiChevronDown />}
+                            </button>
+                        </div>
                         <TextInput
                             id="locationDescription"
                             name="locationDescription"
@@ -1104,8 +1183,30 @@ export default function EditHotelPage() {
                             rows={4}
                             value={hotelData.locationDescription || ''}
                             onChange={handleHotelChange}
-                            label="Location Description"
                         />
+                        {translationCollapse.locationDescription && (
+                            <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                                </p>
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="Arabic Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={hotelData.translations.locationDescription.ar}
+                                    onChange={(e) => handleTranslationChange('locationDescription', 'ar', e.target.value)}
+                                />
+                                <TextInput
+                                    as="textarea"
+                                    rows={4}
+                                    label="French Translation (Optional)"
+                                    placeholder="Leave empty to use English"
+                                    value={hotelData.translations.locationDescription.fr}
+                                    onChange={(e) => handleTranslationChange('locationDescription', 'fr', e.target.value)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>

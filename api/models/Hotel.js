@@ -168,6 +168,17 @@ const hotelSchema = new mongoose.Schema({
     },
     description: { type: String },
     locationDescription: { type: String },
+    // Translation fields (Arabic and French only - English is the base field)
+    translations: {
+        description: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        },
+        locationDescription: {
+            ar: { type: String, default: '' },
+            fr: { type: String, default: '' }
+        }
+    },
     childrenPolicies: {
         under6: { type: String, default: 'Free' },
         age6to12: { type: String, default: 'Additional charge per room type' },
