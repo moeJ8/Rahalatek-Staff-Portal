@@ -35,6 +35,7 @@ export default function Header() {
 
   // Check if we're on a protected/auth page
   const isAuthenticated = !!user;
+  // Keep language switcher visible; we'll lock header language/dir separately
   const hideLanguageSwitcher = shouldHideLanguageSwitcher(location.pathname, isAuthenticated);
   
   // Helper function to add language prefix to URLs for public pages
@@ -70,7 +71,7 @@ export default function Header() {
   
   // Force English translations for protected/auth pages
   const getTranslation = (key) => {
-    if (hideLanguageSwitcher) {
+    if (isAuthenticated) {
       // Force English translations for protected/auth pages
       const englishTranslations = {
         'header.home': 'Home',
@@ -283,7 +284,7 @@ export default function Header() {
   const isRTL = i18n.language === 'ar';
   
   // Force LTR layout for protected/auth pages
-  const headerDirection = hideLanguageSwitcher ? 'ltr' : (isRTL ? 'rtl' : 'ltr');
+  const headerDirection = isAuthenticated ? 'ltr' : (isRTL ? 'rtl' : 'ltr');
 
   return (
     <header dir={headerDirection} className={`shadow-md mb-6 transition-all duration-300 sticky top-0 z-50 ${

@@ -13,6 +13,8 @@ router.get('/category/:category', blogController.getBlogsByCategory);
 router.get('/slug/:slug', blogController.getBlogBySlug);
 // Increment blog views - must be after slug route
 router.post('/slug/:slug/view', blogController.incrementBlogViews);
+// Track WhatsApp clicks for a blog
+router.post('/slug/:slug/whatsapp-click', blogController.incrementWhatsAppClicks);
 
 // Protected routes - Admin and Content Manager only
 router.use(verifyToken);
@@ -40,6 +42,11 @@ router.delete('/:id', blogController.deleteBlog);
 // Publishing actions
 router.put('/:id/publish', blogController.publishBlog);
 router.put('/:id/unpublish', blogController.unpublishBlog);
+
+// Removed per-blog WhatsApp clicks report endpoint
+
+// Trigger weekly WhatsApp clicks PDF report
+router.post('/reports/whatsapp-weekly', blogController.triggerWeeklyWhatsappReport);
 
 module.exports = router;
 

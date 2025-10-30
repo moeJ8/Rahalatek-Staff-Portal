@@ -28,7 +28,17 @@ export default function BlogListPage() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
-  const [sortByPopular, setSortByPopular] = useState(true);
+  
+  // Persist sortByPopular in localStorage to survive remounts from URL changes
+  const [sortByPopular, setSortByPopular] = useState(() => {
+    const saved = localStorage.getItem('blogSortByPopular');
+    return saved !== null ? saved === 'true' : true; // Default to true if not set
+  });
+  
+  // Update localStorage when sortByPopular changes
+  useEffect(() => {
+    localStorage.setItem('blogSortByPopular', sortByPopular.toString());
+  }, [sortByPopular]);
   const [screenType, setScreenType] = useState('desktop');
   const [totalPages, setTotalPages] = useState(1);
   const [totalBlogs, setTotalBlogs] = useState(0);
@@ -557,10 +567,16 @@ export default function BlogListPage() {
                       <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.recentPosts')}</h3>
                     </div>
                     <div className="space-y-3">
-                      {recentBlogs.map((blog) => (
+                      {recentBlogs.map((blog) => {
+                        // Navigate to blog page with language prefix for SEO (only for ar/fr)
+                        const lang = i18n.language;
+                        const blogUrl = (lang === 'ar' || lang === 'fr') 
+                          ? `/${lang}/blog/${blog.slug}` 
+                          : `/blog/${blog.slug}`;
+                        return (
                         <div
                           key={blog._id}
-                          onClick={() => navigate(`/blog/${blog.slug}`)}
+                          onClick={() => navigate(blogUrl)}
                           className="flex gap-3 group cursor-pointer"
                         >
                           {blog.mainImage && (
@@ -585,7 +601,8 @@ export default function BlogListPage() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -739,10 +756,16 @@ export default function BlogListPage() {
                               <h3 className="text-base font-bold text-gray-900 dark:text-white">{t('blogPage.recentPosts')}</h3>
                             </div>
                             <div className="space-y-3">
-                              {recentBlogs.map((blog) => (
+                              {recentBlogs.map((blog) => {
+                                // Navigate to blog page with language prefix for SEO (only for ar/fr)
+                                const lang = i18n.language;
+                                const blogUrl = (lang === 'ar' || lang === 'fr') 
+                                  ? `/${lang}/blog/${blog.slug}` 
+                                  : `/blog/${blog.slug}`;
+                                return (
                                 <div
                                   key={blog._id}
-                                  onClick={() => navigate(`/blog/${blog.slug}`)}
+                                  onClick={() => navigate(blogUrl)}
                                   className="flex gap-3 group cursor-pointer"
                                 >
                                   {blog.mainImage && (
@@ -767,7 +790,8 @@ export default function BlogListPage() {
                                     </div>
                                   </div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -898,7 +922,13 @@ export default function BlogListPage() {
                             )}
                             
                             <Link 
-                              to={`/blog/${blog.slug}`}
+                              to={(() => {
+                                // Navigate to blog page with language prefix for SEO (only for ar/fr)
+                                const lang = i18n.language;
+                                return (lang === 'ar' || lang === 'fr') 
+                                  ? `/${lang}/blog/${blog.slug}` 
+                                  : `/blog/${blog.slug}`;
+                              })()}
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {

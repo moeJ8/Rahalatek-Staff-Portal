@@ -2,8 +2,10 @@ import React from 'react';
 import { FaCalendarAlt, FaClock, FaEye, FaCrown, FaTag } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const PublicBlogCard = ({ blog }) => {
+  const { i18n } = useTranslation();
   // Detect if text contains Arabic characters
   const hasArabicText = (text) => {
     const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
@@ -31,11 +33,20 @@ const PublicBlogCard = ({ blog }) => {
     }
   };
 
+  // Navigate to blog page with language prefix for SEO (only for ar/fr)
+  const getBlogUrl = () => {
+    const lang = i18n.language;
+    if (lang === 'ar' || lang === 'fr') {
+      return `/${lang}/blog/${blog.slug}`;
+    }
+    return `/blog/${blog.slug}`;
+  };
+
   const imageUrl = blog.mainImage?.url || 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Blog+Image';
 
   return (
     <Link 
-      to={`/blog/${blog.slug}`}
+      to={getBlogUrl()}
       onClick={handleBlogClick}
       className="bg-white dark:bg-slate-900 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 group flex flex-col"
       dir="ltr"

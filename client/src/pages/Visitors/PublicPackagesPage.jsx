@@ -10,6 +10,7 @@ import CustomScrollbar from '../../components/CustomScrollbar';
 import SearchableSelect from '../../components/SearchableSelect';
 import PackageCard from '../../components/Visitors/PackageCard';
 import axios from 'axios';
+import FloatingContactButtons from '../../components/FloatingContactButtons';
 
 const PublicPackagesPage = () => {
   const { t, i18n } = useTranslation();
@@ -874,6 +875,8 @@ const PublicPackagesPage = () => {
           </div>
         </div>
       </div>
+      {/* Floating Contact Buttons */}
+      <FloatingContactButtons />
     </div>
   );
 };

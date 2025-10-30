@@ -4,6 +4,8 @@ import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { FaCalendarAlt, FaUser, FaEye, FaClock, FaArrowLeft, FaTags, FaHome, FaLink, FaExpand } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
+import CustomSelect from '../../components/Select';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import PublicBlogCard from '../../components/Visitors/PublicBlogCard';
 import toast from 'react-hot-toast';
@@ -12,6 +14,12 @@ import '../../styles/quill.css';
 export default function BlogDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  
+  // Extract slug from URL (like packages/tours)
+  // URL can be: /blog/:slug OR /ar/blog/:slug OR /fr/blog/:slug
+  // Note: URL language prefix is controlled by UI language switcher, not blog content language
+  
   const [blog, setBlog] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,15 +27,112 @@ export default function BlogDetailPage() {
   const [screenType, setScreenType] = useState('desktop');
   const [blogsPerSlide, setBlogsPerSlide] = useState(3);
   const carouselRef = useRef(null);
+  const prevSelectedLang = useRef(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(null);
+  const [originalBlog, setOriginalBlog] = useState(null); // Store original blog with translations structure
+  
+  // Use i18n language for UI RTL detection
+  const isRTL = i18n.language === 'ar';
+  
+  // Detect Arabic text in blog content for title and content direction
+  const hasArabicText = (text) => {
+    if (!text) return false;
+    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    return arabicRegex.test(text);
+  };
+  
+  // Auto-detect RTL for title and content based on actual text content
+  const titleRTL = blog && hasArabicText(blog.title);
+  const contentRTL = blog && (hasArabicText(blog.content) || hasArabicText(blog.excerpt));
 
+  // Helper to get translation value from Map or plain object
+  const getTranslationValue = (translationObj, lang) => {
+    if (!translationObj) return null;
+    if (translationObj instanceof Map) {
+      return translationObj.has(lang) ? translationObj.get(lang) : null;
+    }
+    if (typeof translationObj === 'object') {
+      return translationObj[lang] || null;
+    }
+    return null;
+  };
+  
+  // Treat strings with only HTML wrappers or nbsp as empty
+  const isMeaningfulString = (value) => {
+    if (typeof value !== 'string') return false;
+    const stripped = value
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;|\u00A0/gi, ' ')
+      .trim();
+    return stripped.length > 0;
+  };
+
+  // Helper to compute displayed blog content based on selected language
+  const computeDisplayBlog = useCallback((originalBlogData, displayLang) => {
+    if (!originalBlogData) return null;
+    
+    const originalLang = originalBlogData.originalLanguage || 'ar';
+    
+    // If displaying original language, return original content
+    if (!displayLang || displayLang === originalLang || !originalBlogData.translations) {
+      return originalBlogData;
+    }
+    
+    // Create a copy and apply translations
+    const displayBlog = { ...originalBlogData };
+    const translations = originalBlogData.translations;
+    
+    const getTranslated = (baseValue, translationValue) => {
+      return translationValue && translationValue.trim() ? translationValue : baseValue;
+    };
+    
+    // Translate title
+    const titleTranslation = getTranslationValue(translations.title, displayLang);
+    if (isMeaningfulString(titleTranslation)) {
+      displayBlog.title = getTranslated(originalBlogData.title, titleTranslation);
+    }
+    
+    // Translate excerpt
+    const excerptTranslation = getTranslationValue(translations.excerpt, displayLang);
+    if (isMeaningfulString(excerptTranslation)) {
+      displayBlog.excerpt = getTranslated(originalBlogData.excerpt, excerptTranslation);
+    }
+    
+    // Translate content
+    const contentTranslation = getTranslationValue(translations.content, displayLang);
+    if (isMeaningfulString(contentTranslation)) {
+      displayBlog.content = getTranslated(originalBlogData.content, contentTranslation);
+    }
+    
+    // Translate metaDescription
+    const metaDescTranslation = getTranslationValue(translations.metaDescription, displayLang);
+    if (isMeaningfulString(metaDescTranslation)) {
+      displayBlog.metaDescription = getTranslated(originalBlogData.metaDescription, metaDescTranslation);
+    }
+    
+    return displayBlog;
+  }, []);
+
+  // Fetch blog ONCE - always fetch original without lang param to get all translations
   const fetchBlog = useCallback(async () => {
     try {
       setLoading(true);
+      // Always fetch original (no lang param) to get full translations structure
       const response = await axios.get(`/api/blogs/slug/${slug}`);
 
       if (response.data.success) {
-        setBlog(response.data.data);
+        const blogData = response.data.data;
+        
+        // Store original blog with all translations
+        setOriginalBlog(blogData);
+        
+        // Set initial selected language to blog's ORIGINAL language (independent of UI language switcher)
+        const originalLang = blogData.originalLanguage || 'ar';
+        setSelectedLanguage(originalLang);
+        
+        // Display original content (blog's original language)
+        setBlog(blogData);
       }
     } catch (error) {
       console.error('Error fetching blog:', error);
@@ -46,12 +151,37 @@ export default function BlogDetailPage() {
             secondary: '#ef4444',
           },
         });
-        navigate('/blog');
+        // Navigate to blog list with current language prefix
+        const langPrefix = i18n.language === 'ar' || i18n.language === 'fr' ? `/${i18n.language}` : '';
+        navigate(`${langPrefix}/blog`);
       }
     } finally {
       setLoading(false);
     }
-  }, [slug, navigate]);
+  }, [slug, navigate, i18n.language]);
+  
+  // Initial fetch on mount - ONLY ONCE
+  useEffect(() => {
+    prevSelectedLang.current = null; // Reset ref when slug changes
+    setSelectedLanguage(null); // Reset selected language
+    setOriginalBlog(null); // Reset original blog
+    
+    // Fetch blog ONCE
+    fetchBlog();
+    window.scrollTo(0, 0);
+  }, [slug, fetchBlog]);
+  
+  // Update displayed content when language changes - NO API CALL, NO URL CHANGE
+  // Only changes title and body content, URL stays controlled by UI language switcher
+  useEffect(() => {
+    if (selectedLanguage !== null && originalBlog && selectedLanguage !== prevSelectedLang.current) {
+      prevSelectedLang.current = selectedLanguage;
+      
+      // Compute and update displayed content from stored translations - NO API CALL, NO URL CHANGE
+      const displayBlog = computeDisplayBlog(originalBlog, selectedLanguage);
+      setBlog(displayBlog);
+    }
+  }, [selectedLanguage, originalBlog, computeDisplayBlog]);
 
   const fetchRelatedBlogs = useCallback(async () => {
     if (!blog) return;
@@ -72,18 +202,107 @@ export default function BlogDetailPage() {
   }, [blog]);
 
   useEffect(() => {
-    fetchBlog();
-    window.scrollTo(0, 0);
-  }, [slug, fetchBlog]);
-
-  useEffect(() => {
     if (blog) {
       fetchRelatedBlogs();
     }
   }, [blog, fetchRelatedBlogs]);
 
+  // Add hreflang tags for SEO (like packages)
+  useEffect(() => {
+    if (!slug || !blog) return;
+
+    const baseUrl = window.location.origin;
+
+    // Remove existing hreflang tags
+    const existingTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingTags.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all available language versions
+    if (originalBlog && originalBlog.translations) {
+      const originalLang = originalBlog.originalLanguage || 'ar';
+      const translationLanguages = ['en', 'ar', 'fr'].filter(lang => lang !== originalLang);
+      
+      // Check which translations actually exist
+      const availableLangs = [originalLang];
+      translationLanguages.forEach(lang => {
+        const titleTranslation = getTranslationValue(originalBlog.translations?.title, lang);
+        const excerptTranslation = getTranslationValue(originalBlog.translations?.excerpt, lang);
+        const contentTranslation = getTranslationValue(originalBlog.translations?.content, lang);
+        const metaDescTranslation = getTranslationValue(originalBlog.translations?.metaDescription, lang);
+
+        const hasAnyFilled = [titleTranslation, excerptTranslation, contentTranslation, metaDescTranslation]
+          .some(isMeaningfulString);
+
+        if (hasAnyFilled) {
+          availableLangs.push(lang);
+        }
+      });
+
+      // Add hreflang for each available language
+      availableLangs.forEach(lang => {
+        const link = document.createElement('link');
+        link.rel = 'alternate';
+        link.hreflang = lang;
+        
+        // Build URL based on language (ar/fr get prefix, English doesn't)
+        if (lang === 'ar' || lang === 'fr') {
+          link.href = `${baseUrl}/${lang}/blog/${slug}`;
+        } else {
+          // English or original - no prefix
+          link.href = `${baseUrl}/blog/${slug}`;
+        }
+        
+        document.head.appendChild(link);
+      });
+
+      // Add x-default (fallback) pointing to original language
+      const defaultLink = document.createElement('link');
+      defaultLink.rel = 'alternate';
+      defaultLink.hreflang = 'x-default';
+      // Default URL depends on original language
+      if (originalLang === 'ar' || originalLang === 'fr') {
+        defaultLink.href = `${baseUrl}/${originalLang}/blog/${slug}`;
+      } else {
+        defaultLink.href = `${baseUrl}/blog/${slug}`;
+      }
+      document.head.appendChild(defaultLink);
+    } else {
+      // If no translations structure, just add the basic hreflang
+      const languages = [
+        { code: 'en', path: `/blog/${slug}` },
+        { code: 'ar', path: `/ar/blog/${slug}` },
+        { code: 'fr', path: `/fr/blog/${slug}` }
+      ];
+
+      languages.forEach(({ code, path }) => {
+        const link = document.createElement('link');
+        link.rel = 'alternate';
+        link.hreflang = code;
+        link.href = `${baseUrl}${path}`;
+        document.head.appendChild(link);
+      });
+
+      const defaultLink = document.createElement('link');
+      defaultLink.rel = 'alternate';
+      defaultLink.hreflang = 'x-default';
+      defaultLink.href = `${baseUrl}/blog/${slug}`;
+      document.head.appendChild(defaultLink);
+    }
+
+    // Cleanup function
+    return () => {
+      const allTags = document.querySelectorAll('link[rel="alternate"][hreflang]');
+      allTags.forEach(tag => tag.remove());
+    };
+  }, [slug, blog, originalBlog]);
+
   const formatDate = (dateString) => {
-    const locale = blog && hasArabicText(blog.title) ? 'ar' : 'en-US';
+    const localeMap = {
+      'ar': 'ar-SA',
+      'fr': 'fr-FR',
+      'en': 'en-US'
+    };
+    const locale = localeMap[i18n.language] || 'en-US';
     return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
@@ -96,10 +315,7 @@ export default function BlogDetailPage() {
   const copyLink = () => {
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
     navigator.clipboard.writeText(shareUrl);
-    const message = blog && hasArabicText(blog.title) 
-      ? 'تم نسخ الرابط!' 
-      : 'Link copied to clipboard!';
-    toast.success(message, {
+    toast.success(t('blogDetailPage.linkCopied'), {
       duration: 3000,
       style: {
         background: '#4CAF50',
@@ -152,78 +368,12 @@ export default function BlogDetailPage() {
     };
   }, []);
 
-  // Detect if title contains Arabic text (determines page language)
-  const hasArabicText = (text) => {
-    if (!text) return false;
-    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    return arabicRegex.test(text);
-  };
-
-  const isRTL = blog && hasArabicText(blog.title);
-
-  // Translations based on language
-  const translations = {
-    en: {
-      home: 'Home',
-      blog: 'Blog',
-      featured: 'Featured',
-      minRead: 'min read',
-      views: 'views',
-      copyLink: 'Copy Link',
-      linkCopied: 'Link copied to clipboard!',
-      relatedPosts: 'Related Posts',
-      noRelatedPosts: 'No related posts found',
-      topicsAndTags: 'Topics & Tags',
-      // Call to Action
-      ctaTitle: 'Ready to Start Your Journey?',
-      ctaDescription: 'Explore our tours and packages to make your travel dreams come true',
-      browseTours: 'Browse Tours',
-      viewPackages: 'View Packages',
-      // Category translations
-      categories: {
-        'Activities': 'Activities',
-        'Beaches': 'Beaches',
-        'Hotels': 'Hotels',
-        'Restaurants': 'Restaurants',
-        'Travel Tips': 'Travel Tips',
-        'Destinations': 'Destinations',
-        'Culture': 'Culture'
-      }
-    },
-    ar: {
-      home: 'الرئيسية',
-      blog: 'المدونة',
-      featured: 'مميز',
-      minRead: 'دقيقة قراءة',
-      views: 'مشاهدة',
-      copyLink: 'نسخ الرابط',
-      linkCopied: 'تم نسخ الرابط!',
-      relatedPosts: 'مقالات ذات صلة',
-      noRelatedPosts: 'لا توجد مقالات ذات صلة',
-      topicsAndTags: 'المواضيع والوسوم',
-      // Call to Action
-      ctaTitle: 'هل أنت مستعد لبدء رحلتك؟',
-      ctaDescription: 'استكشف جولاتنا وباقاتنا لتحقيق أحلامك في السفر',
-      browseTours: 'تصفح الجولات',
-      viewPackages: 'عرض الباقات',
-      // Category translations
-      categories: {
-        'Activities': 'الأنشطة',
-        'Beaches': 'الشواطئ',
-        'Hotels': 'الفنادق',
-        'Restaurants': 'المطاعم',
-        'Travel Tips': 'نصائح السفر',
-        'Destinations': 'الوجهات',
-        'Culture': 'الثقافة'
-      }
-    }
-  };
-
-  const t = isRTL ? translations.ar : translations.en;
-  
   // Helper function to translate category names
   const translateCategory = (category) => {
-    return t.categories[category] || category;
+    const categoryKey = `blogDetailPage.categories.${category}`;
+    const translation = t(categoryKey);
+    // If translation key doesn't exist, return original category
+    return translation !== categoryKey ? translation : category;
   };
 
   // Screen size detection for carousel
@@ -309,6 +459,33 @@ export default function BlogDetailPage() {
         <meta name="twitter:title" content={blog.title} />
         <meta name="twitter:description" content={blog.metaDescription || blog.excerpt || blog.title} />
         {blog.mainImage && <meta name="twitter:image" content={blog.mainImage.url} />}
+        {/* Canonical URL for the current language variant */}
+        {(() => {
+          const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+          const pathPrefix = (i18n.language === 'ar' || i18n.language === 'fr') ? `/${i18n.language}` : '';
+          const canonical = `${baseUrl}${pathPrefix}/blog/${slug}`;
+          return <link rel="canonical" href={canonical} />;
+        })()}
+        {/* JSON-LD: BlogPosting structured data */}
+        {(() => {
+          const ld = {
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: blog.title,
+            inLanguage: selectedLanguage || (originalBlog?.originalLanguage || 'ar'),
+            datePublished: blog.publishedAt || blog.createdAt,
+            dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
+            image: blog.mainImage?.url || undefined,
+            author: blog.author?.username ? { '@type': 'Person', name: blog.author.username } : undefined,
+            mainEntityOfPage: {
+              '@type': 'WebPage',
+              '@id': typeof window !== 'undefined' ? window.location.href : ''
+            },
+            description: blog.metaDescription || blog.excerpt || blog.title,
+            keywords: Array.isArray(blog.metaKeywords) ? blog.metaKeywords.join(', ') : undefined
+          };
+          return <script type="application/ld+json">{JSON.stringify(ld)}</script>;
+        })()}
       </Helmet>
 
       <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-gray-50 dark:bg-slate-950 pt-2 sm:pt-4 md:pt-6">
@@ -318,18 +495,18 @@ export default function BlogDetailPage() {
           <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
             <Link to="/" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-1">
               <FaHome className="w-3 h-3" />
-              <span>{t.home}</span>
+              <span>{t('blogDetailPage.home')}</span>
             </Link>
             <span>/</span>
             <Link to="/blog" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
-              {t.blog}
+              {t('blogDetailPage.blog')}
             </Link>
             <span>/</span>
             <Link to={`/blog?category=${blog.category}`} className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
               {translateCategory(blog.category)}
             </Link>
             <span>/</span>
-            <span className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-xs">
+            <span dir={titleRTL ? 'rtl' : 'ltr'} className="text-gray-900 dark:text-white font-medium truncate max-w-[150px] sm:max-w-xs">
               {blog.title}
             </span>
           </nav>
@@ -343,11 +520,11 @@ export default function BlogDetailPage() {
               {blog.isFeatured && (
                 <span className="bg-yellow-400 text-yellow-900 px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1">
                   <FaClock className="w-3 h-3" />
-                  {t.featured}
+                  {t('blogDetailPage.featured')}
                 </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 leading-tight">
+            <h1 dir={titleRTL ? 'rtl' : 'ltr'} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 leading-tight">
               {blog.title}
             </h1>
             
@@ -359,23 +536,69 @@ export default function BlogDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <FaClock className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{blog.readingTime} {t.minRead}</span>
+                <span>{blog.readingTime} {t('blogDetailPage.minRead')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <FaEye className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span>{blog.views} {t.views}</span>
+                <span>{blog.views} {t('blogDetailPage.views')}</span>
               </div>
             </div>
 
-            {/* Copy Link Button */}
-            <button
-              onClick={copyLink}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md text-sm"
-              title={t.copyLink}
-            >
-              <FaLink className="w-3.5 h-3.5" />
-              <span>{t.copyLink}</span>
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Copy Link Button */}
+              <button
+                onClick={copyLink}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md text-sm"
+                title={t('blogDetailPage.copyLink')}
+              >
+                <FaLink className="w-3.5 h-3.5" />
+                <span>{t('blogDetailPage.copyLink')}</span>
+              </button>
+              
+              {/* Language Selector */}
+              {blog && originalBlog && originalBlog.translations && (() => {
+                const originalLang = originalBlog.originalLanguage || blog.originalLanguage || 'ar';
+                
+                // Use originalBlog to check translations, as it has the full translations structure
+                const translationLanguages = ['en', 'ar', 'fr'].filter(lang => lang !== originalLang);
+                const availableTranslationLangs = translationLanguages.filter(lang => {
+                  const titleTranslation = getTranslationValue(originalBlog.translations?.title, lang);
+                  const excerptTranslation = getTranslationValue(originalBlog.translations?.excerpt, lang);
+                  const contentTranslation = getTranslationValue(originalBlog.translations?.content, lang);
+                  const metaDescTranslation = getTranslationValue(originalBlog.translations?.metaDescription, lang);
+                  return [titleTranslation, excerptTranslation, contentTranslation, metaDescTranslation].some(isMeaningfulString);
+                });
+                
+                // If no translations exist, don't show selector
+                if (availableTranslationLangs.length === 0) return null;
+                
+                const availableLanguages = [
+                  { value: originalLang, label: originalLang === 'en' ? 'English' : originalLang === 'ar' ? 'العربية' : 'Français' },
+                  ...availableTranslationLangs.map(lang => ({
+                    value: lang,
+                    label: lang === 'en' ? 'English' : lang === 'ar' ? 'العربية' : 'Français'
+                  }))
+                ];
+                
+                return (
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {t('blogDetailPage.viewIn') || 'View in'}:
+                    </label>
+                    <div className="min-w-[150px]">
+                      <CustomSelect
+                        id="blogLanguageSelector"
+                        value={selectedLanguage || originalLang}
+                        onChange={(value) => setSelectedLanguage(value)}
+                        options={availableLanguages}
+                        variant="compact"
+                        rtlOverride={i18n.language === 'ar'}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Hero Image with Gradient Overlay */}
@@ -407,14 +630,14 @@ export default function BlogDetailPage() {
         <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           {/* Excerpt */}
           {blog.excerpt && (
-            <div className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 font-medium border-l-4 border-blue-600 dark:border-yellow-500 pl-4 sm:pl-6 py-2 italic bg-blue-50/50 dark:bg-yellow-900/10 rounded-r-lg">
+            <div dir={contentRTL ? 'rtl' : 'ltr'} className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-6 sm:mb-8 font-medium border-l-4 border-blue-600 dark:border-yellow-500 pl-4 sm:pl-6 py-2 italic bg-blue-50/50 dark:bg-yellow-900/10 rounded-r-lg">
               {blog.excerpt}
             </div>
           )}
 
           {/* Main Content */}
           <div
-            dir={isRTL ? 'rtl' : 'ltr'}
+            dir={contentRTL ? 'rtl' : 'ltr'}
             className="prose prose-base sm:prose-lg dark:prose-invert max-w-none
               prose-headings:text-gray-900 dark:prose-headings:text-white
               prose-p:text-gray-800 dark:prose-p:text-gray-200
@@ -450,7 +673,7 @@ export default function BlogDetailPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 border-t border-gray-200 dark:border-gray-700">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <FaTags className="text-blue-600 dark:text-yellow-400" />
-                {t.topicsAndTags}
+                {t('blogDetailPage.topicsAndTags')}
               </h2>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {blog.tags.map((tag, index) => (
@@ -473,7 +696,7 @@ export default function BlogDetailPage() {
             <div id="related" className="scroll-mt-24"></div>
             <div dir="ltr" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 mt-6 sm:mt-8 border-t border-gray-200 dark:border-gray-700">
               <h2 dir={isRTL ? 'rtl' : 'ltr'} className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-                {t.relatedPosts}
+                {t('blogDetailPage.relatedPosts')}
               </h2>
 
               {/* Carousel Container with Side Arrows */}
@@ -563,23 +786,23 @@ export default function BlogDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 mt-6 sm:mt-8">
           <div className="bg-gradient-to-r from-blue-600 to-teal-600 dark:from-yellow-500 dark:to-orange-500 rounded-xl p-6 sm:p-8 text-center text-white">
             <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">
-              {t.ctaTitle}
+              {t('blogDetailPage.ctaTitle')}
             </h3>
             <p className="text-base sm:text-lg mb-4 sm:mb-6">
-              {t.ctaDescription}
+              {t('blogDetailPage.ctaDescription')}
             </p>
             <div className="flex justify-center gap-3 sm:gap-4 flex-wrap">
               <Link
                 to="/guest/tours"
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-white text-blue-600 dark:text-orange-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
               >
-                {t.browseTours}
+                {t('blogDetailPage.browseTours')}
               </Link>
               <Link
                 to="/packages"
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-white text-teal-600 dark:text-yellow-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
               >
-                {t.viewPackages}
+                {t('blogDetailPage.viewPackages')}
               </Link>
             </div>
           </div>

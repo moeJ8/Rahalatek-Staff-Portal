@@ -13,6 +13,7 @@ const scheduleConfigSchema = new mongoose.Schema({
             'upcoming-events',
             'monthly-financial',
             'custom-reminders',
+            'weekly-blog-whatsapp-report',
             'cleanup'
         ]
     },
@@ -115,6 +116,14 @@ scheduleConfigSchema.statics.initializeDefaults = async function() {
             description: 'Cleanup expired notifications',
             displaySchedule: 'Every hour',
             metadata: { hour: null, minute: 0 }
+        }
+        ,
+        {
+            jobName: 'weekly-blog-whatsapp-report',
+            cronExpression: '0 8 * * 1',
+            description: 'Weekly WhatsApp clicks report per author',
+            displaySchedule: 'Every Monday at 8:00 AM',
+            metadata: { hour: 8, minute: 0, dayOfWeek: [1] }
         }
     ];
 

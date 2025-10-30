@@ -320,6 +320,92 @@ exports.downloadFinancialSummaryPDF = async (req, res) => {
 };
 
 /**
+ * Download weekly WhatsApp clicks report as PDF
+ */
+exports.downloadWhatsappWeeklyPDF = async (req, res) => {
+    try {
+        const { notificationId } = req.query;
+        if (!notificationId) {
+            return res.status(400).json({ success: false, message: 'notificationId is required' });
+        }
+
+        const Notification = require('../models/Notification');
+        const notification = await Notification.findById(notificationId);
+        if (!notification) {
+            return res.status(404).json({ success: false, message: 'Notification not found' });
+        }
+        if (notification.type !== 'weekly_blog_whatsapp_report') {
+            return res.status(400).json({ success: false, message: 'Invalid notification type for this download' });
+        }
+
+        // Authorization: allow target user to download, admins and content managers as well
+        const isTarget = notification.targetUser && notification.targetUser.toString() === req.user.userId;
+        if (!isTarget && !req.user.isAdmin && !req.user.isContentManager) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const WhatsappClicksReportService = require('../services/whatsappClicksReportService');
+        const PDFService = require('../services/pdfService');
+
+        let pdfBuffer;
+        let fileName = notification.metadata?.fileName || `whatsapp-clicks-weekly-${new Date().toISOString().slice(0,10)}.pdf`;
+
+        if (notification.metadata?.scope === 'all') {
+            // Combined all-authors report with weekly clicks + top 10 all-time
+            const week = WhatsappClicksReportService.getCurrentWeekRange();
+            const Blog = require('../models/Blog');
+            const postsRaw = await Blog.find({})
+                .populate('author', 'username')
+                .select('title slug status whatsappClicks createdAt updatedAt author clicksByDate');
+            const weeklyPosts = postsRaw.map(p => ({
+                title: p.title,
+                slug: p.slug,
+                status: p.status,
+                whatsappClicks: p.whatsappClicks || 0,
+                createdAt: p.createdAt,
+                updatedAt: p.updatedAt,
+                authorName: p.author?.username || 'Unknown',
+                weeklyClicks: WhatsappClicksReportService.sumWeeklyClicks(p.clicksByDate, week.start, week.end)
+            })).filter(p => p.weeklyClicks > 0)
+              .sort((a,b) => b.weeklyClicks - a.weeklyClicks);
+
+            const top10 = [...postsRaw]
+                .sort((a,b) => (b.whatsappClicks||0) - (a.whatsappClicks||0))
+                .slice(0,10)
+                .map(p => ({
+                    title: p.title,
+                    slug: p.slug,
+                    status: p.status,
+                    whatsappClicks: p.whatsappClicks || 0,
+                    createdAt: p.createdAt,
+                    updatedAt: p.updatedAt,
+                    authorName: p.author?.username || 'Unknown'
+                }));
+
+            const data = { 
+                week: { start: WhatsappClicksReportService.formatDate(week.start), end: WhatsappClicksReportService.formatDate(week.end) },
+                weeklyPosts,
+                top10
+            };
+            pdfBuffer = await PDFService.generateWeeklyWhatsappClicksAllAuthorsPDF(data);
+        } else {
+            // Per-author report
+            const authorId = notification.metadata?.author?._id || notification.targetUser || req.user.userId;
+            const reportData = await WhatsappClicksReportService.buildAuthorReportData(authorId);
+            pdfBuffer = await PDFService.generateWeeklyWhatsappClicksPDF(reportData, null);
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        return res.end(pdfBuffer);
+    } catch (error) {
+        console.error('❌ Error generating WhatsApp weekly PDF:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate PDF' });
+    }
+};
+
+/**
  * Delete a notification (all users can delete their own notifications)
  */
 exports.deleteNotification = async (req, res) => {

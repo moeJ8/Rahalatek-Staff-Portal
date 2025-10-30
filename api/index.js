@@ -33,6 +33,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const aboutHeroRoutes = require('./routes/aboutHeroRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const youtubeShortsRoutes = require('./routes/youtubeShortsRoutes');
+const sitemapRoutes = require('./routes/sitemapRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const SchedulerService = require('./services/schedulerService');
@@ -97,6 +98,8 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/about-hero', aboutHeroRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/youtube-shorts', youtubeShortsRoutes);
+// Public sitemap endpoints
+app.use('/', sitemapRoutes);
 
 // API root route - specify exact path match
 app.get('/api', (req, res) => {

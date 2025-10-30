@@ -13,6 +13,7 @@ router.post('/generate-departure-reminders', notificationController.generateDepa
 router.post('/generate-daily-summary', notificationController.generateDailyArrivalsSummary);
 router.post('/generate-monthly-financial-summary', notificationController.generateMonthlyFinancialSummary);
 router.get('/download-financial-summary-pdf', notificationController.downloadFinancialSummaryPDF);
+router.get('/download-whatsapp-weekly-pdf', notificationController.downloadWhatsappWeeklyPDF);
 router.delete('/:id', notificationController.deleteNotification);
 router.post('/cleanup-expired', notificationController.cleanupExpired);
 

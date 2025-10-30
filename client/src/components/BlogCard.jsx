@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaEye, FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaCrown, FaCalendarAlt, FaUser, FaStar } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaToggleOn, FaToggleOff, FaCrown, FaCalendarAlt, FaUser, FaStar, FaWhatsapp } from 'react-icons/fa';
 import CustomButton from './CustomButton';
 
 const BlogCard = ({ 
@@ -90,6 +90,12 @@ const BlogCard = ({
             <FaEye className="text-gray-400 w-3 h-3" />
             <span>{blog.views || 0} views</span>
           </div>
+          {typeof blog.whatsappClicks === 'number' && (
+            <div className="flex items-center gap-1">
+              <FaWhatsapp className="text-gray-400 w-3 h-3" />
+              <span>{blog.whatsappClicks} WhatsApp</span>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             <FaCalendarAlt className="text-gray-400 w-3 h-3" />
             <span>{formatDate(blog.createdAt)}</span>
@@ -159,6 +165,8 @@ const BlogCard = ({
               </CustomButton>
             </div>
           )}
+
+          {/* Removed per-blog WhatsApp report button */}
         </div>
       </div>
     </div>

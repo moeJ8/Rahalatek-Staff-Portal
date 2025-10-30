@@ -9,6 +9,7 @@ import StayOnTop from './components/StayOnTop'
 import ScrollToTop from './components/ScrollToTop'
 import RahalatekLoader from './components/RahalatekLoader'
 import FloatingContactButtons from './components/FloatingContactButtons'
+import FloatingWhatsAppButton from './components/FloatingWhatsAppButton'
 
 // Lazy load all page components
 const AdminPage = React.lazy(() => import('./pages/AdminPage'))
@@ -84,10 +85,20 @@ const ConditionalFloatingContact = () => {
                       location.pathname.startsWith('/country/') ||
                       location.pathname.startsWith('/blog') ||
                       location.pathname.includes('/city/');
+  // Hide specifically on blog detail pages
+  const isBlogDetail = /^\/(ar|fr)\/blog\/.+|^\/blog\/.+/.test(location.pathname);
   
-  if (!isGuestPage) return null;
+  if (!isGuestPage || isBlogDetail) return null;
   
   return <FloatingContactButtons />;
+};
+
+// Show only on blog detail pages: WhatsApp floating button
+const ConditionalFloatingWhatsApp = () => {
+  const location = useLocation();
+  const isBlogDetail = /^\/(ar|fr)\/blog\/.+|^\/blog\/.+/.test(location.pathname);
+  if (!isBlogDetail) return null;
+  return <FloatingWhatsAppButton />;
 };
 
 // Component to conditionally render Footer (hide on sign-in page)
@@ -154,6 +165,7 @@ function App() {
         <StayOnTop />
         <ConditionalScrollToTop />
         <ConditionalFloatingContact />
+        <ConditionalFloatingWhatsApp />
         <Header />
         
         <main className="flex-grow">

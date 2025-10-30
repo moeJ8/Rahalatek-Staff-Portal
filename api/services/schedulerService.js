@@ -126,6 +126,10 @@ class SchedulerService {
             },
             'upcoming-events': () => NotificationService.generateUpcomingEventsEmails(),
             'monthly-financial': () => NotificationService.generateMonthlyFinancialSummaryEmails(),
+            'weekly-blog-whatsapp-report': async () => {
+                const WhatsappClicksReportService = require('./whatsappClicksReportService');
+                await WhatsappClicksReportService.generateWeeklyForAllAuthors();
+            },
             'custom-reminders': () => NotificationService.processScheduledReminders(),
             'cleanup': () => NotificationService.cleanupExpiredNotifications()
         };
@@ -235,7 +239,8 @@ class SchedulerService {
             'upcoming-events': '📅',
             'monthly-financial': '💰',
             'custom-reminders': '⚡',
-            'cleanup': '🧹'
+            'cleanup': '🧹',
+            'weekly-blog-whatsapp-report': '📱'
         };
         return icons[jobName] || '⚙️';
     }

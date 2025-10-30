@@ -6,6 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Card, Alert } from 'flowbite-react';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSave, FaTimes, FaFilter, FaSyncAlt, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import Search from '../Search';
 import CustomButton from '../CustomButton';
 import CustomCheckbox from '../CustomCheckbox';
@@ -51,15 +52,32 @@ export default function BlogManagement({ user }) {
     metaKeywords: [],
     status: 'draft',
     isFeatured: false,
-    tags: []
+    tags: [],
+    originalLanguage: 'ar',
+    translations: {
+      title: { en: '', fr: '' },
+      excerpt: { en: '', fr: '' },
+      content: { en: '', fr: '' },
+      metaDescription: { en: '', fr: '' }
+    }
   });
   
   // Input states
   const [keywordInput, setKeywordInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   
-  // Quill editor ref
+  // Translation collapse states
+  const [translationCollapse, setTranslationCollapse] = useState({
+    title: false,
+    content: false,
+    excerpt: false,
+    metaDescription: false
+  });
+  
+  // Quill editor refs
   const quillRef = useRef(null);
+  const quillRefEn = useRef(null);
+  const quillRefFr = useRef(null);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -415,10 +433,64 @@ export default function BlogManagement({ user }) {
       }));
   };
 
+  // Get available translation languages based on original language
+  const getTranslationLanguages = () => {
+    const original = formData.originalLanguage || 'ar';
+    return ['en', 'ar', 'fr'].filter(lang => lang !== original);
+  };
+
+  // Convert translations Map to object (for display)
+  // Handles both Map instances and plain objects (from MongoDB serialization)
+  const mapToObject = (translationField) => {
+    if (!translationField) return {};
+    
+    // If it's already a plain object (from MongoDB), return it directly
+    if (typeof translationField === 'object' && !(translationField instanceof Map)) {
+      return translationField;
+    }
+    
+    // If it's a Map, convert it to object
+    if (translationField instanceof Map) {
+      const obj = {};
+      translationField.forEach((value, key) => {
+        obj[key] = value;
+      });
+      return obj;
+    }
+    
+    return {};
+  };
+
   const handleOpenModal = (blog = null) => {
     if (blog) {
       setEditMode(true);
       setSelectedBlog(blog);
+      
+      // Convert translations Maps to objects
+      const translations = blog.translations || {};
+      
+      // Get translation languages based on original language
+      const originalLang = blog.originalLanguage || 'ar';
+      const translationLangs = ['en', 'ar', 'fr'].filter(lang => lang !== originalLang);
+      
+      // Helper to normalize translation field
+      const normalizeTranslationField = (field) => {
+        const converted = mapToObject(field);
+        // Ensure all translation languages have keys, even if empty
+        const normalized = {};
+        translationLangs.forEach(lang => {
+          normalized[lang] = converted[lang] || '';
+        });
+        return normalized;
+      };
+      
+      const normalizedTranslations = {
+        title: normalizeTranslationField(translations.title),
+        excerpt: normalizeTranslationField(translations.excerpt),
+        content: normalizeTranslationField(translations.content),
+        metaDescription: normalizeTranslationField(translations.metaDescription)
+      };
+      
       setFormData({
         title: blog.title || '',
         slug: blog.slug || '',
@@ -430,7 +502,9 @@ export default function BlogManagement({ user }) {
         metaKeywords: blog.metaKeywords || [],
         status: blog.status || 'draft',
         isFeatured: blog.isFeatured || false,
-        tags: blog.tags || []
+        tags: blog.tags || [],
+        originalLanguage: blog.originalLanguage || 'ar',
+        translations: normalizedTranslations
       });
     } else {
       setEditMode(false);
@@ -446,7 +520,14 @@ export default function BlogManagement({ user }) {
         metaKeywords: [],
         status: 'draft',
         isFeatured: false,
-        tags: []
+        tags: [],
+        originalLanguage: 'ar',
+        translations: {
+          title: { en: '', fr: '' },
+          excerpt: { en: '', fr: '' },
+          content: { en: '', fr: '' },
+          metaDescription: { en: '', fr: '' }
+        }
       });
     }
     setModalOpen(true);
@@ -467,11 +548,24 @@ export default function BlogManagement({ user }) {
       metaKeywords: [],
       status: 'draft',
       isFeatured: false,
-      tags: []
+      tags: [],
+      originalLanguage: 'ar',
+      translations: {
+        title: { en: '', fr: '' },
+        excerpt: { en: '', fr: '' },
+        content: { en: '', fr: '' },
+        metaDescription: { en: '', fr: '' }
+      }
     });
     setKeywordInput('');
     setTagInput('');
     setSlugError('');
+    setTranslationCollapse({
+      title: false,
+      content: false,
+      excerpt: false,
+      metaDescription: false
+    });
   };
 
   const handleInputChange = (e) => {
@@ -480,6 +574,66 @@ export default function BlogManagement({ user }) {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  // Handle translation changes
+  const handleTranslationChange = (field, language, value) => {
+    setFormData(prev => ({
+      ...prev,
+      translations: {
+        ...prev.translations,
+        [field]: {
+          ...prev.translations[field],
+          [language]: value
+        }
+      }
+    }));
+  };
+
+  // Toggle translation collapse
+  const toggleTranslationCollapse = (section) => {
+    setTranslationCollapse(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Handle original language change - reset translations to ensure only non-original languages are stored
+  const handleOriginalLanguageChange = (value) => {
+    setFormData(prev => {
+      const newOriginalLang = value;
+      
+      // Reset translations when original language changes
+      const translationLanguages = ['en', 'ar', 'fr'].filter(lang => lang !== newOriginalLang);
+      const newTranslations = {
+        title: {},
+        excerpt: {},
+        content: {},
+        metaDescription: {}
+      };
+      
+      // Preserve translations for languages that are still valid (not the new original)
+      translationLanguages.forEach(lang => {
+        if (prev.translations?.title?.[lang]) {
+          newTranslations.title[lang] = prev.translations.title[lang];
+        }
+        if (prev.translations?.excerpt?.[lang]) {
+          newTranslations.excerpt[lang] = prev.translations.excerpt[lang];
+        }
+        if (prev.translations?.content?.[lang]) {
+          newTranslations.content[lang] = prev.translations.content[lang];
+        }
+        if (prev.translations?.metaDescription?.[lang]) {
+          newTranslations.metaDescription[lang] = prev.translations.metaDescription[lang];
+        }
+      });
+      
+      return {
+        ...prev,
+        originalLanguage: newOriginalLang,
+        translations: newTranslations
+      };
+    });
   };
 
   // Handle slug input with validation
@@ -577,7 +731,7 @@ export default function BlogManagement({ user }) {
       toast.error('Please enter a post title', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -586,7 +740,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
       return;
@@ -596,7 +750,7 @@ export default function BlogManagement({ user }) {
       toast.error('Please select a category', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -605,7 +759,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
       return;
@@ -615,7 +769,7 @@ export default function BlogManagement({ user }) {
       toast.error('Please upload a main image', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -624,7 +778,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
       return;
@@ -634,7 +788,7 @@ export default function BlogManagement({ user }) {
       toast.error('Please write post content', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -643,7 +797,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
       return;
@@ -656,7 +810,9 @@ export default function BlogManagement({ user }) {
       // Format slug before submission
       const submissionData = {
         ...formData,
-        slug: formData.slug ? formatSlug(formData.slug) : ''
+        slug: formData.slug ? formatSlug(formData.slug) : '',
+        originalLanguage: formData.originalLanguage || 'ar',
+        translations: formData.translations || {}
       };
       
       const response = await axios[method](url, submissionData, {
@@ -707,7 +863,7 @@ export default function BlogManagement({ user }) {
       toast.error(error.response?.data?.message || 'Failed to save post', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -716,7 +872,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
     }
@@ -764,7 +920,7 @@ export default function BlogManagement({ user }) {
       toast.error('Failed to delete post', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -773,7 +929,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
     } finally {
@@ -821,7 +977,7 @@ export default function BlogManagement({ user }) {
       toast.error('Failed to update post status', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -830,7 +986,7 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
       });
     }
@@ -869,7 +1025,7 @@ export default function BlogManagement({ user }) {
       toast.error('Failed to update featured status', {
         duration: 3000,
         style: {
-          background: '#ef4444',
+          background: '#f44336',
           color: '#fff',
           fontWeight: 'bold',
           fontSize: '16px',
@@ -878,8 +1034,33 @@ export default function BlogManagement({ user }) {
         },
         iconTheme: {
           primary: '#fff',
-          secondary: '#ef4444',
+          secondary: '#f44336',
         },
+      });
+    }
+  };
+
+  // Removed per-blog WhatsApp report trigger
+
+  const triggerWeeklyWhatsappReport = async (scope = 'self') => {
+    try {
+      const params = new URLSearchParams();
+      if (scope === 'all') params.set('scope', 'all');
+      const res = await axios.post(`/api/blogs/reports/whatsapp-weekly?${params.toString()}`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const count = res.data?.count ?? 0;
+      toast.success(scope === 'all' ? `Weekly reports queued for ${count} author(s)` : 'Your weekly report is queued', {
+        duration: 3000,
+        style: { background: '#4CAF50', color: '#fff', fontWeight: 'bold', fontSize: '16px', padding: '16px', zIndex: 10000 },
+        iconTheme: { primary: '#fff', secondary: '#4CAF50' }
+      });
+    } catch (error) {
+      console.error('Error triggering weekly report:', error);
+      toast.error(error.response?.data?.message || 'Failed to trigger weekly report', {
+        duration: 3000,
+        style: { background: '#f44336', color: '#fff', fontWeight: 'bold', fontSize: '16px', padding: '16px', zIndex: 10000 },
+        iconTheme: { primary: '#fff', secondary: '#f44336' }
       });
     }
   };
@@ -899,7 +1080,7 @@ export default function BlogManagement({ user }) {
         <div className="flex justify-center mb-4">
           <h2 className="text-xl sm:text-2xl font-bold dark:text-white">Blog Management</h2>
         </div>
-        <div className="flex justify-center sm:justify-end">
+        <div className="flex justify-center sm:justify-end gap-2 flex-wrap">
           <CustomButton
             onClick={() => handleOpenModal()}
             variant="blueToTeal"
@@ -909,6 +1090,25 @@ export default function BlogManagement({ user }) {
           >
             Create Post
           </CustomButton>
+          {/* Weekly WhatsApp Clicks Report Triggers */}
+          <CustomButton
+            onClick={() => triggerWeeklyWhatsappReport('self')}
+            variant="teal"
+            size="sm"
+            className="w-full sm:w-auto"
+          >
+            Send My Weekly WhatsApp Report
+          </CustomButton>
+          {(user?.isAdmin || user?.isContentManager) && (
+            <CustomButton
+              onClick={() => triggerWeeklyWhatsappReport('all')}
+              variant="purple"
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Send All Authors Weekly Reports
+            </CustomButton>
+          )}
         </div>
       </div>
 
@@ -1138,11 +1338,42 @@ export default function BlogManagement({ user }) {
         maxWidth="md:max-w-screen-2xl"
       >
         <form id="blog-form" onSubmit={handleSubmit} className="space-y-6 pb-12">
+          {/* Original Language */}
+          <div>
+            <Select
+              id="originalLanguage"
+              label="Original Language"
+              value={formData.originalLanguage}
+              onChange={handleOriginalLanguageChange}
+              options={[
+                { value: 'ar', label: 'Arabic (العربية)' },
+                { value: 'en', label: 'English' },
+                { value: 'fr', label: 'French (Français)' }
+              ]}
+              required
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Select the language in which you are writing the original content. Translation fields will appear for other languages.
+            </p>
+          </div>
+
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Title <span className="text-red-500">*</span>
-            </label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Title <span className="text-red-500">*</span>
+              </label>
+              {getTranslationLanguages().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('title')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.title ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              )}
+            </div>
             <TextInput
               id="title"
               name="title"
@@ -1150,6 +1381,25 @@ export default function BlogManagement({ user }) {
               onChange={handleInputChange}
               placeholder="Enter post title"
             />
+            
+            {/* Title Translations */}
+            {translationCollapse.title && getTranslationLanguages().length > 0 && (
+              <div className="mt-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Title Translations (Optional)
+                </p>
+                {getTranslationLanguages().map(lang => (
+                  <TextInput
+                    key={lang}
+                    label={`${lang === 'en' ? 'English' : lang === 'ar' ? 'Arabic' : 'French'} Translation`}
+                    placeholder={`Leave empty to use original as fallback`}
+                    value={formData.translations?.title?.[lang] || ''}
+                    onChange={(e) => handleTranslationChange('title', lang, e.target.value)}
+                    className="mb-2"
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Category */}
@@ -1189,9 +1439,21 @@ export default function BlogManagement({ user }) {
 
           {/* Content Editor */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Post Content <span className="text-red-500">*</span>
-            </label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Post Content <span className="text-red-500">*</span>
+              </label>
+              {getTranslationLanguages().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('content')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.content ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              )}
+            </div>
             <div className="bg-white dark:bg-slate-800 rounded-lg">
               <ReactQuill
                 ref={quillRef}
@@ -1204,14 +1466,56 @@ export default function BlogManagement({ user }) {
                 placeholder="Write your post content here..."
               />
             </div>
+            
+            {/* Content Translations */}
+            {translationCollapse.content && getTranslationLanguages().length > 0 && (
+              <div className="mt-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Content Translations (Optional)
+                </p>
+                {getTranslationLanguages().map(lang => (
+                  <div key={lang} className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {lang === 'en' ? 'English' : lang === 'ar' ? 'Arabic' : 'French'} Translation
+                    </label>
+                    <div className="bg-white dark:bg-slate-800 rounded-lg">
+                      <ReactQuill
+                        ref={lang === 'en' ? quillRefEn : quillRefFr}
+                        theme="snow"
+                        value={formData.translations?.content?.[lang] || ''}
+                        onChange={(value) => handleTranslationChange('content', lang, value)}
+                        modules={modules}
+                        formats={formats}
+                        className="h-[400px] mb-12"
+                        placeholder={`Write ${lang === 'en' ? 'English' : lang === 'ar' ? 'Arabic' : 'French'} translation here...`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Excerpt */}
           <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Excerpt (Brief Summary)
+              </label>
+              {getTranslationLanguages().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('excerpt')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.excerpt ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              )}
+            </div>
             <TextInput
               id="excerpt"
               name="excerpt"
-              label="Excerpt (Brief Summary)"
               as="textarea"
               rows={3}
               value={formData.excerpt}
@@ -1222,6 +1526,28 @@ export default function BlogManagement({ user }) {
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {formData.excerpt.length}/300 characters
             </p>
+            
+            {/* Excerpt Translations */}
+            {translationCollapse.excerpt && getTranslationLanguages().length > 0 && (
+              <div className="mt-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Excerpt Translations (Optional)
+                </p>
+                {getTranslationLanguages().map(lang => (
+                  <TextInput
+                    key={lang}
+                    as="textarea"
+                    rows={2}
+                    label={`${lang === 'en' ? 'English' : lang === 'ar' ? 'Arabic' : 'French'} Translation`}
+                    placeholder={`Leave empty to use original as fallback`}
+                    value={formData.translations?.excerpt?.[lang] || ''}
+                    onChange={(e) => handleTranslationChange('excerpt', lang, e.target.value)}
+                    maxLength="300"
+                    className="mb-2"
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Main Image */}
@@ -1277,10 +1603,24 @@ export default function BlogManagement({ user }) {
 
           {/* Meta Description */}
           <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Meta Description (SEO)
+              </label>
+              {getTranslationLanguages().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('metaDescription')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.metaDescription ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              )}
+            </div>
             <TextInput
               id="metaDescription"
               name="metaDescription"
-              label="Meta Description (SEO)"
               as="textarea"
               rows={2}
               value={formData.metaDescription}
@@ -1291,6 +1631,28 @@ export default function BlogManagement({ user }) {
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {formData.metaDescription.length}/160 characters
             </p>
+            
+            {/* Meta Description Translations */}
+            {translationCollapse.metaDescription && getTranslationLanguages().length > 0 && (
+              <div className="mt-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Meta Description Translations (Optional)
+                </p>
+                {getTranslationLanguages().map(lang => (
+                  <TextInput
+                    key={lang}
+                    as="textarea"
+                    rows={2}
+                    label={`${lang === 'en' ? 'English' : lang === 'ar' ? 'Arabic' : 'French'} Translation`}
+                    placeholder={`Leave empty to use original as fallback`}
+                    value={formData.translations?.metaDescription?.[lang] || ''}
+                    onChange={(e) => handleTranslationChange('metaDescription', lang, e.target.value)}
+                    maxLength="160"
+                    className="mb-2"
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Meta Keywords */}

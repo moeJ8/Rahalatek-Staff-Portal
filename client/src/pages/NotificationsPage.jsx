@@ -5,7 +5,7 @@ import CustomCheckbox from '../components/CustomCheckbox';
 import CustomButton from '../components/CustomButton';
 import Search from '../components/Search';
 import Select from '../components/Select';
-import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock, FaChartLine } from 'react-icons/fa';
+import { FaBell, FaTrash, FaCheck, FaCheckDouble, FaTimes, FaExclamationTriangle, FaPlane, FaPlaneDeparture, FaPlaneArrival, FaCalendarAlt, FaCalendarDay, FaUser, FaSearch, FaFilter, FaSort, FaClock, FaChartLine, FaWhatsapp } from 'react-icons/fa';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -314,6 +314,8 @@ const NotificationsPage = () => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
+      case 'weekly_blog_whatsapp_report':
+        return <FaWhatsapp className="w-5 h-5 text-green-500 dark:text-green-400" />;
       case 'voucher_arrival_reminder':
         return <FaPlaneArrival className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
       case 'voucher_departure_reminder':
@@ -426,6 +428,39 @@ const NotificationsPage = () => {
           color: 'white',
         },
       });
+    } finally {
+      setDownloadingPdf(null);
+    }
+  };
+
+  // Download WhatsApp weekly PDF via API (same method as financial summary)
+  const downloadWhatsappWeeklyPDF = async (notification) => {
+    try {
+      setDownloadingPdf(notification._id);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/notifications/download-whatsapp-weekly-pdf', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { notificationId: notification._id },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = notification.metadata?.fileName || 'whatsapp-weekly.pdf';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) filename = match[1];
+      }
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`PDF downloaded: ${filename}`, { duration: 2500, style: { background: '#14b8a6', color: '#fff' } });
+    } catch (e) {
+      console.error('Download weekly PDF failed', e);
+      toast.error('Failed to download PDF', { duration: 3000, style: { background: '#f44336', color: '#fff' } });
     } finally {
       setDownloadingPdf(null);
     }
@@ -747,6 +782,20 @@ const NotificationsPage = () => {
                           {notification.type === 'monthly_financial_summary' && notification.metadata?.hasDownloadLink && (
                             <CustomButton
                               onClick={() => downloadFinancialSummaryPDF(notification)}
+                              disabled={downloadingPdf === notification._id}
+                              loading={downloadingPdf === notification._id}
+                              variant="teal"
+                              size="xs"
+                              title="Download PDF Report"
+                            >
+                              {downloadingPdf === notification._id ? 'Generating...' : 'Download PDF'}
+                            </CustomButton>
+                          )}
+
+                          {/* Download for weekly WhatsApp clicks with embedded PDF */}
+                          {notification.type === 'weekly_blog_whatsapp_report' && (
+                            <CustomButton
+                              onClick={() => downloadWhatsappWeeklyPDF(notification)}
                               disabled={downloadingPdf === notification._id}
                               loading={downloadingPdf === notification._id}
                               variant="teal"

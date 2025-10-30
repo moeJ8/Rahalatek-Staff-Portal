@@ -302,6 +302,216 @@ class PDFService {
             }
         }
     }
+
+    /**
+     * Generate PDF for weekly WhatsApp clicks report per author
+     */
+    static async generateWeeklyWhatsappClicksPDF(reportData, user) {
+        let browser;
+        try {
+            await ensureChrome();
+            const launchOptions = this.getLaunchOptions();
+            try {
+                browser = await puppeteer.launch(launchOptions);
+            } catch (e) {
+                browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+            }
+
+            const page = await browser.newPage();
+
+            // Build minimal, clean HTML for the report
+            const { week, author, weeklyPosts, top10 } = reportData;
+            const title = `Weekly WhatsApp Clicks Report`;
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; padding: 24px; color: #111827; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    .sub { color: #6b7280; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+    th, td { padding: 10px 8px; border: 1px solid #e5e7eb; }
+    th { background: #f3f4f6; text-align: left; }
+    tr:nth-child(even){ background:#fafafa }
+    .totals { margin-top: 16px; font-weight: 700; }
+  </style>
+  </head>
+  <body>
+    <h1>${title}</h1>
+    <div class="sub">Author: ${author?.username || author?.name || 'Unknown'} • Week: ${week.start} → ${week.end}</div>
+    <h2>This Week's Click Activity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>Weekly Clicks</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${weeklyPosts.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${(p.title || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${p.slug}</td>
+            <td>${p.status}</td>
+            <td>${p.weeklyClicks || 0}</td>
+            <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+            <td>${new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="totals">Total weekly clicks: ${weeklyPosts.reduce((s,p)=>s+(p.weeklyClicks||0),0)}</div>
+
+    <h2 style="margin-top:28px;">Top 10 Posts (All-Time)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>All-Time Clicks</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${top10.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${(p.title || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${p.slug}</td>
+            <td>${p.status}</td>
+            <td>${p.whatsappClicks || 0}</td>
+            <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+            <td>${new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </body>
+</html>`;
+
+            await page.setContent(html, { waitUntil: ['domcontentloaded', 'networkidle2'], timeout: 60000 });
+            const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '1.25cm', bottom: '1.25cm', left: '1.25cm', right: '1.25cm' } });
+            return pdf;
+        } finally {
+            if (browser) { try { await browser.close(); } catch {} }
+        }
+    }
+
+    /**
+     * Generate PDF for weekly WhatsApp clicks report for ALL authors (admin/CM)
+     */
+    static async generateWeeklyWhatsappClicksAllAuthorsPDF(reportData) {
+        let browser;
+        try {
+            await ensureChrome();
+            const launchOptions = this.getLaunchOptions();
+            try {
+                browser = await puppeteer.launch(launchOptions);
+            } catch (e) {
+                browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+            }
+            const page = await browser.newPage();
+
+            const { week, posts, weeklyPosts, top10 } = reportData;
+            const title = `Weekly WhatsApp Clicks Report — All Authors`;
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${title}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; padding: 24px; color: #111827; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    .sub { color: #6b7280; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+    th, td { padding: 10px 8px; border: 1px solid #e5e7eb; }
+    th { background: #f3f4f6; text-align: left; }
+    tr:nth-child(even){ background:#fafafa }
+    .totals { margin-top: 16px; font-weight: 700; }
+  </style>
+  </head>
+  <body>
+    <h1>${title}</h1>
+    <div class="sub">Week: ${week.start} → ${week.end}</div>
+    <h2>This Week's Click Activity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Author</th>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>Weekly Clicks</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${weeklyPosts.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${(p.authorName || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${(p.title || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${p.slug}</td>
+            <td>${p.status}</td>
+            <td>${p.weeklyClicks || 0}</td>
+            <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+            <td>${new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="totals">Total posts: ${weeklyPosts.length} • Total weekly clicks: ${weeklyPosts.reduce((s,p)=>s+(p.weeklyClicks||0),0)}</div>
+
+    <h2 style="margin-top:28px;">Top 10 Posts (All-Time)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Author</th>
+          <th>Title</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>All-Time Clicks</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${top10.map((p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${(p.authorName || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${(p.title || '').toString().replace(/</g, '&lt;')}</td>
+            <td>${p.slug}</td>
+            <td>${p.status}</td>
+            <td>${p.whatsappClicks || 0}</td>
+            <td>${new Date(p.createdAt).toLocaleDateString()}</td>
+            <td>${new Date(p.updatedAt || p.createdAt).toLocaleDateString()}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </body>
+</html>`;
+
+            await page.setContent(html, { waitUntil: ['domcontentloaded', 'networkidle2'], timeout: 60000 });
+            const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '1.25cm', bottom: '1.25cm', left: '1.25cm', right: '1.25cm' } });
+            return pdf;
+        } finally {
+            if (browser) { try { await browser.close(); } catch {} }
+        }
+    }
     
     /**
      * Enhance HTML content for better PDF rendering

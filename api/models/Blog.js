@@ -14,6 +14,11 @@ const blogSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
+    originalLanguage: {
+        type: String,
+        enum: ['en', 'ar', 'fr'],
+        default: 'ar'
+    },
     category: {
         type: String,
         required: [true, 'Blog category is required'],
@@ -109,6 +114,16 @@ const blogSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    whatsappClicks: {
+        type: Number,
+        default: 0
+    },
+    // Daily WhatsApp click counters: { 'YYYY-MM-DD': Number }
+    clicksByDate: {
+        type: Map,
+        of: Number,
+        default: new Map()
+    },
     // Featured flag
     isFeatured: {
         type: Boolean,
@@ -123,6 +138,29 @@ const blogSchema = new mongoose.Schema({
     readingTime: {
         type: Number,
         default: 0
+    },
+    // Translations for multilingual content
+    translations: {
+        title: {
+            type: Map,
+            of: String,
+            default: new Map()
+        },
+        excerpt: {
+            type: Map,
+            of: String,
+            default: new Map()
+        },
+        content: {
+            type: Map,
+            of: String,
+            default: new Map()
+        },
+        metaDescription: {
+            type: Map,
+            of: String,
+            default: new Map()
+        }
     }
 }, {
     timestamps: true,
