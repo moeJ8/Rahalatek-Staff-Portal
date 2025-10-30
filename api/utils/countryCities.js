@@ -7,7 +7,7 @@ const COUNTRY_CITIES = {
   
   "Malaysia": [
     'Kuala Lumpur', 'Penang', 'Langkawi', 'Malacca', 'Johor Bahru',
-    'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands'
+    'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands', 'Selangor'
   ],
   
   "Thailand": [
@@ -46,7 +46,7 @@ const COUNTRY_CITIES = {
   ],
   
   "Albania": [
-    'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Fier', 'Korce',
+    'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Shkodra', 'Fier', 'Korce',
     'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
   ]
 };

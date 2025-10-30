@@ -33,6 +33,8 @@ export default function VouchersPage() {
   const [customDate, setCustomDate] = useState('');
   const [arrivalDateFilter, setArrivalDateFilter] = useState('');
   const [customArrivalDate, setCustomArrivalDate] = useState('');
+  const [arrivalYearFilter, setArrivalYearFilter] = useState('');
+  const [availableArrivalYears, setAvailableArrivalYears] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
 
   const [loading, setLoading] = useState(true);
@@ -138,8 +140,15 @@ export default function VouchersPage() {
         .map(voucher => new Date(voucher.createdAt).getFullYear())
         .filter((year, index, arr) => arr.indexOf(year) === index)
         .sort((a, b) => b - a);
-      
       setAvailableYears(years);
+
+      // Extract available arrival years from arrival dates
+      const arrivalYears = vouchersToShow
+        .map(voucher => voucher.arrivalDate ? new Date(voucher.arrivalDate).getFullYear() : null)
+        .filter(year => year !== null)
+        .filter((year, index, arr) => arr.indexOf(year) === index)
+        .sort((a, b) => b - a);
+      setAvailableArrivalYears(arrivalYears);
       setError('');
     } catch (err) {
       console.error('Error fetching vouchers:', err);
@@ -377,10 +386,19 @@ export default function VouchersPage() {
         );
       }
       
-      // Apply year filter
+      // Apply created year filter
       if (yearFilter) {
+        const yearNum = parseInt(yearFilter);
         filtered = filtered.filter(voucher => 
-          new Date(voucher.createdAt).getFullYear() === parseInt(yearFilter)
+          voucher.createdAt && new Date(voucher.createdAt).getFullYear() === yearNum
+        );
+      }
+
+      // Apply arrival year filter
+      if (arrivalYearFilter) {
+        const aYear = parseInt(arrivalYearFilter);
+        filtered = filtered.filter(voucher => 
+          voucher.arrivalDate && new Date(voucher.arrivalDate).getFullYear() === aYear
         );
       }
       
@@ -410,7 +428,7 @@ export default function VouchersPage() {
     };
 
     applyFilters();
-  }, [searchQuery, userFilter, officeFilter, yearFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers, isDateInRange]);
+  }, [searchQuery, userFilter, officeFilter, yearFilter, arrivalYearFilter, dateFilter, customDate, arrivalDateFilter, customArrivalDate, statusFilter, vouchers, isDateInRange]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -449,6 +467,7 @@ export default function VouchersPage() {
     setUserFilter('');
     setOfficeFilter('');
     setYearFilter('');
+    setArrivalYearFilter('');
     setDateFilter('');
     setCustomDate('');
     setArrivalDateFilter('');
@@ -574,17 +593,36 @@ export default function VouchersPage() {
 
           {/* Filters Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row gap-2 sm:gap-4 lg:justify-center">
-            {/* Year Filter */}
+            {/* Year Filter (Created) */}
             <div className="flex gap-2">
               <div className="w-full sm:w-48">
                 <Select
                   id="yearFilter"
                   value={yearFilter}
                   onChange={(value) => setYearFilter(value)}
-                  placeholder="Year - All Years"
+                  placeholder="Year (Created) - All Years"
                   options={[
-                    { value: '', label: 'Year - All Years' },
+                    { value: '', label: 'Year (Created) - All Years' },
                     ...availableYears.map(year => ({
+                      value: year.toString(),
+                      label: year.toString()
+                    }))
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* Arrival Year Filter */}
+            <div className="flex gap-2">
+              <div className="w-full sm:w-48">
+                <Select
+                  id="arrivalYearFilter"
+                  value={arrivalYearFilter}
+                  onChange={(value) => setArrivalYearFilter(value)}
+                  placeholder="Year (Arrival) - All Years"
+                  options={[
+                    { value: '', label: 'Year (Arrival) - All Years' },
+                    ...availableArrivalYears.map(year => ({
                       value: year.toString(),
                       label: year.toString()
                     }))
@@ -726,7 +764,7 @@ export default function VouchersPage() {
             )}
 
             {/* Clear Filters Button */}
-            {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+            {(searchQuery || userFilter || officeFilter || yearFilter || arrivalYearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
               <div className="flex items-start sm:col-span-2 lg:col-span-1 justify-center sm:justify-start">
                 <button
                   onClick={handleClearFilters}
@@ -740,7 +778,7 @@ export default function VouchersPage() {
           </div>
 
           {/* Active Filters Display */}
-          {(searchQuery || userFilter || officeFilter || yearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
+          {(searchQuery || userFilter || officeFilter || yearFilter || arrivalYearFilter || dateFilter || arrivalDateFilter || statusFilter) && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
               {searchQuery && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -759,7 +797,12 @@ export default function VouchersPage() {
               )}
               {yearFilter && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                  Year: {yearFilter}
+                  Created Year: {yearFilter}
+                </span>
+              )}
+              {arrivalYearFilter && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                  Arrival Year: {arrivalYearFilter}
                 </span>
               )}
               {dateFilter && (
@@ -822,14 +865,15 @@ export default function VouchersPage() {
                   ]}
                   data={[
                     ...filteredVouchers,
-                    ...(isAdmin || isAccountant && filteredVouchers.length > 0 ? 
-                      Object.keys(totals).map((currency, index) => ({
-                        _id: `totals-${currency}`,
-                        isTotal: true,
-                        currency,
-                        isFirstTotal: index === 0,
-                        ...totals[currency]
-                      })) : []
+                    ...(filteredVouchers.length > 0 
+                      ? Object.keys(totals).map((currency, index) => ({
+                          _id: `totals-${currency}`,
+                          isTotal: true,
+                          currency,
+                          isFirstTotal: index === 0,
+                          ...totals[currency]
+                        }))
+                      : []
                     )
                   ]}
                   renderRow={(item) => {
@@ -1169,8 +1213,8 @@ export default function VouchersPage() {
               </CustomScrollbar>
             </div>
 
-            {/* Mobile Totals Summary - Only for Admins and Accountants */}
-            {(isAdmin || isAccountant) && filteredVouchers.length > 0 && (
+            {/* Mobile Totals Summary - Visible to all users */}
+            {filteredVouchers.length > 0 && (
               <div className="sm:hidden mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Totals Summary</h3>
                 {Object.keys(totals).map((currency) => (

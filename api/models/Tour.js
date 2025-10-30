@@ -55,7 +55,7 @@ const tourSchema = new mongoose.Schema({
             'Istanbul', 'Antalya', 'Cappadocia', 'Trabzon', 'Bodrum', 'Fethiye', 'Bursa',
             // Malaysia
             'Kuala Lumpur', 'Penang', 'Langkawi', 'Malacca', 'Johor Bahru',
-            'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands',
+            'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands', 'Selangor',
             // Thailand
             'Bangkok', 'Phuket', 'Pattaya', 'Chiang Mai', 'Krabi', 'Koh Samui',
             'Hua Hin', 'Ayutthaya', 'Chiang Rai', 'Kanchanaburi',
@@ -78,7 +78,7 @@ const tourSchema = new mongoose.Schema({
             'Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori',
             'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi',
             // Albania
-            'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Fier', 'Korce',
+            'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Shkodra', 'Fier', 'Korce',
             'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
         ]
     },

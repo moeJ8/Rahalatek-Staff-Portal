@@ -94,8 +94,9 @@ exports.getCitiesByCountry = async (req, res) => {
             'Johor Bahru': 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=400&h=300&fit=crop&q=80',
             'Kota Kinabalu': 'https://images.unsplash.com/photo-1596738012750-3707c22e4bb5?w=400&h=300&fit=crop&q=80',
             'Kuching': 'https://images.unsplash.com/photo-1586183778882-44e7b5c1e9a4?w=400&h=300&fit=crop&q=80',
-            'Cameron Highlands': 'https://images.unsplash.com/photo-1567202417690-a21b4b2cf7b3?w=400&h=300&fit=crop&q=80',
+            'Cameron Highlands': 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1761840857/Tea_fields__Will_Ellis_gpprje.jpg',
             'Genting Highlands': 'https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?w=400&h=300&fit=crop&q=80',
+            'Selangor': 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1761840857/istockphoto-587901290-612x612_iqytp8.jpg',
             
             // Thailand
             'Bangkok': 'https://images.unsplash.com/photo-1563492065-4c9a4ed7c42d?w=400&h=300&fit=crop&q=80',
@@ -187,10 +188,11 @@ exports.getCitiesByCountry = async (req, res) => {
             'Borjomi': 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400&h=300&fit=crop&q=80',
             
             // Albania
-            'Tirana': 'https://images.unsplash.com/photo-1606402179428-a57976d71fa4?w=400&h=300&fit=crop&q=80',
+            'Tirana': 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1761840858/Sunset-at-Grand-Park-of-Tiranas-Artificial-Lake-scaled_m83m3k.jpg',
             'Durres': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop&q=80',
-            'Vlore': 'https://images.unsplash.com/photo-1544492503-7ad5ac882d5d?w=400&h=300&fit=crop&q=80',
-            'Shkoder': 'https://images.unsplash.com/photo-1571200669781-0b701df0de68?w=400&h=300&fit=crop&q=80',
+            'Vlore': 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1761840857/albania_16x9_b92fhb.avif',
+            'Shkoder': 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1761840857/Shkodra-Scutari-Shkoder-Albania_gaxulo.jpg',
+            'Shkodra': 'https://images.unsplash.com/photo-1571200669781-0b701df0de68?w=400&h=300&fit=crop&q=80',
             'Fier': 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400&h=300&fit=crop&q=80',
             'Korce': 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400&h=300&fit=crop&q=80',
             'Berat': 'https://images.unsplash.com/photo-1589769371245-e1d1e6bd9cd7?w=400&h=300&fit=crop&q=80',
@@ -253,6 +255,57 @@ exports.getCityDetails = async (req, res) => {
         
         // City data with tourism-focused descriptions and top attractions
         const cityData = {
+            // ===== MALAYSIA ADDITIONS =====
+            'Selangor': {
+                country: 'Malaysia',
+                description: 'Selangor surrounds Kuala Lumpur and blends modern attractions with nature getaways. Visit Batu Caves, Sunway Lagoon theme park, i-City Shah Alam, and royal town Klang; explore mangrove fireflies in Kuala Selangor and coffee shops in Petaling Jaya. Easy access, great shopping, and family fun make Selangor a perfect base near KL.',
+                touristicFeatures: [
+                    'Batu Caves - Iconic limestone cave temple with giant statue',
+                    'Sunway Lagoon - Waterpark, amusement rides, and wildlife experiences',
+                    'i-City Shah Alam - LED light city, Snowalk, and theme attractions',
+                    'Sultan Salahuddin Mosque - Blue Mosque with massive dome',
+                    'Kuala Selangor Fireflies - Night boat tours among glowing mangroves',
+                    'Sky Mirror - Photogenic reflective sandbar experiences',
+                    'Royal Klang Heritage Walk - Colonial architecture and food trail',
+                    'Forest Research Institute (FRIM) - Rainforest trails and canopy walk',
+                    'Petaling Jaya Cafes - Third-wave coffee and dining',
+                    'Mitsui Outlet Park & Paradigm Mall - Shopping near KLIA and PJ'
+                ]
+            },
+
+            // ===== ALBANIA ADDITIONS =====
+            'Shkodra': {
+                country: 'Albania',
+                description: 'Shkodra (Shkodër) is Albania’s northern cultural hub between Lake Shkodra and the Albanian Alps. Explore Rozafa Castle, Venetian architecture, lakefront cycling, and nearby Theth and Valbona valleys. Bridges, museums, and authentic cuisine make Shkodra a perfect base for nature and history lovers.',
+                touristicFeatures: [
+                    'Rozafa Castle - Hilltop fortress with panoramic views',
+                    'Lake Shkodra - Cycling paths, boat rides, and birdwatching',
+                    'Mesi Bridge - Historic Ottoman stone bridge',
+                    'Marubi National Museum of Photography - Heritage photo archive',
+                    'Theth & Valbona Valleys - Albanian Alps hiking gateways',
+                    'Venetian-style Architecture - Historic houses and streets',
+                    'Shkodra Cathedral & Lead Mosque - Religious heritage sites',
+                    'Lakefront Restaurants - Fresh fish and traditional cuisine',
+                    'Shiroka & Zogaj - Lakeside villages near Shkodra',
+                    'Cultural Events - Festivals and arts scene'
+                ]
+            },
+            'Vlora': {
+                country: 'Albania',
+                description: 'Vlora (Vlorë) is where the Adriatic meets the Ionian—gateway to the Albanian Riviera. Enjoy beaches, Lungomare promenade, Sazan Island boat trips, Karaburun Peninsula, and Independence Square. Great seafood, coastal hotels, and nearby beaches make Vlora a prime summer destination.',
+                touristicFeatures: [
+                    'Lungomare Promenade - Waterfront walkway with cafes and beaches',
+                    'Zvernec Monastery - Island monastery connected by wooden bridge',
+                    'Karaburun-Sazan Marine Park - Boat tours and snorkeling',
+                    'Independence Monument - Historic square and museum',
+                    'Cold Water (Uji i Ftohte) - Scenic coastal lookout',
+                    'Radhime & Orikum - Nearby beaches and resorts',
+                    'Llogara Pass - Mountain road to Riviera with views',
+                    'Castle of Kanine - Hilltop ruins overlooking Vlora',
+                    'Boating & Sea Activities - Cruises and water sports',
+                    'Seafood Restaurants - Fresh catch and Mediterranean cuisine'
+                ]
+            },
             // ===== TURKEY =====
             'Istanbul': {
                 country: 'Turkey',
