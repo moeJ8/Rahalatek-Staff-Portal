@@ -295,7 +295,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-20">
-            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : "/"} className="flex items-center">
+            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : getLocalizedUrl('/')} className="flex items-center">
               <img 
                 src={isSignInPage ? "/logodark.png" : (darkMode ? "/logodark.png" : "/Logolight.png")} 
                 alt="Rahalatek Logo" 

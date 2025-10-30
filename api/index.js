@@ -46,46 +46,55 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true })); 
 
-// Rate limiting
-// Global API limiter: 100 requests per 15 minutes per IP
-const defaultLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting (enabled only in production)
+const isProd = process.env.NODE_ENV === 'production';
 
-// Burst limiter for engagement/attendance endpoints
-const burstLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+if (isProd) {
+  // honor X-Forwarded-For when behind a proxy/load balancer
+  app.set('trust proxy', 1);
 
-// Strict limiter for auth endpoints
-const strictLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+  // Global API limiter: 100 requests per 15 minutes per IP
+  const defaultLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Do not rate-limit safe public GETs; protect writes and sensitive endpoints instead
+    skip: (req) => req.method === 'GET',
+  });
 
-// Apply global limiter for all API routes
-app.use('/api', defaultLimiter);
+  // Burst limiter for engagement/attendance endpoints
+  const burstLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
-// Route-specific rate limits
-// Blog engagements
-app.use('/api/blogs/slug/:slug/view', burstLimiter);
-app.use('/api/blogs/slug/:slug/whatsapp-click', burstLimiter);
+  // Strict limiter for auth endpoints
+  const strictLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
-// Attendance actions
-app.use('/api/attendance/check-in', burstLimiter);
-app.use('/api/attendance/check-out', burstLimiter);
+  // Apply global limiter for all API routes
+  app.use('/api', defaultLimiter);
 
-// Auth endpoints
-app.use('/api/auth/login', strictLimiter);
-app.use('/api/auth/forgot-password', strictLimiter);
+  // Route-specific rate limits
+  // Blog engagements
+  app.use('/api/blogs/slug/:slug/view', burstLimiter);
+  app.use('/api/blogs/slug/:slug/whatsapp-click', burstLimiter);
+
+  // Attendance actions
+  app.use('/api/attendance/check-in', burstLimiter);
+  app.use('/api/attendance/check-out', burstLimiter);
+
+  // Auth endpoints
+  app.use('/api/auth/login', strictLimiter);
+  app.use('/api/auth/forgot-password', strictLimiter);
+}
 
 mongoose.connect(process.env.MONGO_URI)
   .then(async () => {
