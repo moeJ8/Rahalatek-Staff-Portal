@@ -58,6 +58,152 @@ export default function SignInPage() {
     img.onload = () => setImageLoaded(true);
   }, []);
 
+  // SEO Meta Tags and hreflang
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    // Language-specific content
+    const content = {
+      en: {
+        title: 'Sign In - Rahalatek',
+        description: 'Sign in to your Rahalatek account to access your bookings, manage your travel packages, and explore exclusive deals. Login or create a new account to start your journey.',
+        keywords: 'Rahalatek sign in, login Rahalatek, Rahalatek account, travel account login, tourism login, sign up Rahalatek',
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: 'تسجيل الدخول - رحلاتك',
+        description: 'قم بتسجيل الدخول إلى حساب رحلاتك للوصول إلى حجوزاتك وإدارة باقات السفر واستكشف العروض الحصرية. سجل الدخول أو أنشئ حسابًا جديدًا لبدء رحلتك.',
+        keywords: 'تسجيل دخول رحلاتك, دخول رحلاتك, حساب رحلاتك, تسجيل دخول حساب سفر, تسجيل دخول سياحة, إنشاء حساب رحلاتك',
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: 'Se Connecter - Rahalatek',
+        description: 'Connectez-vous à votre compte Rahalatek pour accéder à vos réservations, gérer vos forfaits voyage et explorer des offres exclusives. Connectez-vous ou créez un nouveau compte pour commencer votre voyage.',
+        keywords: 'Rahalatek se connecter, connexion Rahalatek, compte Rahalatek, connexion compte voyage, connexion tourisme, créer compte Rahalatek',
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const langContent = content[currentLang] || content.en;
+
+    // Update page title
+    document.title = langContent.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', langContent.description);
+    }
+
+    // Update keywords
+    const metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute('content', langContent.keywords);
+    }
+
+    // Update Open Graph
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', langContent.title);
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      ogDescription.setAttribute('content', langContent.description);
+    }
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', langContent.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', langContent.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', langContent.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/signin`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/signin' },
+      { code: 'ar', path: '/ar/signin' },
+      { code: 'fr', path: '/fr/signin' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/signin`;
+    document.head.appendChild(defaultLink);
+  }, [i18n.language]);
+
   useEffect(() => {
     setUsername('');
     setEmail('');

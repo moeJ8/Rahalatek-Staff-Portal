@@ -8,37 +8,149 @@ export default function ContactUsPage() {
   const isRTL = i18n.language === 'ar';
   
   useEffect(() => {
-    document.title = 'Contact Us | Rahalatek';
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    // Language-specific content
+    const content = {
+      en: {
+        title: 'Contact Us - Rahalatek',
+        description: 'Get in touch with Rahalatek. Contact us for tour bookings, hotel reservations, custom packages, and any travel inquiries. We\'re here to help plan your perfect journey.',
+        keywords: 'contact Rahalatek, customer support, travel inquiries, tour booking contact, hotel reservations contact, travel agency contact, tourism help, contact us',
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: 'اتصل بنا - رحلاتك',
+        description: 'تواصل مع رحلاتك. اتصل بنا لحجز الجولات، حجوزات الفنادق، الباقات المخصصة، وأي استفسارات سفر. نحن هنا لمساعدتك في التخطيط لرحلتك المثالية.',
+        keywords: 'اتصل برحلاتك, دعم العملاء, استفسارات السفر, حجز جولات, حجز فنادق, وكالة سفر, مساعدة سياحة, اتصل بنا',
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: 'Contactez-Nous - Rahalatek',
+        description: 'Contactez Rahalatek. Contactez-nous pour les réservations de visites, les réservations d\'hôtels, les forfaits personnalisés et toute demande de voyage. Nous sommes là pour vous aider à planifier votre voyage parfait.',
+        keywords: 'contacter Rahalatek, support client, demandes voyage, contact réservation visite, contact réservation hôtel, contact agence voyage, aide tourisme, contactez-nous',
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const langContent = content[currentLang] || content.en;
+
+    // Update page title
+    document.title = langContent.title;
     
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Get in touch with Rahalatek. Contact us for tour bookings, hotel reservations, custom packages, and any travel inquiries. We\'re here to help plan your perfect journey.'
-      );
+      metaDescription.setAttribute('content', langContent.description);
     }
 
     // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      metaKeywords.setAttribute('content', 
-        'contact Rahalatek, customer support, travel inquiries, tour booking contact, hotel reservations contact, travel agency contact, tourism help, contact us'
-      );
+      metaKeywords.setAttribute('content', langContent.keywords);
     }
 
     // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', 'Contact Us - Rahalatek | Get in Touch');
+      ogTitle.setAttribute('content', langContent.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      ogDescription.setAttribute('content', 
-        'Get in touch with Rahalatek for tour bookings, hotel reservations, and travel inquiries.'
-      );
+      ogDescription.setAttribute('content', langContent.description);
     }
-  }, []);
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', langContent.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', langContent.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', langContent.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/contact`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/contact' },
+      { code: 'ar', path: '/ar/contact' },
+      { code: 'fr', path: '/fr/contact' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/contact`;
+    document.head.appendChild(defaultLink);
+  }, [i18n.language]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950" dir={isRTL ? 'rtl' : 'ltr'}>

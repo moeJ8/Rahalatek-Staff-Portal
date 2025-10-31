@@ -28,36 +28,95 @@ export default function AirportServicePage() {
     setActiveFaqIndex(activeFaqIndex === index ? null : index);
   };
 
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'خدمة نقل المطار - رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'Service Transfert Aéroport - Rahalatek';
+    }
+    return 'Airport Transfer Service - Rahalatek';
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'خدمات نقل المطار الاحترافية في تركيا مع رحلاتك. استقبال وتوديع VIP مع سيارات مريحة، استقبال في المطار، وخدمة على مدار الساعة. احجز نقل المطار الخاص بك اليوم!';
+    }
+    if (currentLang === 'fr') {
+      return 'Services de transfert aéroport professionnels en Turquie avec Rahalatek. Réception et adieu VIP avec véhicules confortables, accueil à l\'aéroport et service 24/7. Réservez votre transfert aéroport aujourd\'hui!';
+    }
+    return 'Professional airport transfer services in Türkiye. VIP reception and farewell with comfortable vehicles, meet & greet, and 24/7 service. Book your seamless airport transfer today!';
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'نقل المطار تركيا, استقبال المطار, توديع المطار, نقل VIP, استقبال في المطار, نقل المطار, نقل خاص, خدمة مطار تركيا, نقل مطار إسطنبول, نقل مطار أنطاليا, نقل مطار طرابزون, نقل فاخر المطار, نقل مرسيدس المطار, رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'transfert aéroport Turquie, réception aéroport, adieu aéroport, transfert VIP, accueil aéroport, navette aéroport, transfert privé, service aéroport Turquie, transfert aéroport Istanbul, transfert aéroport Antalya, transfert aéroport Trabzon, transfert luxe aéroport, transfert Mercedes aéroport, Rahalatek';
+    }
+    return 'airport transfer Turkey, airport reception, airport farewell, VIP transfer, meet and greet, airport shuttle, private transfer, Turkey airport service, Istanbul airport transfer, Antalya airport transfer, Trabzon airport transfer, luxury airport transfer, Mercedes airport transfer, Rahalatek';
+  };
+
+  // SEO Meta Tags and hreflang
   useEffect(() => {
-    document.title = 'Airport Reception & Farewell | Rahalatek';
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
     
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Professional airport transfer services in Türkiye. VIP reception and farewell with comfortable vehicles, meet & greet, and 24/7 service. Book your seamless airport transfer today!'
-      );
+      metaDescription.setAttribute('content', content.description);
     }
 
     // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      metaKeywords.setAttribute('content', 
-        'airport transfer Turkey, airport reception, airport farewell, VIP transfer, meet and greet, airport shuttle, private transfer, Turkey airport service, Istanbul airport transfer, Antalya airport transfer, Trabzon airport transfer, luxury airport transfer, Mercedes airport transfer'
-      );
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
     // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', 'Airport Reception & Farewell - Professional Transfer Service | Rahalatek');
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      ogDescription.setAttribute('content', 
-        'Professional airport transfer services with VIP reception and comfortable vehicles across Türkiye. Meet & greet, 24/7 service, and transparent pricing.'
-      );
+      ogDescription.setAttribute('content', content.description);
     }
 
     const ogImage = document.querySelector('meta[property="og:image"]');
@@ -70,6 +129,30 @@ export default function AirportServicePage() {
       ogUrl.setAttribute('content', window.location.href);
     }
 
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
     // Update Twitter Card
     const twitterCard = document.querySelector('meta[name="twitter:card"]');
     if (twitterCard) {
@@ -78,14 +161,12 @@ export default function AirportServicePage() {
 
     const twitterTitle = document.querySelector('meta[name="twitter:title"]');
     if (twitterTitle) {
-      twitterTitle.setAttribute('content', 'Airport Reception & Farewell - Professional Transfer Service | Rahalatek');
+      twitterTitle.setAttribute('content', content.title);
     }
 
     const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     if (twitterDescription) {
-      twitterDescription.setAttribute('content', 
-        'Professional airport transfer services with VIP reception and comfortable vehicles across Türkiye. Meet & greet, 24/7 service.'
-      );
+      twitterDescription.setAttribute('content', content.description);
     }
 
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
@@ -100,7 +181,33 @@ export default function AirportServicePage() {
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = window.location.href;
+    canonical.href = `${baseUrl}/airport-service`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/airport-service' },
+      { code: 'ar', path: '/ar/airport-service' },
+      { code: 'fr', path: '/fr/airport-service' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/airport-service`;
+    document.head.appendChild(defaultLink);
 
     // Add structured data for SEO
     const structuredData = {
@@ -153,7 +260,8 @@ export default function AirportServicePage() {
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(structuredData);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
 
   const features = [
     {

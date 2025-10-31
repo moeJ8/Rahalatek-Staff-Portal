@@ -334,26 +334,18 @@ export default function BlogListPage() {
   // No more client-side pagination - everything is server-side now
   const displayedBlogs = blogs;
 
-  if (loading && blogs.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
-        <RahalatekLoader size="xl" />
-      </div>
-    );
-  }
-
   // Generate dynamic meta content based on filters
   const getMetaTitle = () => {
     if (selectedCategory) {
-      return `${selectedCategory} Travel Blog Posts | Rahalatek`;
+      return `${selectedCategory} Travel Blog Posts - Rahalatek`;
     }
     if (selectedTag) {
-      return `${selectedTag} Travel Articles | Rahalatek Blog`;
+      return `${selectedTag} Travel Articles - Rahalatek Blog`;
     }
     if (searchTerm) {
-      return `Search Results for "${searchTerm}" | Rahalatek Blog`;
+      return `Search Results for "${searchTerm}" - Rahalatek Blog`;
     }
-    return 'Rahalatek | Blog Posts';
+    return 'Rahalatek Blog - Travel Articles & Tips';
   };
 
   const getMetaDescription = () => {
@@ -385,25 +377,243 @@ export default function BlogListPage() {
     return [...baseKeywords, 'travel destinations', 'travel experiences', 'cultural travel', 'adventure travel', 'luxury travel', 'budget travel'];
   };
 
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    if (currentLang === 'ar') {
+      if (selectedCategory) return `مقالات سفر ${selectedCategory} - مدونة رحلاتك`;
+      if (selectedTag) return `مقالات سفر ${selectedTag} - مدونة رحلاتك`;
+      if (searchTerm) return `نتائج البحث عن "${searchTerm}" - مدونة رحلاتك`;
+      return 'مدونة رحلاتك - مقالات السفر ونصائح السياحة';
+    }
+    if (currentLang === 'fr') {
+      if (selectedCategory) return `Articles de Voyage ${selectedCategory} - Rahalatek`;
+      if (selectedTag) return `Articles de Voyage ${selectedTag} - Blog Rahalatek`;
+      if (searchTerm) return `Résultats de Recherche pour "${searchTerm}" - Blog Rahalatek`;
+      return 'Rahalatek - Articles de Voyage';
+    }
+    return getMetaTitle(); // English
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    if (currentLang === 'ar') {
+      if (selectedCategory) return `اكتشف أفضل تجارب السفر ونصائح ودلائل ${selectedCategory}. رؤى من خبراء رحلاتك لمساعدتك في التخطيط لمغامرة ${selectedCategory} المثالية.`;
+      if (selectedTag) return `استكشف محتوى السفر ودلائل ونصائح ${selectedTag}. اعثر على كل ما تحتاج معرفته عن ${selectedTag} من خبراء رحلاتك.`;
+      if (searchTerm) return `نتائج البحث عن "${searchTerm}" في مدونة السفر الخاصة بنا. اعثر على أحدث نصائح السفر ودلائل الوجهات ونصائح الخبراء من رحلاتك.`;
+      return 'استكشف مدونة السفر الشاملة الخاصة بنا التي تحتوي على نصائح الخبراء ودلائل الوجهات ورؤى السفر. اكتشف أماكن مذهلة وثقافة وطعام ونصائح سفر المغامرات من متخصصي رحلاتك.';
+    }
+    if (currentLang === 'fr') {
+      if (selectedCategory) return `Découvrez les meilleures expériences de voyage, conseils et guides pour ${selectedCategory}. Insights d'experts des spécialistes de voyage Rahalatek pour vous aider à planifier votre aventure ${selectedCategory} parfaite.`;
+      if (selectedTag) return `Explorez le contenu de voyage, guides et conseils ${selectedTag}. Trouvez tout ce que vous devez savoir sur ${selectedTag} des experts de voyage Rahalatek.`;
+      if (searchTerm) return `Résultats de recherche pour "${searchTerm}" dans notre blog de voyage. Trouvez les derniers conseils de voyage, guides de destination et conseils d'experts de Rahalatek.`;
+      return 'Explorez notre blog de voyage complet avec des conseils d\'experts, guides de destination et insights de voyage. Découvrez des endroits incroyables, la culture, la nourriture et les conseils de voyage d\'aventure des spécialistes de Rahalatek.';
+    }
+    return getMetaDescription(); // English
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    if (currentLang === 'ar') {
+      return 'مدونة سفر, نصائح سفر, دلائل وجهات, نصائح سفر, رحلاتك, مدونة سياحة';
+    }
+    if (currentLang === 'fr') {
+      return 'blog voyage, conseils voyage, guides destination, conseils voyage, Rahalatek, blog tourisme';
+    }
+    return getMetaKeywords().join(', '); // English
+  };
+
+  // SEO Meta Tags and hreflang - similar to GuestHomePage.jsx
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    // Generate base content
+    const baseTitle = getMetaTitle();
+    const baseDescription = getMetaDescription();
+    const baseKeywords = getMetaKeywords().join(', ');
+    
+    // Language-specific content
+    const content = {
+      en: {
+        title: baseTitle,
+        description: baseDescription,
+        keywords: baseKeywords,
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: selectedCategory ? `مقالات سفر ${selectedCategory} - مدونة رحلاتك` :
+              selectedTag ? `مقالات سفر ${selectedTag} - مدونة رحلاتك` :
+              searchTerm ? `نتائج البحث عن "${searchTerm}" - مدونة رحلاتك` :
+              'مدونة رحلاتك - مقالات السفر ونصائح السياحة',
+        description: selectedCategory ? `اكتشف أفضل تجارب السفر ونصائح ودلائل ${selectedCategory}. رؤى من خبراء رحلاتك لمساعدتك في التخطيط لمغامرة ${selectedCategory} المثالية.` :
+                    selectedTag ? `استكشف محتوى السفر ودلائل ونصائح ${selectedTag}. اعثر على كل ما تحتاج معرفته عن ${selectedTag} من خبراء رحلاتك.` :
+                    searchTerm ? `نتائج البحث عن "${searchTerm}" في مدونة السفر الخاصة بنا. اعثر على أحدث نصائح السفر ودلائل الوجهات ونصائح الخبراء من رحلاتك.` :
+                    'استكشف مدونة السفر الشاملة الخاصة بنا التي تحتوي على نصائح الخبراء ودلائل الوجهات ورؤى السفر. اكتشف أماكن مذهلة وثقافة وطعام ونصائح سفر المغامرات من متخصصي رحلاتك.',
+        keywords: 'مدونة سفر, نصائح سفر, دلائل وجهات, نصائح سفر, رحلاتك, مدونة سياحة',
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: selectedCategory ? `Articles de Voyage ${selectedCategory} - Rahalatek` :
+               selectedTag ? `Articles de Voyage ${selectedTag} - Blog Rahalatek` :
+               searchTerm ? `Résultats de Recherche pour "${searchTerm}" - Blog Rahalatek` :
+               'Rahalatek - Articles de Voyage',
+        description: selectedCategory ? `Découvrez les meilleures expériences de voyage, conseils et guides pour ${selectedCategory}. Insights d'experts des spécialistes de voyage Rahalatek pour vous aider à planifier votre aventure ${selectedCategory} parfaite.` :
+                    selectedTag ? `Explorez le contenu de voyage, guides et conseils ${selectedTag}. Trouvez tout ce que vous devez savoir sur ${selectedTag} des experts de voyage Rahalatek.` :
+                    searchTerm ? `Résultats de recherche pour "${searchTerm}" dans notre blog de voyage. Trouvez les derniers conseils de voyage, guides de destination et conseils d'experts de Rahalatek.` :
+                    'Explorez notre blog de voyage complet avec des conseils d\'experts, guides de destination et insights de voyage. Découvrez des endroits incroyables, la culture, la nourriture et les conseils de voyage d\'aventure des spécialistes de Rahalatek.',
+        keywords: 'blog voyage, conseils voyage, guides destination, conseils voyage, Rahalatek, blog tourisme',
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const langContent = content[currentLang] || content.en;
+
+    // Update page title
+    document.title = langContent.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', langContent.description);
+    }
+
+    // Update keywords
+    const metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute('content', langContent.keywords);
+    }
+
+    // Update Open Graph
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', langContent.title);
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      ogDescription.setAttribute('content', langContent.description);
+    }
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', langContent.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', langContent.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', langContent.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/blog`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/blog' },
+      { code: 'ar', path: '/ar/blog' },
+      { code: 'fr', path: '/fr/blog' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/blog`;
+    document.head.appendChild(defaultLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language, selectedCategory, selectedTag, searchTerm]);
+
+  if (loading && blogs.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
+        <RahalatekLoader size="xl" />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* SEO Meta Tags */}
       <Helmet>
-        <title>{getMetaTitle()}</title>
-        <meta name="description" content={getMetaDescription()} />
-        <meta name="keywords" content={getMetaKeywords().join(', ')} />
+        <title>{getLocalizedMetaTitle()}</title>
+        <meta name="description" content={getLocalizedMetaDescription()} />
+        <meta name="keywords" content={getLocalizedMetaKeywords()} />
         
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content={getMetaTitle()} />
-        <meta property="og:description" content={getMetaDescription()} />
+        <meta property="og:title" content={getLocalizedMetaTitle()} />
+        <meta property="og:description" content={getLocalizedMetaDescription()} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${window.location.origin}/blog`} />
         <meta property="og:image" content={`${window.location.origin}/last-logo-3.png`} />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={getMetaTitle()} />
-        <meta name="twitter:description" content={getMetaDescription()} />
+        <meta name="twitter:title" content={getLocalizedMetaTitle()} />
+        <meta name="twitter:description" content={getLocalizedMetaDescription()} />
         <meta name="twitter:image" content={`${window.location.origin}/last-logo-3.png`} />
         
         {/* Additional SEO */}

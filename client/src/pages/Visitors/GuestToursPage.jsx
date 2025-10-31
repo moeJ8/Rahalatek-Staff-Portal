@@ -83,72 +83,250 @@ const GuestToursPage = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, [updateScreenSize]);
 
-  // Set page title and meta tags (dynamically based on filters)
-  useEffect(() => {
-    // Dynamic title based on city filter
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    // Base English titles
+    let baseTitle;
     if (cityFilter) {
-      document.title = `${cityFilter} Tours | Rahalatek`;
+      baseTitle = `${cityFilter} Tours - Rahalatek`;
     } else if (countryFilter) {
-      document.title = `${countryFilter} Tours | Rahalatek`;
+      baseTitle = `${countryFilter} Tours - Rahalatek`;
     } else {
-      document.title = 'Rahalatek | Tours';
+      baseTitle = 'Rahalatek Tours - Guided Tours & Travel Experiences';
     }
     
-    // Update meta description based on location
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `جولات ${cityFilter} - رحلاتك`;
+      } else if (countryFilter) {
+        return `جولات ${countryFilter} - رحلاتك`;
+      } else {
+        return 'رحلاتك - الجولات السياحية والرحلات المرشدة';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Visites ${cityFilter} - Rahalatek`;
+      } else if (countryFilter) {
+        return `Visites ${countryFilter} - Rahalatek`;
+      } else {
+        return 'Rahalatek - Visites Guidées & Expériences de Voyage';
+      }
+    }
+    return baseTitle; // English
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `اكتشف جولات رائعة في ${cityFilter} مع رحلاتك. تصفح الجولات الإرشادية وتجارب VIP وباقات السفر في ${cityFilter}. احجز جولتك المثالية في ${cityFilter} اليوم.`;
+      } else if (countryFilter) {
+        return `استكشف جولات ${countryFilter} مع رحلاتك. اعثر على جولات إرشادية وتجارب VIP وباقات سفر في جميع أنحاء ${countryFilter}. احجز جولتك المثالية في ${countryFilter} اليوم.`;
+      } else {
+        return 'تصفح الجولات الإرشادية الرائعة وتجارب السفر مع رحلاتك. اعثر على جولات جماعية وجولات VIP خاصة وتجارب ثقافية وجولات مغامرات حول العالم. احجز جولتك المثالية اليوم.';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Découvrez des visites incroyables à ${cityFilter} avec Rahalatek. Parcourez les visites guidées, expériences VIP et forfaits de voyage à ${cityFilter}. Réservez votre visite ${cityFilter} parfaite aujourd'hui.`;
+      } else if (countryFilter) {
+        return `Explorez les visites ${countryFilter} avec Rahalatek. Trouvez des visites guidées, des expériences VIP et des forfaits de voyage dans toute la ${countryFilter}. Réservez votre visite ${countryFilter} parfaite aujourd'hui.`;
+      } else {
+        return 'Parcourez des visites guidées incroyables et des expériences de voyage avec Rahalatek. Trouvez des visites de groupe, des visites VIP privées et des visites d\'aventure dans le monde entier. Réservez votre visite parfaite aujourd\'hui.';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `Discover amazing tours in ${cityFilter} with Rahalatek. Browse guided tours, VIP experiences, and travel packages in ${cityFilter}. Book your perfect ${cityFilter} tour today.`;
+    } else if (countryFilter) {
+      return `Explore ${countryFilter} tours with Rahalatek. Find guided tours, VIP experiences, and travel packages throughout ${countryFilter}. Book your perfect ${countryFilter} tour today.`;
+    } else {
+      return 'Browse amazing guided tours and travel experiences with Rahalatek. Find group tours, VIP private tours, cultural experiences, and adventure tours worldwide. Book your perfect tour today.';
+    }
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `جولات ${cityFilter}, سفر ${cityFilter}, جولات إرشادية ${cityFilter}, رحلاتك, سياحة ${cityFilter}`;
+      } else if (countryFilter) {
+        return `جولات ${countryFilter}, سفر ${countryFilter}, جولات إرشادية ${countryFilter}, رحلاتك, سياحة ${countryFilter}`;
+      } else {
+        return 'جولات, جولات إرشادية, رحلاتك, تجارب سفر, جولات جماعية, جولات VIP, جولات ثقافية, جولات مغامرات, حجز جولات';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `visites ${cityFilter}, voyage ${cityFilter}, visites guidées ${cityFilter}, Rahalatek, tourisme ${cityFilter}`;
+      } else if (countryFilter) {
+        return `visites ${countryFilter}, voyage ${countryFilter}, visites guidées ${countryFilter}, Rahalatek, tourisme ${countryFilter}`;
+      } else {
+        return 'visites, visites guidées, Rahalatek, expériences voyage, visites groupe, visites VIP, visites culturelles, visites aventure, réservation visites';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `${cityFilter} tours, ${cityFilter} travel, ${cityFilter} guided tours, ${cityFilter} experiences, tours in ${cityFilter}, ${cityFilter} tourism, ${cityFilter} attractions, ${cityFilter} sightseeing, visit ${cityFilter}, ${cityFilter} tour packages, Rahalatek`;
+    } else if (countryFilter) {
+      return `${countryFilter} tours, ${countryFilter} travel, ${countryFilter} guided tours, ${countryFilter} experiences, tours in ${countryFilter}, ${countryFilter} tourism, ${countryFilter} attractions, ${countryFilter} vacation, Rahalatek`;
+    } else {
+      return 'tours, guided tours, travel experiences, group tours, VIP tours, private tours, cultural tours, adventure tours, city tours, tour booking, travel packages, sightseeing tours, tour guide, travel activities, Rahalatek';
+    }
+  };
+
+  // SEO Meta Tags and hreflang - similar to BlogListPage and GuestHomePage
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
+    
+    // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover amazing tours in ${cityFilter} with Rahalatek. Browse guided tours, VIP experiences, and travel packages in ${cityFilter}. Book your perfect ${cityFilter} tour today.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} tours with Rahalatek. Find guided tours, VIP experiences, and travel packages throughout ${countryFilter}. Book your perfect ${countryFilter} tour today.`;
-      } else {
-        description = 'Browse amazing guided tours and travel experiences with Rahalatek. Find group tours, VIP private tours, cultural experiences, and adventure tours worldwide. Book your perfect tour today.';
-      }
-      metaDescription.setAttribute('content', description);
+      metaDescription.setAttribute('content', content.description);
     }
 
-    // Update keywords based on location
+    // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      let keywords;
-      if (cityFilter) {
-        keywords = `${cityFilter} tours, ${cityFilter} travel, ${cityFilter} guided tours, ${cityFilter} experiences, tours in ${cityFilter}, ${cityFilter} tourism, ${cityFilter} attractions, ${cityFilter} sightseeing, visit ${cityFilter}, ${cityFilter} tour packages`;
-      } else if (countryFilter) {
-        keywords = `${countryFilter} tours, ${countryFilter} travel, ${countryFilter} guided tours, ${countryFilter} experiences, tours in ${countryFilter}, ${countryFilter} tourism, ${countryFilter} attractions, ${countryFilter} vacation`;
-      } else {
-        keywords = 'tours, guided tours, travel experiences, group tours, VIP tours, private tours, cultural tours, adventure tours, city tours, tour booking, travel packages, sightseeing tours, tour guide, travel activities';
-      }
-      metaKeywords.setAttribute('content', keywords);
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
-    // Update Open Graph based on location
+    // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      let title;
-      if (cityFilter) {
-        title = `${cityFilter} Tours | Rahalatek`;
-      } else if (countryFilter) {
-        title = `${countryFilter} Tours | Rahalatek`;
-      } else {
-        title = 'Browse Tours - Rahalatek | Guided Tours & Travel Experiences';
-      }
-      ogTitle.setAttribute('content', title);
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover amazing tours in ${cityFilter} with Rahalatek. Browse guided tours and VIP experiences in ${cityFilter}.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} tours with Rahalatek. Find guided tours and travel experiences throughout ${countryFilter}.`;
-      } else {
-        description = 'Browse amazing guided tours and travel experiences with Rahalatek. Find group tours, VIP private tours, and adventure tours worldwide.';
-      }
-      ogDescription.setAttribute('content', description);
+      ogDescription.setAttribute('content', content.description);
     }
-  }, [cityFilter, countryFilter]);
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', content.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', content.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/guest/tours`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/guest/tours' },
+      { code: 'ar', path: '/ar/guest/tours' },
+      { code: 'fr', path: '/fr/guest/tours' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/guest/tours`;
+    document.head.appendChild(defaultLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language, cityFilter, countryFilter]);
 
   // Fetch filter options (only once on mount)
   const fetchFilterOptions = useCallback(async () => {

@@ -81,72 +81,250 @@ const PublicPackagesPage = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, [updateScreenSize]);
 
-  // Set page title and meta tags (dynamically based on filters)
-  useEffect(() => {
-    // Dynamic title based on city filter
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    // Base English titles
+    let baseTitle;
     if (cityFilter) {
-      document.title = `${cityFilter} Packages | Rahalatek`;
+      baseTitle = `${cityFilter} Packages - Rahalatek`;
     } else if (countryFilter) {
-      document.title = `${countryFilter} Packages | Rahalatek`;
+      baseTitle = `${countryFilter} Packages - Rahalatek`;
     } else {
-      document.title = 'Rahalatek | Travel Packages';
+      baseTitle = 'Rahalatek Packages - Travel Packages & Complete Experiences';
     }
     
-    // Update meta description based on location
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `باقات ${cityFilter} - رحلاتك`;
+      } else if (countryFilter) {
+        return `باقات ${countryFilter} - رحلاتك`;
+      } else {
+        return 'رحلاتك - باقات السفر وتجارب كاملة';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Forfaits ${cityFilter} - Rahalatek`;
+      } else if (countryFilter) {
+        return `Forfaits ${countryFilter} - Rahalatek`;
+      } else {
+        return 'Rahalatek - Forfaits Voyage & Expériences Complètes';
+      }
+    }
+    return baseTitle; // English
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `اكتشف باقات سفر رائعة في ${cityFilter} مع رحلاتك. تصفح باقات متعددة الأيام وتركيبات فندق+جولة وتجارب سفر كاملة في ${cityFilter}. احجز باقاتك المثالية في ${cityFilter} اليوم.`;
+      } else if (countryFilter) {
+        return `استكشف باقات سفر ${countryFilter} مع رحلاتك. اعثر على باقات متعددة الأيام وتجارب سفر كاملة وباقات عطلة في جميع أنحاء ${countryFilter}. احجز باقاتك المثالية في ${countryFilter} اليوم.`;
+      } else {
+        return 'تصفح باقات سفر رائعة مع رحلاتك. اعثر على جولات متعددة الأيام وتركيبات فنادق وتجارب سفر كاملة حول العالم. احجز باقة عطلتك المثالية اليوم.';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Découvrez des forfaits voyage incroyables à ${cityFilter} avec Rahalatek. Parcourez des forfaits multi-jours, des combinaisons hôtel+visite et des expériences de voyage complètes à ${cityFilter}. Réservez votre forfait ${cityFilter} parfait aujourd'hui.`;
+      } else if (countryFilter) {
+        return `Explorez les forfaits voyage ${countryFilter} avec Rahalatek. Trouvez des forfaits multi-jours, des expériences de voyage complètes et des forfaits vacances dans toute la ${countryFilter}. Réservez votre forfait ${countryFilter} parfait aujourd'hui.`;
+      } else {
+        return 'Parcourez des forfaits voyage incroyables avec Rahalatek. Trouvez des visites multi-jours, des combinaisons hôtel et des expériences de voyage complètes dans le monde entier. Réservez votre forfait vacances parfait aujourd\'hui.';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `Discover amazing travel packages in ${cityFilter} with Rahalatek. Browse multi-day packages, hotel+tour combinations, and complete travel experiences in ${cityFilter}. Book your perfect ${cityFilter} package today.`;
+    } else if (countryFilter) {
+      return `Explore ${countryFilter} travel packages with Rahalatek. Find multi-day packages, complete travel experiences, and vacation packages throughout ${countryFilter}. Book your perfect ${countryFilter} package today.`;
+    } else {
+      return 'Browse amazing travel packages with Rahalatek. Find multi-day tours, hotel combinations, and complete travel experiences worldwide. Book your perfect vacation package today.';
+    }
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `باقات ${cityFilter}, سفر ${cityFilter}, باقات عطلة ${cityFilter}, رحلاتك, سياحة ${cityFilter}`;
+      } else if (countryFilter) {
+        return `باقات ${countryFilter}, سفر ${countryFilter}, باقات عطلة ${countryFilter}, رحلاتك, سياحة ${countryFilter}`;
+      } else {
+        return 'باقات سفر, باقات عطلة, رحلاتك, جولات متعددة الأيام, باقات فندق وجولة, باقات كاملة';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `forfaits ${cityFilter}, voyage ${cityFilter}, forfaits vacances ${cityFilter}, Rahalatek, tourisme ${cityFilter}`;
+      } else if (countryFilter) {
+        return `forfaits ${countryFilter}, voyage ${countryFilter}, forfaits vacances ${countryFilter}, Rahalatek, tourisme ${countryFilter}`;
+      } else {
+        return 'forfaits voyage, forfaits vacances, Rahalatek, visites multi-jours, forfaits hôtel+visite, forfaits complets';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `${cityFilter} packages, ${cityFilter} travel, ${cityFilter} vacation packages, ${cityFilter} travel packages, packages in ${cityFilter}, ${cityFilter} tourism, ${cityFilter} tours and hotels, ${cityFilter} multi-day tours, Rahalatek`;
+    } else if (countryFilter) {
+      return `${countryFilter} packages, ${countryFilter} travel, ${countryFilter} vacation packages, ${countryFilter} travel packages, packages in ${countryFilter}, ${countryFilter} tourism, Rahalatek`;
+    } else {
+      return 'travel packages, vacation packages, tour packages, multi-day tours, hotel and tour packages, complete travel packages, holiday packages, travel deals, package tours, all-inclusive packages, Rahalatek';
+    }
+  };
+
+  // SEO Meta Tags and hreflang - similar to other pages
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
+    
+    // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover amazing travel packages in ${cityFilter} with Rahalatek. Browse multi-day packages, hotel+tour combinations, and complete travel experiences in ${cityFilter}. Book your perfect ${cityFilter} package today.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} travel packages with Rahalatek. Find multi-day packages, complete travel experiences, and vacation packages throughout ${countryFilter}. Book your perfect ${countryFilter} package today.`;
-      } else {
-        description = 'Browse amazing travel packages with Rahalatek. Find multi-day tours, hotel combinations, and complete travel experiences worldwide. Book your perfect vacation package today.';
-      }
-      metaDescription.setAttribute('content', description);
+      metaDescription.setAttribute('content', content.description);
     }
 
-    // Update keywords based on location
+    // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      let keywords;
-      if (cityFilter) {
-        keywords = `${cityFilter} packages, ${cityFilter} travel, ${cityFilter} vacation packages, ${cityFilter} travel packages, packages in ${cityFilter}, ${cityFilter} tourism, ${cityFilter} tours and hotels, ${cityFilter} multi-day tours`;
-      } else if (countryFilter) {
-        keywords = `${countryFilter} packages, ${countryFilter} travel, ${countryFilter} vacation packages, ${countryFilter} travel packages, packages in ${countryFilter}, ${countryFilter} tourism`;
-      } else {
-        keywords = 'travel packages, vacation packages, tour packages, multi-day tours, hotel and tour packages, complete travel packages, holiday packages, travel deals, package tours, all-inclusive packages';
-      }
-      metaKeywords.setAttribute('content', keywords);
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
-    // Update Open Graph based on location
+    // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      let title;
-      if (cityFilter) {
-        title = `${cityFilter} Packages | Rahalatek`;
-      } else if (countryFilter) {
-        title = `${countryFilter} Packages | Rahalatek`;
-      } else {
-        title = 'Browse Travel Packages - Rahalatek | Complete Travel Experiences';
-      }
-      ogTitle.setAttribute('content', title);
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover amazing travel packages in ${cityFilter} with Rahalatek. Browse complete travel experiences in ${cityFilter}.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} travel packages with Rahalatek. Find complete travel experiences throughout ${countryFilter}.`;
-      } else {
-        description = 'Browse amazing travel packages with Rahalatek. Find multi-day tours, hotel combinations, and complete vacation packages worldwide.';
-      }
-      ogDescription.setAttribute('content', description);
+      ogDescription.setAttribute('content', content.description);
     }
-  }, [cityFilter, countryFilter]);
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', content.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', content.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/packages`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/packages' },
+      { code: 'ar', path: '/ar/packages' },
+      { code: 'fr', path: '/fr/packages' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/packages`;
+    document.head.appendChild(defaultLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language, cityFilter, countryFilter]);
 
   // Fetch filter options (only once on mount)
   const fetchFilterOptions = useCallback(async () => {

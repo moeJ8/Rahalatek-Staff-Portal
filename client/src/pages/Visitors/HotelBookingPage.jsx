@@ -27,36 +27,95 @@ export default function HotelBookingPage() {
   const toggleFaq = (index) => {
     setActiveFaqIndex(activeFaqIndex === index ? null : index);
   };
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'حجز فنادق تركيا - رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'Réservation Hôtels Turquie - Rahalatek';
+    }
+    return 'Hotel Booking Turkey - Rahalatek';
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'احجز أفضل الفنادق في تركيا مع رحلاتك. إقامات فاخرة، منتجعات عائلية، فنادق اقتصادية، وخدمات مميزة في جميع أنحاء تركيا. أفضل الأسعار مضمونة!';
+    }
+    if (currentLang === 'fr') {
+      return 'Réservez les meilleurs hôtels en Turquie avec Rahalatek. Hébergements de luxe, resorts familiaux, hôtels économiques et services premium à travers la Turquie. Meilleurs tarifs garantis!';
+    }
+    return 'Book the best hotels in Türkiye with Rahalatek. Luxury accommodations, family-friendly resorts, budget hotels, and premium services across Turkey. Best rates guaranteed!';
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'فنادق تركيا, حجز فنادق تركيا, فنادق فاخرة, منتجعات عائلية, فنادق اقتصادية, فنادق تركية, حجز فنادق, إقامات تركيا, فنادق شاطئية, فنادق مدنية, فنادق إسطنبول, فنادق أنطاليا, فنادق كابادوكيا, فنادق طرابزون, فنادق 5 نجوم تركيا, فنادق بوتيك تركيا, رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'hôtels Turquie, réservation hôtels Turquie, hôtels de luxe, resorts familiaux, hôtels économiques, hôtels turcs, réservation hôtel, hébergements Turquie, hôtels plage, hôtels ville, hôtels Istanbul, hôtels Antalya, hôtels Cappadoce, hôtels Trabzon, hôtels 5 étoiles Turquie, hôtels boutique Turquie, Rahalatek';
+    }
+    return 'Turkey hotels, hotel booking Turkey, luxury hotels, family resorts, budget hotels, Turkish hotels, hotel reservation, accommodation Turkey, beachfront hotels, city hotels, Istanbul hotels, Antalya hotels, Cappadocia hotels, Trabzon hotels, 5 star hotels Turkey, boutique hotels Turkey, Rahalatek';
+  };
+
+  // SEO Meta Tags and hreflang
   useEffect(() => {
-    document.title = 'Hotel Booking | Rahalatek';
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
     
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Book the best hotels in Türkiye with Rahalatek. Luxury accommodations, family-friendly resorts, budget hotels, and premium services across Turkey. Best rates guaranteed!'
-      );
+      metaDescription.setAttribute('content', content.description);
     }
 
     // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      metaKeywords.setAttribute('content', 
-        'Turkey hotels, hotel booking Turkey, luxury hotels, family resorts, budget hotels, Turkish hotels, hotel reservation, accommodation Turkey, beachfront hotels, city hotels, Istanbul hotels, Antalya hotels, Cappadocia hotels, Trabzon hotels, 5 star hotels Turkey, boutique hotels Turkey'
-      );
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
     // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', 'Hotel Booking - Premium Accommodations in Türkiye | Rahalatek');
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      ogDescription.setAttribute('content', 
-        'Book the best hotels in Türkiye with Rahalatek. Luxury accommodations, family-friendly resorts, and premium services. Best rates guaranteed!'
-      );
+      ogDescription.setAttribute('content', content.description);
     }
 
     const ogImage = document.querySelector('meta[property="og:image"]');
@@ -69,6 +128,30 @@ export default function HotelBookingPage() {
       ogUrl.setAttribute('content', window.location.href);
     }
 
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
     // Update Twitter Card
     const twitterCard = document.querySelector('meta[name="twitter:card"]');
     if (twitterCard) {
@@ -77,14 +160,12 @@ export default function HotelBookingPage() {
 
     const twitterTitle = document.querySelector('meta[name="twitter:title"]');
     if (twitterTitle) {
-      twitterTitle.setAttribute('content', 'Hotel Booking - Premium Accommodations in Türkiye | Rahalatek');
+      twitterTitle.setAttribute('content', content.title);
     }
 
     const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     if (twitterDescription) {
-      twitterDescription.setAttribute('content', 
-        'Book the best hotels in Türkiye with Rahalatek. Luxury accommodations, family-friendly resorts, and premium services.'
-      );
+      twitterDescription.setAttribute('content', content.description);
     }
 
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
@@ -99,7 +180,33 @@ export default function HotelBookingPage() {
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = window.location.href;
+    canonical.href = `${baseUrl}/hotel-booking`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/hotel-booking' },
+      { code: 'ar', path: '/ar/hotel-booking' },
+      { code: 'fr', path: '/fr/hotel-booking' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/hotel-booking`;
+    document.head.appendChild(defaultLink);
 
     // Add structured data for SEO
     const structuredData = {
@@ -126,7 +233,8 @@ export default function HotelBookingPage() {
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(structuredData);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
 
   const features = [
     {

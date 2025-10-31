@@ -76,72 +76,250 @@ const GuestHotelsPage = () => {
     return () => window.removeEventListener('resize', updateScreenSize);
   }, [updateScreenSize]);
 
-  // Set page title and meta tags (dynamically based on filters)
-  useEffect(() => {
-    // Dynamic title based on city filter
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    // Base English titles
+    let baseTitle;
     if (cityFilter) {
-      document.title = `${cityFilter} Hotels | Rahalatek`;
+      baseTitle = `${cityFilter} Hotels - Rahalatek`;
     } else if (countryFilter) {
-      document.title = `${countryFilter} Hotels | Rahalatek`;
+      baseTitle = `${countryFilter} Hotels - Rahalatek`;
     } else {
-      document.title = 'Rahalatek | Hotels';
+      baseTitle = 'Rahalatek Hotels - Luxury Hotels & Accommodations';
     }
     
-    // Update meta description based on location
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `فنادق ${cityFilter} - رحلاتك`;
+      } else if (countryFilter) {
+        return `فنادق ${countryFilter} - رحلاتك`;
+      } else {
+        return 'رحلاتك - فنادق فاخرة وإقامات مميزة';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Hôtels ${cityFilter} - Rahalatek`;
+      } else if (countryFilter) {
+        return `Hôtels ${countryFilter} - Rahalatek`;
+      } else {
+        return 'Rahalatek - Hôtels de Luxe & Hébergements';
+      }
+    }
+    return baseTitle; // English
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `اكتشف فنادق فاخرة في ${cityFilter} مع رحلاتك. تصفح فنادق من 3 إلى 5 نجوم ومنتجعات وإقامات مميزة في ${cityFilter}. احجز إقامتك المثالية في ${cityFilter} اليوم.`;
+      } else if (countryFilter) {
+        return `استكشف فنادق ${countryFilter} مع رحلاتك. اعثر على فنادق فاخرة ومنتجعات وإقامات مميزة في جميع أنحاء ${countryFilter}. احجز إقامتك المثالية في ${countryFilter} اليوم.`;
+      } else {
+        return 'تصفح فنادق فاخرة وإقامات مميزة مع رحلاتك. اعثر على فنادق من 3 إلى 5 نجوم ومنتجعات وإقامات بوتيك حول العالم. احجز إقامتك المثالية اليوم.';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `Découvrez des hôtels de luxe à ${cityFilter} avec Rahalatek. Parcourez des hôtels 3 à 5 étoiles, des resorts et des hébergements premium à ${cityFilter}. Réservez votre séjour ${cityFilter} parfait aujourd'hui.`;
+      } else if (countryFilter) {
+        return `Explorez les hôtels ${countryFilter} avec Rahalatek. Trouvez des hôtels de luxe, des resorts et des hébergements premium dans toute la ${countryFilter}. Réservez votre séjour ${countryFilter} parfait aujourd'hui.`;
+      } else {
+        return 'Parcourez des hôtels de luxe et des hébergements premium avec Rahalatek. Trouvez des hôtels 3 à 5 étoiles, des resorts et des hébergements boutique dans le monde entier. Réservez votre séjour parfait aujourd\'hui.';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `Discover luxury hotels in ${cityFilter} with Rahalatek. Browse 3-star to 5-star hotels, resorts, and premium accommodations in ${cityFilter}. Book your perfect ${cityFilter} hotel stay today.`;
+    } else if (countryFilter) {
+      return `Explore ${countryFilter} hotels with Rahalatek. Find luxury hotels, resorts, and premium accommodations throughout ${countryFilter}. Book your perfect ${countryFilter} hotel stay today.`;
+    } else {
+      return 'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels, resorts, and boutique accommodations worldwide. Book your perfect stay today.';
+    }
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      if (cityFilter) {
+        return `فنادق ${cityFilter}, إقامات ${cityFilter}, فنادق فاخرة ${cityFilter}, رحلاتك, سياحة ${cityFilter}`;
+      } else if (countryFilter) {
+        return `فنادق ${countryFilter}, إقامات ${countryFilter}, فنادق فاخرة ${countryFilter}, رحلاتك, سياحة ${countryFilter}`;
+      } else {
+        return 'فنادق, فنادق فاخرة, رحلاتك, إقامات, منتجعات, فنادق بوتيك, حجز فنادق, فنادق 5 نجوم';
+      }
+    }
+    if (currentLang === 'fr') {
+      if (cityFilter) {
+        return `hôtels ${cityFilter}, hébergements ${cityFilter}, hôtels de luxe ${cityFilter}, Rahalatek, tourisme ${cityFilter}`;
+      } else if (countryFilter) {
+        return `hôtels ${countryFilter}, hébergements ${countryFilter}, hôtels de luxe ${countryFilter}, Rahalatek, tourisme ${countryFilter}`;
+      } else {
+        return 'hôtels, hôtels de luxe, Rahalatek, hébergements, resorts, hôtels boutique, réservation hôtel, hôtels 5 étoiles';
+      }
+    }
+    
+    // English
+    if (cityFilter) {
+      return `${cityFilter} hotels, ${cityFilter} accommodations, ${cityFilter} luxury hotels, ${cityFilter} resorts, hotels in ${cityFilter}, ${cityFilter} hospitality, ${cityFilter} lodging, ${cityFilter} hotel booking, Rahalatek`;
+    } else if (countryFilter) {
+      return `${countryFilter} hotels, ${countryFilter} accommodations, ${countryFilter} luxury hotels, ${countryFilter} resorts, hotels in ${countryFilter}, ${countryFilter} hospitality, Rahalatek`;
+    } else {
+      return 'hotels, luxury hotels, accommodations, resorts, boutique hotels, 3-star hotels, 4-star hotels, 5-star hotels, hotel booking, premium accommodations, hotel rooms, hospitality, lodging, hotel deals, Rahalatek';
+    }
+  };
+
+  // SEO Meta Tags and hreflang - similar to BlogListPage and GuestToursPage
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
+    
+    // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover luxury hotels in ${cityFilter} with Rahalatek. Browse 3-star to 5-star hotels, resorts, and premium accommodations in ${cityFilter}. Book your perfect ${cityFilter} hotel stay today.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} hotels with Rahalatek. Find luxury hotels, resorts, and premium accommodations throughout ${countryFilter}. Book your perfect ${countryFilter} hotel stay today.`;
-      } else {
-        description = 'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels, resorts, and boutique accommodations worldwide. Book your perfect stay today.';
-      }
-      metaDescription.setAttribute('content', description);
+      metaDescription.setAttribute('content', content.description);
     }
 
-    // Update keywords based on location
+    // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      let keywords;
-      if (cityFilter) {
-        keywords = `${cityFilter} hotels, ${cityFilter} accommodations, ${cityFilter} luxury hotels, ${cityFilter} resorts, hotels in ${cityFilter}, ${cityFilter} hospitality, ${cityFilter} lodging, ${cityFilter} hotel booking`;
-      } else if (countryFilter) {
-        keywords = `${countryFilter} hotels, ${countryFilter} accommodations, ${countryFilter} luxury hotels, ${countryFilter} resorts, hotels in ${countryFilter}, ${countryFilter} hospitality`;
-      } else {
-        keywords = 'hotels, luxury hotels, accommodations, resorts, boutique hotels, 3-star hotels, 4-star hotels, 5-star hotels, hotel booking, premium accommodations, hotel rooms, hospitality, lodging, hotel deals';
-      }
-      metaKeywords.setAttribute('content', keywords);
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
-    // Update Open Graph based on location
+    // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      let title;
-      if (cityFilter) {
-        title = `${cityFilter} Hotels | Rahalatek`;
-      } else if (countryFilter) {
-        title = `${countryFilter} Hotels | Rahalatek`;
-      } else {
-        title = 'Browse Hotels - Rahalatek | Luxury Hotels & Accommodations';
-      }
-      ogTitle.setAttribute('content', title);
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      let description;
-      if (cityFilter) {
-        description = `Discover luxury hotels in ${cityFilter} with Rahalatek. Browse premium accommodations and resorts in ${cityFilter}.`;
-      } else if (countryFilter) {
-        description = `Explore ${countryFilter} hotels with Rahalatek. Find luxury hotels and premium accommodations throughout ${countryFilter}.`;
-      } else {
-        description = 'Browse luxury hotels and premium accommodations with Rahalatek. Find 3-star to 5-star hotels and resorts worldwide.';
-      }
-      ogDescription.setAttribute('content', description);
+      ogDescription.setAttribute('content', content.description);
     }
-  }, [cityFilter, countryFilter]);
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', content.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', content.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', `${baseUrl}/last-logo-3.png`);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/guest/hotels`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/guest/hotels' },
+      { code: 'ar', path: '/ar/guest/hotels' },
+      { code: 'fr', path: '/fr/guest/hotels' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/guest/hotels`;
+    document.head.appendChild(defaultLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language, cityFilter, countryFilter]);
 
   // Fetch filter options (only once on mount)
   const fetchFilterOptions = useCallback(async () => {
@@ -159,7 +337,7 @@ const GuestHotelsPage = () => {
     } catch (error) {
       console.error('Error fetching filter options:', error);
     }
-  }, []);
+  }, [i18n.language]);
 
   // Fetch hotels with server-side pagination and filtering
   const fetchHotels = useCallback(async () => {
@@ -200,7 +378,7 @@ const GuestHotelsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, screenType, countryFilter, cityFilter, starFilter, debouncedSearchTerm, getItemsPerPage, hotels.length]);
+  }, [page, screenType, countryFilter, cityFilter, starFilter, debouncedSearchTerm, getItemsPerPage, hotels.length, i18n.language]);
 
   // Fetch filter options on mount
   useEffect(() => {

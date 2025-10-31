@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt } from 'react-icons/fa';
 import Flag from 'react-world-flags';
 import HorizontalScrollbar from '../HorizontalScrollbar';
+import { useLocalizedNavigate } from '../../hooks/useLocalizedNavigate';
 
 const Destinations = () => {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const isRTL = i18n.language === 'ar';
 
   // Static destinations data with high-quality optimized Cloudinary images

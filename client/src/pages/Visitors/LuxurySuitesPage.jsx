@@ -20,36 +20,95 @@ export default function LuxurySuitesPage() {
   const toggleFaq = (index) => {
     setActiveFaqIndex(activeFaqIndex === index ? null : index);
   };
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'شقق فاخرة تركيا - رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'Suites de Luxe Turquie - Rahalatek';
+    }
+    return 'Luxury Suites Turkey - Rahalatek';
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'استمتع بشقق مفروشة فاخرة في تركيا مع رحلاتك. شقق مميزة مع مرافق استثنائية، خصوصية، وخدمة عالمية. احجز إقامتك المثالية اليوم!';
+    }
+    if (currentLang === 'fr') {
+      return 'Découvrez des appartements de service de luxe en Turquie avec Rahalatek. Suites premium avec équipements exceptionnels, intimité et service de classe mondiale. Réservez votre séjour parfait aujourd\'hui!';
+    }
+    return 'Experience luxury serviced apartments in Türkiye with Rahalatek. Premium suites with exceptional amenities, privacy, and world-class service. Book your perfect stay today!';
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    
+    if (currentLang === 'ar') {
+      return 'شقق فاخرة تركيا, شقق مفروشة مميزة, إقامات فاخرة تركيا, شقق مفروشة إسطنبول, شقق فاخرة أنطاليا, شقق مفروشة طرابزون, شقق فاخرة كابادوكيا, إقامات مميزة تركيا, إقامة فاخرة تركيا, شقق مفروشة تركيا, رحلاتك';
+    }
+    if (currentLang === 'fr') {
+      return 'suites luxe Turquie, appartements service premium, hébergements luxe Turquie, appartements meublés Istanbul, appartements luxe Antalya, appartements service Trabzon, suites luxe Cappadoce, hébergements premium Turquie, séjour luxe Turquie, appartements meublés Turquie, Rahalatek';
+    }
+    return 'luxury suites Turkey, premium serviced apartments, luxury accommodation Turkey, furnished apartments Istanbul, luxury apartments Antalya, serviced apartments Trabzon, luxury suites Cappadocia, premium accommodation Turkey, luxury stay Turkey, furnished apartments Turkey, Rahalatek';
+  };
+
+  // SEO Meta Tags and hreflang
   useEffect(() => {
-    document.title = 'Luxury Suites | Rahalatek';
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
     
     // Update meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Experience luxury serviced apartments in Türkiye with Rahalatek. Premium suites with exceptional amenities, privacy, and world-class service. Book your perfect stay today!'
-      );
+      metaDescription.setAttribute('content', content.description);
     }
 
     // Update keywords
     const metaKeywords = document.querySelector('meta[name="keywords"]');
     if (metaKeywords) {
-      metaKeywords.setAttribute('content', 
-        'luxury suites Turkey, premium serviced apartments, luxury accommodation Turkey, furnished apartments Istanbul, luxury apartments Antalya, serviced apartments Trabzon, luxury suites Cappadocia, premium accommodation Turkey, luxury stay Turkey, furnished apartments Turkey'
-      );
+      metaKeywords.setAttribute('content', content.keywords);
     }
 
     // Update Open Graph
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) {
-      ogTitle.setAttribute('content', 'Luxury Suites - Premium Serviced Apartments in Türkiye | Rahalatek');
+      ogTitle.setAttribute('content', content.title);
     }
 
     const ogDescription = document.querySelector('meta[property="og:description"]');
     if (ogDescription) {
-      ogDescription.setAttribute('content', 
-        'Experience luxury serviced apartments in Türkiye with Rahalatek. Premium suites with exceptional amenities, privacy, and world-class service. Book your perfect stay today!'
-      );
+      ogDescription.setAttribute('content', content.description);
     }
 
     const ogImage = document.querySelector('meta[property="og:image"]');
@@ -62,6 +121,30 @@ export default function LuxurySuitesPage() {
       ogUrl.setAttribute('content', window.location.href);
     }
 
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
     // Update Twitter Card
     const twitterCard = document.querySelector('meta[name="twitter:card"]');
     if (twitterCard) {
@@ -70,14 +153,12 @@ export default function LuxurySuitesPage() {
 
     const twitterTitle = document.querySelector('meta[name="twitter:title"]');
     if (twitterTitle) {
-      twitterTitle.setAttribute('content', 'Luxury Suites - Premium Serviced Apartments in Türkiye | Rahalatek');
+      twitterTitle.setAttribute('content', content.title);
     }
 
     const twitterDescription = document.querySelector('meta[name="twitter:description"]');
     if (twitterDescription) {
-      twitterDescription.setAttribute('content', 
-        'Experience luxury serviced apartments in Türkiye with Rahalatek. Premium suites with exceptional amenities, privacy, and world-class service.'
-      );
+      twitterDescription.setAttribute('content', content.description);
     }
 
     const twitterImage = document.querySelector('meta[name="twitter:image"]');
@@ -92,7 +173,33 @@ export default function LuxurySuitesPage() {
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = window.location.href;
+    canonical.href = `${baseUrl}/luxury-suites`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: '/luxury-suites' },
+      { code: 'ar', path: '/ar/luxury-suites' },
+      { code: 'fr', path: '/fr/luxury-suites' }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/luxury-suites`;
+    document.head.appendChild(defaultLink);
 
     // Add structured data for SEO
     const structuredData = {
@@ -137,7 +244,8 @@ export default function LuxurySuitesPage() {
       document.head.appendChild(script);
     }
     script.textContent = JSON.stringify(structuredData);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language]);
 
   return (
     <div className="bg-white dark:bg-slate-950 min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>

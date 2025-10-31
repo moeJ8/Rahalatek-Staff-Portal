@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt, FaArrowLeft, FaClock, FaUsers, FaCrown, FaGem, FaStar } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
@@ -7,12 +7,13 @@ import Flag from 'react-world-flags';
 import axios from 'axios';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import CustomButton from '../../components/CustomButton';
+import { useLocalizedNavigate } from '../../hooks/useLocalizedNavigate';
 
 const GuestCityPage = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
   const { country, city } = useParams();
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cityData, setCityData] = useState(null);
@@ -38,17 +39,215 @@ const GuestCityPage = () => {
   const countryName = decodeURIComponent(country);
   const cityName = decodeURIComponent(city);
 
-  // Set page title and meta tags
-  useEffect(() => {
-    document.title = `${cityName}, ${countryName} | Rahalatek`;
+  // Language-aware meta content functions
+  const getLocalizedMetaTitle = () => {
+    const currentLang = i18n.language;
+    const translatedCityName = t(`countryPage.cities.${cityName}`, cityName);
+    const translatedCountryName = t(`countryPage.countryNames.${countryName}`, countryName);
     
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription && cityData) {
-      metaDescription.setAttribute('content', 
-        cityData.description.substring(0, 160)
-      );
+    if (currentLang === 'ar') {
+      // Optimized for search queries like "اسطنبول رحلاتك"
+      return `${translatedCityName} - رحلاتك`;
     }
-  }, [cityName, countryName, cityData]);
+    if (currentLang === 'fr') {
+      return `${translatedCityName}, ${translatedCountryName} - Rahalatek`;
+    }
+    return `${translatedCityName}, ${translatedCountryName} - Rahalatek`;
+  };
+
+  const getLocalizedMetaDescription = () => {
+    const currentLang = i18n.language;
+    const translatedCityName = t(`countryPage.cities.${cityName}`, cityName);
+    const translatedCountryName = t(`countryPage.countryNames.${countryName}`, countryName);
+    
+    if (cityData?.description) {
+      // Use city description if available, truncate to 160 chars
+      const desc = cityData.description.length > 160 
+        ? cityData.description.substring(0, 160) + '...'
+        : cityData.description;
+      
+      if (currentLang === 'ar') {
+        return `اكتشف ${translatedCityName}, ${translatedCountryName} مع رحلاتك. ${desc} احجز جولاتك وفنادقك في ${translatedCityName} اليوم.`;
+      }
+      if (currentLang === 'fr') {
+        return `Découvrez ${translatedCityName}, ${translatedCountryName} avec Rahalatek. ${desc} Réservez vos visites et hôtels à ${translatedCityName} aujourd'hui.`;
+      }
+      return `Explore ${translatedCityName}, ${translatedCountryName} with Rahalatek. ${desc} Book your tours and hotels in ${translatedCityName} today.`;
+    }
+    
+    // Fallback if no description
+    if (currentLang === 'ar') {
+      return `اكتشف ${translatedCityName}, ${translatedCountryName} مع رحلاتك. اكتشف جولات رائعة، فنادق فاخرة، وإقامات مميزة في ${translatedCityName}. احجز تجربة سفرك المثالية اليوم.`;
+    }
+    if (currentLang === 'fr') {
+      return `Explorez ${translatedCityName}, ${translatedCountryName} avec Rahalatek. Découvrez des visites incroyables, des hôtels de luxe et des hébergements premium à ${translatedCityName}. Réservez votre expérience de voyage parfaite aujourd'hui.`;
+    }
+    return `Explore ${translatedCityName}, ${translatedCountryName} with Rahalatek. Discover amazing tours, luxury hotels, and premium accommodations in ${translatedCityName}. Book your perfect travel experience today.`;
+  };
+
+  const getLocalizedMetaKeywords = () => {
+    const currentLang = i18n.language;
+    const translatedCityName = t(`countryPage.cities.${cityName}`, cityName);
+    const translatedCountryName = t(`countryPage.countryNames.${countryName}`, countryName);
+    
+    if (currentLang === 'ar') {
+      return `${translatedCityName}, ${translatedCountryName}, جولات ${translatedCityName}, فنادق ${translatedCityName}, سفر ${translatedCityName}, سياحة ${translatedCityName}, عطلة ${translatedCityName}, السفر إلى ${translatedCityName}, وجهات ${translatedCityName}, تجارب ${translatedCityName}, رحلاتك`;
+    }
+    if (currentLang === 'fr') {
+      return `${translatedCityName}, ${translatedCountryName}, visites ${translatedCityName}, hôtels ${translatedCityName}, voyage ${translatedCityName}, tourisme ${translatedCityName}, vacances ${translatedCityName}, voyage à ${translatedCityName}, destinations ${translatedCityName}, expériences ${translatedCityName}, Rahalatek`;
+    }
+    return `${cityName}, ${countryName}, ${cityName} tours, ${cityName} hotels, ${cityName} travel, ${cityName} tourism, ${cityName} vacation, travel to ${cityName}, ${cityName} destinations, ${cityName} experiences, ${countryName} travel, Rahalatek`;
+  };
+
+  // SEO Meta Tags and hreflang
+  useEffect(() => {
+    if (!cityData) return; // Wait for city data to load
+    
+    const baseUrl = window.location.origin;
+    const currentLang = i18n.language;
+    const encodedCountry = encodeURIComponent(countryName);
+    const encodedCity = encodeURIComponent(cityName);
+    
+    const langContent = {
+      en: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'en_US'
+      },
+      ar: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'ar_SA'
+      },
+      fr: {
+        title: getLocalizedMetaTitle(),
+        description: getLocalizedMetaDescription(),
+        keywords: getLocalizedMetaKeywords(),
+        ogLocale: 'fr_FR'
+      }
+    };
+
+    const content = langContent[currentLang] || langContent.en;
+
+    // Update page title
+    document.title = content.title;
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', content.description);
+    }
+
+    // Update keywords
+    const metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute('content', content.keywords);
+    }
+
+    // Update Open Graph
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', content.title);
+    }
+
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      ogDescription.setAttribute('content', content.description);
+    }
+
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage && cityData.image) {
+      ogImage.setAttribute('content', cityData.image);
+    }
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) {
+      ogUrl.setAttribute('content', window.location.href);
+    }
+
+    // Add multiple og:locale tags for all languages
+    const existingOgLocales = document.querySelectorAll('meta[property="og:locale"]');
+    existingOgLocales.forEach(tag => tag.remove());
+
+    // Add og:locale for current language (primary)
+    let ogLocale = document.createElement('meta');
+    ogLocale.setAttribute('property', 'og:locale');
+    ogLocale.setAttribute('content', content.ogLocale);
+    document.head.appendChild(ogLocale);
+
+    // Add alternate og:locale for other languages
+    const alternateLocales = [
+      { lang: 'en', locale: 'en_US' },
+      { lang: 'ar', locale: 'ar_SA' },
+      { lang: 'fr', locale: 'fr_FR' }
+    ].filter(loc => loc.lang !== currentLang);
+
+    alternateLocales.forEach(({ locale }) => {
+      const altLocale = document.createElement('meta');
+      altLocale.setAttribute('property', 'og:locale:alternate');
+      altLocale.setAttribute('content', locale);
+      document.head.appendChild(altLocale);
+    });
+
+    // Update Twitter Card
+    const twitterCard = document.querySelector('meta[name="twitter:card"]');
+    if (twitterCard) {
+      twitterCard.setAttribute('content', 'summary_large_image');
+    }
+
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) {
+      twitterTitle.setAttribute('content', content.title);
+    }
+
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) {
+      twitterDescription.setAttribute('content', content.description);
+    }
+
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage && cityData.image) {
+      twitterImage.setAttribute('content', cityData.image);
+    }
+
+    // Add canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `${baseUrl}/country/${encodedCountry}/city/${encodedCity}`;
+
+    // Remove existing hreflang tags
+    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    existingHreflangs.forEach(tag => tag.remove());
+
+    // Add hreflang tags for all language versions
+    const languages = [
+      { code: 'en', path: `/country/${encodedCountry}/city/${encodedCity}` },
+      { code: 'ar', path: `/ar/country/${encodedCountry}/city/${encodedCity}` },
+      { code: 'fr', path: `/fr/country/${encodedCountry}/city/${encodedCity}` }
+    ];
+
+    languages.forEach(({ code, path }) => {
+      const link = document.createElement('link');
+      link.rel = 'alternate';
+      link.hreflang = code;
+      link.href = `${baseUrl}${path}`;
+      document.head.appendChild(link);
+    });
+
+    // Add x-default pointing to English
+    const defaultLink = document.createElement('link');
+    defaultLink.rel = 'alternate';
+    defaultLink.hreflang = 'x-default';
+    defaultLink.href = `${baseUrl}/country/${encodedCountry}/city/${encodedCity}`;
+    document.head.appendChild(defaultLink);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cityName, countryName, i18n.language, cityData, t]);
 
   // Screen size detection for tours carousel
   const updateTourScreenSize = useCallback(() => {
