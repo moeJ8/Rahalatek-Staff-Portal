@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
 import { FaHome, FaSearch, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 
 export default function GuestNotFoundPage({ 
@@ -41,7 +42,7 @@ export default function GuestNotFoundPage({
       <div className="max-w-2xl w-full text-center">
         {/* Logo */}
         <div className="mb-8 flex justify-center">
-          <Link to="/" className="transition-transform duration-300 hover:scale-105">
+          <Link to={getLocalizedPath("/", i18n.language)} className="transition-transform duration-300 hover:scale-105">
             <img 
               src="/Logolight.png" 
               alt="Rahalatek Logo" 
@@ -83,7 +84,7 @@ export default function GuestNotFoundPage({
         <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center ${isRTL ? 'space-x-reverse' : ''}`}>
           <div className="w-full sm:w-auto">
             <Link
-              to="/"
+              to={getLocalizedPath("/", i18n.language)}
               className={`relative text-white bg-blue-600 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:from-blue-700 hover:to-teal-600`}
             >
               <FaHome className="w-4 h-4" />
@@ -92,7 +93,7 @@ export default function GuestNotFoundPage({
           </div>
           <div className="w-full sm:w-auto">
             <Link
-              to="/guest/hotels"
+              to={getLocalizedPath("/guest/hotels", i18n.language)}
               className={`relative text-white bg-teal-500 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:bg-teal-600`}
             >
               <FaBuilding className="w-4 h-4" />
@@ -101,7 +102,7 @@ export default function GuestNotFoundPage({
           </div>
           <div className="w-full sm:w-auto">
             <Link
-              to="/guest/tours"
+              to={getLocalizedPath("/guest/tours", i18n.language)}
               className={`relative text-white bg-gray-800 border-0 shadow-lg overflow-hidden rounded-md px-6 py-3 text-base font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''} hover:bg-green-600`}
             >
               <FaMapMarkerAlt className="w-4 h-4" />

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { FaCalendarAlt, FaUser, FaEye, FaClock, FaArrowLeft, FaTags, FaHome, FaLink, FaExpand } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
 import CustomSelect from '../../components/Select';
 import RahalatekLoader from '../../components/RahalatekLoader';
 import PublicBlogCard from '../../components/Visitors/PublicBlogCard';
@@ -434,7 +435,7 @@ export default function BlogDetailPage() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Blog not found
           </h2>
-          <Link to="/blog" className="text-blue-600 dark:text-blue-400 hover:underline">
+          <Link to={getLocalizedPath("/blog", i18n.language)} className="text-blue-600 dark:text-blue-400 hover:underline">
             Back to Blogs
           </Link>
         </div>
@@ -493,16 +494,16 @@ export default function BlogDetailPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4 sm:mb-6">
           {/* Breadcrumbs */}
           <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
-            <Link to="/" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-1">
+            <Link to={getLocalizedPath("/", i18n.language)} className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors flex items-center gap-1">
               <FaHome className="w-3 h-3" />
               <span>{t('blogDetailPage.home')}</span>
             </Link>
             <span>/</span>
-            <Link to="/blog" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link to={getLocalizedPath("/blog", i18n.language)} className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
               {t('blogDetailPage.blog')}
             </Link>
             <span>/</span>
-            <Link to={`/blog?category=${blog.category}`} className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link to={getLocalizedPath(`/blog?category=${blog.category}`, i18n.language)} className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
               {translateCategory(blog.category)}
             </Link>
             <span>/</span>
@@ -679,7 +680,7 @@ export default function BlogDetailPage() {
                 {blog.tags.map((tag, index) => (
                   <Link
                     key={index}
-                    to={`/blog?tag=${tag}`}
+                    to={getLocalizedPath(`/blog?tag=${tag}`, i18n.language)}
                     className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-100 dark:bg-yellow-900/30 text-blue-700 dark:text-yellow-300 rounded-full text-xs sm:text-sm font-medium hover:bg-blue-200 dark:hover:bg-yellow-900/50 transition-colors"
                   >
                     #{tag}
@@ -793,13 +794,13 @@ export default function BlogDetailPage() {
             </p>
             <div className="flex justify-center gap-3 sm:gap-4 flex-wrap">
               <Link
-                to="/guest/tours"
+                to={getLocalizedPath("/guest/tours", i18n.language)}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-white text-blue-600 dark:text-orange-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
               >
                 {t('blogDetailPage.browseTours')}
               </Link>
               <Link
-                to="/packages"
+                to={getLocalizedPath("/packages", i18n.language)}
                 className="px-4 sm:px-6 py-2 sm:py-3 bg-white text-teal-600 dark:text-yellow-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors text-sm sm:text-base"
               >
                 {t('blogDetailPage.viewPackages')}

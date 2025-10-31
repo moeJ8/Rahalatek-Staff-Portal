@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
 import { FaAward, FaHeadset, FaUserTie, FaMoneyBillWave, FaMapMarkedAlt, FaShieldAlt } from 'react-icons/fa';
 
 const WhyChooseUs = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   const features = [
     {
@@ -147,18 +149,18 @@ const WhyChooseUs = () => {
               {t('aboutPage.whyChooseUs.experienceText')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="/contact"
+              <Link
+                to={getLocalizedPath("/contact", i18n.language)}
                 className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 dark:bg-yellow-600 text-white font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-yellow-700 transition-colors duration-300 shadow-lg hover:shadow-xl"
               >
                 {t('aboutPage.whyChooseUs.startPlanning')}
-              </a>
-              <a
-                href="/packages"
+              </Link>
+              <Link
+                to={getLocalizedPath("/packages", i18n.language)}
                 className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-slate-950 text-blue-600 dark:text-yellow-500 font-semibold rounded-lg border-2 border-blue-600 dark:border-yellow-600 hover:bg-blue-50 dark:hover:bg-slate-900 transition-colors duration-300"
               >
                 {t('aboutPage.whyChooseUs.viewPackages')}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

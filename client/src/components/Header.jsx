@@ -11,6 +11,7 @@ import PublicSearchbar from './PublicSearchbar';
 import UserCalendar from './UserCalendar';
 import LanguageSwitcher from './LanguageSwitcher';
 import { shouldHideLanguageSwitcher } from '../utils/pageUtils';
+import { getLocalizedPath } from '../hooks/useLocalizedNavigate';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
   FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope, FaInfoCircle,
@@ -37,37 +38,6 @@ export default function Header() {
   const isAuthenticated = !!user;
   // Keep language switcher visible; we'll lock header language/dir separately
   const hideLanguageSwitcher = shouldHideLanguageSwitcher(location.pathname, isAuthenticated);
-  
-  // Helper function to add language prefix to URLs for public pages
-  const getLocalizedUrl = (path) => {
-    // Check if we're on a protected/auth page (don't add language prefix)
-    const isProtectedPage = location.pathname.startsWith('/dashboard') || 
-                            location.pathname.startsWith('/home') || 
-                            location.pathname.startsWith('/booking') ||
-                            location.pathname.startsWith('/vouchers') ||
-                            location.pathname.startsWith('/profile') ||
-                            location.pathname.startsWith('/tours') && !location.pathname.includes('/tours/') ||
-                            location.pathname.startsWith('/hotels') && !location.pathname.includes('/hotels/') ||
-                            location.pathname.startsWith('/attendance') ||
-                            location.pathname === '/signin' ||
-                            location.pathname === '/verify-email';
-    
-    // If on protected page, return path as is
-    if (isProtectedPage) {
-      return path;
-    }
-    
-    // Get current language from URL or i18n
-    const urlLang = location.pathname.match(/^\/(ar|fr)/)?.[1];
-    const lang = urlLang || i18n.language;
-    
-    // Add language prefix for Arabic and French
-    if (lang === 'ar' || lang === 'fr') {
-      return `/${lang}${path === '/' ? '' : path}`;
-    }
-    
-    return path;
-  };
   
   // Force English translations for protected/auth pages
   const getTranslation = (key) => {
@@ -280,7 +250,9 @@ export default function Header() {
     );
   };
 
-  const isSignInPage = location.pathname === '/signin';
+  const isSignInPage = location.pathname === '/signin' || 
+                       location.pathname === '/ar/signin' || 
+                       location.pathname === '/fr/signin';
   const isRTL = i18n.language === 'ar';
   
   // Force LTR layout for protected/auth pages
@@ -295,7 +267,7 @@ export default function Header() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-20">
-            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : getLocalizedUrl('/')} className="flex items-center">
+            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : getLocalizedPath('/', i18n.language)} className="flex items-center">
               <img 
                 src={isSignInPage ? "/logodark.png" : (darkMode ? "/logodark.png" : "/Logolight.png")} 
                 alt="Rahalatek Logo" 
@@ -413,7 +385,7 @@ export default function Header() {
               <>
                 {/* Guest Navigation Links */}
                 <Link 
-                  to={getLocalizedUrl('/')} 
+                  to={getLocalizedPath('/', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -430,7 +402,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/guest/hotels')} 
+                  to={getLocalizedPath('/guest/hotels', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -447,7 +419,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/guest/tours')} 
+                  to={getLocalizedPath('/guest/tours', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -464,7 +436,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/packages')} 
+                  to={getLocalizedPath('/packages', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -481,7 +453,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/blog')} 
+                  to={getLocalizedPath('/blog', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -498,7 +470,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/contact')} 
+                  to={getLocalizedPath('/contact', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -515,7 +487,7 @@ export default function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={getLocalizedUrl('/about')} 
+                  to={getLocalizedPath('/about', i18n.language)} 
                   className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
                     isSignInPage
                       ? 'text-white hover:text-white/80 hover:bg-white/10'
@@ -541,7 +513,7 @@ export default function Header() {
                 {!isPublicPage() && (
                   <CustomButton 
                     as={Link} 
-                    to="/signin"
+                    to={getLocalizedPath("/signin", i18n.language)}
                     variant="rippleBlueToYellowTeal" 
                     size="sm"
                   >
@@ -703,7 +675,7 @@ export default function Header() {
                       }`}>
                         <div className="grid grid-cols-3 gap-3">
                           <Link 
-                            to="/"
+                            to={getLocalizedPath("/", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/') 
@@ -716,7 +688,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/guest/hotels"
+                            to={getLocalizedPath("/guest/hotels", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/guest/hotels') 
@@ -729,7 +701,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/guest/tours"
+                            to={getLocalizedPath("/guest/tours", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/guest/tours') 
@@ -742,7 +714,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/packages"
+                            to={getLocalizedPath("/packages", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/packages') 
@@ -755,7 +727,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/blog"
+                            to={getLocalizedPath("/blog", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/blog') || location.pathname.startsWith('/blog/')
@@ -768,7 +740,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/contact"
+                            to={getLocalizedPath("/contact", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/contact') 
@@ -781,7 +753,7 @@ export default function Header() {
                           </Link>
                           
                           <Link 
-                            to="/about"
+                            to={getLocalizedPath("/about", i18n.language)}
                             onClick={closeMobileMenu}
                             className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                               isActive('/about') 
@@ -1019,7 +991,7 @@ export default function Header() {
                   }`}>
                     <div className="grid grid-cols-3 gap-3">
                       <Link 
-                        to="/"
+                        to={getLocalizedPath("/", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/') 
@@ -1032,7 +1004,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/guest/hotels"
+                        to={getLocalizedPath("/guest/hotels", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/guest/hotels') 
@@ -1045,7 +1017,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/guest/tours"
+                        to={getLocalizedPath("/guest/tours", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/guest/tours') 
@@ -1058,7 +1030,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/packages"
+                        to={getLocalizedPath("/packages", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/packages') 
@@ -1071,7 +1043,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/blog"
+                        to={getLocalizedPath("/blog", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/blog') || location.pathname.startsWith('/blog/')
@@ -1084,7 +1056,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/contact"
+                        to={getLocalizedPath("/contact", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/contact') 
@@ -1097,7 +1069,7 @@ export default function Header() {
                       </Link>
                       
                       <Link 
-                        to="/about"
+                        to={getLocalizedPath("/about", i18n.language)}
                         onClick={closeMobileMenu}
                         className={`flex flex-col items-center justify-center p-2.5 rounded-lg transition-all duration-300 group ${
                           isActive('/about') 
@@ -1168,7 +1140,7 @@ export default function Header() {
                 {/* Guest Mobile Navigation - 3 Column Grid */}
                 <div className="grid grid-cols-3 gap-4 px-2">
                   <Link 
-                    to="/"
+                    to={getLocalizedPath("/", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1183,7 +1155,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/guest/hotels"
+                    to={getLocalizedPath("/guest/hotels", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1198,7 +1170,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/guest/tours"
+                    to={getLocalizedPath("/guest/tours", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1213,7 +1185,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/packages"
+                    to={getLocalizedPath("/packages", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1228,7 +1200,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/blog"
+                    to={getLocalizedPath("/blog", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1243,7 +1215,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/contact"
+                    to={getLocalizedPath("/contact", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1258,7 +1230,7 @@ export default function Header() {
                   </Link>
                   
                   <Link 
-                    to="/about"
+                    to={getLocalizedPath("/about", i18n.language)}
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
@@ -1326,7 +1298,7 @@ export default function Header() {
                   <div className="mt-6 px-2">
                     <CustomButton
                       as={Link}
-                      to="/signin"
+                      to={getLocalizedPath("/signin", i18n.language)}
                       onClick={closeMobileMenu}
                       variant="rippleBlueToYellowTeal"
                       size="lg"

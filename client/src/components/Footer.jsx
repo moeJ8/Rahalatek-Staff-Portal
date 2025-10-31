@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { shouldHideLanguageSwitcher } from '../utils/pageUtils';
+import { getLocalizedPath } from '../hooks/useLocalizedNavigate';
 import { 
   FaInstagram, 
   FaWhatsapp, 
@@ -136,7 +137,7 @@ export default function Footer() {
           
           {/* Company Info Section */}
           <div className="space-y-4 col-span-2 lg:col-span-1">
-            <Link to={user ? (user.isPublisher ? "/dashboard" : "/home") : "/"} className="inline-block">
+            <Link to={getLocalizedPath(user ? (user.isPublisher ? "/dashboard" : "/home") : "/", i18n.language)} className="inline-block">
               <img 
                 src={darkMode ? "/logodark.png" : "/Logolight.png"}
                 alt="Rahalatek Logo" 
@@ -182,19 +183,19 @@ export default function Footer() {
                   {!user.isPublisher && (
                     <>
                       <li>
-                        <Link to="/home" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                        <Link to={getLocalizedPath("/home", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaHome className="text-xs" />
                           <span>{getTranslation('footer.home')}</span>
                         </Link>
                       </li>
                       <li>
-                        <Link to="/booking" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                        <Link to={getLocalizedPath("/booking", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaClipboardList className="text-xs" />
                           <span>{getTranslation('footer.booking')}</span>
                         </Link>
                       </li>
                       <li>
-                        <Link to="/vouchers" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                        <Link to={getLocalizedPath("/vouchers", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                           <FaTicketAlt className="text-xs" />
                           <span>{getTranslation('footer.vouchers')}</span>
                         </Link>
@@ -203,20 +204,20 @@ export default function Footer() {
                   )}
                   {(user.isAdmin || user.isAccountant || user.isContentManager || user.isPublisher) && (
                     <li>
-                      <Link to="/dashboard" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                      <Link to={getLocalizedPath("/dashboard", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                         <FaChartLine className="text-xs" />
                         <span>{getTranslation('footer.dashboard')}</span>
                       </Link>
                     </li>
                   )}
                   <li>
-                    <Link to="/hotels" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/hotels", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHotel className="text-xs" />
                       <span>{getTranslation('footer.hotels')}</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/tours" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/tours", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaRoute className="text-xs" />
                       <span>{getTranslation('footer.tours')}</span>
                     </Link>
@@ -225,31 +226,31 @@ export default function Footer() {
               ) : (
                 <>
                   <li>
-                    <Link to="/" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHome className="text-xs" />
                       <span>{t('footer.home')}</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/guest/hotels" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/guest/hotels", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaHotel className="text-xs" />
                       <span>{getTranslation('footer.hotels')}</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/guest/tours" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/guest/tours", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaRoute className="text-xs" />
                       <span>{getTranslation('footer.tours')}</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/packages" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/packages", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaBox className="text-xs" />
                       <span>{getTranslation('footer.packages')}</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/blog" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                    <Link to={getLocalizedPath("/blog", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                       <FaBlog className="text-xs" />
                       <span>{getTranslation('footer.blog')}</span>
                     </Link>
@@ -265,22 +266,22 @@ export default function Footer() {
               <h3 className={getHeadingClasses()}>{getTranslation('footer.topDestinations')}</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link to="/country/Turkey" className={`text-sm ${getLinkClasses()}`}>
+                  <Link to={getLocalizedPath("/country/Turkey", i18n.language)} className={`text-sm ${getLinkClasses()}`}>
                     {getTranslation('footer.turkey')}
                   </Link>
                 </li>
                 <li>
-                  <Link to="/country/Malaysia" className={`text-sm ${getLinkClasses()}`}>
+                  <Link to={getLocalizedPath("/country/Malaysia", i18n.language)} className={`text-sm ${getLinkClasses()}`}>
                     {getTranslation('footer.malaysia')}
                   </Link>
                 </li>
                 <li>
-                  <Link to="/country/Thailand" className={`text-sm ${getLinkClasses()}`}>
+                  <Link to={getLocalizedPath("/country/Thailand", i18n.language)} className={`text-sm ${getLinkClasses()}`}>
                     {getTranslation('footer.thailand')}
                   </Link>
                 </li>
                 <li>
-                  <Link to="/country/Indonesia" className={`text-sm ${getLinkClasses()}`}>
+                  <Link to={getLocalizedPath("/country/Indonesia", i18n.language)} className={`text-sm ${getLinkClasses()}`}>
                     {getTranslation('footer.indonesia')}
                   </Link>
                 </li>
@@ -295,13 +296,13 @@ export default function Footer() {
             <h3 className={getHeadingClasses()}>{getTranslation('footer.company')}</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/about" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                <Link to={getLocalizedPath("/about", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                   <FaInfoCircle className="text-xs" />
                   <span>{getTranslation('footer.aboutUs')}</span>
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
+                <Link to={getLocalizedPath("/contact", i18n.language)} className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}>
                   <FaEnvelope className="text-xs" />
                   <span>{getTranslation('footer.contactUs')}</span>
                 </Link>
@@ -364,13 +365,13 @@ export default function Footer() {
           </div>
           
           <div className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6 text-sm mr-0 md:mr-8 lg:mr-10">
-            <Link to="/about" className={getLinkClasses()}>
+            <Link to={getLocalizedPath("/about", i18n.language)} className={getLinkClasses()}>
               {getTranslation('footer.privacyPolicy')}
             </Link>
-            <Link to="/about" className={getLinkClasses()}>
+            <Link to={getLocalizedPath("/about", i18n.language)} className={getLinkClasses()}>
               {getTranslation('footer.termsOfService')}
             </Link>
-            <Link to="/contact" className={getLinkClasses()}>
+            <Link to={getLocalizedPath("/contact", i18n.language)} className={getLinkClasses()}>
               {getTranslation('footer.support')}
             </Link>
           </div>

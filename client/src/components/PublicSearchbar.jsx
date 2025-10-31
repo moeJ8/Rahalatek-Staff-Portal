@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSearch, FaHotel, FaRoute, FaBox, FaBlog, FaGlobe, FaTimes, FaMapMarkerAlt } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNavigate } from '../hooks/useLocalizedNavigate';
 import axios from 'axios';
 import CustomScrollbar from './CustomScrollbar';
 
@@ -22,7 +22,7 @@ const PublicSearchbar = () => {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const mobileInputRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
 
   // Debounce search query for better performance
   useEffect(() => {
@@ -377,21 +377,18 @@ const PublicSearchbar = () => {
   };
 
   const handleResultClick = (result) => {
-    const lang = i18n.language;
-    const langPrefix = (lang === 'ar' || lang === 'fr') ? `/${lang}` : '';
-    
     if (result.type === 'hotel') {
-      navigate(`${langPrefix}/hotels/${result.slug}`);
+      navigate(`/hotels/${result.slug}`);
     } else if (result.type === 'tour') {
-      navigate(`${langPrefix}/tours/${result.slug}`);
+      navigate(`/tours/${result.slug}`);
     } else if (result.type === 'package') {
-      navigate(`${langPrefix}/packages/${result.slug}`);
+      navigate(`/packages/${result.slug}`);
     } else if (result.type === 'blog') {
-      navigate(`${langPrefix}/blog/${result.slug}`);
+      navigate(`/blog/${result.slug}`);
     } else if (result.type === 'city') {
-      navigate(`${langPrefix}/country/${encodeURIComponent(result.country)}/city/${encodeURIComponent(result.name)}`);
+      navigate(`/country/${encodeURIComponent(result.country)}/city/${encodeURIComponent(result.name)}`);
     } else if (result.type === 'country') {
-      navigate(`${langPrefix}/country/${encodeURIComponent(result.name)}`);
+      navigate(`/country/${encodeURIComponent(result.name)}`);
     }
     setShowDropdown(false);
     setSearchQuery('');

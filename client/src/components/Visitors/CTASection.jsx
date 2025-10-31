@@ -1,10 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
 import { FaPhone, FaEnvelope, FaWhatsapp } from 'react-icons/fa';
 
 const CTASection = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   return (
     <section className="py-20 md:py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 relative overflow-hidden">
@@ -45,7 +46,7 @@ const CTASection = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Link
-              to="/contact"
+              to={getLocalizedPath("/contact", i18n.language)}
               className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-blue-600 dark:text-blue-600 font-bold text-lg rounded-xl hover:bg-blue-50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 min-w-[200px]"
             >
               <span className="relative z-10">{t('aboutPage.cta.getStarted')}</span>
@@ -53,7 +54,7 @@ const CTASection = () => {
             </Link>
 
             <Link
-              to="/packages"
+              to={getLocalizedPath("/packages", i18n.language)}
               className="group inline-flex items-center justify-center px-8 py-4 bg-transparent text-white font-bold text-lg rounded-xl border-2 border-white hover:bg-white hover:text-blue-600 transition-all duration-300 min-w-[200px]"
             >
               <span>{t('aboutPage.cta.explorePackages')}</span>

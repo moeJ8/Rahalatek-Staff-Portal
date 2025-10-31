@@ -1097,7 +1097,7 @@ export default function BlogManagement({ user }) {
             size="sm"
             className="w-full sm:w-auto"
           >
-            Send My Weekly WhatsApp Report
+            Send My WhatsApp Report
           </CustomButton>
           {(user?.isAdmin || user?.isContentManager) && (
             <CustomButton
@@ -1106,7 +1106,7 @@ export default function BlogManagement({ user }) {
               size="sm"
               className="w-full sm:w-auto"
             >
-              Send All Authors Weekly Reports
+              Send All Authors Reports
             </CustomButton>
           )}
         </div>

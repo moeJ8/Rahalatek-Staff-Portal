@@ -110,6 +110,7 @@ export default function LanguageSwitcher({ variant = 'default' }) {
     const pathWithoutLang = path.replace(/^\/(ar|fr)/, '') || '/';
     
     // Check if we're on a protected/authenticated page (don't add language prefix)
+    // Note: sign-in page now supports language prefixes (/ar/signin, /fr/signin), so it's not protected
     const isProtectedPage = path.startsWith('/dashboard') || 
                             path.startsWith('/home') || 
                             path.startsWith('/booking') ||
@@ -118,10 +119,9 @@ export default function LanguageSwitcher({ variant = 'default' }) {
                             path.startsWith('/tours') && !path.includes('/tours/') ||
                             path.startsWith('/hotels') && !path.includes('/hotels/') ||
                             path.startsWith('/attendance') ||
-                            path === '/signin' ||
                             path === '/verify-email';
     
-    // Only add language prefix for public pages
+    // Only add language prefix for public pages (including sign-in page which now supports it)
     if (!isProtectedPage) {
       if (lang === 'ar' || lang === 'fr') {
         newPath = `/${lang}${pathWithoutLang === '/' ? '' : pathWithoutLang}`;
@@ -196,8 +196,12 @@ export default function LanguageSwitcher({ variant = 'default' }) {
       </button>
 
       {/* Desktop Dropdown Menu */}
-      {isOpen && !isMobile && (
+      {!isMobile && (
         <div className={`absolute ${currentLanguage === 'ar' ? 'left-0' : 'right-0'} mt-3 w-40 rounded-2xl shadow-2xl overflow-hidden z-50 transition-all duration-200 ease-in-out origin-top ${
+          isOpen 
+            ? 'opacity-100 scale-100 translate-y-0' 
+            : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+        } ${
           isLightVariant
             ? 'bg-white/95 backdrop-blur-xl border border-white/20'
             : 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-gray-200/50 dark:border-slate-700/50'

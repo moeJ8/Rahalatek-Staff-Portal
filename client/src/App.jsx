@@ -70,6 +70,8 @@ const ConditionalFloatingContact = () => {
   // Show on guest pages and public detail pages, hide on authenticated pages
   const isGuestPage = location.pathname === '/' || 
                       location.pathname === '/signin' ||
+                      location.pathname === '/ar/signin' ||
+                      location.pathname === '/fr/signin' ||
                       location.pathname === '/contact' ||
                       location.pathname === '/about' ||
                       location.pathname === '/tourism' ||
@@ -105,8 +107,10 @@ const ConditionalFloatingWhatsApp = () => {
 const ConditionalFooter = () => {
   const location = useLocation();
   
-  // Hide footer on sign-in page
-  if (location.pathname === '/signin') return null;
+  // Hide footer on sign-in page (including language-prefixed versions)
+  if (location.pathname === '/signin' || 
+      location.pathname === '/ar/signin' || 
+      location.pathname === '/fr/signin') return null;
   
   return <Footer />;
 };
@@ -176,6 +180,8 @@ function App() {
             }>
               <Routes>
               <Route path="/signin" element={user ? <Navigate to={user.isPublisher ? "/dashboard" : "/home"} /> : <SignInPage />} />
+              <Route path="/ar/signin" element={user ? <Navigate to={user.isPublisher ? "/dashboard" : "/home"} /> : <SignInPage />} />
+              <Route path="/fr/signin" element={user ? <Navigate to={user.isPublisher ? "/dashboard" : "/home"} /> : <SignInPage />} />
               <Route path="/verify-email" element={<EmailVerificationPage />} />
               
               {/* Protected Routes - Admin, Accountant, ContentManager, and Publisher access */}

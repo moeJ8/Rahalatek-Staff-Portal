@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
 
 export default function ServicesSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const services = [
     {
       id: 'tours',
@@ -49,7 +50,7 @@ export default function ServicesSection() {
           {services.map((service) => (
             <Link
               key={service.id}
-              to={service.link}
+              to={getLocalizedPath(service.link, i18n.language)}
               className="group block bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] border border-gray-200 dark:border-slate-700"
             >
               {/* Service Image */}
