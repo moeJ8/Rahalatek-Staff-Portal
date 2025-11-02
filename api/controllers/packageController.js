@@ -52,6 +52,59 @@ const translatePackage = (pkg, lang) => {
     translatedPackage.excludes = getTranslatedArray(pkg.excludes, translations.excludes);
   }
 
+  // Translate daily itinerary (ONLY for ar/fr, not for en)
+  if (lang !== 'en' && pkg.dailyItinerary && pkg.dailyItinerary.length > 0) {
+    translatedPackage.dailyItinerary = pkg.dailyItinerary.map((day, index) => {
+      // Convert mongoose subdocument to plain object
+      const dayObj = day.toObject ? day.toObject() : day;
+      const dayTranslations = dayObj.translations;
+      
+      // Ensure day property is always set (fallback to index + 1 if missing)
+      const dayNumber = dayObj.day || (index + 1);
+      
+      if (!dayTranslations) {
+        return { 
+          ...dayObj, 
+          day: dayNumber
+        };
+      }
+
+      // Only translate for arrival/departure/rest days (not tour days)
+      if (!dayObj.isArrivalDay && !dayObj.isDepartureDay && !dayObj.isRestDay) {
+        return { 
+          ...dayObj, 
+          day: dayNumber
+        };
+      }
+
+      const translatedDay = { 
+        ...dayObj, 
+        day: dayNumber
+      };
+      
+      if (dayTranslations.title && dayTranslations.title[lang]) {
+        translatedDay.title = getTranslated(dayObj.title, dayTranslations.title[lang]);
+      }
+      if (dayTranslations.description && dayTranslations.description[lang]) {
+        translatedDay.description = getTranslated(dayObj.description, dayTranslations.description[lang]);
+      }
+      if (dayTranslations.activities && dayTranslations.activities.length > 0) {
+        translatedDay.activities = getTranslatedArray(dayObj.activities, dayTranslations.activities);
+      }
+      
+      return translatedDay;
+    });
+  } else if (pkg.dailyItinerary && pkg.dailyItinerary.length > 0) {
+    // Also ensure day numbers for English (non-translated) packages
+    translatedPackage.dailyItinerary = pkg.dailyItinerary.map((day, index) => {
+      const dayObj = day.toObject ? day.toObject() : day;
+      return {
+        ...dayObj,
+        day: dayObj.day || (index + 1)
+      };
+    });
+  }
+
   return translatedPackage;
 };
 

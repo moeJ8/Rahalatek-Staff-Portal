@@ -138,7 +138,36 @@ const packageSchema = new mongoose.Schema({
             breakfast: { type: Boolean, default: false },
             lunch: { type: Boolean, default: false },
             dinner: { type: Boolean, default: false }
-        }
+        },
+        isArrivalDay: { type: Boolean, default: false },
+        isDepartureDay: { type: Boolean, default: false },
+        isRestDay: { type: Boolean, default: false },
+        tourInfo: {
+            tourId: { type: String, default: null },
+            name: { type: String, default: null },
+            city: { type: String, default: null },
+            duration: { type: Number, default: null },
+            price: { type: Number, default: null },
+            tourType: { type: String, default: null }
+        },
+        translations: {
+            title: {
+                ar: { type: String, default: '' },
+                fr: { type: String, default: '' }
+            },
+            description: {
+                ar: { type: String, default: '' },
+                fr: { type: String, default: '' }
+            },
+            activities: [{
+                ar: { type: String, default: '' },
+                fr: { type: String, default: '' }
+            }]
+        },
+        images: [{
+            url: { type: String },
+            altText: { type: String, default: '' }
+        }]
     }],
     includes: [{
         type: String,

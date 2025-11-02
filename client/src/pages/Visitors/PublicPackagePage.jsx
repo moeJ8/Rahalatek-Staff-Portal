@@ -48,7 +48,10 @@ export default function PublicPackagePage() {
     // Fetch package data by slug
     useEffect(() => {
         const fetchPackage = async () => {
-            setLoading(true);
+            // Only show loading spinner on initial load, not on language change
+            if (!packageData) {
+                setLoading(true);
+            }
 
             try {
                 // Send language parameter to backend for SEO (only for ar/fr)
@@ -58,7 +61,9 @@ export default function PublicPackagePage() {
                 if (response.data?.success) {
                     setPackageData(response.data.data);
                     // Fetch other packages after getting the main package
-                    await fetchOtherPackages();
+                    if (!packageData) {
+                        await fetchOtherPackages();
+                    }
                 } else {
                     throw new Error(response.data?.message || 'Package not found');
                 }

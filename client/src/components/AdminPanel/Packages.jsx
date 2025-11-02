@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Label, Alert, Badge } from 'flowbite-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { FaPlus, FaSave, FaTimes, FaSpinner, FaChevronDown, FaChevronUp, FaFilter, FaSyncAlt, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { FaPlus, FaSave, FaTimes, FaSpinner, FaChevronDown, FaChevronUp, FaFilter, FaSyncAlt, FaAngleLeft, FaAngleRight, FaCalendarAlt } from 'react-icons/fa';
 import { HiTrash, HiPlus } from 'react-icons/hi';
 import Search from '../Search';
 
@@ -13,10 +13,10 @@ import TextInput from '../TextInput';
 import Select from '../Select';
 import SearchableSelect from '../SearchableSelect';
 import CheckBoxDropDown from '../CheckBoxDropDown';
-import TourSelector from '../TourSelector';
 import RahalatekLoader from '../RahalatekLoader';
 import PackageHotelCard from '../PackageHotelCard';
 import PackageCard from '../PackageCard';
+import PackageDayBlock from '../PackageDayBlock';
 import MultiStepModal from '../MultiStepModal';
 import ImageUploader from '../ImageUploader';
 import CustomCheckbox from '../CustomCheckbox';
@@ -206,9 +206,10 @@ export default function Packages({ user }) {
                 }
             }
             
-            // Ensure arrival day flag is set properly
+            // Ensure arrival day flag is set properly and remove any old tourInfo
+            const { tourInfo: _tourInfo, ...cleanDay } = day;
             return {
-                ...day,
+                ...cleanDay,
                 isArrivalDay: isArrival
             };
         });
@@ -638,6 +639,11 @@ export default function Packages({ user }) {
             ...prev,
             [field]: cleanValue
         }));
+
+        // Auto-generate day blocks when duration changes
+        if (field === 'duration' && value > 0) {
+            generateDayBlocks(value);
+        }
     };
 
     const handleNestedInputChange = (section, field, value) => {
@@ -693,6 +699,132 @@ export default function Packages({ user }) {
 
             return newData;
         });
+    };
+
+    // Generate day blocks based on duration
+    const generateDayBlocks = (duration) => {
+        const newItinerary = [];
+        
+        for (let i = 1; i <= duration; i++) {
+            // Check if day already exists in itinerary
+            const existingDay = formData.dailyItinerary.find(d => d.day === i);
+            
+            if (existingDay) {
+                // Keep existing day data but ensure day number is set
+                newItinerary.push({
+                    ...existingDay,
+                    day: i // Ensure day property is always set
+                });
+            } else {
+                // Create new day block
+                const newDay = {
+                    day: i,
+                    title: '',
+                    description: '',
+                    activities: [],
+                    meals: {
+                        breakfast: false,
+                        lunch: false,
+                        dinner: false
+                    },
+                    isArrivalDay: i === 1,
+                    isDepartureDay: i === duration,
+                    isRestDay: false
+                };
+
+                // Set default titles, descriptions, activities and translations for first and last days
+                if (i === 1) {
+                    newDay.title = `Arrival & Hotel Check-in`;
+                    newDay.description = 'Welcome to your journey! Upon arrival at the airport, you will be greeted by our representative who will assist you with the transfer to your hotel. After checking in, take some time to rest and prepare for the exciting adventures ahead.';
+                    newDay.activities = [
+                        'Airport reception service',
+                        'Meet & greet with tour representative',
+                        'Transfer to hotel',
+                        'Hotel check-in assistance',
+                        'Welcome briefing',
+                        'Rest and prepare for upcoming tours'
+                    ];
+                    newDay.translations = {
+                        title: {
+                            ar: 'الوصول وتسجيل الدخول في الفندق',
+                            fr: 'Arrivée et enregistrement à l\'hôtel'
+                        },
+                        description: {
+                            ar: 'مرحباً بك في رحلتك! عند الوصول إلى المطار، سيستقبلك ممثلنا الذي سيساعدك في الانتقال إلى فندقك. بعد تسجيل الدخول، خذ بعض الوقت للراحة والاستعداد للمغامرات المثيرة القادمة.',
+                            fr: 'Bienvenue dans votre voyage ! À votre arrivée à l\'aéroport, vous serez accueilli par notre représentant qui vous aidera lors du transfert vers votre hôtel. Après l\'enregistrement, prenez le temps de vous reposer et de vous préparer pour les aventures passionnantes à venir.'
+                        },
+                        activities: [
+                            { ar: 'خدمة الاستقبال في المطار', fr: 'Service de réception à l\'aéroport' },
+                            { ar: 'الترحيب والاستقبال مع ممثل الجولة', fr: 'Accueil avec le représentant de la visite' },
+                            { ar: 'النقل إلى الفندق', fr: 'Transfert vers l\'hôtel' },
+                            { ar: 'المساعدة في تسجيل الدخول بالفندق', fr: 'Assistance à l\'enregistrement à l\'hôtel' },
+                            { ar: 'إحاطة ترحيبية', fr: 'Briefing de bienvenue' },
+                            { ar: 'الراحة والاستعداد للجولات القادمة', fr: 'Repos et préparation pour les visites à venir' }
+                        ]
+                    };
+                    // Predefined images for arrival day
+                    newDay.images = [
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759851638/merc_wtaghb.jpg',
+                            altText: 'Airport arrival and welcome'
+                        },
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087383/675014510_aul2zd.jpg',
+                            altText: 'Hotel check-in'
+                        },
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759855915/492475786-960x630_kjybmn.jpg',
+                            altText: 'Hotel room'
+                        }
+                    ];
+                } else if (i === duration) {
+                    newDay.title = `Departure & Airport Transfer`;
+                    newDay.description = 'Time to say goodbye! After breakfast and hotel check-out, you will be transferred to the airport for your departure flight. We hope you had an amazing journey and look forward to welcoming you again.';
+                    newDay.activities = [
+                        'Hotel check-out',
+                        'Transfer to airport',
+                        'Departure assistance'
+                    ];
+                    newDay.translations = {
+                        title: {
+                            ar: 'المغادرة والانتقال إلى المطار',
+                            fr: 'Départ et transfert à l\'aéroport'
+                        },
+                        description: {
+                            ar: 'حان وقت الوداع! بعد الإفطار وتسجيل المغادرة من الفندق، سيتم نقلك إلى المطار لرحلة المغادرة. نأمل أن تكون قد قضيت رحلة رائعة ونتطلع للترحيب بك مرة أخرى.',
+                            fr: 'Il est temps de dire au revoir ! Après le petit-déjeuner et le check-out de l\'hôtel, vous serez transféré à l\'aéroport pour votre vol de départ. Nous espérons que vous avez passé un voyage merveilleux et nous avons hâte de vous accueillir à nouveau.'
+                        },
+                        activities: [
+                            { ar: 'تسجيل المغادرة من الفندق', fr: 'Check-out de l\'hôtel' },
+                            { ar: 'النقل إلى المطار', fr: 'Transfert vers l\'aéroport' },
+                            { ar: 'المساعدة في المغادرة', fr: 'Assistance au départ' }
+                        ]
+                    };
+                    // Predefined images for departure day
+                    newDay.images = [
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087521/Hotel-checkout_tgrnzr.avif',
+                            altText: 'Hotel check-out'
+                        },
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087587/7d_gpd2af.jpg',
+                            altText: 'Airport departure'
+                        },
+                        {
+                            url: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087700/Istanbul-Airport-Transfer-By-VIP-Turkey-Transfer_sr0poy.jpg',
+                            altText: 'Goodbye and safe travels'
+                        }
+                    ];
+                }
+
+                newItinerary.push(newDay);
+            }
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            dailyItinerary: newItinerary
+        }));
     };
 
     const removeArrayItem = (field, index) => {
@@ -755,71 +887,7 @@ export default function Packages({ user }) {
         }));
     };
 
-    // Tour management is now handled by TourSelector component
-
-    // Daily itinerary management
-    const handleAddDayItinerary = () => {
-        setFormData(prev => {
-            const newDayNumber = prev.dailyItinerary.length + 1;
-            
-            // Check if there's already a tour assigned to this day number
-            const assignedTour = prev.tours.find(tour => tour.day === newDayNumber);
-            let tourInfo = undefined;
-            
-            if (assignedTour) {
-                const tourData = tours.find(t => t._id === assignedTour.tourId);
-                if (tourData) {
-                    tourInfo = {
-                        tourId: tourData._id,
-                        name: tourData.name,
-                        city: tourData.city,
-                        duration: tourData.duration,
-                        price: tourData.price,
-                        tourType: tourData.tourType
-                    };
-                }
-            }
-            
-            const newDay = {
-                day: newDayNumber,
-                title: tourInfo ? `Day ${newDayNumber} - ${tourInfo.name}` : '',
-                description: tourInfo ? tours.find(t => t._id === assignedTour.tourId)?.description || '' : '',
-                activities: tourInfo ? tours.find(t => t._id === assignedTour.tourId)?.highlights || [''] : [''],
-                meals: {
-                    breakfast: false,
-                    lunch: false,
-                    dinner: false
-                },
-                tourInfo: tourInfo
-            };
-            
-            return {
-                ...prev,
-                dailyItinerary: [...prev.dailyItinerary, newDay]
-            };
-        });
-    };
-
-    const handleDayItineraryChange = (index, field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            dailyItinerary: prev.dailyItinerary.map((day, i) => 
-                i === index ? { ...day, [field]: value } : day
-            )
-        }));
-    };
-
-    const handleMealChange = (dayIndex, meal, value) => {
-        setFormData(prev => ({
-            ...prev,
-            dailyItinerary: prev.dailyItinerary.map((day, i) => 
-                i === dayIndex ? {
-                    ...day,
-                    meals: { ...day.meals, [meal]: value }
-                } : day
-            )
-        }));
-    };
+    // Daily itinerary management - now handled by PackageDayBlock component
 
     // Submit handlers
     const handleCreatePackage = async () => {
@@ -1323,9 +1391,8 @@ export default function Packages({ user }) {
                     handleAddHotelToForm={handleAddHotelToForm}
                     handleRemoveHotel={handleRemoveHotel}
                     handleHotelChange={handleHotelChange}
-                    handleAddDayItinerary={handleAddDayItinerary}
-                    handleDayItineraryChange={handleDayItineraryChange}
-                    handleMealChange={handleMealChange}
+                    generateDayBlocks={generateDayBlocks}
+                    setFormData={setFormData}
                     hotels={hotels}
                     tours={tours}
                     airports={airports}
@@ -1378,9 +1445,8 @@ export default function Packages({ user }) {
                     handleAddHotelToForm={handleAddHotelToForm}
                     handleRemoveHotel={handleRemoveHotel}
                     handleHotelChange={handleHotelChange}
-                    handleAddDayItinerary={handleAddDayItinerary}
-                    handleDayItineraryChange={handleDayItineraryChange}
-                    handleMealChange={handleMealChange}
+                    generateDayBlocks={generateDayBlocks}
+                    setFormData={setFormData}
                     hotels={hotels}
                     tours={tours}
                     airports={airports}
@@ -1421,6 +1487,7 @@ export default function Packages({ user }) {
 function PackageFormSteps({
     currentStep,
     formData,
+    setFormData,
     onInputChange,
     onNestedInputChange,
     onArrayInputChange,
@@ -1429,9 +1496,7 @@ function PackageFormSteps({
     handleAddHotelToForm,
     handleRemoveHotel,
     handleHotelChange,
-    handleAddDayItinerary,
-    handleDayItineraryChange,
-    handleMealChange,
+    generateDayBlocks,
     hotels,
     tours,
     airports,
@@ -1445,22 +1510,6 @@ function PackageFormSteps({
     handleTranslationChange,
     handleArrayTranslationChange
 }) {
-    // Collapsed days state
-    const [collapsedDays, setCollapsedDays] = useState(new Set());
-
-    // Toggle day collapse state
-    const toggleDayCollapse = (dayIndex) => {
-        setCollapsedDays(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(dayIndex)) {
-                newSet.delete(dayIndex);
-            } else {
-                newSet.add(dayIndex);
-            }
-            return newSet;
-        });
-    };
-
     return (
         <>
             {/* Step 1: Basic Information */}
@@ -1662,64 +1711,115 @@ function PackageFormSteps({
                 </div>
             )}
 
-            {/* Step 3: Tours & Daily Itinerary */}
+            {/* Step 3: Daily Itinerary & Tours */}
             {currentStep === 3 && (
                 <div className="space-y-6">
-                    {/* Tours Section */}
+                    {/* Info Banner */}
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-yellow-500 dark:to-orange-500 rounded-lg flex items-center justify-center">
+                                <FaCalendarAlt className="w-4 h-4 text-white dark:text-gray-900" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                {formData.duration}-Day Itinerary
+                            </h3>
+                        </div>
+                        
+                        {/* Compact Regenerate Button (when duration changes) */}
+                        {formData.duration > 0 && formData.dailyItinerary.length !== formData.duration && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                                    Duration changed ({formData.dailyItinerary.length} → {formData.duration} days)
+                                </span>
+                                <CustomButton
+                                    onClick={() => generateDayBlocks(formData.duration)}
+                                    variant="orange"
+                                    size="sm"
+                                    icon={FaSyncAlt}
+                                >
+                                    Regenerate
+                                </CustomButton>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Day Blocks Grid */}
                     {formData.countries.length > 0 && formData.cities.length > 0 ? (
-                        <TourSelector
-                            availableTours={tours.filter(tour => 
-                                formData.cities.length === 0 || formData.cities.includes(tour.city)
+                        <div className="space-y-4">
+                            {formData.dailyItinerary.length === 0 && formData.duration > 0 && (
+                                <Card className="dark:bg-slate-900 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
+                                    <div className="text-center py-4">
+                                        <p className="text-yellow-800 dark:text-yellow-300 font-medium mb-3">
+                                            Day blocks not generated yet for {formData.duration} days
+                                        </p>
+                                        <CustomButton
+                                            onClick={() => generateDayBlocks(formData.duration)}
+                                            variant="pinkToOrange"
+                                            size="md"
+                                            icon={FaPlus}
+                                        >
+                                            Generate {formData.duration} Day Blocks
+                                        </CustomButton>
+                                    </div>
+                                </Card>
                             )}
-                            selectedTours={formData.tours.map(t => t.tourId)}
-                            hideDayAssignment={true}
-                            onTourSelection={(tourId) => {
-                                const existingTourIndex = formData.tours.findIndex(t => t.tourId === tourId);
-                                
-                                if (existingTourIndex >= 0) {
-                                    // Remove tour and its activities from itinerary
-                                    const removedTour = formData.tours[existingTourIndex];
-                                    const selectedTour = tours.find(t => t._id === tourId);
-                                    const tourActivity = `${selectedTour?.name} (${selectedTour?.city})`;
-                                    
-                                    // Update tours
-                                    onInputChange('tours', formData.tours.filter((_, i) => i !== existingTourIndex));
-                                    
-                                    // Remove tour activity from daily itinerary
-                                    if (removedTour.day) {
-                                        const updatedItinerary = formData.dailyItinerary.map(dayEntry => {
-                                            if (dayEntry.day === removedTour.day) {
-                                                return {
-                                                    ...dayEntry,
-                                                    activities: dayEntry.activities.filter(activity => activity !== tourActivity)
-                                                };
-                                            }
-                                            return dayEntry;
-                                        });
-                                        onInputChange('dailyItinerary', updatedItinerary);
-                                    }
-                                } else {
-                                    // Add tour without automatic day assignment (will be assigned from Daily Itinerary)
-                                    const newTour = {
-                                        tourId: tourId,
-                                        day: null // No automatic day assignment
-                                    };
-                                    
-                                    // Update tours
-                                    onInputChange('tours', [...formData.tours, newTour]);
-                                }
-                            }}
-                            onTourDayAssignment={(tourId, day) => {
-                                // eslint-disable-next-line no-unused-vars
-                                const selectedTour = tours.find(t => t._id === tourId);
-                                const dayNumber = parseInt(day);
-                                
-                                const updatedTours = formData.tours.map(tour => 
-                                    tour.tourId === tourId ? { ...tour, day: dayNumber } : tour
-                                );
-                                onInputChange('tours', updatedTours);
-                            }}
-                        />
+
+                            {formData.dailyItinerary.length > 0 && (
+                                <>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                                        {formData.dailyItinerary
+                                            .sort((a, b) => a.day - b.day)
+                                            .map((day) => (
+                                            <PackageDayBlock
+                                                key={day.day}
+                                                day={day}
+                                                dayNumber={day.day}
+                                                totalDays={formData.duration}
+                                                tours={tours.filter(tour => 
+                                                    formData.cities.includes(tour.city)
+                                                )}
+                                                onChange={(updatedDay) => {
+                                                    // Update the specific day in dailyItinerary
+                                                    const newItinerary = formData.dailyItinerary.map(d => 
+                                                        d.day === day.day ? updatedDay : d
+                                                    );
+                                                    
+                                                    // Update tours array based on day assignments
+                                                    let newTours = [...formData.tours];
+                                                    
+                                                    // If this day has a tour assigned
+                                                    if (updatedDay.tourInfo?.tourId) {
+                                                        const tourId = updatedDay.tourInfo.tourId;
+                                                        
+                                                        // Step 1: Remove any OLD tour that was previously on this day
+                                                        newTours = newTours.filter(tour => tour.day !== day.day);
+                                                        
+                                                        // Step 2: Remove the NEW tour from other days (tour can only be on one day)
+                                                        newTours = newTours.filter(tour => tour.tourId !== tourId);
+                                                        
+                                                        // Step 3: Add the new tour to the current day
+                                                        newTours.push({
+                                                            tourId: tourId,
+                                                            day: updatedDay.day
+                                                        });
+                                                    } else {
+                                                        // If tour was removed from this day, remove from tours array
+                                                        newTours = newTours.filter(tour => tour.day !== day.day);
+                                                    }
+                                                    
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        dailyItinerary: newItinerary,
+                                                        tours: newTours
+                                                    }));
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                </>
+                            )}
+                        </div>
                     ) : (
                         <Card className="dark:bg-slate-900">
                             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -1742,403 +1842,6 @@ function PackageFormSteps({
                             </div>
                         </Card>
                     )}
-
-                    {/* Daily Itinerary Section */}
-                    <Card className="dark:bg-slate-900">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4">
-                            <h3 className="text-base sm:text-lg font-semibold dark:text-white">Daily Itinerary</h3>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-                                <CustomCheckbox
-                                    id="includeArrivalDay"
-                                    label="Include Day 1 as Arrival & Transfer"
-                                    checked={formData.includeArrivalDay || false}
-                                    onChange={(checked) => {
-                                        onInputChange('includeArrivalDay', checked);
-                                        if (checked) {
-                                                // Add Day 1 as arrival day and shift other tours
-                                                const arrivalDay = {
-                                                    day: 1,
-                                                    title: 'Day 1 - Arrival & Transfer',
-                                                    description: 'Arrival at airport, meet & greet service, transfer to hotel, check-in and rest.',
-                                                    activities: [
-                                                        'Airport reception service',
-                                                        'Meet & greet with tour representative', 
-                                                        'Transfer to hotel',
-                                                        'Hotel check-in assistance',
-                                                        'Welcome briefing',
-                                                        'Rest and prepare for upcoming tours'
-                                                    ],
-                                                    meals: {
-                                                        breakfast: false,
-                                                        lunch: false,
-                                                        dinner: false
-                                                    },
-                                                    isArrivalDay: true
-                                                };
-                                                
-                                                // Shift existing tour days +1
-                                                const updatedTours = formData.tours.map(tour => ({
-                                                    ...tour,
-                                                    day: tour.day + 1
-                                                }));
-                                                
-                                                const updatedItinerary = formData.dailyItinerary
-                                                    .filter(day => !day.isArrivalDay) // Remove any existing arrival day
-                                                    .map(day => ({
-                                                        ...day,
-                                                        day: day.day + 1,
-                                                        title: day.title.replace(/Day \d+/, `Day ${day.day + 1}`)
-                                                    }));
-                                                
-                                                // Add arrival day and sort
-                                                const newItinerary = [arrivalDay, ...updatedItinerary]
-                                                    .sort((a, b) => a.day - b.day);
-                                                
-                                                onInputChange('tours', updatedTours);
-                                                onInputChange('dailyItinerary', newItinerary);
-                                            } else {
-                                                // Remove arrival day and shift tours back
-                                                const updatedTours = formData.tours.map(tour => ({
-                                                    ...tour,
-                                                    day: Math.max(1, tour.day - 1)
-                                                }));
-                                                
-                                                const updatedItinerary = formData.dailyItinerary
-                                                    .filter(day => !day.isArrivalDay)
-                                                    .map(day => ({
-                                                        ...day,
-                                                        day: Math.max(1, day.day - 1),
-                                                        title: day.title.replace(/Day \d+/, `Day ${Math.max(1, day.day - 1)}`)
-                                                    }));
-                                                
-                                                onInputChange('tours', updatedTours);
-                                                onInputChange('dailyItinerary', updatedItinerary);
-                                            }
-                                        }}
-                                />
-                                <CustomButton
-                                    onClick={handleAddDayItinerary}
-                                    variant="pinkToOrange"
-                                    size="sm"
-                                    icon={FaPlus}
-                                    className="w-full sm:w-auto"
-                                >
-                                    Add Day
-                                </CustomButton>
-                            </div>
-                        </div>
-                        
-                        {formData.dailyItinerary.map((day, index) => (
-                            <div key={index} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 mb-4">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-medium dark:text-white">Day {day.day}</h4>
-                                        {day.isArrivalDay && (
-                                            <Badge color="info" size="sm">Arrival Day</Badge>
-                                        )}
-                                        <button
-                                            onClick={() => toggleDayCollapse(index)}
-                                            className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                        >
-                                            {collapsedDays.has(index) ? (
-                                                <FaChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                            ) : (
-                                                <FaChevronUp className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                            )}
-                                        </button>
-                                    </div>
-                                    {!day.isArrivalDay && (
-                                        <CustomButton
-                                            onClick={() => removeArrayItem('dailyItinerary', index)}
-                                            variant="red"
-                                            size="sm"
-                                            shape="circular"
-                                            icon={FaTimes}
-                                        />
-                                    )}
-                                </div>
-                                
-                                {/* Collapsible content */}
-                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                                    collapsedDays.has(index) ? 'max-h-0 opacity-0' : 'max-h-screen opacity-100'
-                                }`}>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {/* Selected Tour Card */}
-                                        {day.tourInfo && (
-                                            <div className="p-3 bg-blue-50 dark:bg-slate-800 rounded-lg">
-                                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                        {day.tourInfo.tourType === 'VIP' ? (
-                                                            <span 
-                                                                className="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600 w-fit"
-                                                                style={{ 
-                                                                    color: '#7B5804', 
-                                                                    fontWeight: 'bold',
-                                                                    fontSize: '0.75rem',
-                                                                    textShadow: '0 0 2px rgba(255,255,255,0.5)'
-                                                                }}
-                                                            >
-                                                                VIP
-                                                            </span>
-                                                        ) : day.tourInfo.tourType === 'Group' ? (
-                                                            <Badge color="blue" size="sm" className="w-fit">Group</Badge>
-                                                        ) : (
-                                                            <Badge color="green" size="sm" className="w-fit">Private</Badge>
-                                                        )}
-                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-1">
-                                                            <span className="text-sm font-medium dark:text-white">{day.tourInfo.name}</span>
-                                                            <span className="text-xs text-gray-600 dark:text-gray-400">({day.tourInfo.city})</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-sm text-green-600 dark:text-green-400 font-semibold">
-                                                        ${day.tourInfo.price}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    {/* Tour Assignment for this day */}
-                                    {!day.isArrivalDay && (
-                                        <div>
-                                            <Label value="Assign Tour to this Day" className="dark:text-white" />
-                                            <div className="flex flex-col sm:flex-row gap-2">
-                                                <Select
-                                                    key={`day-${day.day}-${formData.tours.length}-${formData.tours.filter(t => t.day === null || t.day === day.day).length}`}
-                                                    value={day.tourInfo?.tourId || ''}
-                                                    onChange={(selectedTourId) => {
-                                                        if (selectedTourId) {
-                                                            // Assign tour to this day
-                                                            const selectedTour = tours.find(t => t._id === selectedTourId);
-                                                            if (selectedTour) {
-                                                                // Update the tour's day assignment
-                                                                const updatedTours = formData.tours.map(tour => 
-                                                                    tour.tourId === selectedTourId 
-                                                                        ? { ...tour, day: day.day }
-                                                                        : tour.day === day.day 
-                                                                            ? { ...tour, day: null } // Remove previous tour from this day
-                                                                            : tour
-                                                                );
-                                                                onInputChange('tours', updatedTours);
-                                                                
-                                                                // Update this day's tour info
-                                                                const updatedDayInfo = {
-                                                                    ...day,
-                                                                    tourInfo: {
-                                                                        tourId: selectedTour._id,
-                                                                        name: selectedTour.name,
-                                                                        city: selectedTour.city,
-                                                                        tourType: selectedTour.tourType,
-                                                                        price: selectedTour.price
-                                                                    },
-                                                                    activities: selectedTour.highlights || day.activities,
-                                                                    title: `Day ${day.day} - ${selectedTour.name}`,
-                                                                    description: selectedTour.description || day.description
-                                                                };
-                                                                
-                                                                // Update daily itinerary
-                                                                const updatedItinerary = formData.dailyItinerary.map((d, i) => 
-                                                                    i === index ? updatedDayInfo : d
-                                                                );
-                                                                onInputChange('dailyItinerary', updatedItinerary);
-                                                            }
-                                                        } else {
-                                                            // Remove tour assignment from this day
-                                                            const updatedTours = formData.tours.map(tour => 
-                                                                tour.day === day.day ? { ...tour, day: null } : tour
-                                                            );
-                                                            onInputChange('tours', updatedTours);
-                                                            
-                                                            // Clear tour info from this day
-                                                            const updatedDayInfo = {
-                                                                ...day,
-                                                                tourInfo: null,
-                                                                activities: [],
-                                                                title: `Day ${day.day}`,
-                                                                description: ''
-                                                            };
-                                                            
-                                                            const updatedItinerary = formData.dailyItinerary.map((d, i) => 
-                                                                i === index ? updatedDayInfo : d
-                                                            );
-                                                            onInputChange('dailyItinerary', updatedItinerary);
-                                                        }
-                                                    }}
-                                                    options={[
-                                                        { value: '', label: 'Select a tour for this day...' },
-                                                        ...formData.tours
-                                                            .filter(tour => tour.day === null || tour.day === day.day)
-                                                            .map(tour => {
-                                                                const tourId = typeof tour.tourId === 'object' ? tour.tourId._id : tour.tourId;
-                                                                const tourData = tours.find(t => t._id === tourId);
-                                                                
-                                                                if (!tourData) {
-                                                                    return {
-                                                                        value: tourId,
-                                                                        label: `Tour ${tourId.toString().slice(-8)} (Loading...)`
-                                                                    };
-                                                                }
-                                                                
-                                                                const isAssigned = tour.day === day.day;
-                                                                
-                                                                return {
-                                                                    value: tourId,
-                                                                    label: `${tourData.name} (${tourData.city}) - $${tourData.price}${isAssigned ? ' ✓' : ''}`
-                                                                };
-                                                            })
-                                                    ]}
-                                                    placeholder="Select a tour for this day..."
-                                                    className="flex-1"
-                                                />
-                                                {day.tourInfo && (
-                                                    <CustomButton
-                                                        onClick={() => {
-                                                            // Remove tour assignment
-                                                            const updatedTours = formData.tours.map(tour => 
-                                                                tour.day === day.day ? { ...tour, day: null } : tour
-                                                            );
-                                                            onInputChange('tours', updatedTours);
-                                                            
-                                                            const updatedDayInfo = {
-                                                                ...day,
-                                                                tourInfo: null,
-                                                                activities: [],
-                                                                title: `Day ${day.day}`,
-                                                                description: ''
-                                                            };
-                                                            
-                                                            const updatedItinerary = formData.dailyItinerary.map((d, i) => 
-                                                                i === index ? updatedDayInfo : d
-                                                            );
-                                                            onInputChange('dailyItinerary', updatedItinerary);
-                                                        }}
-                                                        variant="red"
-                                                        size="sm"
-                                                        shape="circular"
-                                                        icon={FaTimes}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                    
-                                    <div>
-                                        <Label value="Day Title" className="dark:text-white" />
-                                        <TextInput
-                                            value={day.title}
-                                            onChange={(e) => handleDayItineraryChange(index, 'title', e.target.value)}
-                                            placeholder="e.g., Arrival Day, City Tour, etc."
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <Label value="Description (Optional)" className="dark:text-white" />
-                                        <TextInput
-                                            value={day.description}
-                                            onChange={(e) => handleDayItineraryChange(index, 'description', e.target.value)}
-                                            placeholder="Describe the day's activities and highlights... (optional)"
-                                            as="textarea"
-                                            rows={3}
-                                        />
-                                    </div>
-                                    
-                                    <div>
-                                        <Label value="Tour Highlights & Activities" className="dark:text-white" />
-                                        <div className="space-y-2">
-                                            {day.activities && day.activities.length > 0 ? (
-                                                day.activities.map((activity, actIndex) => (
-                                                    <div key={actIndex} className="flex items-center gap-2">
-                                                        <TextInput
-                                                            value={activity}
-                                                            onChange={(e) => {
-                                                                const newActivities = [...day.activities];
-                                                                newActivities[actIndex] = e.target.value;
-                                                                handleDayItineraryChange(index, 'activities', newActivities);
-                                                            }}
-                                                            placeholder="Tour highlight or activity description..."
-                                                            className="flex-1"
-                                                        />
-                                                        <CustomButton
-                                                            onClick={() => {
-                                                                const newActivities = day.activities.filter((_, i) => i !== actIndex);
-                                                                handleDayItineraryChange(index, 'activities', newActivities);
-                                                            }}
-                                                            variant="red"
-                                                            size="sm"
-                                                            shape="circular"
-                                                            icon={FaTimes}
-                                                        />
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="text-gray-500 dark:text-gray-400 text-sm">
-                                                    No highlights or activities added yet. Tour highlights will automatically appear here when a tour is assigned to this day.
-                                                </div>
-                                            )}
-                                            <CustomButton
-                                                onClick={() => {
-                                                    const newActivities = [...(day.activities || []), ''];
-                                                    handleDayItineraryChange(index, 'activities', newActivities);
-                                                }}
-                                                variant="blue"
-                                                size="xs"
-                                                icon={FaPlus}
-                                                className="mt-2"
-                                            >
-                                                Add Highlight/Activity
-                                            </CustomButton>
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <Label value="Meals Included" className="dark:text-white" />
-                                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2">
-                                            <CustomCheckbox
-                                                id={`breakfast-${index}`}
-                                                label="Breakfast"
-                                                checked={day.meals.breakfast}
-                                                onChange={(checked) => handleMealChange(index, 'breakfast', checked)}
-                                            />
-                                            <CustomCheckbox
-                                                id={`lunch-${index}`}
-                                                label="Lunch"
-                                                checked={day.meals.lunch}
-                                                onChange={(checked) => handleMealChange(index, 'lunch', checked)}
-                                            />
-                                            <CustomCheckbox
-                                                id={`dinner-${index}`}
-                                                label="Dinner"
-                                                checked={day.meals.dinner}
-                                                onChange={(checked) => handleMealChange(index, 'dinner', checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                </div>
-                            </div>
-                        ))}
-                        
-                        {/* Show unassigned tours */}
-                        {formData.tours.filter(t => t.day === null).length > 0 && (
-                            <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                                <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-2">
-                                    📋 Unassigned Tours ({formData.tours.filter(t => t.day === null).length})
-                                </h4>
-                                <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
-                                    The following tours are selected but not yet assigned to any day. Use the dropdown in each day section to assign them:
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {formData.tours.filter(t => t.day === null).map(tour => {
-                                        const tourData = tours.find(t => t._id === tour.tourId);
-                                        return tourData ? (
-                                            <span key={tour.tourId} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200">
-                                                {tourData.name} ({tourData.city})
-                                            </span>
-                                        ) : null;
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                        
-                    </Card>
                 </div>
             )}
 

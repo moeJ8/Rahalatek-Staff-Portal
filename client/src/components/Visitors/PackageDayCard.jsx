@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { getTranslatedText, getTranslatedArray } from '../../utils/translationUtils';
 import PackageImagesCarousel from '../PackageImagesCarousel';
+import CustomTooltip from '../CustomTooltip';
 
 const PackageDayCard = ({ day, tourData, onCardClick }) => {
     const { t, i18n } = useTranslation();
@@ -13,12 +14,23 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
     const translatedDetailedDescription = tourData ? getTranslatedText(tourData, 'detailedDescription', i18n.language) : '';
     const translatedHighlights = tourData ? getTranslatedArray(tourData, 'highlights', i18n.language) : [];
     
-    // Don't show tour images for arrival days
-    const shouldShowImages = tourData && !day.isArrivalDay;
-    const tourImages = shouldShowImages ? (tourData?.images?.map(img => ({
-        url: img.url,
-        altText: img.altText || `${translatedTourName} - Tour image`
-    })) || []) : [];
+    // Determine which images to show
+    const isStaticDay = day.isArrivalDay || day.isDepartureDay || day.isRestDay;
+    let tourImages = [];
+    
+    if (tourData && !isStaticDay) {
+        // Tour day: show tour images
+        tourImages = tourData?.images?.map(img => ({
+            url: img.url,
+            altText: img.altText || `${translatedTourName} - Tour image`
+        })) || [];
+    } else if (isStaticDay && day.images && day.images.length > 0) {
+        // Static day: show predefined images
+        tourImages = day.images.map(img => ({
+            url: img.url,
+            altText: img.altText || day.title
+        }));
+    }
 
     // Helper function to translate arrival day content
     const translateArrivalContent = (text) => {
@@ -53,52 +65,45 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
         return text;
     };
 
-    // Check if content is arrival day content (for RTL styling)
-    const isArrivalContent = (text) => {
-        if (!text) return false;
-        return text.includes('Arrival & Transfer') || 
-               text.includes('Arrival at airport') ||
-               text.includes('Airport reception service') ||
-               text.includes('Meet & greet with tour representative') ||
-               text.includes('Transfer to hotel') ||
-               text.includes('Hotel check-in assistance') ||
-               text.includes('Welcome briefing') ||
-               text.includes('Rest and prepare for upcoming tours');
-    };
 
     return (
         <div 
             className={`relative bg-white/30 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group ${
-                tourData && !day.isArrivalDay ? 'cursor-pointer' : 'cursor-default'
+                tourData && !isStaticDay ? 'cursor-pointer' : 'cursor-default'
             }`}
-            onClick={() => tourData && !day.isArrivalDay && onCardClick(tourData.slug)}
+            onClick={() => tourData && !isStaticDay && onCardClick(tourData.slug)}
         >
             {/* Day number badge - TOP LEFT CORNER */}
             <div className="absolute top-0 left-0 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-yellow-500 dark:to-yellow-600 rounded-tl-xl rounded-br-xl px-4 py-2.5 z-10">
                 <div className="text-center">
-                    <div className="text-xl font-bold text-white">{day.day}</div>
-                    <div className="text-xs text-white/90 font-medium">Days</div>
+                    <div className="text-md text-white/90 font-bold">
+                        {i18n.language === 'ar' ? 'اليوم' : i18n.language === 'fr' ? 'Jour' : 'Day'}
+                    </div>
+                    {day.day && <div className="text-xl font-bold text-white">{day.day}</div>}
                 </div>
             </div>
             
             <div className="flex flex-col lg:flex-row">
                 {/* Left side - content */}
-                <div className={`flex-1 p-6 ${(tourData && !day.isArrivalDay) ? 'pt-6' : 'pt-16'}`}>
+                <div className={`flex-1 p-6 ${tourImages.length > 0 ? 'pt-6' : 'pt-16'}`}>
                     {/* Title first */}
                     <h3 className={`text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300 ${
-                        tourData && !day.isArrivalDay ? 'group-hover:text-blue-600 dark:group-hover:text-yellow-400' : ''
+                        tourData && !isStaticDay ? 'group-hover:text-blue-600 dark:group-hover:text-yellow-400' : ''
                     } ${
-                        isArrivalContent(day.title) && isRTL 
+                        isRTL || /[\u0600-\u06FF\u0750-\u077F]/.test(tourData && !isStaticDay ? translatedTourName : day.title) 
                             ? 'text-right' 
-                            : /[\u0600-\u06FF\u0750-\u077F]/.test(tourData && !day.isArrivalDay ? translatedTourName : day.title) 
-                                ? 'text-right' 
-                                : (tourData && !day.isArrivalDay) ? 'text-left ml-12' : 'text-left'
+                            : tourImages.length > 0 ? 'text-left ml-12' : 'text-left'
                     }`}>
-                        {tourData && !day.isArrivalDay ? translatedTourName : translateArrivalContent(day.title.replace(/^Day\s*\d+\s*-?\s*/i, '').trim())}
+                        {tourData && !isStaticDay 
+                            ? translatedTourName 
+                            : isStaticDay
+                                ? (day.title || '').replace(/^Day\s*\d+\s*:?\s*/i, '').trim()
+                                : translateArrivalContent((day.title || '').replace(/^Day\s*\d+\s*:?\s*/i, '').trim())
+                        }
                     </h3>
                     
                     {/* Location and duration below title */}
-                    {tourData && !day.isArrivalDay && (
+                    {tourData && !isStaticDay && (
                         <div className={`flex items-center gap-2 text-sm text-blue-600 dark:text-yellow-400 font-semibold mb-4 ${
                             isRTL || /[\u0600-\u06FF\u0750-\u077F]/.test(translatedTourName) ? 'justify-end' : 'justify-start ml-12'
                         }`}>
@@ -113,19 +118,32 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     )}
                     
                     {/* Description - Show tour description if available, otherwise day description */}
-                    {((tourData && !day.isArrivalDay && translatedTourDescription) || day.description) && (
-                        <p className={`text-gray-700 dark:text-gray-300 text-sm font-semibold leading-relaxed mb-4 ${
-                            isArrivalContent(tourData && !day.isArrivalDay ? translatedTourDescription : day.description) && isRTL 
-                                ? 'text-right' 
-                                : /[\u0600-\u06FF\u0750-\u077F]/.test(tourData && !day.isArrivalDay ? translatedTourDescription : day.description) ? 'text-right' : 'text-left'
-                        }`}>
-                            {tourData && !day.isArrivalDay && translatedTourDescription ? translatedTourDescription : translateArrivalContent(day.description)}
-                        </p>
-                    )}
+                    {((tourData && !isStaticDay && translatedTourDescription) || day.description) && (() => {
+                        const descText = tourData && !isStaticDay && translatedTourDescription 
+                            ? translatedTourDescription 
+                            : isStaticDay
+                                ? day.description
+                                : translateArrivalContent(day.description);
+                        const hasArabic = /[\u0600-\u06FF\u0750-\u077F]/.test(descText || '');
+                        const shouldBeRTL = isRTL || hasArabic;
+                        
+                        return (
+                            <p 
+                                className={`text-gray-700 dark:text-gray-300 text-sm font-semibold leading-relaxed mb-1 ${
+                                    isStaticDay ? 'mt-5' : ''
+                                } ${
+                                    shouldBeRTL ? 'text-right' : 'text-left'
+                                }`}
+                                dir={shouldBeRTL ? 'rtl' : 'ltr'}
+                            >
+                                {descText}
+                            </p>
+                        );
+                    })()}
                     
                     {/* Tour detailed description */}
-                    {translatedDetailedDescription && !day.isArrivalDay && (
-                        <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2 ${
+                    {translatedDetailedDescription && !isStaticDay && (
+                        <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-2 line-clamp-1 ${
                             /[\u0600-\u06FF\u0750-\u077F]/.test(translatedDetailedDescription) ? 'text-right' : 'text-left'
                         }`}>
                             {translatedDetailedDescription}
@@ -136,7 +154,7 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                     {day.activities && day.activities.length > 0 && (
                         <div className="mb-4">
                             <ul className="space-y-2">
-                                {day.activities.slice(0, 4).map((activity, actIndex) => {
+                                {(isStaticDay ? day.activities : day.activities.slice(0, 4)).map((activity, actIndex) => {
                                     // Try to match activity with tour highlights and translate
                                     let translatedActivity = activity;
                                     if (tourData && tourData.highlights && translatedHighlights.length > 0) {
@@ -144,34 +162,75 @@ const PackageDayCard = ({ day, tourData, onCardClick }) => {
                                         if (index >= 0 && translatedHighlights[index]) {
                                             translatedActivity = translatedHighlights[index];
                                         }
+                                    } else if (isStaticDay) {
+                                        // For static days, use the activity as-is (already translated by backend)
+                                        translatedActivity = activity;
+                                    } else {
+                                        // For other days, use i18n translation
+                                        translatedActivity = translateArrivalContent(activity);
                                     }
                                     
                                     return (
                                         <li key={actIndex} className={`flex items-start text-sm text-gray-700 dark:text-gray-300 ${
-                                            isArrivalContent(translatedActivity) && isRTL 
+                                            isRTL || /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) 
                                                 ? 'flex-row-reverse text-right' 
-                                                : /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) ? 'flex-row-reverse text-right' : 'text-left'
+                                                : 'text-left'
                                         }`}>
                                             <span className={`w-1.5 h-1.5 bg-blue-500 dark:bg-yellow-400 rounded-full mt-2 flex-shrink-0 ${
-                                                isArrivalContent(translatedActivity) && isRTL 
+                                                isRTL || /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) 
                                                     ? 'ml-3' 
-                                                    : /[\u0600-\u06FF\u0750-\u077F]/.test(translatedActivity) ? 'ml-3' : 'mr-3'
+                                                    : 'mr-3'
                                             }`}></span>
-                                            {translateArrivalContent(translatedActivity)}
+                                            {translatedActivity}
                                         </li>
                                     );
                                 })}
                             </ul>
-                            {day.activities.length > 4 && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
-                                    +{day.activities.length - 4} more activities
-                                </p>
-                            )}
+                            {!isStaticDay && day.activities.length > 4 && (() => {
+                                const remainingActivities = day.activities.slice(4);
+                                const translatedRemainingActivities = remainingActivities.map(activity => {
+                                    if (tourData && tourData.highlights && translatedHighlights.length > 0) {
+                                        const index = tourData.highlights.findIndex(h => h === activity);
+                                        if (index >= 0 && translatedHighlights[index]) {
+                                            return translatedHighlights[index];
+                                        }
+                                    }
+                                    return activity;
+                                });
+                                
+                                return (
+                                    <CustomTooltip
+                                        content={
+                                            <div className="max-w-sm">
+                                                <ul className="space-y-2">
+                                                    {translatedRemainingActivities.map((activity, idx) => {
+                                                        const hasArabic = /[\u0600-\u06FF\u0750-\u077F]/.test(activity);
+                                                        return (
+                                                            <li key={idx} className={`flex items-center text-xs ${
+                                                                isRTL || hasArabic ? 'flex-row-reverse text-right' : 'text-left'
+                                                            }`}>
+                                                                <span className={`w-1.5 h-1.5 bg-blue-500 dark:bg-yellow-400 rounded-full flex-shrink-0 ${
+                                                                    isRTL || hasArabic ? 'ml-2' : 'mr-2'
+                                                                }`}></span>
+                                                                <span className="break-words">{activity}</span>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            </div>
+                                        }
+                                    >
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic cursor-help hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+                                            +{day.activities.length - 4} more activities
+                                        </p>
+                                    </CustomTooltip>
+                                );
+                            })()}
                         </div>
                     )}
                     
                     {/* Meals */}
-                    {(day.meals.breakfast || day.meals.lunch || day.meals.dinner) && (
+                    {day.meals && (day.meals.breakfast || day.meals.lunch || day.meals.dinner) && (
                         <div className="flex flex-wrap gap-2">
                             {day.meals.breakfast && (
                                 <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-yellow-400 dark:to-yellow-500 text-white font-semibold rounded-full shadow-sm">
