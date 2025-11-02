@@ -38,13 +38,18 @@ const sitemapRoutes = require('./routes/sitemapRoutes');
 const authController = require('./controllers/authController');
 const NotificationService = require('./services/notificationService');
 const SchedulerService = require('./services/schedulerService');
+const { startMemoryMonitoring } = require('./utils/memoryMonitor');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Start memory monitoring in production
+startMemoryMonitoring();
+
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); 
-app.use(express.urlencoded({ limit: '50mb', extended: true })); 
+// Reduced payload limits to prevent memory issues (10MB is more than enough)
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ limit: '10mb', extended: true })); 
 
 // Rate limiting (enabled only in production)
 const isProd = process.env.NODE_ENV === 'production';
@@ -96,9 +101,16 @@ if (isProd) {
   app.use('/api/auth/forgot-password', strictLimiter);
 }
 
-mongoose.connect(process.env.MONGO_URI)
+// MongoDB connection with proper pooling and memory management
+mongoose.connect(process.env.MONGO_URI, {
+  maxPoolSize: 25, // Balanced connection pool (default is 100!)
+  minPoolSize: 5,
+  socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 5000,
+  family: 4 // Force IPv4
+})
   .then(async () => {
-    console.log('MongoDB connected');
+    console.log('MongoDB connected with optimized pool settings');
     try {
       await authController.checkAndFixSchema();
       console.log('Schema check completed');

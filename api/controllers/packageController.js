@@ -618,35 +618,32 @@ exports.incrementPackageViews = async (req, res) => {
 // Public route - get featured packages (sorted by views)
 exports.getFeaturedPackages = async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 9; // Default to 9 for carousel
+        const limit = parseInt(req.query.limit) || 12;
         
-        // Check Redis cache first (only for default limit to keep cache simple)
-        if (limit === 9) {
-            const cachedPackages = await featuredPackagesCache.get();
-            if (cachedPackages) {
-                console.log('✅ Serving featured packages from Redis cache');
-                return res.status(200).json({
-                    success: true,
-                    data: cachedPackages
-                });
-            }
+        // Check cache first - serve from cache (return all if less than limit requested)
+        const cachedPackages = await featuredPackagesCache.get();
+        if (cachedPackages) {
+            console.log(`✅ Serving ${cachedPackages.length} featured packages from Redis cache`);
+            return res.status(200).json({
+                success: true,
+                data: cachedPackages.slice(0, limit)
+            });
         }
 
-        console.log('📦 Fetching fresh featured packages...');
+        console.log(`📦 Fetching fresh featured packages (limit: ${limit})...`);
         const packages = await Package.find({ isActive: true })
-            .sort({ views: -1, updatedAt: -1 }) // Sort by views first, then by recent updates
-            .limit(limit)
+            .sort({ views: -1, updatedAt: -1 })
+            .limit(100) // Always fetch 100 to cache
             .populate('hotels.hotelId', 'name stars images')
-            .populate('tours.tourId', 'name city country tourType duration price totalPrice images');
+            .populate('tours.tourId', 'name city country tourType duration price totalPrice images')
+            .lean(); // Returns plain objects - saves memory!
         
-        // Cache the result (only for default limit)
-        if (limit === 9) {
-            await featuredPackagesCache.set(packages);
-        }
+        // Cache the lean results (already plain objects)
+        await featuredPackagesCache.set(packages);
         
         res.status(200).json({
             success: true,
-            data: packages
+            data: packages.slice(0, limit)
         });
     } catch (error) {
         console.error('Error fetching featured packages:', error);
@@ -668,7 +665,8 @@ exports.getRecentPackages = async (req, res) => {
             .sort({ createdAt: -1 }) // Sort by most recent creation date
             .limit(limit)
             .populate('hotels.hotelId', 'name stars images')
-            .populate('tours.tourId', 'name city country tourType duration price totalPrice images');
+            .populate('tours.tourId', 'name city country tourType duration price totalPrice images')
+            .lean(); // Use lean for better memory performance
         
         res.status(200).json({
             success: true,

@@ -338,22 +338,23 @@ exports.getAllVouchers = async (req, res) => {
         })
             .sort({ createdAt: -1 })
             .populate('createdBy', 'username')
-            .populate('statusUpdatedBy', 'username');
+            .populate('statusUpdatedBy', 'username')
+            .lean(); // Memory optimization - returns plain objects
         
         // Get office payments for all vouchers to show payment status
         const OfficePayment = require('../models/OfficePayment');
         const voucherIds = vouchers.map(v => v._id);
         const officePayments = await OfficePayment.find({ 
             relatedVoucher: { $in: voucherIds } 
-        });
+        }).lean();
         
-        // Map office payments to vouchers
+        // Map office payments to vouchers (voucher is already plain object from lean())
         const vouchersWithPayments = vouchers.map(voucher => {
             const voucherPayments = officePayments.filter(payment => 
                 payment.relatedVoucher && payment.relatedVoucher.toString() === voucher._id.toString()
             );
             return {
-                ...voucher.toObject(),
+                ...voucher,
                 officePayments: voucherPayments
             };
         });

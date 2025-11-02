@@ -129,7 +129,19 @@ export default function Header() {
   };
 
   const isActive = (path) => {
-    return location.pathname === path;
+    // Handle language-prefixed URLs (e.g., /ar/packages, /fr/packages)
+    const currentPath = location.pathname;
+    
+    // Check exact match
+    if (currentPath === path) return true;
+    
+    // Check with language prefix (/ar, /fr)
+    const langPrefixes = ['/ar', '/fr'];
+    for (const prefix of langPrefixes) {
+      if (currentPath === `${prefix}${path}`) return true;
+    }
+    
+    return false;
   };
 
   const toggleMobileMenu = () => {
