@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Label, Alert, Table, TextInput } from 'flowbite-react';
-import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch } from 'react-icons/hi';
+import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch, HiRefresh } from 'react-icons/hi';
 import { FaTicketAlt } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 import { getAllVouchers } from '../utils/voucherApi';
@@ -185,8 +185,13 @@ const OfficeDetailPage = () => {
             // Currency filter - skip if 'ALL' is selected
             if (filters.currency && filters.currency !== 'ALL' && voucher.currency !== filters.currency) return false;
             
-            // Year filter
-            if (filters.year && voucherYear.toString() !== filters.year) return false;
+            // Year filter - MASTER filter checks BOTH createdAt and arrivalDate years
+            if (filters.year) {
+                const arrivalYear = voucher.arrivalDate ? new Date(voucher.arrivalDate).getFullYear() : null;
+                const matchesYear = voucherYear.toString() === filters.year || 
+                                   (arrivalYear && arrivalYear.toString() === filters.year);
+                if (!matchesYear) return false;
+            }
             
             // Month filter - only apply if specific months are selected
             if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
@@ -198,10 +203,6 @@ const OfficeDetailPage = () => {
                 if (voucher.arrivalDate) {
                     const arrivalDate = new Date(voucher.arrivalDate);
                     const arrivalMonth = arrivalDate.getMonth() + 1; // 1-based month
-                    const arrivalYear = arrivalDate.getFullYear();
-                    
-                    // Check if arrival date is in the selected year and month
-                    if (arrivalYear.toString() !== filters.year) return false;
                     if (!filters.arrivalMonth.includes(arrivalMonth.toString())) return false;
                 } else {
                     return false; // No arrival date, exclude from arrival month filter
@@ -277,8 +278,13 @@ const OfficeDetailPage = () => {
             // Currency filter - skip if 'ALL' is selected
             if (filters.currency && filters.currency !== 'ALL' && voucher.currency !== filters.currency) return false;
             
-            // Year filter
-            if (filters.year && voucherYear.toString() !== filters.year) return false;
+            // Year filter - MASTER filter checks BOTH createdAt and arrivalDate years
+            if (filters.year) {
+                const arrivalYear = voucher.arrivalDate ? new Date(voucher.arrivalDate).getFullYear() : null;
+                const matchesYear = voucherYear.toString() === filters.year || 
+                                   (arrivalYear && arrivalYear.toString() === filters.year);
+                if (!matchesYear) return false;
+            }
             
             // Month filter - only apply if specific months are selected
             if (filters.month && Array.isArray(filters.month) && filters.month.length > 0 && !filters.month.includes('')) {
@@ -290,10 +296,6 @@ const OfficeDetailPage = () => {
                 if (voucher.arrivalDate) {
                     const arrivalDate = new Date(voucher.arrivalDate);
                     const arrivalMonth = arrivalDate.getMonth() + 1; // 1-based month
-                    const arrivalYear = arrivalDate.getFullYear();
-                    
-                    // Check if arrival date is in the selected year and month
-                    if (arrivalYear.toString() !== filters.year) return false;
                     if (!filters.arrivalMonth.includes(arrivalMonth.toString())) return false;
                 } else {
                     return false; // No arrival date, exclude from arrival month filter
@@ -313,15 +315,23 @@ const OfficeDetailPage = () => {
             return relatedVoucherId === voucher._id && payment.status === 'approved';
         });
         
-        const totalPaid = voucherSpecificPayments.reduce((total, payment) => {
-            if (payment.type === 'INCOMING') {
-                return total + payment.amount;
-            }
-            return total;
-        }, 0);
+        // Calculate how much they paid you (INCOMING)
+        const incomingTotal = voucherSpecificPayments
+            .filter(p => p.type === 'INCOMING')
+            .reduce((sum, p) => sum + p.amount, 0);
         
-        const remaining = voucher.totalAmount - totalPaid;
-        return { totalPaid, remaining };
+        // Calculate additional charges you added (OUTGOING)
+        const outgoingTotal = voucherSpecificPayments
+            .filter(p => p.type === 'OUTGOING')
+            .reduce((sum, p) => sum + p.amount, 0);
+        
+        // Remaining = Original Amount - What they paid + Additional charges
+        const remaining = voucher.totalAmount - incomingTotal + outgoingTotal;
+        
+        return { 
+            totalPaid: incomingTotal, 
+            remaining: remaining 
+        };
     };
 
     // Calculate remaining balance for a specific voucher
@@ -331,14 +341,21 @@ const OfficeDetailPage = () => {
         const voucherSpecificPayments = voucherPayments.filter(payment => {
             // Handle both populated and unpopulated relatedVoucher
             const relatedVoucherId = payment.relatedVoucher?._id || payment.relatedVoucher;
-            return relatedVoucherId === voucherId && payment.type === 'OUTGOING' && payment.status === 'approved';
+            return relatedVoucherId === voucherId && payment.status === 'approved';
         });
         
-        const totalPaid = voucherSpecificPayments.reduce((total, payment) => {
-            return total + payment.amount;
-        }, 0);
+        // Calculate how much you paid them (OUTGOING)
+        const outgoingTotal = voucherSpecificPayments
+            .filter(p => p.type === 'OUTGOING')
+            .reduce((sum, p) => sum + p.amount, 0);
         
-        return servicesTotal - totalPaid;
+        // Calculate additional charges from them (INCOMING)
+        const incomingTotal = voucherSpecificPayments
+            .filter(p => p.type === 'INCOMING')
+            .reduce((sum, p) => sum + p.amount, 0);
+        
+        // Remaining = Services Total - What you paid + Additional charges
+        return servicesTotal - outgoingTotal + incomingTotal;
     };
 
     // Calculate totals for filtered vouchers
@@ -399,6 +416,13 @@ const OfficeDetailPage = () => {
             setFilters(prev => ({
                 ...prev,
                 month: Array.isArray(value) ? value : [value]
+            }));
+        } else if (filterType === 'year') {
+            // When year changes, reset month filter to "All Months"
+            setFilters(prev => ({
+                ...prev,
+                year: value,
+                month: [''] // Set to "All Months"
             }));
         } else {
             setFilters(prev => ({
@@ -472,21 +496,29 @@ const OfficeDetailPage = () => {
         return monthOptionsList;
     }, [vouchers, filters.year]);
     
-    // Generate dynamic year options based on available data
+    // Generate dynamic year options based on available data (both createdAt and arrivalDate)
     const yearOptions = useMemo(() => {
-        const dataYears = [...new Set(
-            vouchers.map(voucher => {
-                const voucherDate = new Date(voucher.createdAt);
-                return voucherDate.getFullYear();
-            })
-        )];
+        const yearsSet = new Set();
+        
+        // Extract years from both createdAt and arrivalDate
+        vouchers.forEach(voucher => {
+            // Add year from createdAt
+            const createdYear = new Date(voucher.createdAt).getFullYear();
+            yearsSet.add(createdYear);
+            
+            // Add year from arrivalDate if it exists
+            if (voucher.arrivalDate) {
+                const arrivalYear = new Date(voucher.arrivalDate).getFullYear();
+                yearsSet.add(arrivalYear);
+            }
+        });
         
         // Always include current year even if no data exists
         const currentYear = new Date().getFullYear();
-        const allYears = [...new Set([currentYear, ...dataYears])];
+        yearsSet.add(currentYear);
         
-        // Sort in descending order (newest first) and create options
-        return allYears
+        // Convert to array, sort in descending order (newest first), and create options
+        return Array.from(yearsSet)
             .sort((a, b) => b - a)
             .map(year => ({
                 value: year.toString(),
@@ -579,7 +611,7 @@ const OfficeDetailPage = () => {
                     {/* Filters */}
                     <div className="bg-gray-50 dark:bg-slate-950 border dark:border-slate-600 p-6 rounded-lg mb-6">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Filters</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                             <div>
                                 <Label htmlFor="year-filter" value="Year" className="mb-2" />
                                 <SearchableSelect
@@ -640,6 +672,17 @@ const OfficeDetailPage = () => {
                                     icon={HiX}
                                 >
                                     Clear Filters
+                                </CustomButton>
+                            </div>
+                            <div className="flex items-end">
+                                <CustomButton
+                                    variant="orange"
+                                    onClick={fetchOfficeVouchers}
+                                    className="w-full h-[48px]"
+                                    title="Refresh data from server"
+                                    icon={HiRefresh}
+                                >
+                                    Refresh Data
                                 </CustomButton>
                             </div>
                         </div>
