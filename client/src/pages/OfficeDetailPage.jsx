@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Card, Label, Alert, Table, TextInput } from 'flowbite-react';
-import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch, HiRefresh } from 'react-icons/hi';
+import { HiArrowLeft, HiOfficeBuilding, HiX, HiSearch, HiRefresh, HiDownload } from 'react-icons/hi';
 import { FaTicketAlt } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
-import { getAllVouchers } from '../utils/voucherApi';
+import axios from 'axios';
 import RahalatekLoader from '../components/RahalatekLoader';
 import CustomButton from '../components/CustomButton';
 import SearchableSelect from '../components/SearchableSelect';
@@ -36,6 +36,7 @@ const OfficeDetailPage = () => {
     });
     const [serviceTableSearch, setServiceTableSearch] = useState('');
     const [clientTableSearch, setClientTableSearch] = useState('');
+    const [pdfDownloading, setPdfDownloading] = useState(false);
     
     const getCurrencySymbol = (currency) => {
         const symbols = {
@@ -60,27 +61,115 @@ const OfficeDetailPage = () => {
         });
     };
     
-    const fetchOfficeVouchers = async () => {
+    const fetchOfficeVouchers = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await getAllVouchers();
+            // Use optimized endpoint that only returns relevant vouchers for this office
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`/api/office-payments/${encodeURIComponent(displayName)}/vouchers`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             
-            // Store all vouchers (will be filtered later for each table)
-            setVouchers(response.data);
+            console.log(`⚡ Loaded ${response.data.count} relevant vouchers for ${displayName}`);
+            setVouchers(response.data.data);
             setError('');
         } catch (err) {
             console.error('Failed to fetch office vouchers:', err);
             setError('Failed to fetch office vouchers');
-            toast.error('Failed to fetch office vouchers');
+            toast.error('Failed to fetch office vouchers', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setLoading(false);
         }
-    };
+    }, [displayName]);
     
-
+    // Download office detail as PDF
+    const downloadOfficeDetailPDF = async () => {
+        setPdfDownloading(true);
+        try {
+            const token = localStorage.getItem('token');
+            
+            const response = await axios.get(`/api/office-payments/${encodeURIComponent(displayName)}/download-pdf`, {
+                headers: { Authorization: `Bearer ${token}` },
+                params: { 
+                    year: filters.year,
+                    month: JSON.stringify(filters.month),
+                    arrivalMonth: JSON.stringify(filters.arrivalMonth),
+                    currency: filters.currency
+                },
+                responseType: 'blob'
+            });
+            
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Get filename from response headers or create default
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = `office-detail-${displayName}-${filters.year}.pdf`;
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            
+            toast.success('PDF downloaded successfully!', {
+                duration: 3000,
+                style: {
+                    background: '#4CAF50',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#4CAF50',
+                },
+            });
+        } catch (err) {
+            console.error('Error downloading PDF:', err);
+            toast.error('Failed to download PDF. Please try again.', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
+        } finally {
+            setPdfDownloading(false);
+        }
+    };
 
     // Calculate service payments for a voucher for this office
-    const calculateServicePayments = (voucher) => {
+    const calculateServicePayments = useCallback((voucher) => {
         const services = {
             hotels: 0,
             transfers: 0,
@@ -139,7 +228,7 @@ const OfficeDetailPage = () => {
         services.total = services.hotels + services.transfers + services.trips + services.flights;
         
         return services;
-    };
+    }, [displayName]);
     
     // Get vouchers that have services for this office (for the services table)
     // Direct clients don't provide services, so return empty array for them
@@ -307,7 +396,7 @@ const OfficeDetailPage = () => {
     }, [vouchers, filters, displayName, clientTableSearch, isDirectClient]);
 
     // Calculate client voucher details
-    const calculateClientVoucherDetails = (voucher) => {
+    const calculateClientVoucherDetails = useCallback((voucher) => {
         if (!voucherPayments) return { totalPaid: 0, remaining: voucher.totalAmount };
         
         const voucherSpecificPayments = voucherPayments.filter(payment => {
@@ -332,10 +421,10 @@ const OfficeDetailPage = () => {
             totalPaid: incomingTotal, 
             remaining: remaining 
         };
-    };
+    }, [voucherPayments]);
 
     // Calculate remaining balance for a specific voucher
-    const calculateVoucherRemaining = (voucherId, servicesTotal) => {
+    const calculateVoucherRemaining = useCallback((voucherId, servicesTotal) => {
         if (!voucherPayments) return servicesTotal; // Safety check
         
         const voucherSpecificPayments = voucherPayments.filter(payment => {
@@ -356,7 +445,7 @@ const OfficeDetailPage = () => {
         
         // Remaining = Services Total - What you paid + Additional charges
         return servicesTotal - outgoingTotal + incomingTotal;
-    };
+    }, [voucherPayments]);
 
     // Calculate totals for filtered vouchers
     const totals = useMemo(() => {
@@ -402,13 +491,13 @@ const OfficeDetailPage = () => {
         baseTotal.clientTotalRemaining = clientTotals.clientTotalRemaining;
 
         return baseTotal;
-    }, [filteredVouchers, getClientVouchers, voucherPayments]);
+    }, [filteredVouchers, getClientVouchers, calculateServicePayments, calculateClientVoucherDetails, calculateVoucherRemaining]);
 
 
     
     useEffect(() => {
         fetchOfficeVouchers();
-    }, [displayName]);
+    }, [fetchOfficeVouchers]);
     
     const handleFilterChange = (filterType, value) => {
         if (filterType === 'month') {
@@ -568,8 +657,46 @@ const OfficeDetailPage = () => {
         <div className="min-h-screen bg-white dark:bg-slate-950 p-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-6 mb-8 border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <div className="flex items-center justify-between">
+                <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    {/* Mobile Layout */}
+                    <div className="sm:hidden">
+                        {/* Mobile Header Row */}
+                        <div className="flex items-center justify-between mb-3">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="flex items-center justify-center w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                                title="Go back"
+                            >
+                                <HiArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                            </button>
+                            
+                            <div className="flex items-center gap-2 bg-teal-500/10 dark:bg-teal-500/20 px-3 py-1.5 rounded-full border border-teal-500/20">
+                                <FaTicketAlt className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                                <span className="text-sm font-semibold text-teal-700 dark:text-teal-300">
+                                    {filteredVouchers.length + getClientVouchers.length} Vouchers
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {/* Mobile Office Info */}
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-teal-100 dark:bg-teal-900/30 p-2.5 rounded-xl">
+                                <HiOfficeBuilding className="h-7 w-7 text-teal-600 dark:text-teal-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight truncate">
+                                    {displayName}
+                                </h1>
+                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 flex items-center">
+                                    <span className="w-1.5 h-1.5 bg-teal-500 rounded-full mr-1.5"></span>
+                                    {isDirectClient ? 'Direct Client' : 'Office Details'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Desktop Layout - Original */}
+                    <div className="hidden sm:flex sm:items-center sm:justify-between">
                         <div className="flex items-center space-x-4">
                             <CustomButton
                                 variant="gray"
@@ -604,6 +731,22 @@ const OfficeDetailPage = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                {/* Export PDF Button */}
+                <div className="flex justify-end mb-4 sm:-mt-4">
+                    <CustomButton
+                        onClick={downloadOfficeDetailPDF}
+                        disabled={pdfDownloading}
+                        loading={pdfDownloading}
+                        variant="green"
+                        size="md"
+                        icon={HiDownload}
+                        title="Download Office Detail Report as PDF"
+                        className="w-full sm:w-auto"
+                    >
+                        {pdfDownloading ? 'Exporting' : 'Export PDF'}
+                    </CustomButton>
                 </div>
                 
                 {/* Filters and Voucher Table */}

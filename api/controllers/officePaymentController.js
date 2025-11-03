@@ -1,5 +1,7 @@
 const OfficePayment = require('../models/OfficePayment');
 const { invalidateDashboardCache } = require('../utils/redis');
+const OfficeDetailPdfService = require('../services/officeDetailPdfService');
+const User = require('../models/User');
 
 // Get all payments for an office by currency
 exports.getOfficePayments = async (req, res) => {
@@ -25,6 +27,95 @@ exports.getOfficePayments = async (req, res) => {
     } catch (error) {
         console.error('Error fetching office payments:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Get relevant vouchers for an office (optimized endpoint)
+exports.getOfficeVouchers = async (req, res) => {
+    try {
+        const { officeName } = req.params;
+        const decodedOfficeName = decodeURIComponent(officeName);
+
+        if (!decodedOfficeName) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Office name is required' 
+            });
+        }
+
+        console.time(`getOfficeVouchers-${decodedOfficeName}`);
+
+        const Voucher = require('../models/Voucher');
+
+        // Build optimized query to find vouchers where this office is involved
+        // Either as client (voucher.officeName) OR as service provider (in arrays)
+        const vouchers = await Voucher.find({
+            $and: [
+                // Not deleted
+                {
+                    $or: [
+                        { isDeleted: false },
+                        { isDeleted: { $exists: false } }
+                    ]
+                },
+                // Office is involved
+                {
+                    $or: [
+                        // Office is the client
+                        { officeName: decodedOfficeName },
+                        // Office provided hotel services
+                        { 'hotels.officeName': decodedOfficeName },
+                        // Office provided transfer services
+                        { 'transfers.officeName': decodedOfficeName },
+                        // Office provided trip services (new structure)
+                        { 'trips.officeName': decodedOfficeName },
+                        // Office provided trip services (old structure)
+                        { 'payments.trips.officeName': decodedOfficeName },
+                        // Office provided flight services
+                        { 'flights.officeName': decodedOfficeName }
+                    ]
+                }
+            ]
+        })
+        .populate('createdBy', 'username')
+        .populate('statusUpdatedBy', 'username')
+        .sort({ createdAt: -1 })
+        .lean();
+
+        // Get all office payments for these vouchers
+        const voucherIds = vouchers.map(v => v._id);
+        const officePayments = await OfficePayment.find({ 
+            relatedVoucher: { $in: voucherIds },
+            officeName: decodedOfficeName
+        }).lean();
+
+        // Map office payments to vouchers
+        const vouchersWithPayments = vouchers.map(voucher => {
+            const voucherPayments = officePayments.filter(payment => 
+                payment.relatedVoucher && payment.relatedVoucher.toString() === voucher._id.toString()
+            );
+            return {
+                ...voucher,
+                officePayments: voucherPayments
+            };
+        });
+
+        console.timeEnd(`getOfficeVouchers-${decodedOfficeName}`);
+        console.log(`📊 Found ${vouchersWithPayments.length} relevant vouchers for ${decodedOfficeName}`);
+
+        res.status(200).json({
+            success: true,
+            count: vouchersWithPayments.length,
+            data: vouchersWithPayments
+        });
+
+    } catch (error) {
+        console.error('Error fetching office vouchers:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Server error',
+            error: error.message 
+        });
     }
 };
 
@@ -227,5 +318,65 @@ exports.updatePaymentDate = async (req, res) => {
     } catch (error) {
         console.error('Error updating payment date:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Download office detail as PDF
+exports.downloadOfficeDetailPDF = async (req, res) => {
+    try {
+        const { officeName } = req.params;
+        const { year, month, arrivalMonth, currency } = req.query;
+        
+        if (!officeName) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Office name is required' 
+            });
+        }
+        
+        // Get full user object
+        const fullUser = await User.findById(req.user.userId).select('username email isAdmin isAccountant');
+        
+        if (!fullUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        // Parse filters
+        const filters = {
+            year: year || new Date().getFullYear().toString(),
+            month: month ? JSON.parse(month) : [''],
+            arrivalMonth: arrivalMonth ? JSON.parse(arrivalMonth) : [],
+            currency: currency || 'ALL'
+        };
+        
+        // Generate office detail data
+        const officeData = await OfficeDetailPdfService.generateOfficeDetailData(
+            decodeURIComponent(officeName), 
+            filters
+        );
+        
+        // Generate PDF
+        const pdfBuffer = await OfficeDetailPdfService.generateOfficeDetailPDF(officeData, fullUser);
+        
+        // Set response headers for PDF download
+        const filename = `office-detail-${officeName.replace(/[^a-z0-9]/gi, '-')}-${filters.year}.pdf`;
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        
+        // Send PDF
+        res.end(pdfBuffer);
+        
+    } catch (error) {
+        console.error('Error downloading office detail PDF:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to generate PDF',
+            error: error.message 
+        });
     }
 }; 

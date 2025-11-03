@@ -99,11 +99,6 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         return `${day}/${month}/${year}`;
     };
 
-    // Load payments from backend API (currency-specific or all currencies)
-    useEffect(() => {
-        fetchPayments();
-    }, [officeName, currency]);
-
     // Check user role
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -120,7 +115,7 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         }
     }, []);
 
-    const fetchPayments = async () => {
+    const fetchPayments = React.useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -147,20 +142,49 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         } catch (err) {
             if (err.response?.status !== 404) {
                 console.error('Failed to fetch payments:', err);
-                toast.error('Failed to load payments');
+                toast.error('Failed to load payments', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
             }
             // If 404, it means no payments exist yet, which is fine
             setPayments([]);
             onPaymentsChange?.([]);
         }
-    };
+    }, [officeName, currency, onPaymentsChange]);
+
+    // Load payments from backend API (currency-specific or all currencies)
+    useEffect(() => {
+        fetchPayments();
+    }, [fetchPayments]);
+
+    const resetPaymentForm = React.useCallback((selectedCurrency = null) => {
+        setPaymentForm({
+            type: 'INCOMING',
+            amount: '',
+            currency: selectedCurrency || (currency === 'ALL' ? 'USD' : currency),
+            notes: '',
+            voucherId: '',
+            paymentDate: ''
+        });
+    }, [currency]);
 
     // Update form when currency changes
     useEffect(() => {
         if (showPaymentModal) {
             resetPaymentForm();
         }
-    }, [currency]);
+    }, [currency, showPaymentModal, resetPaymentForm]);
 
     // Reset voucher selection if selected voucher doesn't match current form currency
     useEffect(() => {
@@ -187,11 +211,15 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                 toast.error('Please enter a valid amount greater than 0', {
                     duration: 4000,
                     style: {
-                        background: '#EF4444',
+                        background: '#f44336',
                         color: '#fff',
                         fontWeight: 'bold',
                         fontSize: '16px',
                         padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
                     },
                 });
                 setPaymentLoading(false);
@@ -202,11 +230,15 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                 toast.error('Please select a payment type', {
                     duration: 4000,
                     style: {
-                        background: '#EF4444',
+                        background: '#f44336',
                         color: '#fff',
                         fontWeight: 'bold',
                         fontSize: '16px',
                         padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
                     },
                 });
                 setPaymentLoading(false);
@@ -215,7 +247,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
 
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('You must be logged in to add payments');
+                toast.error('You must be logged in to add payments', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 setPaymentLoading(false);
                 return;
             }
@@ -258,21 +303,23 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             resetPaymentForm();
         } catch (err) {
             console.error('Failed to save payment:', err);
-            toast.error(err.response?.data?.message || 'Failed to save payment');
+            toast.error(err.response?.data?.message || 'Failed to save payment', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setPaymentLoading(false);
         }
-    };
-
-    const resetPaymentForm = (selectedCurrency = null) => {
-        setPaymentForm({
-            type: 'INCOMING',
-            amount: '',
-            currency: selectedCurrency || (currency === 'ALL' ? 'USD' : currency),
-            notes: '',
-            voucherId: '',
-            paymentDate: ''
-        });
     };
 
     const openPaymentModal = (selectedCurrency = null) => {
@@ -308,7 +355,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('You must be logged in to update payment dates');
+                toast.error('You must be logged in to update payment dates', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 return;
             }
 
@@ -338,7 +398,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             });
         } catch (err) {
             console.error('Failed to update payment date:', err);
-            toast.error(err.response?.data?.message || 'Failed to update payment date');
+            toast.error(err.response?.data?.message || 'Failed to update payment date', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
             throw err; // Re-throw to let PaymentDateControls handle the error state
         }
     };
@@ -351,11 +424,15 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             toast.error('Please select a payment date before approving', {
                 duration: 4000,
                 style: {
-                    background: '#EF4444',
+                    background: '#f44336',
                     color: '#fff',
                     fontWeight: 'bold',
                     fontSize: '16px',
                     padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
                 },
             });
             return;
@@ -365,7 +442,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('You must be logged in to approve payments');
+                toast.error('You must be logged in to approve payments', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 setApprovalLoading(false);
                 return;
             }
@@ -398,7 +488,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             closeApprovalModal();
         } catch (err) {
             console.error('Failed to approve payment:', err);
-            toast.error(err.response?.data?.message || 'Failed to approve payment');
+            toast.error(err.response?.data?.message || 'Failed to approve payment', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setApprovalLoading(false);
         }
@@ -409,7 +512,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('You must be logged in to delete payments');
+                toast.error('You must be logged in to delete payments', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 return;
             }
 
@@ -438,7 +554,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             closeDeleteModal();
         } catch (err) {
             console.error('Failed to delete payment:', err);
-            toast.error(err.response?.data?.message || 'Failed to delete payment');
+            toast.error(err.response?.data?.message || 'Failed to delete payment', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         } finally {
             setDeleteLoading(false);
         }
@@ -464,7 +593,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                toast.error('You must be logged in to approve payments');
+                toast.error('You must be logged in to approve payments', {
+                    duration: 3000,
+                    style: {
+                        background: '#f44336',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        padding: '16px',
+                    },
+                    iconTheme: {
+                        primary: '#fff',
+                        secondary: '#f44336',
+                    },
+                });
                 return;
             }
 
@@ -492,7 +634,20 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             });
         } catch (err) {
             console.error('Failed to approve payment:', err);
-            toast.error(err.response?.data?.message || 'Failed to approve payment');
+            toast.error(err.response?.data?.message || 'Failed to approve payment', {
+                duration: 3000,
+                style: {
+                    background: '#f44336',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    padding: '16px',
+                },
+                iconTheme: {
+                    primary: '#fff',
+                    secondary: '#f44336',
+                },
+            });
         }
     };
 
@@ -508,8 +663,8 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
             })() && (
                 <div>
                     {/* Main Payment History Header */}
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-teal-600 dark:text-teal-400" />
                         Payment History
                     </h4>
                     
@@ -526,8 +681,33 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                         });
                         
                         return currencies.map((payCurrency, index) => (
-                            <div key={payCurrency} className={index > 0 ? "mt-8" : ""}>
-                                <div className="flex justify-between items-center mb-4">
+                            <div key={payCurrency} className={index > 0 ? "mt-6 sm:mt-8" : ""}>
+                                {/* Mobile Layout */}
+                                <div className="sm:hidden mb-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-purple-100 dark:bg-purple-900/50 px-3 py-1.5 rounded-full text-sm font-semibold text-purple-800 dark:text-purple-200">
+                                                {payCurrency} ({getCurrencySymbol(payCurrency)})
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {groupedPayments[payCurrency].length}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <CustomButton
+                                        variant="green"
+                                        size="sm"
+                                        onClick={() => openPaymentModal(currency === 'ALL' ? payCurrency : currency)}
+                                        icon={HiPlus}
+                                        title={`Add payment record in ${currency === 'ALL' ? payCurrency : currency}`}
+                                        className="w-full"
+                                    >
+                                        Add Payment ({currency === 'ALL' ? payCurrency : currency})
+                                    </CustomButton>
+                                </div>
+                                
+                                {/* Desktop Layout - Original */}
+                                <div className="hidden sm:flex sm:justify-between sm:items-center mb-4">
                                     <h5 className="text-md font-medium text-gray-800 dark:text-gray-200 flex items-center">
                                         {currency === 'ALL' ? (
                                             <span className="flex items-center">
@@ -837,11 +1017,32 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                 return filteredPayments.length === 0;
             })() && (
                 <div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-teal-600 dark:text-teal-400" />
                         Payment History
                     </h4>
-                    <div className="flex justify-between items-center mb-4">
+                    
+                    {/* Mobile Layout */}
+                    <div className="sm:hidden mb-3">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="bg-purple-100 dark:bg-purple-900/50 px-3 py-1.5 rounded-full text-sm font-semibold text-purple-800 dark:text-purple-200">
+                                {currency} ({getCurrencySymbol(currency)})
+                            </span>
+                        </div>
+                        <CustomButton
+                            variant="green"
+                            size="sm"
+                            onClick={() => openPaymentModal(currency)}
+                            icon={HiPlus}
+                            title={`Add payment record in ${currency}`}
+                            className="w-full"
+                        >
+                            Add Payment ({currency})
+                        </CustomButton>
+                    </div>
+                    
+                    {/* Desktop Layout - Original */}
+                    <div className="hidden sm:flex sm:justify-between sm:items-center mb-4">
                         <h5 className="text-md font-medium text-gray-800 dark:text-gray-200 flex items-center">
                             {currency} Payments
                         </h5>
@@ -855,8 +1056,9 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                             Add Payment ({currency})
                         </CustomButton>
                     </div>
-                    <div className="text-center py-8">
-                        <p className="text-gray-500 dark:text-gray-400">No {currency} payments yet.</p>
+                    
+                    <div className="text-center py-6 sm:py-8">
+                        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No {currency} payments yet.</p>
                     </div>
                 </div>
             )}
@@ -867,13 +1069,13 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                 return filteredPayments.length === 0;
             })() && (
                 <div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-                        <HiCurrencyDollar className="h-6 w-6 mr-2 text-teal-600 dark:text-teal-400" />
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center">
+                        <HiCurrencyDollar className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-teal-600 dark:text-teal-400" />
                         Payment History
                     </h4>
-                    <div className="text-center py-8">
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">No payment history yet. Start by adding a payment:</p>
-                        <div className="flex flex-wrap justify-center gap-3">
+                    <div className="text-center py-6 sm:py-8">
+                        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-4">No payment history yet. Start by adding a payment:</p>
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-2 sm:gap-3">
                             {['USD', 'EUR', 'TRY'].map((curr) => (
                                 <CustomButton
                                     key={curr}
@@ -881,6 +1083,7 @@ const PaymentManager = ({ officeName, currency, filters, onPaymentsChange, servi
                                     onClick={() => openPaymentModal(curr)}
                                     icon={HiPlus}
                                     title={`Add payment record in ${curr}`}
+                                    className="w-full sm:w-auto"
                                 >
                                     Add Payment ({curr})
                                 </CustomButton>
