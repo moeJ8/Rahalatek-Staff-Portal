@@ -12,7 +12,7 @@ import {
   FaExternalLinkAlt,
   FaChartLine
 } from 'react-icons/fa';
-import { getUserNotifications } from '../utils/notificationApi';
+import axios from 'axios';
 import RahalatekLoader from './RahalatekLoader';
 import CustomButton from './CustomButton';
 
@@ -38,11 +38,14 @@ export default function RecentNotificationsWidget() {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await getUserNotifications();
+      const token = localStorage.getItem('token');
       
-      // Get the 5 most recent notifications
-      const recent = (response.data || []).slice(0, 5);
-      setNotifications(recent);
+      // Use optimized endpoint with limit parameter
+      const response = await axios.get('/api/notifications?limit=5', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setNotifications(response.data.data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {

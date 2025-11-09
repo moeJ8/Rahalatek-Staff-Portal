@@ -61,19 +61,6 @@ export default function Home() {
     return 'Good evening';
   };
 
-
-  if (loading) {
-    return (
-      <div className="bg-gray-50 dark:bg-slate-950 min-h-screen">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center py-20">
-            <RahalatekLoader size="lg" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-gray-50 dark:bg-slate-950 min-h-screen">
       <div className="container mx-auto px-4 py-2 sm:py-3 md:py-4">

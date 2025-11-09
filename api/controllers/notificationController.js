@@ -6,11 +6,13 @@ const NotificationService = require('../services/notificationService');
 exports.getUserNotifications = async (req, res) => {
     try {
         const { userId, isAdmin, isAccountant } = req.user;
+        const { limit } = req.query;
         
         const notifications = await NotificationService.getUserNotifications(
             userId, 
             isAdmin, 
-            isAccountant
+            isAccountant,
+            limit ? parseInt(limit) : null
         );
 
         res.status(200).json({

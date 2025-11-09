@@ -114,6 +114,9 @@ const GuestCountryPage = () => {
       },
       'Albania': {
         heroImage: 'https://res.cloudinary.com/dnzqnr6js/image/upload/f_auto,q_85,w_1400,h_700,c_fill,g_auto,dpr_auto/v1759681631/albania_ftb9qt.jpg'
+      },
+      'United Arab Emirates': {
+        heroImage: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1400&h=700&fit=crop&q=85'
       }
     };
     return countries[countryName] || { heroImage: null };
@@ -319,6 +322,11 @@ const GuestCountryPage = () => {
         code: 'AL',
         heroImage: 'https://res.cloudinary.com/dnzqnr6js/image/upload/f_auto,q_85,w_1400,h_700,c_fill,g_auto,dpr_auto/v1759681631/albania_ftb9qt.jpg',
         overview: 'Uncover Albania, Europe\'s last hidden gem and the Balkans\' best-kept secret, where pristine beaches rival the Greek islands, ancient heritage sites dot dramatic mountains, and authentic culture thrives without tourist crowds—all at a fraction of Western Europe\'s prices. This Mediterranean jewel, emerging from decades of isolation, now welcomes travelers to discover UNESCO World Heritage sites, stunning Riviera coastline, and warm Albanian hospitality. Explore charming Tirana, the colorful capital, where communist-era bunkers transformed into art museums contrast with trendy Blloku district\'s cafes and nightlife. Ride the Dajti Mountain cable car for spectacular views, then wander vibrant Skanderbeg Square surrounded by museums and mosques. Journey to Berat, the "City of a Thousand Windows," where white Ottoman houses cascade down hillsides, and ancient castle ruins overlook the Osum River—a perfectly preserved UNESCO town seemingly frozen in time. Visit Gjirokastër\'s stone fortress and traditional architecture, another UNESCO site showcasing authentic Albanian mountain culture. Head south to the Albanian Riviera, where postcard-perfect Ksamil beaches rival the Caribbean with white sand and turquoise waters facing Corfu. Base yourself in Sarande\'s beachfront hotels, visit the stunning Blue Eye natural spring with impossibly blue water, and explore Butrint National Park\'s Greek and Roman ruins by the sea. Hike the dramatic Albanian Alps, visit remote mountain villages where traditions endure, and explore the turquoise waters of Komani Lake. Discover ancient Illyrian ruins, Ottoman bridges, and medieval castles throughout the country. Taste delicious Albanian cuisine—byrek (savory pies), tavë kosi (lamb with yogurt), fresh seafood, and local raki. Experience genuine warmth from locals excited to share their country, enjoy Mediterranean climate, and explore stunning nature from mountains to pristine coastline. With incredible value (cheapest country in Europe), diverse landscapes, rich history, authentic experiences, and absence of tourist crowds, Albania rewards adventurous travelers seeking undiscovered destinations offering the Mediterranean dream without the price tag or masses—perfect for budget travelers, couples, and those wanting to explore before everyone else discovers this Balkan treasure.'
+      },
+      'United Arab Emirates': {
+        code: 'AE',
+        heroImage: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1762608287/zq-lee-VbDjv8-8ibc-unsplash_qfopyr.jpg',
+        overview: 'Experience the United Arab Emirates, a dazzling Arabian destination where ultra-modern luxury meets traditional desert culture in the most spectacular way. This federation of seven emirates has transformed from pearl-diving villages to a global hub of innovation, luxury, and extraordinary experiences in just five decades. Start in Dubai, the jewel of the UAE and a city of superlatives—home to the world\'s tallest building (Burj Khalifa at 828m), largest shopping mall (Dubai Mall), and most luxurious hotels including the iconic sail-shaped Burj Al Arab. Shop at traditional Gold and Spice Souks, then explore futuristic Dubai Marina\'s skyscrapers and beach clubs. Experience thrilling desert safaris with dune bashing, camel rides, and Bedouin-style dinners under stars, or hit the slopes at indoor Ski Dubai. Visit Abu Dhabi, the sophisticated capital, featuring the stunning Sheikh Zayed Grand Mosque with its gleaming white marble and intricate Islamic architecture—one of the world\'s most beautiful mosques. Explore Louvre Abu Dhabi\'s world-class art collection, race on Yas Island\'s Formula 1 circuit, and relax on pristine Saadiyat Island beaches. Discover Sharjah, the UAE\'s cultural capital, with excellent museums, traditional architecture, and authentic Arabian atmosphere. Adventure to Ras Al Khaimah for mountain hiking in Jebel Jais (UAE\'s highest peak) and the world\'s longest zipline, or explore Fujairah\'s pristine diving sites and historic forts on the east coast. Experience Al Ain\'s desert oases, ancient forts, and the famous camel market. Enjoy year-round sunshine (350+ days annually), world-class beaches on both Arabian Gulf and Gulf of Oman, and water sports from jet skiing to paddleboarding. Indulge in incredible dining from Michelin-starred restaurants to authentic Emirati cuisine—try machboos, harees, and luqaimat. Shop tax-free in gleaming malls, traditional souks, and during the famous Dubai Shopping Festival. Experience unmatched luxury at 7-star hotels, relax at award-winning spas, and enjoy world-class entertainment from concerts to theme parks. With excellent infrastructure, absolute safety, English widely spoken, convenient location as a global hub, visa-free entry for many nationalities, and unique blend of Arabian heritage with futuristic innovation, the UAE delivers extraordinary experiences for luxury travelers, families, business visitors, and adventure seekers wanting to experience the modern Middle East at its finest.'
       }
     };
     return countries[countryName] || { 
@@ -464,7 +472,8 @@ const GuestCountryPage = () => {
       'Egypt': 'EG',
       'Azerbaijan': 'AZ',
       'Georgia': 'GE',
-      'Albania': 'AL'
+      'Albania': 'AL',
+      'United Arab Emirates': 'AE'
     };
     return codes[country] || null;
   };

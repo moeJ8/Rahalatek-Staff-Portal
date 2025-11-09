@@ -62,6 +62,7 @@ const tourSchema = new mongoose.Schema({
             // Indonesia
             'Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan',
             'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak',
+            'Puncak', 'Sukabumi',
             // Saudi Arabia
             'Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 
             'Taif', 'Abha', 'Tabuk', 'Al Khobar',
@@ -77,15 +78,19 @@ const tourSchema = new mongoose.Schema({
             // Georgia
             'Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori',
             'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi',
+            'Bakuriani',
             // Albania
             'Tirana', 'Durres', 'Vlore', 'Shkoder', 'Shkodra', 'Fier', 'Korce',
-            'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
+            'Berat', 'Gjirokaster', 'Sarande', 'Kruje',
+            // United Arab Emirates
+            'Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah',
+            'Fujairah', 'Umm Al Quwain', 'Al Ain'
         ]
     },
     country: {
         type: String,
         required: [true, 'A tour must have a country'],
-        enum: ['Turkey', 'Malaysia', 'Thailand', 'Indonesia', 'Saudi Arabia', 'Morocco', 'Egypt', 'Azerbaijan', 'Georgia', 'Albania']
+        enum: ['Turkey', 'Malaysia', 'Thailand', 'Indonesia', 'Saudi Arabia', 'Morocco', 'Egypt', 'Azerbaijan', 'Georgia', 'Albania', 'United Arab Emirates']
     },
     description: {
         type: String,

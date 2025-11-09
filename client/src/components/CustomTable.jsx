@@ -23,7 +23,7 @@ const CustomTable = ({
             }
         },
         head: {
-            base: "group/thead",
+            base: "group/thead sticky top-0 z-10",
             cell: {
                 base: "bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-700 px-6 py-3 group-first/thead:first:rounded-tl-lg group-first/thead:last:rounded-tr-lg text-xs font-medium uppercase tracking-wider text-left text-gray-500 dark:text-gray-400"
             }
@@ -70,51 +70,89 @@ const CustomTable = ({
                 .dark .custom-table-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: #64748b;
                 }
+                
+                /* Table with scrollable body only */
+                .custom-table-wrapper {
+                    position: relative;
+                }
+                
+                .custom-table-wrapper table {
+                    width: 100%;
+                    display: table;
+                    table-layout: fixed;
+                }
+                
+                .custom-table-wrapper thead {
+                    display: table;
+                    width: 100%;
+                    table-layout: fixed;
+                }
+                
+                .custom-table-wrapper tbody {
+                    display: block;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                }
+                
+                .custom-table-wrapper tbody tr {
+                    display: table;
+                    width: 100%;
+                    table-layout: fixed;
+                }
+                
+                .custom-table-wrapper thead th {
+                    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+                }
+                
+                .dark .custom-table-wrapper thead th {
+                    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+                }
             `}</style>
-            <div className={`overflow-auto custom-table-scrollbar ${className}`} style={{ maxHeight: '70vh' }}>
+            <div className={`custom-table-wrapper ${className}`}>
                 <Table 
                     striped={striped}
                     theme={customTheme}
                 >
-                {headers.length > 0 && (
-                    <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-700">
-                        {headers.map((header, index) => (
-                            <Table.HeadCell 
-                                key={index} 
-                                className={`text-sm font-semibold px-4 py-3 ${header.className || ''}`}
-                            >
-                                {header.label || header}
-                            </Table.HeadCell>
-                        ))}
-                    </Table.Head>
-                )}
-                
-                <Table.Body>
-                    {data.length > 0 ? (
-                        data.map((item, index) => (
-                            <Table.Row 
-                                key={item.id || item._id || index} 
-                                className="group bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
-                            >
-                                {renderRow ? renderRow(item, index) : (
-                                    <Table.Cell className="px-4 py-3">
-                                        No render function provided
-                                    </Table.Cell>
-                                )}
-                            </Table.Row>
-                        ))
-                    ) : (
-                        <Table.Row>
-                            <Table.Cell colSpan={headers.length || 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                {EmptyIcon && (
-                                    <EmptyIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                                )}
-                                <p className="text-lg font-medium">{emptyMessage}</p>
-                            </Table.Cell>
-                        </Table.Row>
+                    {headers.length > 0 && (
+                        <Table.Head className="text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-700">
+                            {headers.map((header, index) => (
+                                <Table.HeadCell 
+                                    key={index} 
+                                    className={`text-sm font-semibold px-4 py-3 ${header.className || ''}`}
+                                >
+                                    {header.label || header}
+                                </Table.HeadCell>
+                            ))}
+                        </Table.Head>
                     )}
-                </Table.Body>
-            </Table>
+                    
+                    <Table.Body className="custom-table-scrollbar">
+                        {data.length > 0 ? (
+                            data.map((item, index) => (
+                                <Table.Row 
+                                    key={item.id || item._id || index} 
+                                    className="group bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700"
+                                >
+                                    {renderRow ? renderRow(item, index) : (
+                                        <Table.Cell className="px-4 py-3">
+                                            No render function provided
+                                        </Table.Cell>
+                                    )}
+                                </Table.Row>
+                            ))
+                        ) : (
+                            <Table.Row>
+                                <Table.Cell colSpan={headers.length || 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    {EmptyIcon && (
+                                        <EmptyIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                    )}
+                                    <p className="text-lg font-medium">{emptyMessage}</p>
+                                </Table.Cell>
+                            </Table.Row>
+                        )}
+                    </Table.Body>
+                </Table>
             </div>
         </>
     );

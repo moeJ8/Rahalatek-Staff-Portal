@@ -19,6 +19,29 @@ const carouselSlideSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  // Translation fields (Arabic and French only - English is the base field)
+  translations: {
+    title: {
+      ar: { type: String, default: '', maxlength: 100 },
+      fr: { type: String, default: '', maxlength: 100 }
+    },
+    subtitle: {
+      ar: { type: String, default: '', maxlength: 200 },
+      fr: { type: String, default: '', maxlength: 200 }
+    },
+    description: {
+      ar: { type: String, default: '', maxlength: 500 },
+      fr: { type: String, default: '', maxlength: 500 }
+    },
+    buttonText: {
+      ar: { type: String, default: '', maxlength: 50 },
+      fr: { type: String, default: '', maxlength: 50 }
+    },
+    textPosition: {
+      ar: { type: String, enum: ['left', 'center', 'right'], default: '' },
+      fr: { type: String, enum: ['left', 'center', 'right'], default: '' }
+    }
+  },
   image: {
     url: {
       type: String,

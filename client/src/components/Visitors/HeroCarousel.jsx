@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 import CustomButton from '../CustomButton';
 
 const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
+  const { i18n } = useTranslation();
   const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState(null);
@@ -15,12 +17,13 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
   const carouselRef = useRef(null);
   const autoplayRef = useRef(null);
 
-  // Fetch active slides from API
+  // Fetch active slides from API with language parameter
   useEffect(() => {
     const fetchSlides = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/carousel/active');
+        const currentLang = i18n.language || 'en';
+        const response = await fetch(`/api/carousel/active?lang=${currentLang}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch carousel slides');
@@ -91,7 +94,7 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
     };
 
     fetchSlides();
-  }, []);
+  }, [i18n.language]); // Re-fetch when language changes
 
   // Navigation functions
   const nextSlide = useCallback(() => {
@@ -224,17 +227,6 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [nextSlide, prevSlide]);
 
-  const getTextPositionClasses = (position) => {
-    switch (position) {
-      case 'left':
-        return 'text-left justify-start';
-      case 'right':
-        return 'text-right justify-end';
-      default:
-        return 'text-center justify-center';
-    }
-  };
-
   const getTextColorClasses = (color) => {
     return color === 'dark' ? 'text-gray-900' : 'text-white';
   };
@@ -271,7 +263,8 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
             </div>
           </div>
         ) : (
-          slides.map((slide, index) => (
+          slides.map((slide, index) => {
+            return (
             <div
               key={slide._id}
               className="w-full h-full flex-shrink-0 relative bg-gray-900"
@@ -289,12 +282,18 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
               <div className="absolute inset-0 bg-black/40"></div>
               
               {/* Content */}
-              <div className={`absolute inset-0 flex items-center ${
-                slide.textPosition === 'left' ? 'justify-start' :
-                slide.textPosition === 'right' ? 'justify-end' :
-                'justify-center'
-              } p-4 sm:p-6 md:p-10 lg:p-20`}>
-                <div className={`max-w-4xl ${getTextColorClasses(slide.textColor)} z-10 ${getTextPositionClasses(slide.textPosition)}`}>
+              <div 
+                className={`absolute inset-0 flex items-center ${
+                  slide.textPosition === 'left' ? 'justify-start' :
+                  slide.textPosition === 'right' ? 'justify-end' :
+                  'justify-center'
+                } p-4 sm:p-6 md:p-10 lg:p-20`}
+              >
+                <div className={`max-w-4xl ${getTextColorClasses(slide.textColor)} z-10 ${
+                  slide.textPosition === 'left' ? 'text-left' :
+                  slide.textPosition === 'right' ? 'text-right' :
+                  'text-center'
+                }`}>
                   {/* Title */}
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-3 md:mb-4 lg:mb-6 leading-tight">
                     {slide.title}
@@ -341,7 +340,8 @@ const HeroCarousel = ({ autoplay = true, autoplayInterval = 5000 }) => {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 

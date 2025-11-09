@@ -135,7 +135,7 @@ export default function BlogManagement({ user }) {
     'Hua Hin', 'Ayutthaya', 'Chiang Rai', 'Kanchanaburi',
     // Indonesia
     'Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan',
-    'Lombok', 'Makassar', 'Semarang',
+    'Lombok', 'Makassar', 'Semarang', 'Puncak', 'Sukabumi',
     // Saudi Arabia
     'Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar',
     'Taif', 'Abha', 'Tabuk', 'Jubail',
@@ -150,10 +150,13 @@ export default function BlogManagement({ user }) {
     'Quba', 'Mingachevir', 'Nakhchivan',
     // Georgia
     'Tbilisi', 'Batumi', 'Kutaisi', 'Mestia', 'Gudauri', 'Mtskheta',
-    'Sighnaghi', 'Borjomi', 'Gori',
+    'Sighnaghi', 'Borjomi', 'Gori', 'Bakuriani',
     // Albania
     'Tirana', 'Durres', 'Saranda', 'Vlore', 'Shkoder', 'Berat',
-    'Gjirokaster', 'Ksamil', 'Theth'
+    'Gjirokaster', 'Ksamil', 'Theth',
+    // United Arab Emirates
+    'Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah',
+    'Fujairah', 'Umm Al Quwain', 'Al Ain'
   ];
 
   // Convert video URL to embed format

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLocalizedNavigate } from '../../hooks/useLocalizedNavigate';
 import PackageCard from './PackageCard';
 import CustomButton from '../CustomButton';
 import RahalatekLoader from '../RahalatekLoader';
@@ -15,13 +15,16 @@ const FeaturedPackages = () => {
   const [screenType, setScreenType] = useState('desktop');
   const [packagesPerSlide, setPackagesPerSlide] = useState(3);
   const carouselRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate = useLocalizedNavigate();
 
   useEffect(() => {
     const fetchFeaturedPackages = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/packages/featured?limit=9');
+        // Add language parameter to the API request
+        const lang = i18n.language;
+        const langParam = (lang === 'ar' || lang === 'fr') ? `&lang=${lang}` : '';
+        const response = await axios.get(`/api/packages/featured?limit=9${langParam}`);
         if (response.data?.success) {
           setPackages(response.data.data || []);
         }
@@ -34,7 +37,7 @@ const FeaturedPackages = () => {
     };
 
     fetchFeaturedPackages();
-  }, []);
+  }, [i18n.language]);
 
   // Screen size detection
   const updateScreenSize = () => {
@@ -87,13 +90,8 @@ const FeaturedPackages = () => {
       console.error('Error incrementing package views:', error);
     }
     
-    // Navigate to package page with language prefix for SEO (only for ar/fr)
-    const lang = i18n.language;
-    if (lang === 'ar' || lang === 'fr') {
-      navigate(`/${lang}/packages/${pkg.slug}`);
-    } else {
-      navigate(`/packages/${pkg.slug}`);
-    }
+    // Navigate to package page with automatic language handling
+    navigate(`/packages/${pkg.slug}`);
   };
 
   if (loading) {
@@ -133,13 +131,24 @@ const FeaturedPackages = () => {
   }
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-4 sm:py-6 md:py-8">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="relative text-center mb-6 sm:mb-8 md:mb-12">
+        <div className="relative text-center mb-4 sm:mb-6 md:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
             {t('home.packages.title')}
           </h2>
+          {/* View All Button - Desktop Only in Header */}
+          <div className="hidden lg:block lg:absolute lg:right-16 lg:top-0">
+            <CustomButton
+              onClick={() => navigate('/packages')}
+              variant="rippleBlueToYellowTeal"
+              size="md"
+              className="px-6 py-2 text-sm"
+            >
+              {t('home.packages.viewAll')}
+            </CustomButton>
+          </div>
         </div>
 
         {/* Packages Carousel */}
@@ -224,6 +233,19 @@ const FeaturedPackages = () => {
               ))}
             </div>
           )}
+
+          {/* View All Button - Mobile/Tablet Only */}
+          <div className="flex justify-center mt-8 lg:hidden">
+            <CustomButton
+              onClick={() => navigate('/packages')}
+              variant="rippleBlueToYellowTeal"
+              size="md"
+              className="px-4 py-2 sm:px-8 sm:py-3 text-sm sm:text-base"
+            >
+              {t('home.packages.viewAll')}
+            </CustomButton>
+          </div>
+
         </>
       </div>
     </section>

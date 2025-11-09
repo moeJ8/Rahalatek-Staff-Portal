@@ -1,9 +1,43 @@
 const AboutHero = require('../models/AboutHero');
 const cloudinary = require('../config/cloudinary');
 
+// Helper function to translate a single about hero
+const translateHero = (hero, lang) => {
+  if (lang === 'en' || !hero.translations) {
+    return hero.toObject ? hero.toObject() : hero;
+  }
+
+  const translations = hero.translations;
+  const translatedHero = hero.toObject ? hero.toObject() : { ...hero };
+
+  // Helper function to get translated text or fallback to base
+  const getTranslated = (baseValue, translationValue) => {
+    return translationValue && translationValue.trim() ? translationValue : baseValue;
+  };
+
+  // Translate simple fields
+  if (translations.title && translations.title[lang]) {
+    translatedHero.title = getTranslated(hero.title, translations.title[lang]);
+  }
+  if (translations.subtitle && translations.subtitle[lang]) {
+    translatedHero.subtitle = getTranslated(hero.subtitle, translations.subtitle[lang]);
+  }
+  if (translations.description && translations.description[lang]) {
+    translatedHero.description = getTranslated(hero.description, translations.description[lang]);
+  }
+  
+  // Translate text position
+  if (translations.textPosition && translations.textPosition[lang] && translations.textPosition[lang].trim() !== '') {
+    translatedHero.textPosition = translations.textPosition[lang];
+  }
+
+  return translatedHero;
+};
+
 // Get active hero for public display
 exports.getActiveHero = async (req, res) => {
   try {
+    const { lang = 'en' } = req.query; // Get language from query parameter
     const hero = await AboutHero.getActiveHero();
     
     if (!hero) {
@@ -23,7 +57,8 @@ exports.getActiveHero = async (req, res) => {
       });
     }
     
-    res.json(hero);
+    const translatedHero = translateHero(hero, lang);
+    res.json(translatedHero);
   } catch (error) {
     console.error('Error fetching active about hero:', error);
     res.status(500).json({ message: 'Failed to fetch about hero' });

@@ -91,10 +91,10 @@ const PartnersSection = () => {
   }, []);
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-4 sm:py-6 md:py-8">
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-6 sm:mb-8">
+        <div className="text-center mb-4 sm:mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {t('home.partners.title')}
           </h2>

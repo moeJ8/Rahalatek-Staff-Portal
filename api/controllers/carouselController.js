@@ -1,11 +1,59 @@
 const CarouselSlide = require('../models/CarouselSlide');
 const cloudinary = require('../config/cloudinary');
 
+// Helper function to translate a single carousel slide
+const translateSlide = (slide, lang) => {
+  if (lang === 'en' || !slide.translations) {
+    return slide.toObject ? slide.toObject() : slide;
+  }
+
+  const translations = slide.translations;
+  const translatedSlide = slide.toObject ? slide.toObject() : { ...slide };
+
+  // Helper function to get translated text or fallback to base
+  const getTranslated = (baseValue, translationValue) => {
+    return translationValue && translationValue.trim() ? translationValue : baseValue;
+  };
+
+  // Translate simple fields
+  if (translations.title && translations.title[lang]) {
+    translatedSlide.title = getTranslated(slide.title, translations.title[lang]);
+  }
+  if (translations.subtitle && translations.subtitle[lang]) {
+    translatedSlide.subtitle = getTranslated(slide.subtitle, translations.subtitle[lang]);
+  }
+  if (translations.description && translations.description[lang]) {
+    translatedSlide.description = getTranslated(slide.description, translations.description[lang]);
+  }
+  
+  // Translate button text
+  if (translations.buttonText && translations.buttonText[lang] && slide.button) {
+    translatedSlide.button = {
+      ...slide.button,
+      text: getTranslated(slide.button.text, translations.buttonText[lang])
+    };
+  }
+  
+  // Translate text position
+  if (translations.textPosition && translations.textPosition[lang] && translations.textPosition[lang].trim() !== '') {
+    translatedSlide.textPosition = translations.textPosition[lang];
+  }
+
+  return translatedSlide;
+};
+
+// Helper function to translate multiple slides
+const translateSlides = (slides, lang) => {
+  return slides.map(slide => translateSlide(slide, lang));
+};
+
 // Get all active slides for public display
 exports.getActiveSlides = async (req, res) => {
   try {
+    const { lang = 'en' } = req.query; // Get language from query parameter
     const slides = await CarouselSlide.getActiveSlides();
-    res.json(slides);
+    const translatedSlides = translateSlides(slides, lang);
+    res.json(translatedSlides);
   } catch (error) {
     console.error('Error fetching active carousel slides:', error);
     res.status(500).json({ message: 'Failed to fetch carousel slides' });

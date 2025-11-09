@@ -710,7 +710,7 @@ const GuestCityPage = () => {
               {cityData.touristicFeatures.map((feature, index) => (
                 <div 
                   key={index}
-                  className="flex items-start space-x-3 sm:space-x-4"
+                  className="flex items-start gap-3 sm:gap-4"
                 >
                   <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-blue-500 dark:bg-yellow-400 flex-shrink-0 mt-1.5 sm:mt-2"></span>
                   <span className="text-gray-800 dark:text-gray-100 text-sm sm:text-base leading-relaxed">

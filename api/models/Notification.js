@@ -120,7 +120,7 @@ notificationSchema.methods.markAsReadByUser = function(userId) {
 };
 
 // Static method to get user-specific notifications based on role
-notificationSchema.statics.getUserNotifications = async function(userId, userRole) {
+notificationSchema.statics.getUserNotifications = async function(userId, userRole, limit = null) {
     let query;
 
     // Role-based filtering
@@ -195,13 +195,21 @@ notificationSchema.statics.getUserNotifications = async function(userId, userRol
         };
     }
 
-    return this.find(query)
+    const queryBuilder = this.find(query)
         .populate('relatedVoucher', 'voucherNumber clientName arrivalDate')
         .populate('voucherCreatedBy', 'username')
         .populate('targetUser', 'username')
         .populate('actionPerformedBy', 'username')
-        .sort({ createdAt: -1 })
-        .limit(50); // Limit to recent 50 notifications
+        .sort({ createdAt: -1 });
+    
+    // Apply limit if specified, otherwise default to 50
+    if (limit !== null) {
+        queryBuilder.limit(limit);
+    } else {
+        queryBuilder.limit(50);
+    }
+    
+    return queryBuilder;
 };
 
-module.exports = mongoose.model('Notification', notificationSchema); module.exports = mongoose.model('Notification', notificationSchema); 
+module.exports = mongoose.model('Notification', notificationSchema); 

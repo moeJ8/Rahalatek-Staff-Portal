@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { FaTicketAlt, FaPlane, FaEye, FaPlus, FaClock, FaCheck, FaTimes } from 'react-icons/fa';
-import { getAllVouchers } from '../utils/voucherApi';
+import axios from 'axios';
 import RahalatekLoader from './RahalatekLoader';
 import CustomButton from './CustomButton';
 
@@ -21,26 +21,20 @@ export default function RecentVoucherActivity() {
   const fetchRecentVouchers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getAllVouchers();
+      const token = localStorage.getItem('token');
       
-      let vouchers = response.data || [];
+      // Use optimized recent endpoint - filtering done on backend
+      const response = await axios.get('/api/vouchers/recent?limit=5', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // For non-admin users, filter to show only their vouchers
-      if (!user?.isAdmin && !user?.isAccountant) {
-        vouchers = vouchers.filter(voucher => 
-          voucher.createdBy?._id === user?.id || voucher.createdBy === user?.id
-        );
-      }
-      
-      // Get the 5 most recent vouchers
-      const recent = vouchers.slice(0, 5);
-      setRecentVouchers(recent);
+      setRecentVouchers(response.data.data || []);
     } catch (error) {
       console.error('Error fetching recent vouchers:', error);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     if (user) {

@@ -5,7 +5,6 @@ import CompanyStory from '../../components/Visitors/CompanyStory';
 import MissionVisionValues from '../../components/Visitors/MissionVisionValues';
 import Statistics from '../../components/Visitors/Statistics';
 import WhyChooseUs from '../../components/Visitors/WhyChooseUs';
-import ServicesSection from '../../components/Visitors/ServicesSection';
 import BranchesSection from '../../components/Visitors/BranchesSection';
 import ClientReviewsSection from '../../components/Visitors/ClientReviewsSection';
 import PartnersSection from '../../components/PartnersSection';
@@ -188,21 +187,16 @@ const AboutUsPage = () => {
         {/* Why Choose Us */}
         <WhyChooseUs />
         
-        {/* Our Services */}
-        <div className="-mt-12 bg-white dark:bg-slate-950">
-          <ServicesSection />
-        </div>
-        
         {/* Client Reviews Section */}
         <ClientReviewsSection />
         
-        {/* Partners Section */}
-        <div className="bg-white dark:bg-slate-950">
-          <PartnersSection />
-        </div>
-        
         {/* Call to Action */}
         <CTASection />
+      </div>
+
+      {/* Partners Section - Outside RTL wrapper for proper auto-scroll */}
+      <div className="bg-white dark:bg-slate-950">
+        <PartnersSection />
       </div>
     </div>
   );

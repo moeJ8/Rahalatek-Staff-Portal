@@ -1,47 +1,51 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { getLocalizedPath } from '../../hooks/useLocalizedNavigate';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { getLocalizedPath } from "../../hooks/useLocalizedNavigate";
 
 export default function ServicesSection() {
   const { t, i18n } = useTranslation();
   const services = [
     {
-      id: 'tours',
-      nameKey: 'home.services.tours',
-      image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759789335/Istanbul-1_eqyqij.jpg',
-      link: '/tourism'
+      id: "tours",
+      nameKey: "home.services.tours",
+      image:
+        "https://res.cloudinary.com/dnzqnr6js/image/upload/v1759789335/Istanbul-1_eqyqij.jpg",
+      link: "/tourism",
     },
     {
-      id: 'hotel-booking',
-      nameKey: 'home.services.hotelBooking',
-      image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1758985729/hotels/1758985728978_0.jpg',
-      link: '/hotel-booking'
+      id: "hotel-booking",
+      nameKey: "home.services.hotelBooking",
+      image:
+        "https://res.cloudinary.com/dnzqnr6js/image/upload/v1758985729/hotels/1758985728978_0.jpg",
+      link: "/hotel-booking",
     },
     {
-      id: 'luxury-suites',
-      nameKey: 'home.services.luxurySuites',
-      image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759855915/492475786-960x630_kjybmn.jpg',
-      link: '/luxury-suites'
+      id: "luxury-suites",
+      nameKey: "home.services.luxurySuites",
+      image:
+        "https://res.cloudinary.com/dnzqnr6js/image/upload/v1759855915/492475786-960x630_kjybmn.jpg",
+      link: "/luxury-suites",
     },
     {
-      id: 'airport-service',
-      nameKey: 'home.services.airportService',
-      image: 'https://res.cloudinary.com/dnzqnr6js/image/upload/v1759859381/photo-1449965408869-eaa3f722e40d_gbhlay.jpg',
-      link: '/airport-service'
-    }
+      id: "airport-service",
+      nameKey: "home.services.airportService",
+      image:
+        "https://res.cloudinary.com/dnzqnr6js/image/upload/v1759859381/photo-1449965408869-eaa3f722e40d_gbhlay.jpg",
+      link: "/airport-service",
+    },
   ];
 
   return (
-    <section className="py-6 sm:py-8 md:py-12">
+    <section className="py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-6 sm:mb-8 md:mb-12">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            {t('home.services.title')}
+            {t("home.services.title")}
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            {t('home.services.subtitle')}
+            {t("home.services.subtitle")}
           </p>
         </div>
 
@@ -62,7 +66,7 @@ export default function ServicesSection() {
                 />
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-300"></div>
-                
+
                 {/* Service Name on Image */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-white leading-tight group-hover:text-yellow-400 dark:group-hover:text-yellow-400 transition-colors duration-300 drop-shadow-lg">

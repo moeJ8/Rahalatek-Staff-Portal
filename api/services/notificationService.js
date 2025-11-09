@@ -439,13 +439,13 @@ class NotificationService {
     /**
      * Get user notifications based on their role
      */
-    static async getUserNotifications(userId, isAdmin, isAccountant) {
+    static async getUserNotifications(userId, isAdmin, isAccountant, limit = null) {
         try {
             let userRole = 'user';
             if (isAdmin) userRole = 'admin';
             else if (isAccountant) userRole = 'accountant';
 
-            return await Notification.getUserNotifications(userId, userRole);
+            return await Notification.getUserNotifications(userId, userRole, limit);
         } catch (error) {
             console.error('Error getting user notifications:', error);
             throw error;

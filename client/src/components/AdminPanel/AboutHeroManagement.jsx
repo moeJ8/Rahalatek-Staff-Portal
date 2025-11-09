@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Table } from 'flowbite-react';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSave, FaTimes, FaImages, FaPalette } from 'react-icons/fa';
+import { Table, Label } from 'flowbite-react';
+import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash, FaSave, FaTimes, FaImages, FaPalette, FaChevronLeft, FaChevronRight, FaInfoCircle } from 'react-icons/fa';
+import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import CustomButton from '../CustomButton';
 import TextInput from '../TextInput';
 import CustomSelect from '../Select';
@@ -31,8 +32,25 @@ const AboutHeroManagement = () => {
     images: [],
     textPosition: 'center',
     textColor: 'light',
-    isActive: true
+    isActive: true,
+    translations: {
+      title: { ar: '', fr: '' },
+      subtitle: { ar: '', fr: '' },
+      description: { ar: '', fr: '' },
+      textPosition: { ar: '', fr: '' }
+    }
   });
+
+  // Translation collapse state
+  const [translationCollapse, setTranslationCollapse] = useState({
+    title: false,
+    subtitle: false,
+    description: false
+  });
+
+  // Preview and text position language state
+  const [previewLang, setPreviewLang] = useState('en');
+  const [textPosLang, setTextPosLang] = useState('en');
 
   // Fetch heroes
   const fetchHeroes = async () => {
@@ -74,9 +92,22 @@ const AboutHeroManagement = () => {
       images: [],
       textPosition: 'center',
       textColor: 'light',
-      isActive: true
+      isActive: true,
+      translations: {
+        title: { ar: '', fr: '' },
+        subtitle: { ar: '', fr: '' },
+        description: { ar: '', fr: '' },
+        textPosition: { ar: '', fr: '' }
+      }
     });
     setEditingHero(null);
+    setTranslationCollapse({
+      title: false,
+      subtitle: false,
+      description: false
+    });
+    setPreviewLang('en');
+    setTextPosLang('en');
   };
 
   // Open modal for creating/editing
@@ -90,7 +121,13 @@ const AboutHeroManagement = () => {
         images: hero.image ? [hero.image] : [],
         textPosition: hero.textPosition,
         textColor: hero.textColor,
-        isActive: hero.isActive
+        isActive: hero.isActive,
+        translations: hero.translations || {
+          title: { ar: '', fr: '' },
+          subtitle: { ar: '', fr: '' },
+          description: { ar: '', fr: '' },
+          textPosition: { ar: '', fr: '' }
+        }
       });
     } else {
       resetForm();
@@ -102,6 +139,123 @@ const AboutHeroManagement = () => {
   const closeModal = () => {
     setModalOpen(false);
     resetForm();
+  };
+
+  // Toggle translation collapse
+  const toggleTranslationCollapse = (section) => {
+    setTranslationCollapse(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Handle translation change
+  const handleTranslationChange = (field, language, value) => {
+    setFormData({
+      ...formData,
+      translations: {
+        ...formData.translations,
+        [field]: {
+          ...formData.translations[field],
+          [language]: value
+        }
+      }
+    });
+  };
+
+  // Get translated text for preview
+  const getPreviewText = (field) => {
+    if (previewLang === 'en') {
+      return formData[field] || '';
+    }
+
+    const translation = formData.translations?.[field]?.[previewLang];
+    if (translation && translation.trim() !== '') {
+      return translation;
+    }
+
+    return formData[field] || '';
+  };
+
+  // Get text position for preview (language-specific)
+  const getPreviewTextPosition = () => {
+    if (previewLang === 'en') {
+      return formData.textPosition;
+    }
+
+    const translation = formData.translations?.textPosition?.[previewLang];
+    if (translation && translation.trim() !== '') {
+      return translation;
+    }
+
+    return formData.textPosition;
+  };
+
+  // Language options for preview
+  const previewLanguages = [
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' }
+  ];
+
+  // Navigate preview language
+  const nextPreviewLang = () => {
+    const currentIndex = previewLanguages.findIndex(lang => lang.code === previewLang);
+    const nextIndex = (currentIndex + 1) % previewLanguages.length;
+    setPreviewLang(previewLanguages[nextIndex].code);
+  };
+
+  const prevPreviewLang = () => {
+    const currentIndex = previewLanguages.findIndex(lang => lang.code === previewLang);
+    const prevIndex = (currentIndex - 1 + previewLanguages.length) % previewLanguages.length;
+    setPreviewLang(previewLanguages[prevIndex].code);
+  };
+
+  const currentLangInfo = previewLanguages.find(lang => lang.code === previewLang);
+
+  // Text position language navigation
+  const textPosLangInfo = previewLanguages.find(lang => lang.code === textPosLang);
+
+  const nextTextPosLang = () => {
+    const currentIndex = previewLanguages.findIndex(lang => lang.code === textPosLang);
+    const nextIndex = (currentIndex + 1) % previewLanguages.length;
+    setTextPosLang(previewLanguages[nextIndex].code);
+  };
+
+  const prevTextPosLang = () => {
+    const currentIndex = previewLanguages.findIndex(lang => lang.code === textPosLang);
+    const prevIndex = (currentIndex - 1 + previewLanguages.length) % previewLanguages.length;
+    setTextPosLang(previewLanguages[prevIndex].code);
+  };
+
+  const getCurrentTextPosition = () => {
+    if (textPosLang === 'en') {
+      return formData.textPosition;
+    }
+
+    const translation = formData.translations?.textPosition?.[textPosLang];
+    if (translation && translation.trim() !== '') {
+      return translation;
+    }
+
+    return '';
+  };
+
+  const setCurrentTextPosition = (value) => {
+    if (textPosLang === 'en') {
+      setFormData(prev => ({ ...prev, textPosition: value }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        translations: {
+          ...prev.translations,
+          textPosition: {
+            ...prev.translations.textPosition,
+            [textPosLang]: value
+          }
+        }
+      }));
+    }
   };
 
   // Handle form submission
@@ -151,7 +305,8 @@ const AboutHeroManagement = () => {
         image: formData.images[0],
         textPosition: formData.textPosition,
         textColor: formData.textColor,
-        isActive: formData.isActive
+        isActive: formData.isActive,
+        translations: formData.translations
       };
 
       const response = await fetch(url, {
@@ -525,37 +680,139 @@ const AboutHeroManagement = () => {
             {/* Form Section */}
             <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
-            <TextInput
-              label="Title *"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter hero title"
-              required
-              maxLength={100}
-            />
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <Label htmlFor="heroTitle" value="Title *" />
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('title')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.title ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              </div>
+              <TextInput
+                id="heroTitle"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter hero title"
+                required
+                maxLength={100}
+              />
+              {translationCollapse.title && (
+                <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                  </p>
+                  <TextInput
+                    label="Arabic Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.title.ar}
+                    onChange={(e) => handleTranslationChange('title', 'ar', e.target.value)}
+                  />
+                  <TextInput
+                    label="French Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.title.fr}
+                    onChange={(e) => handleTranslationChange('title', 'fr', e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Subtitle */}
-            <TextInput
-              label="Subtitle"
-              value={formData.subtitle}
-              onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
-              placeholder="Enter hero subtitle (optional)"
-              maxLength={200}
-            />
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <Label htmlFor="heroSubtitle" value="Subtitle" />
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('subtitle')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.subtitle ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              </div>
+              <TextInput
+                id="heroSubtitle"
+                value={formData.subtitle}
+                onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                placeholder="Enter hero subtitle (optional)"
+                maxLength={200}
+              />
+              {translationCollapse.subtitle && (
+                <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                  </p>
+                  <TextInput
+                    label="Arabic Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.subtitle.ar}
+                    onChange={(e) => handleTranslationChange('subtitle', 'ar', e.target.value)}
+                  />
+                  <TextInput
+                    label="French Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.subtitle.fr}
+                    onChange={(e) => handleTranslationChange('subtitle', 'fr', e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Description */}
-            <TextInput
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter hero description (optional)"
-              maxLength={500}
-              as="textarea"
-              rows={4}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {formData.description.length}/500 characters
-            </p>
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <Label htmlFor="heroDescription" value="Description" />
+                <button
+                  type="button"
+                  onClick={() => toggleTranslationCollapse('description')}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                >
+                  Translations
+                  {translationCollapse.description ? <HiChevronUp /> : <HiChevronDown />}
+                </button>
+              </div>
+              <TextInput
+                id="heroDescription"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter hero description (optional)"
+                maxLength={500}
+                as="textarea"
+                rows={4}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {formData.description.length}/500 characters
+              </p>
+              {translationCollapse.description && (
+                <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Note: The field above is in English. Add translations below. Leave empty to use English as fallback.
+                  </p>
+                  <TextInput
+                    as="textarea"
+                    rows={4}
+                    label="Arabic Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.description.ar}
+                    onChange={(e) => handleTranslationChange('description', 'ar', e.target.value)}
+                    maxLength={500}
+                  />
+                  <TextInput
+                    as="textarea"
+                    rows={4}
+                    label="French Translation (Optional)"
+                    placeholder="Leave empty to use English"
+                    value={formData.translations.description.fr}
+                    onChange={(e) => handleTranslationChange('description', 'fr', e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+              )}
+            </div>
 
             {/* Image Upload */}
             <div>
@@ -570,28 +827,70 @@ const AboutHeroManagement = () => {
               />
             </div>
 
-            {/* Text Position */}
-            <CustomSelect
-              label="Text Position"
-              value={formData.textPosition}
-              onChange={(value) => setFormData(prev => ({ ...prev, textPosition: value }))}
-              options={[
-                { value: 'left', label: 'Left' },
-                { value: 'center', label: 'Center' },
-                { value: 'right', label: 'Right' }
-              ]}
-            />
+            {/* Text Position Header with Language Selector */}
+            <div className="flex items-center justify-end mb-2">
+              {/* Language Navigation for Text Position */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={prevTextPosLang}
+                  className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-all hover:scale-105"
+                  title="Previous language"
+                >
+                  <FaChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
+                </button>
 
-            {/* Text Color */}
-            <CustomSelect
-              label="Text Color"
-              value={formData.textColor}
-              onChange={(value) => setFormData(prev => ({ ...prev, textColor: value }))}
-              options={[
-                { value: 'light', label: 'Light (White)' },
-                { value: 'dark', label: 'Dark (Black)' }
-              ]}
-            />
+                <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-50 dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-slate-600">
+                  <span className="text-xs md:text-sm font-medium text-gray-900 dark:text-white">
+                    {textPosLangInfo?.name}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={nextTextPosLang}
+                  className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-all hover:scale-105"
+                  title="Next language"
+                >
+                  <FaChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Text Position and Text Color */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Text Position */}
+              <div>
+                <CustomSelect
+                  label="Text Position"
+                  value={getCurrentTextPosition()}
+                  onChange={(value) => setCurrentTextPosition(value)}
+                  options={[
+                    { value: 'left', label: 'Left' },
+                    { value: 'center', label: 'Center' },
+                    { value: 'right', label: 'Right' }
+                  ]}
+                />
+                
+                {/* Show fallback info for non-English */}
+                {textPosLang !== 'en' && !getCurrentTextPosition() && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    Using English position: {formData.textPosition}
+                  </p>
+                )}
+              </div>
+
+              {/* Text Color */}
+              <CustomSelect
+                label="Text Color"
+                value={formData.textColor}
+                onChange={(value) => setFormData(prev => ({ ...prev, textColor: value }))}
+                options={[
+                  { value: 'light', label: 'Light (White)' },
+                  { value: 'dark', label: 'Dark (Black)' }
+                ]}
+              />
+            </div>
 
             {/* Active Status */}
             <div>
@@ -614,7 +913,44 @@ const AboutHeroManagement = () => {
                  <span className="hidden sm:inline">Live Preview</span>
                  <span className="sm:hidden">Preview</span>
                </h3>
+
+               {/* Language Navigation */}
+               <div className="flex items-center gap-2">
+                 <button
+                   type="button"
+                   onClick={prevPreviewLang}
+                   className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-all hover:scale-105"
+                   title="Previous language"
+                 >
+                   <FaChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
+                 </button>
+
+                 <div className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-50 dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-slate-600">
+                   <span className="text-xs md:text-sm font-medium text-gray-900 dark:text-white">
+                     {currentLangInfo?.name}
+                   </span>
+                 </div>
+
+                 <button
+                   type="button"
+                   onClick={nextPreviewLang}
+                   className="p-1.5 md:p-2 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 transition-all hover:scale-105"
+                   title="Next language"
+                 >
+                   <FaChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                 </button>
+               </div>
              </div>
+
+             {/* Fallback info */}
+             {previewLang !== 'en' && (
+               <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg">
+                 <FaInfoCircle className="w-3 h-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                 <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                   Empty translations will automatically fall back to English content
+                 </p>
+               </div>
+             )}
              
              {/* Container with scale transform for true miniature preview */}
              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded md:rounded-lg border border-blue-200 dark:border-teal-600 md:border-2 shadow md:shadow-lg bg-gray-900">
@@ -639,36 +975,38 @@ const AboutHeroManagement = () => {
                 <div className="absolute inset-0 bg-black/40"></div>
 
                 {/* Content - Exact match to AboutHeroSection */}
-                <div className={`absolute inset-0 flex flex-col justify-center ${
-                  formData.textPosition === 'left' ? 'items-start' :
-                  formData.textPosition === 'right' ? 'items-end' :
-                  'items-center'
-                } p-4 sm:p-6 md:p-10 lg:p-20`}>
+                <div 
+                  className={`absolute inset-0 flex flex-col justify-center ${
+                    getPreviewTextPosition() === 'left' ? 'items-start' :
+                    getPreviewTextPosition() === 'right' ? 'items-end' :
+                    'items-center'
+                  } p-4 sm:p-6 md:p-10 lg:p-20`}
+                >
                   <div className={`max-w-4xl ${formData.textColor === 'dark' ? 'text-gray-900' : 'text-white'} z-10 ${
-                    formData.textPosition === 'left' ? 'text-left' :
-                    formData.textPosition === 'right' ? 'text-right' :
+                    getPreviewTextPosition() === 'left' ? 'text-left' :
+                    getPreviewTextPosition() === 'right' ? 'text-right' :
                     'text-center'
                   }`}>
                     {/* Title - Slightly smaller on mobile */}
                     <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-2 sm:mb-3 md:mb-4 lg:mb-6 leading-tight">
-                      {formData.title || 'Your Hero Title'}
+                      {getPreviewText('title') || 'Your Hero Title'}
                     </h1>
 
                     {/* Subtitle - Slightly smaller on mobile */}
-                    {(formData.subtitle || !formData.title) && (
+                    {(getPreviewText('subtitle') || !formData.title) && (
                       <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-medium mb-3 sm:mb-4 md:mb-6 opacity-90">
-                        {formData.subtitle || 'Your hero subtitle here'}
+                        {getPreviewText('subtitle') || 'Your hero subtitle here'}
                       </h2>
                     )}
 
                     {/* Description - Slightly smaller on mobile */}
-                    {(formData.description || !formData.title) && (
+                    {(getPreviewText('description') || !formData.title) && (
                       <p className={`text-sm sm:text-lg md:text-xl lg:text-2xl opacity-80 leading-relaxed ${
-                        formData.textPosition === 'center' ? 'mx-auto max-w-2xl' :
-                        formData.textPosition === 'right' ? 'ml-auto max-w-2xl' :
+                        getPreviewTextPosition() === 'center' ? 'mx-auto max-w-2xl' :
+                        getPreviewTextPosition() === 'right' ? 'ml-auto max-w-2xl' :
                         'max-w-2xl'
                       }`}>
-                        {formData.description || 'Your hero description will appear here. This is a preview of how your content will look on the About Us page.'}
+                        {getPreviewText('description') || 'Your hero description will appear here. This is a preview of how your content will look on the About Us page.'}
                       </p>
                     )}
                   </div>
@@ -679,8 +1017,12 @@ const AboutHeroManagement = () => {
             {/* Preview Info */}
             <div className="grid grid-cols-2 gap-1.5 md:gap-2">
               <div className="bg-blue-50 dark:bg-slate-800 p-1.5 md:p-2 rounded border border-blue-200 dark:border-slate-600 text-center">
-                <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 block">Position</span>
-                <span className="text-xs md:text-sm text-gray-900 dark:text-white font-semibold capitalize">{formData.textPosition}</span>
+                <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 block">
+                  Position ({currentLangInfo?.name})
+                </span>
+                <span className="text-xs md:text-sm text-gray-900 dark:text-white font-semibold capitalize">
+                  {getPreviewTextPosition()}
+                </span>
               </div>
               <div className="bg-purple-50 dark:bg-slate-800 p-1.5 md:p-2 rounded border border-purple-200 dark:border-slate-600 text-center">
                 <span className="text-[10px] md:text-xs text-gray-600 dark:text-gray-400 block">Color</span>

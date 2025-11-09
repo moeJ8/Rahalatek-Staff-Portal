@@ -619,14 +619,17 @@ exports.incrementPackageViews = async (req, res) => {
 exports.getFeaturedPackages = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 12;
+        const { lang = 'en' } = req.query; // Get language from query parameter, default to 'en'
         
         // Check cache first - serve from cache (return all if less than limit requested)
         const cachedPackages = await featuredPackagesCache.get();
         if (cachedPackages) {
             console.log(`✅ Serving ${cachedPackages.length} featured packages from Redis cache`);
+            // Translate cached packages before returning
+            const translatedPackages = translatePackages(cachedPackages, lang);
             return res.status(200).json({
                 success: true,
-                data: cachedPackages.slice(0, limit)
+                data: translatedPackages.slice(0, limit)
             });
         }
 
@@ -641,9 +644,12 @@ exports.getFeaturedPackages = async (req, res) => {
         // Cache the lean results (already plain objects)
         await featuredPackagesCache.set(packages);
         
+        // Translate packages before returning
+        const translatedPackages = translatePackages(packages, lang);
+        
         res.status(200).json({
             success: true,
-            data: packages.slice(0, limit)
+            data: translatedPackages.slice(0, limit)
         });
     } catch (error) {
         console.error('Error fetching featured packages:', error);
@@ -659,6 +665,7 @@ exports.getFeaturedPackages = async (req, res) => {
 exports.getRecentPackages = async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 4; // Default to 4 for sidebar
+        const { lang = 'en' } = req.query; // Get language from query parameter, default to 'en'
         
         console.log('📦 Fetching recent packages...');
         const packages = await Package.find({ isActive: true })
@@ -668,9 +675,12 @@ exports.getRecentPackages = async (req, res) => {
             .populate('tours.tourId', 'name city country tourType duration price totalPrice images')
             .lean(); // Use lean for better memory performance
         
+        // Translate packages before returning
+        const translatedPackages = translatePackages(packages, lang);
+        
         res.status(200).json({
             success: true,
-            data: packages
+            data: translatedPackages
         });
     } catch (error) {
         console.error('Error fetching recent packages:', error);

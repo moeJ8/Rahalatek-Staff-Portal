@@ -40,7 +40,7 @@ const packageSchema = new mongoose.Schema({
     countries: [{
         type: String,
         required: true,
-        enum: ['Turkey', 'Malaysia', 'Thailand', 'Indonesia', 'Saudi Arabia', 'Morocco', 'Egypt', 'Azerbaijan', 'Georgia', 'Albania']
+        enum: ['Turkey', 'Malaysia', 'Thailand', 'Indonesia', 'Saudi Arabia', 'Morocco', 'Egypt', 'Azerbaijan', 'Georgia', 'Albania', 'United Arab Emirates']
     }],
     cities: [{
         type: String,

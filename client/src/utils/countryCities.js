@@ -17,7 +17,8 @@ export const COUNTRY_CITIES = {
   
   "Indonesia": [
     'Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan',
-    'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak'
+    'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak',
+    'Puncak', 'Sukabumi'
   ],
   
   "Saudi Arabia": [
@@ -42,12 +43,18 @@ export const COUNTRY_CITIES = {
   
   "Georgia": [
     'Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori',
-    'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi'
+    'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi',
+    'Bakuriani'
   ],
   
   "Albania": [
     'Tirana', 'Durres', 'Vlora', 'Shkodra', 'Fier', 'Korce',
     'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
+  ],
+  
+  "United Arab Emirates": [
+    'Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah',
+    'Fujairah', 'Umm Al Quwain', 'Al Ain'
   ]
 };
 
