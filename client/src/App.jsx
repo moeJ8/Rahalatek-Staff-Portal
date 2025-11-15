@@ -89,6 +89,23 @@ const GuestNotFoundPage = React.lazy(() =>
   import("./pages/Visitors/GuestNotFoundPage")
 );
 
+// Component to track route changes for Google Analytics
+const RouteTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Track page view when route changes
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("config", "G-R4QCLW1LT3", {
+        page_path: location.pathname + location.search,
+        page_title: document.title,
+      });
+    }
+  }, [location.pathname, location.search]);
+
+  return null; // This component doesn't render anything
+};
+
 // Component to conditionally render ScrollToTop based on current route
 const ConditionalScrollToTop = () => {
   const location = useLocation();
@@ -208,6 +225,7 @@ function App() {
         }}
       />
       <BrowserRouter>
+        <RouteTracker />
         <StayOnTop />
         <ConditionalScrollToTop />
         <ConditionalFloatingContact />
