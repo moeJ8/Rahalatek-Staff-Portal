@@ -666,7 +666,7 @@ export default function Users() {
 
                                     {/* Admin Actions */}
                                     {isAdmin && (
-                                        <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-700 justify-center">
+                                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                                             {/* Admin Status Toggle */}
                                             {user.isAdmin ? (
                                                 <CustomButton
@@ -674,7 +674,7 @@ export default function Users() {
                                                     size="xs"
                                                     onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
                                                     title="Revoke admin privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Revoke
                                                 </CustomButton>
@@ -685,7 +685,7 @@ export default function Users() {
                                                     onClick={() => handleToggleAdminStatus(user._id, user.isAdmin)}
                                                     disabled={user.isAccountant || user.isContentManager || user.isPublisher}
                                                     title="Assign admin privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Admin
                                                 </CustomButton>
@@ -698,7 +698,7 @@ export default function Users() {
                                                     size="xs"
                                                     onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
                                                     title="Revoke accountant privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Revoke
                                                 </CustomButton>
@@ -709,7 +709,7 @@ export default function Users() {
                                                     onClick={() => handleToggleAccountantStatus(user._id, user.isAccountant)}
                                                     disabled={user.isAdmin || user.isContentManager || user.isPublisher}
                                                     title="Assign accountant privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Accountant
                                                 </CustomButton>
@@ -722,7 +722,7 @@ export default function Users() {
                                                     size="xs"
                                                     onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
                                                     title="Revoke content manager privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Revoke
                                                 </CustomButton>
@@ -733,7 +733,7 @@ export default function Users() {
                                                     onClick={() => handleToggleContentManagerStatus(user._id, user.isContentManager)}
                                                     disabled={user.isAdmin || user.isAccountant || user.isPublisher}
                                                     title="Assign content manager privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Content Manager
                                                 </CustomButton>
@@ -746,7 +746,7 @@ export default function Users() {
                                                     size="xs"
                                                     onClick={() => handleTogglePublisherStatus(user._id, user.isPublisher)}
                                                     title="Revoke publisher privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Revoke
                                                 </CustomButton>
@@ -757,7 +757,7 @@ export default function Users() {
                                                     onClick={() => handleTogglePublisherStatus(user._id, user.isPublisher)}
                                                     disabled={user.isAdmin || user.isAccountant || user.isContentManager}
                                                     title="Assign publisher privileges"
-                                                    className="text-xs"
+                                                    className="text-xs w-full"
                                                 >
                                                     Publisher
                                                 </CustomButton>
@@ -769,7 +769,7 @@ export default function Users() {
                                                 size="xs"
                                                 onClick={() => openDeleteUserModal(user)}
                                                 title="Delete user"
-                                                className="text-xs"
+                                                className="text-xs w-full"
                                                 icon={({ className }) => (
                                                     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

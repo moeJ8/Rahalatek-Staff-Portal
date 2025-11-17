@@ -96,6 +96,14 @@ const voucherSchema = new mongoose.Schema({
         officeName: { type: String, default: '' },
         price: { type: Number, default: 0 }
     }],
+    // Generic "Other" services for anything not covered by the main types
+    others: [{
+        description: String,
+        date: Date,
+        // Payment info to each other service
+        officeName: { type: String, default: '' },
+        price: { type: Number, default: 0 }
+    }],
     // Keep the old payments structure for backward compatibility
     payments: {
         hotels: {
@@ -129,6 +137,17 @@ const voucherSchema = new mongoose.Schema({
             }
         },
         flights: {
+            officeName: {
+                type: String,
+                default: ''
+            },
+            price: {
+                type: Number,
+                default: 0
+            }
+        },
+        // Optional global payment bucket for "Other" services
+        others: {
             officeName: {
                 type: String,
                 default: ''

@@ -22,6 +22,7 @@ router.post('/:userId/salary/base', profileController.addMonthlyBaseSalary);
 router.get('/:userId/salary/base', profileController.getUserSalaryBaseEntries);
 router.put('/:userId/salary/edit', profileController.editPreviousMonthSalary);
 router.delete('/:userId/salary/base', profileController.deleteScheduledSalaryEntry);
+router.get('/:userId/salary/receipt', profileController.downloadSalaryReceipt);
 
 // Monthly bonuses
 router.get('/:userId/bonuses', profileController.getUserBonuses);

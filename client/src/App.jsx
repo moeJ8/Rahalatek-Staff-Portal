@@ -28,6 +28,7 @@ const HotelsPage = React.lazy(() => import("./pages/HotelsPage"));
 const EditHotelPage = React.lazy(() => import("./pages/EditHotelPage"));
 const EditOfficePage = React.lazy(() => import("./pages/EditOfficePage"));
 const VouchersPage = React.lazy(() => import("./pages/VouchersPage"));
+const PaymentsPage = React.lazy(() => import("./pages/PaymentsPage"));
 const VoucherDetailPage = React.lazy(() => import("./pages/VoucherDetailPage"));
 const EditVoucherPage = React.lazy(() => import("./pages/EditVoucherPage"));
 const CreateVoucherPage = React.lazy(() => import("./pages/CreateVoucherPage"));
@@ -306,6 +307,7 @@ function App() {
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/booking" element={<BookingPage />} />
                 <Route path="/vouchers" element={<VouchersPage />} />
+                <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/vouchers/new" element={<CreateVoucherPage />} />
                 <Route path="/vouchers/:id" element={<VoucherDetailPage />} />
                 <Route path="/edit-voucher/:id" element={<EditVoucherPage />} />

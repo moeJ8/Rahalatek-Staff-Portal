@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Label } from 'flowbite-react';
 import { FaCalendarAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
@@ -25,6 +26,7 @@ const CustomDatePicker = ({
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const dropdownRef = useRef(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Mobile detection
   useEffect(() => {
@@ -38,6 +40,11 @@ const CustomDatePicker = ({
     window.addEventListener('resize', checkMobile);
     
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
   }, []);
 
   // Date formatting functions
@@ -292,11 +299,11 @@ const CustomDatePicker = ({
         </div>
       </div>
 
-      {isOpen && (
-        <div className={`fixed lg:absolute z-50 ${popupSize === 'small' ? 'w-52' : 'w-80'} ${popupPosition === 'up' ? 'lg:bottom-full lg:mb-1' : 'lg:top-full lg:mt-1'} bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200 
-                        top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 lg:top-auto lg:left-auto lg:transform-none`}>
-          {/* Calendar Header */}
-          <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-b border-gray-200/50 dark:border-gray-600/50`}>
+      {isOpen && (() => {
+        const calendarPanel = (
+          <div className={`${popupSize === 'small' ? 'w-52' : 'w-80'} bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95 duration-200`}>
+            {/* Calendar Header */}
+            <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-b border-gray-200/50 dark:border-gray-600/50`}>
             <button
               type="button"
               onClick={() => navigateMonth(-1)}
@@ -418,25 +425,53 @@ const CustomDatePicker = ({
             </div>
           </div>
 
-          {/* Calendar Footer */}
-          <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-t border-gray-200/50 dark:border-gray-600/50`}>
-            <button
-              type="button"
-              onClick={clearDate}
-              className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              onClick={goToToday}
-              className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-lg transition-colors duration-200"
-            >
-              Today
-            </button>
+            {/* Calendar Footer */}
+            <div className={`flex items-center justify-between ${popupSize === 'small' ? 'px-2 py-1' : 'p-4'} border-t border-gray-200/50 dark:border-gray-600/50`}>
+              <button
+                type="button"
+                onClick={clearDate}
+                className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={goToToday}
+                className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-lg transition-colors duration-200"
+              >
+                Today
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        );
+
+        if (isMobile && isMounted) {
+          return createPortal(
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setIsOpen(false);
+                }
+              }}
+            >
+              <div 
+                className="w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {calendarPanel}
+              </div>
+            </div>,
+            document.body
+          );
+        }
+
+        return (
+          <div className={`absolute z-50 ${popupSize === 'small' ? 'w-52' : 'w-80'} ${popupPosition === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
+            {calendarPanel}
+          </div>
+        );
+      })()}
     </div>
   );
 };

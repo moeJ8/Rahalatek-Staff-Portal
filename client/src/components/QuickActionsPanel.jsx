@@ -83,6 +83,15 @@ export default function QuickActionsPanel() {
         hoverColor: 'hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
       },
       {
+        id: 'payments-dashboard',
+        title: 'Payments',
+        description: 'Office payments',
+        icon: <FaMoneyBillWave className="w-5 h-5" />,
+        link: '/payments',
+        color: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+        hoverColor: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+      },
+      {
         id: 'manage-offices',
         title: 'Manage Offices',
         description: 'Office payments',
@@ -124,9 +133,9 @@ export default function QuickActionsPanel() {
       {
         id: 'office-payments',
         title: 'Office Payments',
-        description: 'Financial tracking',
+        description: 'Payments dashboard',
         icon: <FaMoneyBillWave className="w-5 h-5" />,
-        link: '/dashboard',
+        link: '/payments',
         color: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
         hoverColor: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
       }

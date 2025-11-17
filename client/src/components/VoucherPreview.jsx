@@ -41,6 +41,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [showTransfers, setShowTransfers] = useState(() => getInitialVisibility('transfers'));
   const [showTrips, setShowTrips] = useState(() => getInitialVisibility('trips'));
   const [showFlights, setShowFlights] = useState(() => getInitialVisibility('flights'));
+  const [showOthers, setShowOthers] = useState(() => getInitialVisibility('others'));
   const [showLogo, setShowLogo] = useState(() => getInitialVisibility('logo'));
   const [showAddress, setShowAddress] = useState(() => getInitialVisibility('address'));
   const [showContact, setShowContact] = useState(() => getInitialVisibility('contact'));
@@ -70,6 +71,11 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     saveVisibilityState('flights', value);
   };
 
+  const setShowOthersWithStorage = (value) => {
+    setShowOthers(value);
+    saveVisibilityState('others', value);
+  };
+
   const setShowLogoWithStorage = (value) => {
     setShowLogo(value);
     saveVisibilityState('logo', value);
@@ -94,6 +100,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
   const [reorderedTransfers, setReorderedTransfers] = useState([]);
   const [reorderedTrips, setReorderedTrips] = useState([]);
   const [reorderedFlights, setReorderedFlights] = useState([]);
+  const [reorderedOthers, setReorderedOthers] = useState([]);
   
 
   useEffect(() => {
@@ -102,6 +109,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setReorderedTransfers(voucherData.transfers || []);
       setReorderedTrips(voucherData.trips || []);
       setReorderedFlights(voucherData.flights || []);
+      setReorderedOthers(voucherData.others || []);
     }
   }, [voucherData]);
   
@@ -125,6 +133,10 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       const newArray = [...reorderedFlights];
       [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
       setReorderedFlights(newArray);
+    } else if (type === 'others') {
+      const newArray = [...reorderedOthers];
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+      setReorderedOthers(newArray);
     }
   };
   
@@ -135,6 +147,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
     else if (type === 'transfers') arrayLength = reorderedTransfers.length;
     else if (type === 'trips') arrayLength = reorderedTrips.length;
     else if (type === 'flights') arrayLength = reorderedFlights.length;
+    else if (type === 'others') arrayLength = reorderedOthers.length;
     
     if (index === arrayLength - 1) return;
     
@@ -154,11 +167,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       const newArray = [...reorderedFlights];
       [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
       setReorderedFlights(newArray);
+    } else if (type === 'others') {
+      const newArray = [...reorderedOthers];
+      [newArray[index], newArray[index + 1]] = [newArray[index + 1], newArray[index]];
+      setReorderedOthers(newArray);
     }
   };
   
   // Determine if all sections are visible
-  const allSectionsVisible = showHotels && showTransfers && showTrips && showFlights && showTotalAmount;
+  const allSectionsVisible = showHotels && showTransfers && showTrips && showFlights && showOthers && showTotalAmount;
   
   const toggleAllSections = () => {
     if (allSectionsVisible) {
@@ -167,6 +184,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setShowTransfersWithStorage(false);
       setShowTripsWithStorage(false);
       setShowFlightsWithStorage(false);
+      setShowOthersWithStorage(false);
       setShowTotalAmountWithStorage(false);
     } else {
     
@@ -174,6 +192,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       setShowTransfersWithStorage(true);
       setShowTripsWithStorage(true);
       setShowFlightsWithStorage(true);
+      setShowOthersWithStorage(true);
       setShowTotalAmountWithStorage(true);
     }
   };
@@ -823,6 +842,89 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       container.appendChild(flightsSection);
     }
     
+    // Other Services Section
+    if (showOthers && voucherData.others && voucherData.others.length > 0) {
+      const otherSection = document.createElement('div');
+      otherSection.style.marginBottom = '15px';
+
+      const otherSectionTitle = document.createElement('h3');
+      otherSectionTitle.textContent = 'Other Services';
+      otherSectionTitle.style.backgroundColor = '#0f3785';
+      otherSectionTitle.style.color = 'white';
+      otherSectionTitle.style.padding = '6px 15px';
+      otherSectionTitle.style.paddingBottom = '18px';
+      otherSectionTitle.style.borderTopLeftRadius = '6px';
+      otherSectionTitle.style.borderTopRightRadius = '6px';
+      otherSectionTitle.style.margin = '0';
+      otherSectionTitle.style.fontSize = '16px';
+      otherSectionTitle.style.fontWeight = '600';
+      otherSectionTitle.style.display = 'flex';
+      otherSectionTitle.style.alignItems = 'center';
+
+      const otherTableWrapper = document.createElement('div');
+      otherTableWrapper.style.overflowX = 'auto';
+
+      const otherTable = document.createElement('table');
+      otherTable.style.width = '100%';
+      otherTable.style.fontSize = '12px';
+      otherTable.style.textAlign = 'left';
+      otherTable.style.color = '#374151';
+      otherTable.style.borderCollapse = 'collapse';
+      otherTable.style.border = '1px solid #bfdbfe';
+      otherTable.style.fontWeight = 'bold';
+
+      const otherThead = document.createElement('thead');
+      otherThead.style.backgroundColor = '#dbeafe';
+      otherThead.style.textTransform = 'uppercase';
+
+      const otherHeaderRow = document.createElement('tr');
+      const otherHeaders = ['DESCRIPTION', 'DATE'];
+      otherHeaders.forEach((headerText) => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        th.style.padding = '12px 16px';
+        th.style.border = '1px solid #f8fafc';
+        th.style.fontSize = '12px';
+        th.style.fontWeight = 'bold';
+        otherHeaderRow.appendChild(th);
+      });
+
+      otherThead.appendChild(otherHeaderRow);
+      otherTable.appendChild(otherThead);
+
+      const otherTbody = document.createElement('tbody');
+
+      (voucherData.others || []).forEach((other) => {
+        const row = document.createElement('tr');
+        row.style.backgroundColor = 'white';
+        row.style.borderBottom = '1px solid #e5e7eb';
+
+        const otherData = [
+          other.description || '',
+          other.date ? formatDisplayDate(other.date) : '',
+        ];
+
+        otherData.forEach((cellData) => {
+          const td = document.createElement('td');
+          td.textContent = cellData;
+          td.style.fontSize = '12px';
+          td.style.fontWeight = 'bold';
+          td.style.color = '#000000';
+          td.style.padding = '12px 16px';
+          td.style.border = '1px solid #f8fafc';
+          row.appendChild(td);
+        });
+
+        otherTbody.appendChild(row);
+      });
+
+      otherTable.appendChild(otherTbody);
+      otherTableWrapper.appendChild(otherTable);
+      otherSection.appendChild(otherSectionTitle);
+      otherSection.appendChild(otherTableWrapper);
+      container.appendChild(otherSection);
+    }
+
     // Total Amount Section (conditionally included)
     if (showTotalAmount) {
       const totalSection = document.createElement('div');
@@ -1366,6 +1468,15 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             </CustomButton>
             <CustomButton 
               size="xs" 
+              variant={showOthers ? "green" : "gray"}
+              onClick={() => setShowOthersWithStorage(!showOthers)}
+              icon={showOthers ? FaEye : FaEyeSlash}
+              className="w-full sm:w-auto"
+            >
+              Other Services
+            </CustomButton>
+            <CustomButton 
+              size="xs" 
               variant={showTotalAmount ? "green" : "gray"}
               onClick={() => setShowTotalAmountWithStorage(!showTotalAmount)}
               icon={showTotalAmount ? FaEye : FaEyeSlash}
@@ -1747,6 +1858,71 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                             onClick={() => setShowFlightsWithStorage(true)}
           >
             <span className="text-gray-600 font-medium text-sm sm:text-base">Flights section hidden</span>
+            <CustomButton size="xs" variant="gray" icon={FaEye}>
+              Show
+            </CustomButton>
+          </div>
+        )}
+
+        {/* Other Services */}
+        <div className="mb-6" style={{ display: showOthers ? 'block' : 'none' }}>
+          <h3 className="text-lg font-semibold bg-blue-800 text-white pt-2 pb-6 px-4 rounded-t-md">
+            Other Services
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm text-left text-gray-700 border border-blue-200 font-bold">
+              <thead className="text-xs text-gray-700 uppercase bg-blue-100">
+                <tr>
+                  <th className="px-2 py-2 border w-16"></th>
+                  <th className="px-2 md:px-4 py-2 border">Description</th>
+                  <th className="px-2 md:px-4 py-2 border">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reorderedOthers.map((other, index) => (
+                  <tr
+                    key={`other-row-${index}`}
+                    className="bg-white border-b hover:bg-gray-50"
+                  >
+                    <td className="px-1 py-2 border text-center">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          onClick={() => moveUp(index, 'others')}
+                          disabled={index === 0}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronUp size={10} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(index, 'others')}
+                          disabled={index === reorderedOthers.length - 1}
+                          className="p-1 text-gray-500 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronDown size={10} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                      {other.description}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 border text-xs md:text-sm">
+                      {other.date ? formatDisplayDate(other.date) : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {!showOthers && voucherData.others && voucherData.others.length > 0 && (
+          <div
+            className="mb-6 p-2 bg-gray-100 border border-gray-300 rounded-md cursor-pointer flex items-center justify-between"
+            onClick={() => setShowOthersWithStorage(true)}
+          >
+            <span className="text-gray-600 font-medium text-sm sm:text-base">
+              Other Services section hidden
+            </span>
             <CustomButton size="xs" variant="gray" icon={FaEye}>
               Show
             </CustomButton>

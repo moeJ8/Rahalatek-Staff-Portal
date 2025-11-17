@@ -1448,46 +1448,46 @@ export default function UIManagement() {
           <div className="flex gap-0 w-full">
             <button
               onClick={() => setActiveTab("carousel")}
-              className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === "carousel"
                   ? "bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm"
               }`}
             >
-              <FaImages className="w-4 h-4" />
+              <FaImages className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Carousel</span>
             </button>
             <button
               onClick={() => setActiveTab("about")}
-              className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === "about"
                   ? "bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm"
               }`}
             >
-              <FaInfoCircle className="w-4 h-4" />
+              <FaInfoCircle className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>About</span>
             </button>
             <button
               onClick={() => setActiveTab("youtube")}
-              className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === "youtube"
                   ? "bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm"
               }`}
             >
-              <FaYoutube className="w-4 h-4" />
+              <FaYoutube className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Shorts</span>
             </button>
             <button
               onClick={() => setActiveTab("reviews")}
-              className={`flex-1 px-4 sm:px-6 py-3 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1 sm:gap-2 ${
                 activeTab === "reviews"
                   ? "bg-white/90 dark:bg-slate-900/80 backdrop-blur-md text-blue-600 dark:text-teal-400 border-b-2 border-blue-500 dark:border-teal-500 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100/70 dark:hover:bg-slate-700/50 hover:backdrop-blur-sm"
               }`}
             >
-              <FaStar className="w-4 h-4" />
+              <FaStar className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Reviews</span>
             </button>
           </div>

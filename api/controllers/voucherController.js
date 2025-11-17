@@ -138,6 +138,26 @@ const manageVoucherOfficePayment = async (
       });
     }
 
+    // Others - handle per-item payments for generic services
+    if (voucher.others && Array.isArray(voucher.others)) {
+      voucher.others.forEach((other, index) => {
+        if (
+          other &&
+          typeof other === "object" &&
+          other.officeName &&
+          other.price > 0
+        ) {
+          servicePayments.push({
+            officeName: other.officeName,
+            amount: other.price,
+            serviceType: "other",
+            serviceIndex: index,
+            serviceDescription: other.description || "Other Service",
+          });
+        }
+      });
+    }
+
     // Group service payments by office to create consolidated payments
     const officeGroups = {};
     servicePayments.forEach((service) => {
@@ -195,6 +215,7 @@ exports.createVoucher = async (req, res) => {
       transfers,
       trips,
       flights,
+      others,
       note,
       privateNote,
       totalAmount,
@@ -229,6 +250,7 @@ exports.createVoucher = async (req, res) => {
       transfers,
       trips,
       flights: flights || [],
+      others: others || [],
       note: note || "",
       privateNote: privateNote || "",
       totalAmount: Number(totalAmount) || 0,
@@ -240,6 +262,7 @@ exports.createVoucher = async (req, res) => {
         transfers: { officeName: "", price: 0 },
         trips: { officeName: "", price: 0 },
         flights: { officeName: "", price: 0 },
+        others: { officeName: "", price: 0 },
       },
       createdBy: req.user.userId,
     });
@@ -278,6 +301,7 @@ exports.createVoucher = async (req, res) => {
           transfers,
           trips,
           flights: flights || [],
+          others: others || [],
           note: note || "",
           privateNote: privateNote || "",
           totalAmount: Number(totalAmount) || 0,
@@ -289,6 +313,7 @@ exports.createVoucher = async (req, res) => {
             transfers: { officeName: "", price: 0 },
             trips: { officeName: "", price: 0 },
             flights: { officeName: "", price: 0 },
+            others: { officeName: "", price: 0 },
           },
           createdBy: req.user.userId,
         });
@@ -602,6 +627,7 @@ exports.getVouchersForFinancials = async (req, res) => {
           "transfers.officeName transfers.price " +
           "trips.officeName trips.price " +
           "flights.officeName flights.price " +
+          "others.officeName others.price " +
           "payments"
       )
       .sort({ createdAt: -1 })
@@ -1046,6 +1072,7 @@ exports.updateVoucher = async (req, res) => {
       transfers,
       trips,
       flights,
+      others,
       note,
       privateNote,
       totalAmount,
@@ -1081,6 +1108,7 @@ exports.updateVoucher = async (req, res) => {
         transfers,
         trips,
         flights: flights || [],
+        others: others || [],
         note: note || "",
         privateNote: privateNote || "",
         totalAmount: Number(totalAmount) || 0,
@@ -1092,6 +1120,7 @@ exports.updateVoucher = async (req, res) => {
           transfers: { officeName: "", price: 0 },
           trips: { officeName: "", price: 0 },
           flights: { officeName: "", price: 0 },
+          others: { officeName: "", price: 0 },
         },
       },
       { new: true, runValidators: true }

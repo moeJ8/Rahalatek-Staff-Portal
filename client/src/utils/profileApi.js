@@ -15,8 +15,10 @@ export const updateUserSalary = async (userId, data) => {
   return response.data;
 };
 
-export const getUserBonuses = async (userId) => {
-  const response = await axios.get(`/api/profile/${userId}/bonuses`);
+export const getUserBonuses = async (userId, params = {}) => {
+  const response = await axios.get(`/api/profile/${userId}/bonuses`, {
+    params,
+  });
   return response.data;
 };
 
@@ -37,8 +39,10 @@ export const saveMonthlyBaseSalary = async (userId, { year, month, amount, note,
   return response.data;
 };
 
-export const getUserSalaryBaseEntries = async (userId) => {
-  const response = await axios.get(`/api/profile/${userId}/salary/base`);
+export const getUserSalaryBaseEntries = async (userId, params = {}) => {
+  const response = await axios.get(`/api/profile/${userId}/salary/base`, {
+    params,
+  });
   return response.data;
 };
 

@@ -15,7 +15,7 @@ import { getLocalizedPath } from '../hooks/useLocalizedNavigate';
 import { 
   FaCheck, FaTimes, FaSignInAlt, FaSignOutAlt, FaClock, 
   FaHome, FaClipboardList, FaTicketAlt, FaHotel, FaRoute, FaBox, FaEnvelope, FaInfoCircle,
-  FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout, FaBlog 
+  FaChartLine, FaUser, FaUserClock, FaCalendarAlt, FaMoon, FaSignOutAlt as FaLogout, FaBlog, FaMoneyBillWave 
 } from 'react-icons/fa';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 import axios from 'axios';
@@ -59,6 +59,7 @@ export default function Header() {
         'header.attendance': 'Attendance',
         'header.calendar': 'Calendar',
         'header.logout': 'Logout',
+        'header.payments': 'Payments',
         'header.publicPages': 'Public Pages',
         'header.more': 'More',
         'header.theme': 'Theme'
@@ -655,6 +656,21 @@ export default function Header() {
                         <span className="text-xs font-medium text-center">{getTranslation('header.attendance')}</span>
                       </Link>
                       
+                    {(user.isAdmin || user.isAccountant) && (
+                      <Link 
+                        to="/payments"
+                        onClick={closeMobileMenu}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isActive('/payments') 
+                            ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}
+                      >
+                        <FaMoneyBillWave className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                        <span className="text-xs font-medium text-center">{getTranslation('header.payments')}</span>
+                      </Link>
+                    )}
+                    
                       <button 
                         onClick={() => {
                           closeMobileMenu();
@@ -939,16 +955,16 @@ export default function Header() {
                       {/* Row 3 */}
                       {(user.isAdmin || user.isAccountant) && (
                         <Link 
-                          to="/profile"
+                          to="/payments"
                           onClick={closeMobileMenu}
                           className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                            isActive('/profile') 
+                            isActive('/payments') 
                               ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
                               : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                           }`}
                         >
-                          <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
-                          <span className="text-xs font-medium text-center">{getTranslation('header.profile')}</span>
+                          <FaMoneyBillWave className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                          <span className="text-xs font-medium text-center">{getTranslation('header.payments')}</span>
                         </Link>
                       )}
                       
@@ -967,6 +983,21 @@ export default function Header() {
                         <span className="text-xs font-medium text-center">{getTranslation('header.attendance')}</span>
                       </Link>
                       
+                      {(user.isAdmin || user.isAccountant) && (
+                        <Link 
+                          to="/profile"
+                          onClick={closeMobileMenu}
+                          className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                            isActive('/profile') 
+                              ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
+                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                          }`}
+                        >
+                          <FaUser className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-200" />
+                          <span className="text-xs font-medium text-center">{getTranslation('header.profile')}</span>
+                        </Link>
+                      )}
+
                       <button 
                         onClick={() => {
                           closeMobileMenu();

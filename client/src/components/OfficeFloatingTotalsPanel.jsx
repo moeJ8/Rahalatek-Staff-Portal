@@ -351,25 +351,31 @@ const OfficeFloatingTotalsPanel = ({
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
                     <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Hotels</h4>
                     <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                      {getCurrencySymbol(filters.currency)}{totals.hotels.toFixed(2)}
+                      {getCurrencySymbol(filters.currency)}{(totals.hotels || 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
                     <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">Transfers</h4>
                     <p className="text-lg font-bold text-green-700 dark:text-green-300">
-                      {getCurrencySymbol(filters.currency)}{totals.transfers.toFixed(2)}
+                      {getCurrencySymbol(filters.currency)}{(totals.transfers || 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
                     <h4 className="text-sm font-semibold text-purple-600 dark:text-purple-400">Trips</h4>
                     <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
-                      {getCurrencySymbol(filters.currency)}{totals.trips.toFixed(2)}
+                      {getCurrencySymbol(filters.currency)}{(totals.trips || 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700">
                     <h4 className="text-sm font-semibold text-orange-600 dark:text-orange-400">Flights</h4>
                     <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
-                      {getCurrencySymbol(filters.currency)}{totals.flights.toFixed(2)}
+                      {getCurrencySymbol(filters.currency)}{(totals.flights || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-200 dark:border-pink-700 col-span-2">
+                    <h4 className="text-sm font-semibold text-pink-600 dark:text-pink-400">Others</h4>
+                    <p className="text-lg font-bold text-pink-700 dark:text-pink-300">
+                      {getCurrencySymbol(filters.currency)}{(totals.others || 0).toFixed(2)}
                     </p>
                   </div>
                 </div>

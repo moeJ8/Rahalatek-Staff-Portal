@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const SalaryReceiptService = require('../services/salaryReceiptService');
 
 // Get current user's profile
 exports.getCurrentUserProfile = async (req, res) => {
@@ -389,8 +390,31 @@ exports.getUserSalaryBaseEntries = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        const queryYear =
+            typeof req.query.year !== 'undefined'
+                ? parseInt(req.query.year, 10)
+                : undefined;
+        const queryMonth =
+            typeof req.query.month !== 'undefined' && req.query.month !== 'all'
+                ? parseInt(req.query.month, 10)
+                : undefined;
+
+        let filteredEntries = user.salaryBaseEntries || [];
+
+        if (!Number.isNaN(queryYear) && typeof queryYear === 'number') {
+            filteredEntries = filteredEntries.filter(
+                (entry) => entry.year === queryYear
+            );
+        }
+
+        if (!Number.isNaN(queryMonth) && typeof queryMonth === 'number') {
+            filteredEntries = filteredEntries.filter(
+                (entry) => entry.month === queryMonth
+            );
+        }
+
         // Sort salary base entries by year and month (newest first)
-        const sortedEntries = (user.salaryBaseEntries || []).sort((a, b) => {
+        const sortedEntries = filteredEntries.sort((a, b) => {
             if (a.year !== b.year) return b.year - a.year;
             return b.month - a.month;
         });
@@ -577,7 +601,23 @@ exports.getUserBonuses = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json({ bonuses: user.salaryBonuses || [] });
+        const queryYear =
+            typeof req.query.year !== 'undefined'
+                ? parseInt(req.query.year, 10)
+                : undefined;
+        const queryMonth =
+            typeof req.query.month !== 'undefined' && req.query.month !== 'all'
+                ? parseInt(req.query.month, 10)
+                : undefined;
+
+        let bonuses = user.salaryBonuses || [];
+        if (!Number.isNaN(queryYear) && typeof queryYear === 'number') {
+            bonuses = bonuses.filter((bonus) => bonus.year === queryYear);
+        }
+        if (!Number.isNaN(queryMonth) && typeof queryMonth === 'number') {
+            bonuses = bonuses.filter((bonus) => bonus.month === queryMonth);
+        }
+        res.json({ bonuses });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -659,5 +699,94 @@ exports.deleteBonusEntry = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+const getUserRoleLabel = (user) => {
+    if (user.isAdmin) return 'Administrator';
+    if (user.isAccountant) return 'Accountant';
+    if (user.isContentManager) return 'Content Manager';
+    if (user.isPublisher) return 'Publisher';
+    return 'Employee';
+};
+
+// Download salary receipt PDF for a specific user/year/month
+exports.downloadSalaryReceipt = async (req, res) => {
+    try {
+        if (!req.user.isAdmin && !req.user.isAccountant) {
+            return res.status(403).json({ message: 'Access denied. Admin or accountant privileges required.' });
+        }
+
+        const { userId } = req.params;
+        const { year, month } = req.query;
+
+        if (typeof year === 'undefined' || typeof month === 'undefined' || month === 'all') {
+            return res.status(400).json({ message: 'Year and month query parameters are required.' });
+        }
+
+        const numericYear = parseInt(year, 10);
+        const numericMonth = parseInt(month, 10);
+
+        if (Number.isNaN(numericYear) || Number.isNaN(numericMonth) || numericMonth < 0 || numericMonth > 11) {
+            return res.status(400).json({ message: 'Invalid year or month provided.' });
+        }
+
+        const user = await User.findById(userId).select(
+            'username email salaryAmount salaryCurrency salaryNotes salaryBaseEntries salaryBonuses isAdmin isAccountant isContentManager isPublisher'
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const salaryEntry = (user.salaryBaseEntries || []).find(
+            (entry) => entry.year === numericYear && entry.month === numericMonth
+        );
+
+        const bonusesForPeriod = (user.salaryBonuses || [])
+            .filter((bonus) => bonus.year === numericYear && bonus.month === numericMonth)
+            .map((bonus) => ({
+                amount: Number(bonus.amount) || 0,
+                note: bonus.note || 'Bonus',
+                createdAt: bonus.createdAt,
+                updatedAt: bonus.updatedAt,
+            }));
+
+        const preparedBy = await User.findById(req.user.userId).select('username email');
+
+        const pdfBuffer = await SalaryReceiptService.generateSalaryReceipt({
+            employee: {
+                name: user.username,
+                email: user.email,
+                role: getUserRoleLabel(user),
+            },
+            salary: {
+                amount:
+                    Number(salaryEntry?.amount) || Number(user.salaryAmount) || 0,
+                currency:
+                    salaryEntry?.currency || user.salaryCurrency || 'USD',
+                notes: salaryEntry?.note || user.salaryNotes || '',
+            },
+            period: {
+                year: numericYear,
+                month: numericMonth,
+            },
+            bonuses: bonusesForPeriod,
+            preparedBy: {
+                name: preparedBy?.username || 'System',
+                email: preparedBy?.email || '',
+            },
+        });
+
+        const safeUser = user.username ? user.username.replace(/[^a-z0-9]/gi, '-').toLowerCase() : 'employee';
+        const filename = `salary-receipt-${safeUser}-${numericYear}-${String(numericMonth + 1).padStart(2, '0')}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        return res.end(pdfBuffer);
+    } catch (err) {
+        console.error('Error generating salary receipt:', err);
+        res.status(500).json({ message: 'Failed to generate salary receipt' });
     }
 };

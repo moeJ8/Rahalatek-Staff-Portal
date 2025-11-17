@@ -20,6 +20,7 @@ export const isProtectedPage = (pathname, isAuthenticated) => {
     '/hotels', // Authenticated hotels page
     '/profile',
     '/attendance',
+    '/payments',
   ];
 
   return protectedRoutes.some(route => pathname.startsWith(route));

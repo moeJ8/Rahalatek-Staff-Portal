@@ -174,7 +174,8 @@ const OfficeDetailPage = () => {
             hotels: 0,
             transfers: 0,
             trips: 0,
-            flights: 0
+            flights: 0,
+            others: 0
         };
         
         // Calculate hotels - sum all individual hotel prices for this office
@@ -224,8 +225,17 @@ const OfficeDetailPage = () => {
                 }
             });
         }
-        
-        services.total = services.hotels + services.transfers + services.trips + services.flights;
+
+        // Calculate others - sum all individual other service prices for this office
+        if (voucher.others && Array.isArray(voucher.others)) {
+            voucher.others.forEach(other => {
+                if (other && typeof other === 'object' && other.officeName === displayName && other.price) {
+                    services.others += parseFloat(other.price) || 0;
+                }
+            });
+        }
+
+        services.total = services.hotels + services.transfers + services.trips + services.flights + services.others;
         
         return services;
     }, [displayName]);
@@ -248,8 +258,9 @@ const OfficeDetailPage = () => {
                 hasTripService = voucher.payments?.trips?.officeName === displayName;
             }
             const hasFlightService = voucher.flights?.some(flight => flight.officeName === displayName);
+            const hasOtherService = voucher.others?.some(other => other && typeof other === 'object' && other.officeName === displayName);
             
-            return hasHotelService || hasTransferService || hasTripService || hasFlightService;
+            return hasHotelService || hasTransferService || hasTripService || hasFlightService || hasOtherService;
         });
     }, [vouchers, displayName, isDirectClient]);
 
@@ -456,13 +467,15 @@ const OfficeDetailPage = () => {
             acc.transfers += services.transfers;
             acc.trips += services.trips;
             acc.flights += services.flights;
+            acc.others += services.others;
             acc.servicesProvided += services.total; // What office is owed
             return acc;
         }, { 
             hotels: 0, 
             transfers: 0, 
             trips: 0, 
-            flights: 0, 
+            flights: 0,
+            others: 0,
             servicesProvided: 0, // What office is owed for services
             totalRemaining: 0, // Total remaining across all vouchers
             clientTotalAmount: 0, // Total amount from client vouchers
@@ -886,6 +899,7 @@ const OfficeDetailPage = () => {
                                                         { label: "Transfers", className: "text-green-600 dark:text-green-400" },
                                                         { label: "Trips", className: "text-purple-600 dark:text-purple-400" },
                                                         { label: "Flights", className: "text-orange-600 dark:text-orange-400" },
+                                                        { label: "Others", className: "text-pink-600 dark:text-pink-400" },
                                                         { label: "Services Total", className: "text-gray-900 dark:text-white" },
                                                         { label: "Remaining", className: "text-red-600 dark:text-red-400" }
                                                     ]}
@@ -926,6 +940,9 @@ const OfficeDetailPage = () => {
                                                                 </Table.Cell>
                                                                 <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
                                                                     {getCurrencySymbol(voucher.currency)}{services.flights.toFixed(2)}
+                                                                </Table.Cell>
+                                                                <Table.Cell className="text-sm text-pink-600 dark:text-pink-400 font-medium px-4 py-3">
+                                                                    {getCurrencySymbol(voucher.currency)}{services.others.toFixed(2)}
                                                                 </Table.Cell>
                                                                 <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
                                                                     {getCurrencySymbol(voucher.currency)}{services.total.toFixed(2)}

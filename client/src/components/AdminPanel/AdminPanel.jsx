@@ -11,7 +11,7 @@ import {
   Modal,
   Textarea,
 } from "flowbite-react";
-import { HiPlus, HiX, HiTrash, HiRefresh } from "react-icons/hi";
+import { HiPlus, HiX, HiTrash, HiRefresh, HiDownload } from "react-icons/hi";
 import {
   FaPlaneDeparture,
   FaMapMarkedAlt,
@@ -486,16 +486,20 @@ export default function AdminPanel() {
   const [selectedBonusMonthToEdit, setSelectedBonusMonthToEdit] = useState("");
 
   // Cards view state
-  const [salaryCardsYear, setSalaryCardsYear] = useState(
-    new Date().getFullYear()
-  );
+  const now = new Date();
+  const previousMonthIndex = (now.getMonth() + 11) % 12;
+  const previousMonthYear = now.getFullYear() - (now.getMonth() === 0 ? 1 : 0);
+
+  const [salaryCardsYear, setSalaryCardsYear] = useState(previousMonthYear);
   const [salaryCardsMonth, setSalaryCardsMonth] = useState(
-    new Date().getMonth().toString()
-  ); // Current month (0-11)
+    previousMonthIndex.toString()
+  ); // Default to previous month (0-11)
   const [allUsersSalaryData, setAllUsersSalaryData] = useState([]);
   const [salaryCardsLoading, setSalaryCardsLoading] = useState(false);
   const [availableSalaryYears, setAvailableSalaryYears] = useState([]);
   const [availableSalaryMonths, setAvailableSalaryMonths] = useState([]);
+  const [salaryReceiptDownloading, setSalaryReceiptDownloading] =
+    useState(null);
 
   // Generate month options - always show months up to current month, plus any existing salary entries
   const getMonthOptions = () => {
@@ -1057,10 +1061,15 @@ export default function AdminPanel() {
       const userPromises = filteredUsers.map(async (user) => {
         try {
           // Get all user data in parallel
+          const baseParams = { year: salaryCardsYear };
+          if (salaryCardsMonth !== "all") {
+            baseParams.month = parseInt(salaryCardsMonth, 10);
+          }
+
           const [salaryRes, baseEntriesRes, bonusesRes] = await Promise.all([
             getUserSalary(user._id),
-            getUserSalaryBaseEntries(user._id),
-            getUserBonuses(user._id),
+            getUserSalaryBaseEntries(user._id, baseParams),
+            getUserBonuses(user._id, baseParams),
           ]);
 
           const baseEntries = baseEntriesRes.salaryBaseEntries || [];
@@ -1153,6 +1162,91 @@ export default function AdminPanel() {
       setSalaryCardsLoading(false);
     }
   }, [users, isAccountant, isAdmin, salaryCardsYear, salaryCardsMonth]);
+  const showReceiptSuccess = (message, extra = {}) =>
+    toast.success(message, {
+      duration: 3000,
+      style: {
+        background: "#2563eb",
+        color: "#fff",
+        fontWeight: "bold",
+        fontSize: "16px",
+        padding: "16px",
+      },
+      iconTheme: {
+        primary: "#fff",
+        secondary: "#2563eb",
+      },
+      ...extra,
+    });
+
+  const showReceiptError = (message, extra = {}) =>
+    toast.error(message, {
+      duration: 3000,
+      style: {
+        background: "#f44336",
+        color: "#fff",
+        fontWeight: "bold",
+        fontSize: "16px",
+        padding: "16px",
+      },
+      iconTheme: {
+        primary: "#fff",
+        secondary: "#f44336",
+      },
+      ...extra,
+    });
+
+  const handleDownloadSalaryReceipt = async (userData) => {
+    if (salaryCardsMonth === "all") {
+      showReceiptError("Select a specific month to download salary receipts.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showReceiptError("You must be logged in to download salary receipts");
+      return;
+    }
+
+    setSalaryReceiptDownloading(userData.userId);
+    try {
+      const response = await axios.get(
+        `/api/profile/${userData.userId}/salary/receipt`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob",
+          params: {
+            year: salaryCardsYear,
+            month: salaryCardsMonth,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const monthNumber = parseInt(salaryCardsMonth, 10) + 1;
+      const filename = `salary-receipt-${
+        userData.username
+      }-${salaryCardsYear}-${String(monthNumber).padStart(2, "0")}.pdf`;
+
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showReceiptSuccess("Salary receipt downloaded");
+    } catch (error) {
+      console.error("Failed to download salary receipt:", error);
+      showReceiptError(
+        error.response?.data?.message || "Failed to download salary receipt"
+      );
+    } finally {
+      setSalaryReceiptDownloading(null);
+    }
+  };
 
   const handleSaveBonusAmount = async (bonus) => {
     if (!selectedUserForSalary || saveBonusAmountLoading) return;
@@ -1548,6 +1642,7 @@ export default function AdminPanel() {
                   transfers: 0,
                   trips: 0,
                   flights: 0,
+                  others: 0,
                   total: 0,
                   currency: voucher.currency || "USD",
                   voucherCount: 0,
@@ -1586,6 +1681,7 @@ export default function AdminPanel() {
                   transfers: 0,
                   trips: 0,
                   flights: 0,
+                  others: 0,
                   total: 0,
                   currency: voucher.currency || "USD",
                   voucherCount: 0,
@@ -1624,6 +1720,7 @@ export default function AdminPanel() {
                   transfers: 0,
                   trips: 0,
                   flights: 0,
+                  others: 0,
                   total: 0,
                   currency: voucher.currency || "USD",
                   voucherCount: 0,
@@ -1662,6 +1759,7 @@ export default function AdminPanel() {
                   transfers: 0,
                   trips: 0,
                   flights: 0,
+                  others: 0,
                   total: 0,
                   currency: voucher.currency || "USD",
                   voucherCount: 0,
@@ -1700,6 +1798,7 @@ export default function AdminPanel() {
                   transfers: 0,
                   trips: 0,
                   flights: 0,
+                  others: 0,
                   total: 0,
                   currency: voucher.currency || "USD",
                   voucherCount: 0,
@@ -1710,6 +1809,45 @@ export default function AdminPanel() {
 
               aggregatedData[key].flights += flight.price;
               aggregatedData[key].total += flight.price;
+
+              // Track unique vouchers
+              if (!voucherTracker[key].has(voucher._id)) {
+                voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherCount++;
+              }
+            }
+          });
+        }
+
+        // Process other services array for office payments
+        if (voucher.others && Array.isArray(voucher.others)) {
+          voucher.others.forEach((other) => {
+            if (other.officeName && other.price > 0) {
+              const key = `${other.officeName}-${monthYear}`;
+
+              if (!aggregatedData[key]) {
+                aggregatedData[key] = {
+                  officeName: other.officeName,
+                  month: monthYear,
+                  year: voucherDate.getFullYear(),
+                  monthName: voucherDate.toLocaleString("default", {
+                    month: "long",
+                  }),
+                  hotels: 0,
+                  transfers: 0,
+                  trips: 0,
+                  flights: 0,
+                  others: 0,
+                  total: 0,
+                  currency: voucher.currency || "USD",
+                  voucherCount: 0,
+                  voucherIds: new Set(),
+                };
+                voucherTracker[key] = new Set();
+              }
+
+              aggregatedData[key].others += other.price;
+              aggregatedData[key].total += other.price;
 
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
@@ -2319,6 +2457,7 @@ export default function AdminPanel() {
       acc.transfers += item.transfers;
       acc.trips += item.trips;
       acc.flights += item.flights;
+      acc.others += item.others || 0;
       acc.total += item.total;
       acc.totalRemaining += calculateOfficeRemaining(
         item.officeName,
@@ -2332,6 +2471,7 @@ export default function AdminPanel() {
       transfers: 0,
       trips: 0,
       flights: 0,
+      others: 0,
       total: 0,
       totalRemaining: 0,
       voucherCount: 0,
@@ -3926,49 +4066,59 @@ export default function AdminPanel() {
                     Financial Reports
                   </h2>
 
-                  {/* PDF Download Button */}
-                  <CustomButton
-                    onClick={downloadFinancialSummaryPDF}
-                    disabled={pdfDownloading}
-                    variant="green"
-                    size="md"
-                    className="flex items-center gap-2"
-                    title={`Download ${
-                      financialFilters.month
-                        ? new Date(
-                            financialFilters.year,
-                            financialFilters.month - 1
-                          ).toLocaleString("en-US", { month: "long" })
-                        : "Current"
-                    } ${financialFilters.year} Financial Report`}
-                  >
-                    {pdfDownloading ? (
-                      <>
-                        <svg
-                          className="animate-spin h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Generating...
-                      </>
-                    ) : (
-                      <>📄 Download PDF</>
-                    )}
-                  </CustomButton>
+                  <div className="flex flex-row items-stretch gap-2 w-full sm:w-auto">
+                    <CustomButton
+                      onClick={downloadFinancialSummaryPDF}
+                      disabled={pdfDownloading}
+                      variant="green"
+                      size="sm"
+                      className="flex items-center gap-2 flex-1 text-xs sm:text-sm whitespace-nowrap"
+                      title={`Download ${
+                        financialFilters.month
+                          ? new Date(
+                              financialFilters.year,
+                              financialFilters.month - 1
+                            ).toLocaleString("en-US", { month: "long" })
+                          : "Current"
+                      } ${financialFilters.year} Financial Report`}
+                    >
+                      {pdfDownloading ? (
+                        <>
+                          <svg
+                            className="animate-spin h-3 w-3 sm:h-4 sm:w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Generating...
+                        </>
+                      ) : (
+                        <>📄 Download PDF</>
+                      )}
+                    </CustomButton>
+                    <CustomButton
+                      variant="blue"
+                      size="sm"
+                      className="flex items-center gap-2 flex-1 text-xs sm:text-sm whitespace-nowrap"
+                      onClick={() => navigate("/payments")}
+                      title="Open all payments dashboard"
+                    >
+                      💳 View Payments
+                    </CustomButton>
+                  </div>
                 </div>
 
                 {/* Overview Cards */}
@@ -4650,6 +4800,10 @@ export default function AdminPanel() {
                               className: "text-orange-600 dark:text-orange-400",
                             },
                             {
+                              label: "Others",
+                              className: "text-pink-600 dark:text-pink-400",
+                            },
+                            {
                               label: "Total",
                               className: "text-gray-900 dark:text-white",
                             },
@@ -4693,6 +4847,10 @@ export default function AdminPanel() {
                               <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
                                 {getCurrencySymbol(financialFilters.currency)}
                                 {item.flights.toFixed(2)}
+                              </Table.Cell>
+                              <Table.Cell className="text-sm text-pink-600 dark:text-pink-400 font-medium px-4 py-3">
+                                {getCurrencySymbol(financialFilters.currency)}
+                                {(item.others || 0).toFixed(2)}
                               </Table.Cell>
                               <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
                                 {getCurrencySymbol(financialFilters.currency)}
@@ -4975,6 +5133,17 @@ export default function AdminPanel() {
                                           financialFilters.currency
                                         )}
                                         {item.flights.toFixed(2)}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-pink-600 dark:text-pink-400 mb-1">
+                                        Others
+                                      </div>
+                                      <div className="text-sm font-medium text-pink-600 dark:text-pink-400">
+                                        {getCurrencySymbol(
+                                          financialFilters.currency
+                                        )}
+                                        {(item.others || 0).toFixed(2)}
                                       </div>
                                     </div>
                                   </div>
@@ -6153,8 +6322,8 @@ export default function AdminPanel() {
                     {/* Salary Cards */}
                     {!salaryCardsLoading && allUsersSalaryData.length > 0 && (
                       <div>
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
-                          <div className="flex items-center">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="flex items-center flex-wrap gap-2">
                             <FaCoins className="w-5 h-5 mr-2 text-blue-800 dark:text-teal-400" />
                             Salary Overview ({salaryCardsYear})
                             {salaryCardsMonth !== "all" && (
@@ -6199,32 +6368,57 @@ export default function AdminPanel() {
                             return (
                               <div
                                 key={userData.userId}
-                                className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                className="bg-white dark:bg-slate-900 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                                 style={{
                                   animationDelay: `${index * 100}ms`,
                                 }}
                               >
-                                <div className="flex items-center justify-between mb-4">
-                                  <div className="flex items-center">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                  <div className="flex items-center flex-wrap gap-2">
                                     <h5 className="font-semibold text-gray-900 dark:text-white mr-2">
                                       {userData.username}
                                     </h5>
                                     <UserBadge user={userData} size="sm" />
                                   </div>
 
-                                  <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                      userData.salary > 0
-                                        ? "bg-green-500 text-white"
-                                        : "bg-gray-500 text-white"
-                                    }`}
-                                  >
-                                    {userData.currency}
-                                  </span>
+                                  <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                        userData.salary > 0
+                                          ? "bg-green-500 text-white"
+                                          : "bg-gray-500 text-white"
+                                      }`}
+                                    >
+                                      {userData.currency}
+                                    </span>
+                                    <CustomButton
+                                      variant="blue"
+                                      size="xs"
+                                      icon={HiDownload}
+                                      className="w-auto justify-center"
+                                      disabled={salaryCardsMonth === "all"}
+                                      loading={
+                                        salaryReceiptDownloading ===
+                                        userData.userId
+                                      }
+                                      onClick={() =>
+                                        handleDownloadSalaryReceipt(userData)
+                                      }
+                                      title={
+                                        salaryCardsMonth === "all"
+                                          ? "Select a month to download receipts"
+                                          : "Download salary receipt"
+                                      }
+                                    >
+                                      <span className="hidden sm:inline">
+                                        Receipt
+                                      </span>
+                                    </CustomButton>
+                                  </div>
                                 </div>
 
                                 <div className="space-y-3">
-                                  <div className="flex justify-between text-sm">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                                     <span className="text-gray-600 dark:text-slate-300">
                                       Base Salary:
                                     </span>
@@ -6235,7 +6429,7 @@ export default function AdminPanel() {
                                   </div>
 
                                   {userData.totalBonus > 0 && (
-                                    <div className="flex justify-between text-sm">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                                       <span className="text-gray-600 dark:text-slate-300">
                                         Bonuses:
                                       </span>
@@ -6246,7 +6440,7 @@ export default function AdminPanel() {
                                     </div>
                                   )}
 
-                                  <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold border-t pt-2">
                                     <span className="text-gray-900 dark:text-white">
                                       Total:
                                     </span>
