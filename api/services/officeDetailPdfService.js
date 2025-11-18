@@ -49,10 +49,11 @@ class OfficeDetailPdfService {
             const serviceBreakdown = this.calculateServiceBreakdown(serviceVouchers, officeName, allPayments);
             
             // Calculate client payments
-            const clientPayments = this.calculateClientPayments(clientVouchers, allPayments);
+            const { tableRows: clientPayments, summaries: clientPaymentSummaries } =
+                this.calculateClientPayments(clientVouchers, allPayments);
             
             // Calculate totals by currency
-            const totalsByCurrency = this.calculateTotalsByCurrency(serviceBreakdown, clientPayments);
+            const totalsByCurrency = this.calculateTotalsByCurrency(serviceBreakdown, clientPaymentSummaries);
             
             return {
                 officeName,
@@ -270,7 +271,8 @@ class OfficeDetailPdfService {
      * Calculate client payments with payment tracking
      */
     static calculateClientPayments(clientVouchers, allPayments) {
-        const payments = [];
+        const tableRows = [];
+        const summaries = [];
         
         clientVouchers.forEach(voucher => {
             // Get payments for this voucher
@@ -290,22 +292,67 @@ class OfficeDetailPdfService {
             
             const remaining = voucher.totalAmount - incomingTotal + outgoingTotal;
             
-            payments.push({
+            summaries.push({
                 voucherNumber: voucher.voucherNumber,
-                clientName: voucher.clientName,
-                createdAt: voucher.createdAt,
-                arrivalDate: voucher.arrivalDate,
                 currency: voucher.currency || 'USD',
                 totalAmount: voucher.totalAmount,
-                paid: incomingTotal,
-                remaining: remaining
+                remaining
             });
+            
+            const sortedPayments = [...voucherPayments].sort((a, b) => {
+                const dateA = new Date(a.paymentDate || a.approvedAt || a.createdAt).getTime();
+                const dateB = new Date(b.paymentDate || b.approvedAt || b.createdAt).getTime();
+                return dateA - dateB;
+            });
+            
+            let runningRemaining = voucher.totalAmount;
+            
+            if (sortedPayments.length === 0) {
+                tableRows.push({
+                    voucherNumber: voucher.voucherNumber,
+                    clientName: voucher.clientName,
+                    createdAt: voucher.createdAt,
+                    arrivalDate: voucher.arrivalDate,
+                    currency: voucher.currency || 'USD',
+                    totalAmount: voucher.totalAmount,
+                    paymentAmount: 0,
+                    paymentDate: null,
+                    remaining: runningRemaining
+                });
+            } else {
+                sortedPayments.forEach(payment => {
+                    const paymentValue = payment.type === 'INCOMING'
+                        ? payment.amount
+                        : -payment.amount;
+                    
+                    runningRemaining -= paymentValue;
+                    
+                    tableRows.push({
+                        voucherNumber: voucher.voucherNumber,
+                        clientName: voucher.clientName,
+                        createdAt: voucher.createdAt,
+                        arrivalDate: voucher.arrivalDate,
+                        currency: voucher.currency || 'USD',
+                        totalAmount: voucher.totalAmount,
+                        paymentAmount: paymentValue,
+                        paymentDate: payment.paymentDate || payment.approvedAt || payment.createdAt,
+                        remaining: runningRemaining
+                    });
+                });
+            }
         });
         
-        // Sort by voucher number descending (newest first) to match web page order
-        payments.sort((a, b) => b.voucherNumber - a.voucherNumber);
+        // Sort rows by voucher (desc) then payment date (asc – first payment on top)
+        tableRows.sort((a, b) => {
+            if (a.voucherNumber === b.voucherNumber) {
+                const dateA = a.paymentDate ? new Date(a.paymentDate).getTime() : 0;
+                const dateB = b.paymentDate ? new Date(b.paymentDate).getTime() : 0;
+                return dateA - dateB;
+            }
+            return b.voucherNumber - a.voucherNumber;
+        });
         
-        return payments;
+        return { tableRows, summaries };
     }
     
     /**
@@ -450,7 +497,8 @@ class OfficeDetailPdfService {
         
         const formatCurrency = (amount, currency) => {
             const symbol = currencySymbols[currency] || currency;
-            return `${symbol}${amount.toFixed(2)}`;
+            const value = Math.abs(amount).toFixed(2);
+            return amount < 0 ? `-${symbol}${value}` : `${symbol}${value}`;
         };
         
         // Sort currencies with USD first, EUR second, then alphabetically
@@ -805,7 +853,10 @@ class OfficeDetailPdfService {
     <div class="section-title ${Object.keys(servicesByCurrency).length > 0 ? 'page-break' : ''}">
         Client Payments
     </div>
-    ${sortCurrencies(Object.keys(clientsByCurrency)).map(currency => `
+    ${sortCurrencies(Object.keys(clientsByCurrency)).map(currency => {
+        const currencyTotals = totalsByCurrency[currency] || { clientTotal: 0, clientRemaining: 0 };
+        const totalPaid = currencyTotals.clientTotal - currencyTotals.clientRemaining;
+        return `
         <div class="currency-group">
             <div class="currency-header">${currency} (${currencySymbols[currency]})</div>
             <table>
@@ -815,9 +866,10 @@ class OfficeDetailPdfService {
                         <th style="width: 180px;">Client</th>
                         <th style="width: 75px;">Date</th>
                         <th style="width: 75px;">Arrival</th>
-                        <th style="width: 90px;" class="number">Total Amount</th>
-                        <th style="width: 90px;" class="number">Paid</th>
-                        <th style="width: 90px;" class="number">Remaining</th>
+                        <th style="width: 110px;">Total Amount</th>
+                        <th style="width: 90px;" class="number">Payment Date</th>
+                        <th style="width: 90px;">Paid</th>
+                        <th style="width: 90px;">Remaining</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -828,34 +880,29 @@ class OfficeDetailPdfService {
                             <td>${formatDate(item.createdAt)}</td>
                             <td>${formatDate(item.arrivalDate)}</td>
                             <td class="number">${formatCurrency(item.totalAmount, currency)}</td>
-                            <td class="number positive">${formatCurrency(item.paid, currency)}</td>
+                            <td class="number">${item.paymentDate ? formatDate(item.paymentDate) : '—'}</td>
+                            <td class="number ${item.paymentAmount >= 0 ? 'positive' : 'negative'}">
+                                ${formatCurrency(item.paymentAmount, currency)}
+                            </td>
                             <td class="number ${item.remaining > 0 ? 'negative' : 'positive'}">
                                 <strong>${formatCurrency(item.remaining, currency)}</strong>
                             </td>
                         </tr>
                     `).join('')}
                     <tr class="total-row">
-                        <td colspan="4" style="text-align: right;">TOTAL:</td>
-                        <td class="number">${formatCurrency(
-                            clientsByCurrency[currency].reduce((sum, item) => sum + item.totalAmount, 0), 
-                            currency
-                        )}</td>
-                        <td class="number positive">${formatCurrency(
-                            clientsByCurrency[currency].reduce((sum, item) => sum + item.paid, 0), 
-                            currency
-                        )}</td>
-                        <td class="number ${
-                            clientsByCurrency[currency].reduce((sum, item) => sum + item.remaining, 0) > 0 
-                            ? 'negative' : 'positive'
-                        }">${formatCurrency(
-                            clientsByCurrency[currency].reduce((sum, item) => sum + item.remaining, 0), 
-                            currency
-                        )}</td>
+                        <td colspan="5" style="text-align: right;">TOTAL:</td>
+                        <td class="number">${formatCurrency(currencyTotals.clientTotal, currency)}</td>
+                        <td class="number ${totalPaid >= 0 ? 'positive' : 'negative'}">
+                            ${formatCurrency(totalPaid, currency)}
+                        </td>
+                        <td class="number ${currencyTotals.clientRemaining > 0 ? 'negative' : 'positive'}">
+                            ${formatCurrency(currencyTotals.clientRemaining, currency)}
+                        </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-    `).join('')}
+    `}).join('')}
     ` : ''}
     
     ${Object.keys(servicesByCurrency).length === 0 && Object.keys(clientsByCurrency).length === 0 ? `
