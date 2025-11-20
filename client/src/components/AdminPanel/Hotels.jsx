@@ -2134,11 +2134,11 @@ export default function Hotels() {
                                     </div>
                                 ) : hotels.length > 0 ? (
                                     <div className="space-y-2 relative">
-                                        <CustomSelect
+                                        <SearchableSelect
                                             id="selectHotelToDuplicate"
                                             label="Select Hotel"
                                             value={selectedHotelToDuplicate}
-                                            onChange={(value) => setSelectedHotelToDuplicate(value)}
+                                            onChange={(e) => setSelectedHotelToDuplicate(e.target.value)}
                                             options={[
                                                 { value: "", label: "Choose a hotel" },
                                                 ...hotels.map(hotel => ({
@@ -2146,7 +2146,7 @@ export default function Hotels() {
                                                     label: `${hotel.name} - ${hotel.city} (${hotel.stars}★)`
                                                 }))
                                             ]}
-                                            placeholder="Select a hotel to duplicate"
+                                            placeholder="Search and choose a hotel..."
                                             required
                                         />
                                     </div>

@@ -1,61 +1,151 @@
 // Country-City mappings for frontend use
 export const COUNTRY_CITIES = {
-  "Turkey": [
+  Turkey: [
     // Turkish cities + Fethiye and Bursa
-    'Istanbul', 'Antalya', 'Cappadocia', 'Trabzon', 'Bodrum', 'Fethiye', 'Bursa'
+    "Istanbul",
+    "Antalya",
+    "Cappadocia",
+    "Trabzon",
+    "Bodrum",
+    "Fethiye",
+    "Bursa",
   ],
-  
-  "Malaysia": [
-    'Kuala Lumpur', 'Penang', 'Langkawi', 'Malacca', 'Johor Bahru',
-    'Kota Kinabalu', 'Kuching', 'Cameron Highlands', 'Genting Highlands', 'Selangor'
+
+  Malaysia: [
+    "Kuala Lumpur",
+    "Penang",
+    "Langkawi",
+    "Malacca",
+    "Johor Bahru",
+    "Kota Kinabalu",
+    "Kuching",
+    "Cameron Highlands",
+    "Genting Highlands",
+    "Selangor",
   ],
-  
-  "Thailand": [
-    'Bangkok', 'Phuket', 'Pattaya', 'Chiang Mai', 'Krabi', 'Koh Samui',
-    'Hua Hin', 'Ayutthaya', 'Chiang Rai', 'Kanchanaburi'
+
+  Thailand: [
+    "Bangkok",
+    "Phuket",
+    "Pattaya",
+    "Chiang Mai",
+    "Krabi",
+    "Koh Samui",
+    "Hua Hin",
+    "Ayutthaya",
+    "Chiang Rai",
+    "Kanchanaburi",
   ],
-  
-  "Indonesia": [
-    'Jakarta', 'Bali', 'Yogyakarta', 'Bandung', 'Surabaya', 'Medan',
-    'Lombok', 'Bogor', 'Malang', 'Solo', 'Ubud', 'Sanur', 'Seminyak',
-    'Puncak', 'Sukabumi'
+
+  Indonesia: [
+    "Jakarta",
+    "Bali",
+    "Yogyakarta",
+    "Bandung",
+    "Surabaya",
+    "Medan",
+    "Lombok",
+    "Bogor",
+    "Malang",
+    "Solo",
+    "Ubud",
+    "Sanur",
+    "Seminyak",
+    "Puncak",
+    "Sukabumi",
   ],
-  
+
   "Saudi Arabia": [
-    'Riyadh', 'Jeddah', 'Mecca', 'Medina', 'Dammam', 'Khobar', 
-    'Taif', 'Abha', 'Tabuk', 'Al Khobar'
+    "Riyadh",
+    "Jeddah",
+    "Mecca",
+    "Medina",
+    "Dammam",
+    "Khobar",
+    "Taif",
+    "Abha",
+    "Tabuk",
+    "Al Khobar",
   ],
-  
-  "Morocco": [
-    'Casablanca', 'Marrakech', 'Rabat', 'Fez', 'Tangier', 'Agadir',
-    'Meknes', 'Essaouira', 'Chefchaouen', 'Ouarzazate'
+
+  Morocco: [
+    "Casablanca",
+    "Marrakech",
+    "Rabat",
+    "Fez",
+    "Tangier",
+    "Agadir",
+    "Meknes",
+    "Essaouira",
+    "Chefchaouen",
+    "Ouarzazate",
   ],
-  
-  "Egypt": [
-    'Cairo', 'Alexandria', 'Luxor', 'Aswan', 'Hurghada', 'Sharm El Sheikh',
-    'Dahab', 'Marsa Alam', 'Taba', 'Giza'
+
+  Egypt: [
+    "Cairo",
+    "Alexandria",
+    "Luxor",
+    "Aswan",
+    "Hurghada",
+    "Sharm El Sheikh",
+    "Dahab",
+    "Marsa Alam",
+    "Taba",
+    "Giza",
   ],
-  
-  "Azerbaijan": [
-    'Baku', 'Ganja', 'Sumgayit', 'Mingachevir', 'Qabalah', 'Shaki',
-    'Lankaran', 'Shamakhi', 'Quba', 'Gabala'
+
+  Azerbaijan: [
+    "Baku",
+    "Ganja",
+    "Sumgayit",
+    "Mingachevir",
+    "Qabalah",
+    "Shaki",
+    "Lankaran",
+    "Shamakhi",
+    "Quba",
+    "Gabala",
   ],
-  
-  "Georgia": [
-    'Tbilisi', 'Batumi', 'Kutaisi', 'Rustavi', 'Zugdidi', 'Gori',
-    'Telavi', 'Mestia', 'Kazbegi', 'Sighnaghi', 'Mtskheta', 'Borjomi',
-    'Bakuriani'
+
+  Georgia: [
+    "Tbilisi",
+    "Batumi",
+    "Kutaisi",
+    "Rustavi",
+    "Zugdidi",
+    "Gori",
+    "Telavi",
+    "Mestia",
+    "Kazbegi",
+    "Sighnaghi",
+    "Mtskheta",
+    "Borjomi",
+    "Bakuriani",
   ],
-  
-  "Albania": [
-    'Tirana', 'Durres', 'Vlora', 'Shkodra', 'Fier', 'Korce',
-    'Berat', 'Gjirokaster', 'Sarande', 'Kruje'
+
+  Albania: [
+    "Tirana",
+    "Durres",
+    "Vlore",
+    "Shkoder",
+    "Fier",
+    "Korce",
+    "Berat",
+    "Gjirokaster",
+    "Sarande",
+    "Kruje",
   ],
-  
+
   "United Arab Emirates": [
-    'Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah',
-    'Fujairah', 'Umm Al Quwain', 'Al Ain'
-  ]
+    "Dubai",
+    "Abu Dhabi",
+    "Sharjah",
+    "Ajman",
+    "Ras Al Khaimah",
+    "Fujairah",
+    "Umm Al Quwain",
+    "Al Ain",
+  ],
 };
 
 // Helper functions
@@ -87,31 +177,31 @@ export const isValidCityForCountry = (city, country) => {
 
 // Format options for dropdowns
 export const getCountryOptions = () => {
-  return getCountries().map(country => ({
+  return getCountries().map((country) => ({
     value: country,
-    label: country
+    label: country,
   }));
 };
 
 export const getCityOptions = (countries) => {
   // Handle both single country (string) and multiple countries (array)
-  if (typeof countries === 'string') {
-    return getCitiesByCountry(countries).map(city => ({
+  if (typeof countries === "string") {
+    return getCitiesByCountry(countries).map((city) => ({
       value: city,
-      label: city
+      label: city,
     }));
   }
-  
+
   // Handle array of countries
   if (Array.isArray(countries) && countries.length > 0) {
-    const cities = countries.flatMap(country => getCitiesByCountry(country));
+    const cities = countries.flatMap((country) => getCitiesByCountry(country));
     const uniqueCities = [...new Set(cities)].sort();
-    return uniqueCities.map(city => ({
+    return uniqueCities.map((city) => ({
       value: city,
-      label: city
+      label: city,
     }));
   }
-  
+
   // Return empty array if no countries provided
   return [];
 };
@@ -119,7 +209,9 @@ export const getCityOptions = (countries) => {
 // Get transfer cities based on hotel countries
 export const getTransferCitiesFromHotelCountries = (hotelCountries) => {
   const uniqueCountries = [...new Set(hotelCountries.filter(Boolean))];
-  const cities = uniqueCountries.flatMap(country => getCitiesByCountry(country));
+  const cities = uniqueCountries.flatMap((country) =>
+    getCitiesByCountry(country)
+  );
   return [...new Set(cities)].sort();
 };
 
@@ -133,5 +225,5 @@ export default {
   isValidCityForCountry,
   getCountryOptions,
   getCityOptions,
-  getTransferCitiesFromHotelCountries
+  getTransferCitiesFromHotelCountries,
 };

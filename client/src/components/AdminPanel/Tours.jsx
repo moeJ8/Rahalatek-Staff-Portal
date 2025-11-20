@@ -1040,11 +1040,11 @@ export default function Tours() {
                         </div>
                     ) : tours.length > 0 ? (
                         <div className="space-y-2 relative">
-                            <CustomSelect
+                            <SearchableSelect
                                 id="selectTourToDuplicate"
                                 label="Select Tour"
                                 value={selectedTourToDuplicate}
-                                onChange={(value) => setSelectedTourToDuplicate(value)}
+                                onChange={(e) => setSelectedTourToDuplicate(e.target.value)}
                                 options={[
                                     { value: "", label: "Choose a tour" },
                                     ...tours.map(tour => ({
@@ -1052,7 +1052,7 @@ export default function Tours() {
                                         label: `${tour.name} - ${tour.city} (${tour.tourType})`
                                     }))
                                 ]}
-                                placeholder="Select a tour to duplicate"
+                                placeholder="Search and choose a tour..."
                                 required
                             />
                         </div>

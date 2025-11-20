@@ -1,8 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Label } from 'flowbite-react';
 import { FaCalendarAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
+
+const normalizeIsoDate = (dateString = '') => {
+  if (!dateString) return '';
+  return dateString.split('T')[0];
+};
 
 const CustomDatePicker = ({ 
   value, 
@@ -26,7 +31,13 @@ const CustomDatePicker = ({
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const dropdownRef = useRef(null);
+  const calendarPortalRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   // Mobile detection
   useEffect(() => {
@@ -69,12 +80,15 @@ const CustomDatePicker = ({
     if (value) {
       setDisplayDate(formatDateForDisplay(value));
       
-      // Parse ISO date string in local timezone to avoid timezone shift
-      const [year, month, day] = value.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day); // month is 0-indexed
-      
-      setSelectedDate(localDate);
-      setCurrentMonth(localDate);
+      const normalized = normalizeIsoDate(value);
+      const [year, month, day] = normalized.split('-').map((segment) => Number(segment));
+      if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
+        const localDate = new Date(year, month - 1, day); // month is 0-indexed
+        setSelectedDate(localDate);
+        setCurrentMonth(localDate);
+      } else {
+        setSelectedDate(null);
+      }
     } else {
       setDisplayDate('');
       setSelectedDate(null);
@@ -84,7 +98,13 @@ const CustomDatePicker = ({
   // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const clickedInsideInput =
+        dropdownRef.current && dropdownRef.current.contains(event.target);
+      const clickedInsidePortal =
+        calendarPortalRef.current &&
+        calendarPortalRef.current.contains(event.target);
+
+      if (!clickedInsideInput && !clickedInsidePortal) {
         setIsOpen(false);
       }
     };
@@ -139,10 +159,12 @@ const CustomDatePicker = ({
     const isoDate = `${year}-${month}-${day}`;
     
     // Check min/max constraints
-    if (min && isoDate < min) {
+    const normalizedMin = normalizeIsoDate(min);
+    const normalizedMax = normalizeIsoDate(max);
+    if (normalizedMin && isoDate < normalizedMin) {
       return; // Don't allow selection before min date
     }
-    if (max && isoDate > max) {
+    if (normalizedMax && isoDate > normalizedMax) {
       return; // Don't allow selection after max date
     }
     
@@ -154,15 +176,45 @@ const CustomDatePicker = ({
     setIsOpen(false);
   };
 
+  const updateDropdownPosition = useCallback(() => {
+    if (!dropdownRef.current) return;
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const gap = 8;
+    const top =
+      popupPosition === "up"
+        ? rect.top + window.scrollY - gap
+        : rect.bottom + window.scrollY + gap;
+    setDropdownPosition({
+      top,
+      left: rect.left + window.scrollX,
+      width: rect.width,
+    });
+  }, [popupPosition]);
+
   const handleToggle = () => {
     setIsOpen(!isOpen);
     if (!isOpen && value) {
       // Parse ISO date string in local timezone
-      const [year, month, day] = value.split('-').map(Number);
+      const normalized = normalizeIsoDate(value);
+      const [year, month, day] = normalized.split('-').map((segment) => Number(segment));
       const localDate = new Date(year, month - 1, day);
       setCurrentMonth(localDate);
     }
+    if (!isOpen && !isMobile) {
+      updateDropdownPosition();
+    }
   };
+  useEffect(() => {
+    if (isOpen && !isMobile) {
+      updateDropdownPosition();
+      window.addEventListener('resize', updateDropdownPosition);
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      return () => {
+        window.removeEventListener('resize', updateDropdownPosition);
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+      };
+    }
+  }, [isOpen, isMobile, updateDropdownPosition]);
 
   const navigateMonth = (direction) => {
     const newMonth = new Date(currentMonth);
@@ -466,11 +518,24 @@ const CustomDatePicker = ({
           );
         }
 
-        return (
-          <div className={`absolute z-50 ${popupSize === 'small' ? 'w-52' : 'w-80'} ${popupPosition === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'}`}>
-            {calendarPanel}
-          </div>
-        );
+        if (!isMobile && isMounted) {
+          return createPortal(
+            <div
+              ref={calendarPortalRef}
+              className={`absolute z-[10000] ${popupSize === 'small' ? 'w-52' : 'w-80'}`}
+              style={{
+                top: dropdownPosition.top,
+                left: dropdownPosition.left,
+                width: dropdownPosition.width || undefined,
+                transform: popupPosition === 'up' ? 'translateY(-100%)' : 'none',
+              }}
+            >
+              {calendarPanel}
+            </div>,
+            document.body
+          );
+        }
+        return null;
       })()}
     </div>
   );

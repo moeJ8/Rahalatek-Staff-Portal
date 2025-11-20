@@ -424,7 +424,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const hotelTable = document.createElement('table');
       hotelTable.style.width = '100%';
-      hotelTable.style.fontSize = '12px';
+      hotelTable.style.fontSize = '11px';
       hotelTable.style.textAlign = 'left';
       hotelTable.style.color = '#374151';
       hotelTable.style.borderCollapse = 'collapse';
@@ -442,9 +442,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       hotelHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '12px 16px';
+        th.style.padding = '10px 14px';
         th.style.border = '1px solid #f8fafc';
-        th.style.fontSize = '12px';
+        th.style.fontSize = '11px';
         th.style.fontWeight = 'bold';
         hotelHeaderRow.appendChild(th);
       });
@@ -470,7 +470,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: hotel.pax,
             breakdown: hotel.adults !== null && hotel.children !== null && hotel.children > 0
-              ? ` (${hotel.adults}A ${hotel.children}C)`
+              ? ` (${hotel.adults}Ad ${hotel.children}Ch)`
               : null
           },
           hotel.confirmationNumber || ''
@@ -482,7 +482,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             // Create main pax text
             const paxText = document.createElement('span');
             paxText.textContent = cellData.pax;
-            paxText.style.fontSize = '12px';
+            paxText.style.fontSize = '11px';
             paxText.style.fontWeight = 'bold';
             paxText.style.color = '#000000';
             td.appendChild(paxText);
@@ -491,18 +491,18 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             if (cellData.breakdown) {
               const breakdownText = document.createElement('span');
               breakdownText.textContent = cellData.breakdown;
-              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontSize = '7px';
               breakdownText.style.fontWeight = 'normal';
               breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
               td.appendChild(breakdownText);
             }
           } else {
             td.textContent = cellData;
-            td.style.fontSize = '12px';
+            td.style.fontSize = '11px';
             td.style.fontWeight = 'bold';
             td.style.color = '#000000';
           }
-          td.style.padding = '12px 16px';
+          td.style.padding = '10px 14px';
           td.style.border = '1px solid #f8fafc';
           row.appendChild(td);
         });
@@ -542,7 +542,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const transferTable = document.createElement('table');
       transferTable.style.width = '100%';
-      transferTable.style.fontSize = '12px';
+      transferTable.style.fontSize = '11px';
       transferTable.style.textAlign = 'left';
       transferTable.style.color = '#374151';
       transferTable.style.borderCollapse = 'collapse';
@@ -560,9 +560,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       transferHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '12px 16px';
+        th.style.padding = '10px 14px';
         th.style.border = '1px solid #f8fafc';
-        th.style.fontSize = '12px';
+        th.style.fontSize = '11px';
         th.style.fontWeight = 'bold';
         th.style.verticalAlign = 'middle';
         transferHeaderRow.appendChild(th);
@@ -589,7 +589,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: transfer.pax,
             breakdown: transfer.adults !== null && transfer.children !== null && transfer.children > 0
-              ? ` (${transfer.adults}A ${transfer.children}C)`
+              ? ` (${transfer.adults}Ad ${transfer.children}Ch)`
               : null
           },
           transfer.vehicleType
@@ -601,7 +601,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             // Create main pax text
             const paxText = document.createElement('span');
             paxText.textContent = cellData.pax;
-            paxText.style.fontSize = '12px';
+            paxText.style.fontSize = '11px';
             paxText.style.fontWeight = 'bold';
             paxText.style.color = '#000000';
             td.appendChild(paxText);
@@ -610,18 +610,18 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             if (cellData.breakdown) {
               const breakdownText = document.createElement('span');
               breakdownText.textContent = cellData.breakdown;
-              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontSize = '7px';
               breakdownText.style.fontWeight = 'normal';
               breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
               td.appendChild(breakdownText);
             }
           } else {
             td.textContent = cellData;
-            td.style.fontSize = '12px';
+            td.style.fontSize = '11px';
             td.style.fontWeight = 'bold';
             td.style.color = '#000000';
           }
-          td.style.padding = '12px 16px';
+          td.style.padding = '10px 14px';
           td.style.border = '1px solid #f8fafc';
           row.appendChild(td);
         });
@@ -661,7 +661,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       
       const tripsTable = document.createElement('table');
       tripsTable.style.width = '100%';
-      tripsTable.style.fontSize = '12px';
+      tripsTable.style.fontSize = '11px';
       tripsTable.style.textAlign = 'left';
       tripsTable.style.color = '#374151';
       tripsTable.style.borderCollapse = 'collapse';
@@ -679,9 +679,9 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
       tripsHeaders.forEach(headerText => {
         const th = document.createElement('th');
         th.textContent = headerText;
-        th.style.padding = '12px 16px';
+        th.style.padding = '10px 14px';
         th.style.border = '1px solid #f8fafc';
-        th.style.fontSize = '12px';
+        th.style.fontSize = '11px';
         th.style.fontWeight = 'bold';
         tripsHeaderRow.appendChild(th);
       });
@@ -704,7 +704,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
           {
             pax: trip.pax,
             breakdown: trip.adults !== null && trip.children !== null && trip.children > 0
-              ? ` (${trip.adults}A ${trip.children}C)`
+              ? ` (${trip.adults}Ad ${trip.children}Ch)`
               : null
           }
         ];
@@ -715,7 +715,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             // Create main pax text
             const paxText = document.createElement('span');
             paxText.textContent = cellData.pax;
-            paxText.style.fontSize = '12px';
+            paxText.style.fontSize = '11px';
             paxText.style.fontWeight = 'bold';
             paxText.style.color = '#000000';
             td.appendChild(paxText);
@@ -724,18 +724,18 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
             if (cellData.breakdown) {
               const breakdownText = document.createElement('span');
               breakdownText.textContent = cellData.breakdown;
-              breakdownText.style.fontSize = '8px';
+              breakdownText.style.fontSize = '7px';
               breakdownText.style.fontWeight = 'normal';
               breakdownText.style.color = '#6b7280'; // text-gray-500 equivalent
               td.appendChild(breakdownText);
             }
           } else {
             td.textContent = cellData;
-            td.style.fontSize = '12px';
+            td.style.fontSize = '11px';
             td.style.fontWeight = 'bold';
             td.style.color = '#000000';
           }
-          td.style.padding = '12px 16px';
+          td.style.padding = '10px 14px';
           td.style.border = '1px solid #f8fafc';
           row.appendChild(td);
         });
@@ -1619,7 +1619,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {hotel.pax}
                         {hotel.adults !== null && hotel.children !== null && hotel.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({hotel.adults}A {hotel.children}C)
+                            ({hotel.adults}Ad {hotel.children}Ch)
                           </span>
                         )}
                       </div>
@@ -1701,7 +1701,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {transfer.pax}
                         {transfer.adults !== null && transfer.children !== null && transfer.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({transfer.adults}A {transfer.children}C)
+                            ({transfer.adults}Ad {transfer.children}Ch)
                           </span>
                         )}
                       </div>
@@ -1776,7 +1776,7 @@ const VoucherPreview = ({ voucherData, onDelete, editUrl, saveButton, onSave }) 
                         {trip.pax}
                         {trip.adults !== null && trip.children !== null && trip.children > 0 && (
                           <span className="text-xs text-gray-500 ml-1">
-                            ({trip.adults}A {trip.children}C)
+                            ({trip.adults}Ad {trip.children}Ch)
                           </span>
                         )}
                       </div>

@@ -201,30 +201,29 @@ class PaymentReceiptService {
         color: #1d4ed8;
       }
       .amount-display {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: white;
-        border-radius: 16px;
-        padding: 16px 20px;
-        margin-bottom: 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        background: rgba(248, 250, 252, 0.5);
       }
       .amount-value {
-        font-size: 32px;
+        font-size: 28px;
         font-weight: 700;
         margin: 0;
+        color: #0f172a;
       }
       .amount-label {
-        margin-top: 4px;
-        font-size: 12px;
+        margin-top: 6px;
+        font-size: 11px;
         letter-spacing: 0.5px;
         text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.7);
+        color: #94a3b8;
       }
       .amount-direction {
-        margin-top: 2px;
-        font-size: 11px;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.85);
+        margin-top: 4px;
+        font-size: 12px;
+        color: #1e293b;
       }
       .grid {
         display: grid;
@@ -259,10 +258,10 @@ class PaymentReceiptService {
         letter-spacing: 0.8px;
       }
       .notes {
-        border: 1px dashed #cbd5f5;
+        border: 1px dashed #94a3b8;
         border-radius: 12px;
         padding: 16px;
-        background: #fff;
+        background: rgba(248, 250, 252, 0.3);
         margin-bottom: 24px;
         min-height: 80px;
       }
@@ -318,14 +317,6 @@ class PaymentReceiptService {
         </div>
       </div>
 
-      <div class="amount-display">
-        <div class="amount-value">
-          ${symbol}${payment.amount.toFixed(2)}
-        </div>
-        <div class="amount-label">${directionLabel} • ${payment.currency}</div>
-        <div class="amount-direction">${counterpartyLabel}</div>
-      </div>
-
       <div class="grid">
         <div class="info-card">
           <div class="info-label">Office Name</div>
@@ -336,20 +327,8 @@ class PaymentReceiptService {
           <div class="info-value">${voucherInfo}</div>
         </div>
         <div class="info-card">
-          <div class="info-label">Created By</div>
-          <div class="info-value">${sanitize(
-            payment.createdBy?.name || payment.createdBy?.username || "N/A"
-          )}</div>
-        </div>
-        <div class="info-card">
           <div class="info-label">Created On</div>
           <div class="info-value">${formatDate(payment.createdAt, true)}</div>
-        </div>
-        <div class="info-card">
-          <div class="info-label">Approved By</div>
-          <div class="info-value">${sanitize(
-            payment.approvedBy?.name || payment.approvedBy?.username || "N/A"
-          )}</div>
         </div>
         <div class="info-card">
           <div class="info-label">Issued By</div>
@@ -372,34 +351,38 @@ class PaymentReceiptService {
           <thead>
             <tr>
               <th>Event</th>
-              <th>Performed By</th>
               <th>Date</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Payment Created</td>
-              <td>${sanitize(
-                payment.createdBy?.name || payment.createdBy?.username || "N/A"
-              )}</td>
               <td>${formatDate(payment.createdAt, true)}</td>
             </tr>
             <tr>
               <td>Payment Approved</td>
-              <td>${sanitize(
-                payment.approvedBy?.name ||
-                  payment.approvedBy?.username ||
-                  "N/A"
-              )}</td>
               <td>${formatDate(payment.approvedAt, true)}</td>
             </tr>
             <tr>
               <td>Payment Date</td>
-              <td>${payment.paymentDate ? "Recorded" : "Not provided"}</td>
-              <td>${formatDate(payment.paymentDate)}</td>
+              <td>${
+                payment.paymentDate
+                  ? formatDate(payment.paymentDate)
+                  : "Not provided"
+              }</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="amount-display">
+        <div class="amount-label">${directionLabel}</div>
+        <div class="amount-value">
+          ${symbol}${payment.amount.toFixed(2)}
+        </div>
+        <div class="amount-direction">
+          ${counterpartyLabel} • Currency: ${payment.currency}
+        </div>
       </div>
 
       <div class="footer">

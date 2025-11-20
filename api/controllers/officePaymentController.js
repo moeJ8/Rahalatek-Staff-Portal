@@ -116,7 +116,8 @@ exports.getOfficePayments = async (req, res) => {
         }
 
         const payments = await OfficePayment.find(query)
-            .populate('createdBy', 'name')
+            .populate('createdBy', 'name username')
+            .populate('approvedBy', 'name username')
             .populate('relatedVoucher', 'voucherNumber clientName')
             .sort({ createdAt: -1 });
 

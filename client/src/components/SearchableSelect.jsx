@@ -27,7 +27,13 @@ const SearchableSelect = ({
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const modalRef = useRef(null);
+  const dropdownMenuRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [dropdownStyles, setDropdownStyles] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
 
   // Mobile detection
   useEffect(() => {
@@ -43,6 +49,17 @@ const SearchableSelect = ({
 
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  const updateDropdownPosition = () => {
+    if (dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setDropdownStyles({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -70,7 +87,12 @@ const SearchableSelect = ({
   useEffect(() => {
     // Click outside to close dropdown
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const clickedInsideTrigger =
+        dropdownRef.current && dropdownRef.current.contains(event.target);
+      const clickedInsideMenu =
+        dropdownMenuRef.current && dropdownMenuRef.current.contains(event.target);
+
+      if (!clickedInsideTrigger && !clickedInsideMenu) {
         setIsOpen(false);
         setSearchTerm("");
       }
@@ -111,6 +133,23 @@ const SearchableSelect = ({
     }
   }, [isOpen, isMobile]);
 
+  useEffect(() => {
+    if (!isOpen || isMobile) return;
+
+    updateDropdownPosition();
+
+    const handleScroll = () => updateDropdownPosition();
+    const handleResize = () => updateDropdownPosition();
+
+    window.addEventListener("scroll", handleScroll, true);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isOpen, isMobile]);
+
   const handleSelect = (option) => {
     onChange({ target: { value: option.value } });
     setIsOpen(false);
@@ -137,7 +176,11 @@ const SearchableSelect = ({
         setShowMobileModal(true);
       }
     } else {
-      setIsOpen(!isOpen);
+      const nextState = !isOpen;
+      setIsOpen(nextState);
+      if (nextState) {
+        updateDropdownPosition();
+      }
     }
   };
 
@@ -148,6 +191,7 @@ const SearchableSelect = ({
   const handleInputFocus = () => {
     if (!disabled && !isMobile) {
       setIsOpen(true);
+      updateDropdownPosition();
     }
   };
 
@@ -160,6 +204,7 @@ const SearchableSelect = ({
         setShowMobileModal(true);
       } else {
         setIsOpen(true);
+        updateDropdownPosition();
       }
     }
   };
@@ -276,55 +321,65 @@ const SearchableSelect = ({
         </div>
       </div>
 
-      {isOpen && !disabled && !isMobile && (
-        <div
-          className={`absolute z-50 w-full mt-1 border rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${
-            variant === "glass"
-              ? "backdrop-blur-3xl bg-black/60 border-white/40"
-              : "backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-gray-200/50 dark:border-gray-600/50"
-          }`}
-        >
-          <CustomScrollbar maxHeight="400px" variant={variant}>
-            <div className="p-1">
-              {loading ? (
-                <div className="py-4 px-4 text-center">
-                  <div className="flex items-center justify-center">
-                    <RahalatekLoader size="sm" />
+      {isOpen &&
+        !disabled &&
+        !isMobile &&
+        createPortal(
+          <div
+            ref={dropdownMenuRef}
+            className={`fixed z-[10000] border rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${
+              variant === "glass"
+                ? "backdrop-blur-3xl bg-black/60 border-white/40"
+                : "backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-gray-200/50 dark:border-gray-600/50"
+            }`}
+            style={{
+              top: dropdownStyles.top,
+              left: dropdownStyles.left,
+              width: dropdownStyles.width,
+            }}
+          >
+            <CustomScrollbar maxHeight="400px" variant={variant}>
+              <div className="p-1">
+                {loading ? (
+                  <div className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center">
+                      <RahalatekLoader size="sm" />
+                    </div>
                   </div>
-                </div>
-              ) : filteredOptions.length > 0 ? (
-                filteredOptions.map((option) => (
+                ) : filteredOptions.length > 0 ? (
+                  filteredOptions.map((option) => (
+                    <div
+                      key={option.value}
+                      className={`py-3 px-4 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 mx-1 my-0.5 ${
+                        variant === "glass"
+                          ? value === option.value
+                            ? "bg-white/35 text-white shadow-md border border-white/30"
+                            : "text-white hover:bg-white/20 hover:text-white"
+                          : value === option.value
+                          ? "bg-blue-500/20 dark:bg-blue-400/30 text-blue-700 dark:text-blue-300 shadow-sm"
+                          : "text-gray-700 dark:text-gray-200 hover:bg-blue-50/50 dark:hover:bg-blue-900/20"
+                      }`}
+                      onClick={() => handleSelect(option)}
+                    >
+                      {option.label}
+                    </div>
+                  ))
+                ) : (
                   <div
-                    key={option.value}
-                    className={`py-3 px-4 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 mx-1 my-0.5 ${
+                    className={`py-4 px-4 text-center text-sm font-medium ${
                       variant === "glass"
-                        ? value === option.value
-                          ? "bg-white/35 text-white shadow-md border border-white/30"
-                          : "text-white hover:bg-white/20 hover:text-white"
-                        : value === option.value
-                        ? "bg-blue-500/20 dark:bg-blue-400/30 text-blue-700 dark:text-blue-300 shadow-sm"
-                        : "text-gray-700 dark:text-gray-200 hover:bg-blue-50/50 dark:hover:bg-blue-900/20"
+                        ? "text-white"
+                        : "text-gray-500 dark:text-gray-400"
                     }`}
-                    onClick={() => handleSelect(option)}
                   >
-                    {option.label}
+                    No results found
                   </div>
-                ))
-              ) : (
-                <div
-                  className={`py-4 px-4 text-center text-sm font-medium ${
-                    variant === "glass"
-                      ? "text-white"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  No results found
-                </div>
-              )}
-            </div>
-          </CustomScrollbar>
-        </div>
-      )}
+                )}
+              </div>
+            </CustomScrollbar>
+          </div>,
+          document.body
+        )}
 
       {/* Mobile Modal */}
       {showMobileModal &&
@@ -333,7 +388,7 @@ const SearchableSelect = ({
         isMounted &&
         createPortal(
           <div
-            className={`fixed inset-0 z-50 flex items-start justify-center pt-4 px-4 bg-black/50 ${
+            className={`fixed inset-0 z-[10000] flex items-start justify-center pt-4 px-4 bg-black/50 ${
               modalEnter ? "backdrop-blur-sm" : "backdrop-blur-0"
             } transition-all duration-300`}
             onClick={(e) => {
@@ -345,10 +400,10 @@ const SearchableSelect = ({
                 }, 300);
               }
             }}
-          >
+            >
             <div
               ref={modalRef}
-              className={`w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl transform transition-all duration-300 ${
+                className={`w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl transform transition-all duration-300 ${
                 modalEnter ? "opacity-100 scale-100" : "opacity-0 scale-95"
               }`}
               style={{ maxHeight: "90vh" }}

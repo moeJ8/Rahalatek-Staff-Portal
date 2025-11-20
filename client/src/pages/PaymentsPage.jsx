@@ -26,6 +26,7 @@ import CustomDatePicker from "../components/CustomDatePicker";
 import CustomButton from "../components/CustomButton";
 import CustomScrollbar from "../components/CustomScrollbar";
 import RahalatekLoader from "../components/RahalatekLoader";
+import PaymentDateControls from "../components/PaymentDateControls";
 
 const getCurrencySymbol = (currency) => {
   if (!currency) return "$";
@@ -63,15 +64,20 @@ const formatDateTime = (dateString) => {
 const PaymentInfoRow = ({ label, value }) => {
   const displayValue =
     value === null || value === undefined || value === "" ? "N/A" : value;
+  const isElement = React.isValidElement(displayValue);
 
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {label}
       </p>
-      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-        {displayValue}
-      </p>
+      {isElement ? (
+        <div className="mt-0.5">{displayValue}</div>
+      ) : (
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          {displayValue}
+        </p>
+      )}
     </div>
   );
 };
@@ -96,6 +102,19 @@ const PaymentsPage = () => {
   const navigate = useNavigate();
   const defaultCreatedMonthRef = useRef(getCurrentMonthValue());
   const defaultCreatedYearRef = useRef(getCurrentYearValue());
+  const userRoles = useMemo(() => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      return {
+        isAdmin: !!storedUser.isAdmin,
+        isAccountant: !!storedUser.isAccountant,
+      };
+    } catch (error) {
+      console.error("Failed to parse user info", error);
+      return { isAdmin: false, isAccountant: false };
+    }
+  }, []);
+  const canEditPaymentDate = userRoles.isAdmin || userRoles.isAccountant;
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingReceiptId, setDownloadingReceiptId] = useState(null);
@@ -357,6 +376,7 @@ const PaymentsPage = () => {
             payment.notes,
             payment.relatedVoucher?.clientName,
             payment.relatedVoucher?.voucherNumber?.toString(),
+            payment._id,
           ]
             .filter(Boolean)
             .join(" ")
@@ -601,10 +621,77 @@ const PaymentsPage = () => {
     }
   };
 
-  const canViewPage = useMemo(() => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return user.isAdmin || user.isAccountant;
-  }, []);
+  const handlePaymentDateUpdate = useCallback(
+    async (paymentId, paymentDate) => {
+      if (!paymentId) return;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("You must be logged in to update payment dates", {
+          duration: 3000,
+          style: {
+            background: "#f44336",
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: "16px",
+            padding: "16px",
+          },
+          iconTheme: {
+            primary: "#fff",
+            secondary: "#f44336",
+          },
+        });
+        throw new Error("Not authenticated");
+      }
+
+      try {
+        await axios.patch(
+          `/api/office-payments/${paymentId}/payment-date`,
+          { paymentDate },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        toast.success("Payment date updated successfully", {
+          duration: 2500,
+          style: {
+            background: "#4CAF50",
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: "15px",
+            padding: "14px",
+          },
+          iconTheme: {
+            primary: "#fff",
+            secondary: "#4CAF50",
+          },
+        });
+        await fetchPayments();
+      } catch (error) {
+        console.error("Failed to update payment date:", error);
+        toast.error(
+          error.response?.data?.message || "Failed to update payment date",
+          {
+            duration: 3000,
+            style: {
+              background: "#f44336",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: "16px",
+              padding: "16px",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#f44336",
+            },
+          }
+        );
+        throw error;
+      }
+    },
+    [fetchPayments]
+  );
+
+  const canViewPage = canEditPaymentDate;
 
   if (!canViewPage) {
     return (
@@ -936,6 +1023,9 @@ const PaymentsPage = () => {
                       <p className="text-[10px] text-gray-500 dark:text-gray-400">
                         Created {formatDateTime(payment.createdAt)}
                       </p>
+                      <p className="text-[10px] font-mono text-gray-500 dark:text-gray-400">
+                        Payment ID: {payment._id}
+                      </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       <span
@@ -1067,9 +1157,14 @@ const PaymentsPage = () => {
                     <PaymentInfoRow
                       label="Payment Date"
                       value={
-                        payment.paymentDate
-                          ? formatDate(payment.paymentDate)
-                          : "Not recorded"
+                        <PaymentDateControls
+                          currentPaymentDate={payment.paymentDate}
+                          onPaymentDateUpdate={(newDate) =>
+                            handlePaymentDateUpdate(payment._id, newDate)
+                          }
+                          canEdit={canEditPaymentDate}
+                          className="text-sm"
+                        />
                       }
                     />
                   </div>

@@ -1000,13 +1000,21 @@ const PaymentManager = ({
                           </div>
                         )}
 
-                        {payment.status === "approved" &&
-                          payment.approvedBy && (
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                              Approved by: {payment.approvedBy.name} on{" "}
-                              {formatDate(payment.approvedAt)}
-                            </p>
-                          )}
+                        {payment.status === "approved" && (
+                          <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">
+                            <span className="text-green-600 dark:text-green-400 font-semibold">
+                              Approved By:
+                            </span>{" "}
+                            {payment.approvedBy?.name ||
+                              payment.approvedBy?.username ||
+                              (payment.status === "approved"
+                                ? "System"
+                                : "Pending")}
+                            {payment.approvedAt
+                              ? ` on ${formatDate(payment.approvedAt)}`
+                              : ""}
+                          </p>
+                        )}
 
                         {/* Mobile: Action buttons */}
                         <div className="flex space-x-2 mt-3">
@@ -1166,13 +1174,21 @@ const PaymentManager = ({
                               </div>
                             )}
 
-                            {payment.status === "approved" &&
-                              payment.approvedBy && (
-                                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                                  Approved by: {payment.approvedBy.name} on{" "}
-                                  {formatDate(payment.approvedAt)}
-                                </p>
-                              )}
+                            {payment.status === "approved" && (
+                              <p className="text-xs text-gray-500 dark:text-gray-300 mt-1">
+                                <span className="text-green-600 dark:text-green-400 font-semibold">
+                                  Approved By:
+                                </span>{" "}
+                                {payment.approvedBy?.name ||
+                                  payment.approvedBy?.username ||
+                                  (payment.status === "approved"
+                                    ? "System"
+                                    : "Pending")}
+                                {payment.approvedAt
+                                  ? ` on ${formatDate(payment.approvedAt)}`
+                                  : ""}
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex flex-row items-center space-x-2">

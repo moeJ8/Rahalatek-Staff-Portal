@@ -1629,7 +1629,8 @@ function PackageFormSteps({
                                 onChange={(e) => onInputChange('description', e.target.value)}
                                 placeholder="Enter package description..."
                                 as="textarea"
-                                rows={4}
+                                rows={8}
+                                style={{ minHeight: '220px' }}
                             />
                             {translationCollapse.description && (
                                 <div className="mt-2 space-y-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-slate-900">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Label } from 'flowbite-react';
 import { FaChevronDown } from 'react-icons/fa';
 import CustomScrollbar from './CustomScrollbar';
@@ -20,6 +21,8 @@ const Select = ({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState('');
   const dropdownRef = useRef(null);
+  const dropdownMenuRef = useRef(null);
+  const [dropdownStyles, setDropdownStyles] = useState({ top: 0, left: 0, width: 0 });
   
   // Determine RTL: prefer explicit override, else auto based on selected value
   const isRTL = typeof rtlOverride === 'boolean' ? rtlOverride : (value === 'ar');
@@ -33,7 +36,9 @@ const Select = ({
   useEffect(() => {
     // Click outside to close dropdown
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const clickedInsideTrigger = dropdownRef.current && dropdownRef.current.contains(event.target);
+      const clickedInsideMenu = dropdownMenuRef.current && dropdownMenuRef.current.contains(event.target);
+      if (!clickedInsideTrigger && !clickedInsideMenu) {
         setIsOpen(false);
       }
     };
@@ -44,6 +49,17 @@ const Select = ({
     };
   }, []);
 
+  const updateDropdownPosition = () => {
+    if (dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setDropdownStyles({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
+
   const handleSelect = (option) => {
     if (disabled) return;
     
@@ -53,7 +69,11 @@ const Select = ({
 
   const handleToggle = () => {
     if (disabled) return;
-    setIsOpen(!isOpen);
+    const nextState = !isOpen;
+    setIsOpen(nextState);
+    if (!isOpen && !disabled) {
+      updateDropdownPosition();
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -85,6 +105,23 @@ const Select = ({
       }
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateDropdownPosition();
+
+    const handleScroll = () => updateDropdownPosition();
+    const handleResize = () => updateDropdownPosition();
+
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isOpen]);
 
   const isGlass = variant === "glass";
   const isCompact = variant === "compact";
@@ -160,12 +197,21 @@ const Select = ({
         </div>
       </div>
 
-      {isOpen && !disabled && (
-        <div className={`absolute z-50 w-full mt-1 border rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${
-          isGlass
-            ? 'backdrop-blur-3xl bg-black/60 border-white/40'
-            : 'backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-gray-200/50 dark:border-gray-600/50'
-        }`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {isOpen && !disabled && createPortal(
+        <div
+          ref={dropdownMenuRef}
+          className={`fixed z-[10000] border rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 ${
+            isGlass
+              ? 'backdrop-blur-3xl bg-black/60 border-white/40'
+              : 'backdrop-blur-md bg-white/90 dark:bg-gray-800/90 border-gray-200/50 dark:border-gray-600/50'
+          }`}
+          style={{
+            top: dropdownStyles.top + 4,
+            left: dropdownStyles.left,
+            width: dropdownStyles.width,
+          }}
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
           <CustomScrollbar maxHeight="400px" variant={variant}>
             <div className="p-1">
               {options.length > 0 ? (
@@ -201,7 +247,8 @@ const Select = ({
               )}
             </div>
           </CustomScrollbar>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
