@@ -875,10 +875,7 @@ class OfficeDetailPdfService {
     <div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
-            <div class="report-title">Office Report</div>
-        </div>
-        <div class="header-right">
-            <div class="office-name">${officeName}</div>
+            <div class="report-title">Office Report · ${officeName}</div>
         </div>
         ${
           logoBase64
