@@ -422,6 +422,7 @@ export const generateBookingMessage = ({
   hotelEntries.forEach((entry) => {
     const hotelData = entry.hotelData;
     if (!hotelData) return;
+    const hotelName = hotelData.name || "الفندق";
 
     // Check if this hotel has reception/farewell options enabled
     const includeReception =
@@ -466,7 +467,7 @@ export const generateBookingMessage = ({
               ? `${transportVehicleType} خاص`
               : `بسيارة ${transportVehicleType} خاصة`;
           transportationLines.push(
-            `${RLM}الاستقبال من ${airportName} ${vehicleText}`
+            `${RLM}الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
           );
         }
       } else if (
@@ -483,7 +484,7 @@ export const generateBookingMessage = ({
             ? `${transportVehicleType} خاص`
             : `بسيارة ${transportVehicleType} خاصة`;
         transportationLines.push(
-          `${RLM}الاستقبال من ${airportName} ${vehicleText}`
+          `${RLM}الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
         );
       }
     }
@@ -520,7 +521,7 @@ export const generateBookingMessage = ({
               ? `${transportVehicleType} خاص`
               : `بسيارة ${transportVehicleType} خاصة`;
           transportationLines.push(
-            `${RLM}التوديع إلى ${airportName} ${vehicleText}`
+            `${RLM}التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
           );
         }
       } else if (
@@ -537,7 +538,7 @@ export const generateBookingMessage = ({
             ? `${transportVehicleType} خاص`
             : `بسيارة ${transportVehicleType} خاصة`;
         transportationLines.push(
-          `${RLM}التوديع إلى ${airportName} ${vehicleText}`
+          `${RLM}التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
         );
       }
     }
@@ -564,7 +565,7 @@ export const generateBookingMessage = ({
           ? `${transportVehicleType} خاص`
           : `بسيارة ${transportVehicleType} خاصة`;
       transportationLines.push(
-        `${RLM}استقبال وتوديع من وإلى ${airportName} ${vehicleText}`
+        `${RLM}استقبال وتوديع من وإلى ${airportName} وفندق ${hotelName} ${vehicleText}`
       );
     }
   });
@@ -849,6 +850,7 @@ export const generateBookingMessageEnglish = ({
   hotelEntries.forEach((entry) => {
     const hotelData = entry.hotelData;
     if (!hotelData) return;
+    const hotelName = hotelData.name || "Hotel";
 
     // Check if this hotel has reception/farewell options enabled
     const includeReception =
@@ -891,7 +893,7 @@ export const generateBookingMessageEnglish = ({
               ? `Private ${transportVehicleType}`
               : `Private ${transportVehicleType} car`;
           transportationLines.push(
-            `Reception from ${airportName} by ${vehicleText}`
+            `Reception from ${airportName} to ${hotelName} by ${vehicleText}`
           );
         }
       } else if (
@@ -908,7 +910,7 @@ export const generateBookingMessageEnglish = ({
             ? `Private ${transportVehicleType}`
             : `Private ${transportVehicleType} car`;
         transportationLines.push(
-          `Reception from ${airportName} by ${vehicleText}`
+          `Reception from ${airportName} to ${hotelName} by ${vehicleText}`
         );
       }
     }
@@ -943,7 +945,7 @@ export const generateBookingMessageEnglish = ({
               ? `Private ${transportVehicleType}`
               : `Private ${transportVehicleType} car`;
           transportationLines.push(
-            `Farewell to ${airportName} by ${vehicleText}`
+            `Farewell from ${hotelName} to ${airportName} by ${vehicleText}`
           );
         }
       } else if (
@@ -960,7 +962,7 @@ export const generateBookingMessageEnglish = ({
             ? `Private ${transportVehicleType}`
             : `Private ${transportVehicleType} car`;
         transportationLines.push(
-          `Farewell to ${airportName} by ${vehicleText}`
+          `Farewell from ${hotelName} to ${airportName} by ${vehicleText}`
         );
       }
     }
@@ -978,7 +980,7 @@ export const generateBookingMessageEnglish = ({
       transportationLines = transportationLines.filter(
         (line) =>
           !line.includes(`Reception from ${airportName}`) &&
-          !line.includes(`Farewell to ${airportName}`)
+          !line.includes(`Farewell from ${hotelName}`)
       );
 
       const vehicleText =
@@ -986,7 +988,7 @@ export const generateBookingMessageEnglish = ({
           ? `Private ${transportVehicleType}`
           : `Private ${transportVehicleType} car`;
       transportationLines.push(
-        `Reception & Farewell from/to ${airportName} by ${vehicleText}`
+        `Reception & Farewell between ${airportName} and ${hotelName} by ${vehicleText}`
       );
     }
   });
