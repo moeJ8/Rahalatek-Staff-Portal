@@ -20,7 +20,10 @@ import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
 // Lazy load all page components
 import AdminPage from "./pages/AdminPage"; // Import directly for faster load
 import HomePage from "./pages/HomePage"; // Import directly - default landing page after sign-in
+import BookingsPage from "./pages/BookingsPage"; // Import directly for faster load
 const BookingPage = React.lazy(() => import("./pages/BookingPage"));
+const EditBookingPage = React.lazy(() => import("./pages/EditBookingPage"));
+const BookingsTrashPage = React.lazy(() => import("./pages/BookingsTrashPage"));
 const SignInPage = React.lazy(() => import("./pages/SignInPage"));
 const ToursPage = React.lazy(() => import("./pages/ToursPage"));
 const EditTourPage = React.lazy(() => import("./pages/EditTourPage"));
@@ -305,7 +308,10 @@ function App() {
               {/* Internal system routes - NOT for Publishers */}
               <Route element={<ProtectedRoute requireAdmin={true} />}>
                 <Route path="/home" element={<HomePage />} />
-                <Route path="/booking" element={<BookingPage />} />
+                <Route path="/create-booking" element={<BookingPage />} />
+                <Route path="/bookings" element={<BookingsPage />} />
+                <Route path="/bookings/edit/:id" element={<EditBookingPage />} />
+                <Route path="/bookings/trash" element={<BookingsTrashPage />} />
                 <Route path="/vouchers" element={<VouchersPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/vouchers/new" element={<CreateVoucherPage />} />

@@ -15,7 +15,8 @@ import {
   FaUserTie,
   FaBell,
   FaTrash,
-  FaBellSlash
+  FaBellSlash,
+  FaClipboardList
 } from 'react-icons/fa';
 
 export default function QuickActionsPanel() {
@@ -53,6 +54,20 @@ export default function QuickActionsPanel() {
         hoverColor: 'hover:bg-blue-100 dark:hover:bg-blue-900/50'
       }
     ];
+
+    // Booking action - only for non-publishers (admins, accountants, content managers)
+    const bookingActions = [];
+    if (!user.isPublisher) {
+      bookingActions.push({
+        id: 'create-booking',
+        title: 'Create Booking',
+        description: 'New booking package',
+        icon: <FaClipboardList className="w-5 h-5" />,
+        link: '/create-booking',
+        color: 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+        hoverColor: 'hover:bg-amber-100 dark:hover:bg-amber-900/50'
+      });
+    }
 
     const adminActions = [
       {
@@ -162,7 +177,7 @@ export default function QuickActionsPanel() {
       }
     ];
 
-    let actions = [...commonActions, ...personalActions];
+    let actions = [...commonActions, ...bookingActions, ...personalActions];
 
     if (user.isAdmin) {
       actions = [...actions, ...adminActions];

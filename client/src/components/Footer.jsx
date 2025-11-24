@@ -162,8 +162,8 @@ export default function Footer() {
                   <Link to="/home" className={`text-sm ${getLinkClasses()}`}>
                     Home
                   </Link>
-                  <Link to="/booking" className={`text-sm ${getLinkClasses()}`}>
-                    Booking
+                  <Link to="/bookings" className={`text-sm ${getLinkClasses()}`}>
+                    Bookings
                   </Link>
                   <Link
                     to="/vouchers"
@@ -332,7 +332,7 @@ export default function Footer() {
                       </li>
                       <li>
                         <Link
-                          to={getLocalizedPath("/booking", i18n.language)}
+                          to={getLocalizedPath("/bookings", i18n.language)}
                           className={`flex items-center gap-2 text-sm ${getLinkClasses()}`}
                         >
                           <FaClipboardList className="text-xs" />

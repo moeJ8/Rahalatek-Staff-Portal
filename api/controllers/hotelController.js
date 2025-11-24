@@ -9,12 +9,13 @@ const {
 
 // Helper function to translate a single hotel
 const translateHotel = (hotel, lang) => {
-  if (lang === 'en' || !hotel.translations) {
-    return hotel.toObject ? hotel.toObject() : hotel;
+  const hotelObj = hotel.toObject ? hotel.toObject() : { ...hotel };
+  
+  if (lang === 'en' || !hotelObj.translations) {
+    return hotelObj;
   }
 
-  const translations = hotel.translations;
-  const translatedHotel = hotel.toObject ? hotel.toObject() : { ...hotel };
+  const translations = hotelObj.translations;
 
   // Helper function to get translated text or fallback to base
   const getTranslated = (baseValue, translationValue) => {
@@ -23,13 +24,16 @@ const translateHotel = (hotel, lang) => {
 
   // Translate simple fields
   if (translations.description && translations.description[lang]) {
-    translatedHotel.description = getTranslated(hotel.description, translations.description[lang]);
+    hotelObj.description = getTranslated(hotelObj.description, translations.description[lang]);
   }
   if (translations.locationDescription && translations.locationDescription[lang]) {
-    translatedHotel.locationDescription = getTranslated(hotel.locationDescription, translations.locationDescription[lang]);
+    hotelObj.locationDescription = getTranslated(hotelObj.locationDescription, translations.locationDescription[lang]);
   }
 
-  return translatedHotel;
+  // Keep translations object in response for frontend use
+  hotelObj.translations = translations;
+
+  return hotelObj;
 };
 
 // Helper function to translate multiple hotels

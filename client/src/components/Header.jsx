@@ -25,7 +25,6 @@ export default function Header() {
   const [user, setUser] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [mobileMenuExpanded, setMobileMenuExpanded] = useState(false);
   const [mobilePublicPagesOpen, setMobilePublicPagesOpen] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [hoveredIndicator, setHoveredIndicator] = useState(null);
@@ -53,7 +52,7 @@ export default function Header() {
         'header.about': 'About Us',
         'header.signIn': 'Sign In',
         'header.dashboard': 'Dashboard',
-        'header.booking': 'Booking',
+        'header.booking': 'Bookings',
         'header.vouchers': 'Vouchers',
         'header.profile': 'Profile',
         'header.attendance': 'Attendance',
@@ -62,7 +61,8 @@ export default function Header() {
         'header.payments': 'Payments',
         'header.publicPages': 'Public Pages',
         'header.more': 'More',
-        'header.theme': 'Theme'
+        'header.theme': 'Theme',
+        'header.language': 'Language'
       };
       return englishTranslations[key] || key;
     }
@@ -151,7 +151,6 @@ export default function Header() {
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
-    setMobileMenuExpanded(false);
     setMobilePublicPagesOpen(false);
   };
 
@@ -346,16 +345,16 @@ export default function Header() {
                       }`}></span>
                     </Link>
                     <Link 
-                      to="/booking" 
+                      to="/bookings" 
                       className={`font-medium py-2 px-3 rounded-lg transition-all duration-300 relative group ${
-                        isActive('/booking') 
+                        isActive('/bookings') 
                           ? 'text-blue-600 dark:text-teal-400 bg-blue-50/80 dark:bg-teal-900/20' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10'
                       }`}
                     >
                       {getTranslation('header.booking')}
                       <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-blue-600 dark:bg-teal-400 transition-all duration-300 ${
-                        isActive('/booking') ? 'w-full' : 'w-0 group-hover:w-full'
+                        isActive('/bookings') ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}></span>
                     </Link>
                     <Link 
@@ -796,32 +795,14 @@ export default function Header() {
                       </div>
                     </div>
                     
-                    {/* Collapsible More Options Section */}
+                    {/* Theme Toggle */}
                     <div className="mt-4 px-2">
-                      <button
-                        onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
-                        className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        <span className="text-sm font-medium mr-2">{getTranslation('header.more')}</span>
-                        {mobileMenuExpanded ? (
-                          <HiChevronUp className="text-lg transition-transform duration-200" />
-                        ) : (
-                          <HiChevronDown className="text-lg transition-transform duration-200" />
-                        )}
-                      </button>
-                      
-                      {/* Expanded Options */}
-                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                        mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
-                      }`}>
-                        <div className="flex justify-center">
-                          {/* Theme Toggle */}
-                          <div className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md">
-                            <div className="transform group-hover:scale-110 transition-transform duration-200">
-                              <CustomDarkModeToggle />
-                            </div>
-                            <span className="text-xs font-medium text-center mt-1">{getTranslation('header.theme')}</span>
+                      <div className="flex justify-center">
+                        <div className="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md">
+                          <div className="transform group-hover:scale-110 transition-transform duration-200">
+                            <CustomDarkModeToggle />
                           </div>
+                          <span className="text-xs font-medium text-center mt-1">{getTranslation('header.theme')}</span>
                         </div>
                       </div>
                     </div>
@@ -862,12 +843,12 @@ export default function Header() {
                       </Link>
                   
                   <Link 
-                    to="/booking"
+                    to="/bookings"
                     onClick={closeMobileMenu}
                     className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
                       isSignInPage
                         ? 'text-white hover:bg-white/10'
-                        : isActive('/booking') 
+                        : isActive('/bookings') 
                           ? 'text-blue-600 dark:text-teal-400 bg-blue-50 dark:bg-teal-900/20 shadow-md' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
                     }`}
@@ -1127,37 +1108,33 @@ export default function Header() {
                       </div>
                     </div>
                     
-                    {/* Collapsible More Options Section */}
+                    {/* Theme / Language Controls */}
                     <div className="mt-4 px-2">
-                  <button
-                    onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
-                    className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <span className="text-sm font-medium mr-2">More</span>
-                    {mobileMenuExpanded ? (
-                      <HiChevronUp className="text-lg transition-transform duration-200" />
-                    ) : (
-                      <HiChevronDown className="text-lg transition-transform duration-200" />
-                    )}
-                  </button>
-                  
-                  {/* Expanded Options */}
-                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="flex justify-center">
-                      {/* Theme Toggle */}
-                      <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                        isSignInPage
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                      }`}>
-                        <div className="transform group-hover:scale-110 transition-transform duration-200">
-                          <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
+                      <div className="flex justify-center gap-4">
+                        <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                          isSignInPage
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                        }`}>
+                          <div className="transform group-hover:scale-110 transition-transform duration-200">
+                            <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
+                          </div>
+                          <span className="text-xs font-medium text-center mt-1">{getTranslation('header.theme')}</span>
                         </div>
-                        <span className="text-xs font-medium text-center mt-1">{t('header.theme')}</span>
-                      </div>
-                    </div>
+                        {!hideLanguageSwitcher && (
+                          <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                            isSignInPage
+                              ? 'text-white hover:bg-white/10'
+                              : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
+                          }`}>
+                            <div className="transform group-hover:scale-110 transition-transform duration-200">
+                              <LanguageSwitcher variant={isSignInPage ? "light" : "default"} />
+                            </div>
+                            <span className="text-xs font-medium text-center mt-1">
+                              {getTranslation('header.language')}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -1288,50 +1265,39 @@ export default function Header() {
                   </Link>
                 </div>
                 
-                {/* Collapsible More Options Section for Guests */}
+                {/* Theme / Language Controls for Guests */}
                 <div className="mt-4 px-2">
-                  <button
-                    onClick={() => setMobileMenuExpanded(!mobileMenuExpanded)}
-                    className="w-full flex items-center justify-center py-2 px-4 rounded-lg transition-all duration-300 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <span className="text-sm font-medium mr-2">{t('header.more')}</span>
-                    {mobileMenuExpanded ? (
-                      <HiChevronUp className="text-lg transition-transform duration-200" />
-                    ) : (
-                      <HiChevronDown className="text-lg transition-transform duration-200" />
-                    )}
-                  </button>
-                  
-                  {/* Expanded Options for Guests */}
-                  <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                    mobileMenuExpanded ? 'max-h-32 opacity-100 mt-3' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="flex justify-center gap-4">
-                      {/* Theme Toggle */}
-                      <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                        isSignInPage
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                      }`}>
-                        <div className="transform group-hover:scale-110 transition-transform duration-200">
-                          <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
-                        </div>
-                        <span className="text-xs font-medium text-center mt-1">{t('header.theme')}</span>
+                  <div className="flex justify-center gap-4">
+                    <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isSignInPage
+                        ? 'text-white hover:bg-white/10'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}>
+                      <div className="transform group-hover:scale-110 transition-transform duration-200">
+                        <CustomDarkModeToggle variant={isSignInPage ? "light" : "default"} />
                       </div>
-                      
-                      {/* Language Switcher */}
-                      <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
-                        isSignInPage
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-teal-400 hover:bg-blue-50/50 dark:hover:bg-teal-900/10 hover:shadow-md'
-                      }`}>
-                        <div className="transform group-hover:scale-110 transition-transform duration-200">
-                          <LanguageSwitcher variant={isSignInPage ? "light" : "default"} />
-                        </div>
-                        <span className="text-xs font-medium text-center mt-1">
-                          {i18n.language === 'en' ? 'Language' : i18n.language === 'ar' ? 'اللغة' : i18n.language === 'fr' ? 'Langue' : i18n.language === 'tr' ? 'Dil' : 'Sprache'}
-                        </span>
+                      <span className="text-xs font-medium text-center mt-1">{t('header.theme')}</span>
+                    </div>
+                    
+                    <div className={`flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-300 group ${
+                      isSignInPage
+                        ? 'text-white hover:bg-white/10'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-yellow-400 hover:bg-blue-50/50 dark:hover:bg-yellow-900/10 hover:shadow-md'
+                    }`}>
+                      <div className="transform group-hover:scale-110 transition-transform duration-200">
+                        <LanguageSwitcher variant={isSignInPage ? "light" : "default"} />
                       </div>
+                      <span className="text-xs font-medium text-center mt-1">
+                        {i18n.language === 'en'
+                          ? 'Language'
+                          : i18n.language === 'ar'
+                          ? 'اللغة'
+                          : i18n.language === 'fr'
+                          ? 'Langue'
+                          : i18n.language === 'tr'
+                          ? 'Dil'
+                          : 'Sprache'}
+                      </span>
                     </div>
                   </div>
                 </div>

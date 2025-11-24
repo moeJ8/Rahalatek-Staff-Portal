@@ -363,6 +363,7 @@ export default function PublicPackagePage() {
                                     <PackageDayCard
                                         key={index}
                                         day={day}
+                                        titleClassName="break-words sm:whitespace-normal"
                                         tourData={tourData}
                                         onCardClick={(slug) => {
                                             const lang = i18n.language;

@@ -9,12 +9,13 @@ const {
 
 // Helper function to translate a single tour
 const translateTour = (tour, lang) => {
-  if (lang === 'en' || !tour.translations) {
-    return tour.toObject ? tour.toObject() : tour;
+  const tourObj = tour.toObject ? tour.toObject() : { ...tour };
+  
+  if (lang === 'en' || !tourObj.translations) {
+    return tourObj;
   }
 
-  const translations = tour.translations;
-  const translatedTour = tour.toObject ? tour.toObject() : { ...tour };
+  const translations = tourObj.translations;
 
   // Helper function to get translated text or fallback to base
   const getTranslated = (baseValue, translationValue) => {
@@ -36,26 +37,26 @@ const translateTour = (tour, lang) => {
 
   // Translate simple fields
   if (translations.name && translations.name[lang]) {
-    translatedTour.name = getTranslated(tour.name, translations.name[lang]);
+    tourObj.name = getTranslated(tourObj.name, translations.name[lang]);
   }
   if (translations.description && translations.description[lang]) {
-    translatedTour.description = getTranslated(tour.description, translations.description[lang]);
+    tourObj.description = getTranslated(tourObj.description, translations.description[lang]);
   }
   if (translations.detailedDescription && translations.detailedDescription[lang]) {
-    translatedTour.detailedDescription = getTranslated(tour.detailedDescription, translations.detailedDescription[lang]);
+    tourObj.detailedDescription = getTranslated(tourObj.detailedDescription, translations.detailedDescription[lang]);
   }
 
   // Translate arrays
-  if (translations.highlights && translations.highlights.length > 0 && tour.highlights) {
-    translatedTour.highlights = getTranslatedArray(tour.highlights, translations.highlights);
+  if (translations.highlights && translations.highlights.length > 0 && tourObj.highlights) {
+    tourObj.highlights = getTranslatedArray(tourObj.highlights, translations.highlights);
   }
-  if (translations.policies && translations.policies.length > 0 && tour.policies) {
-    translatedTour.policies = getTranslatedArray(tour.policies, translations.policies);
+  if (translations.policies && translations.policies.length > 0 && tourObj.policies) {
+    tourObj.policies = getTranslatedArray(tourObj.policies, translations.policies);
   }
 
   // Translate FAQs
-  if (translations.faqs && translations.faqs.length > 0 && tour.faqs) {
-    translatedTour.faqs = tour.faqs.map((faq, index) => {
+  if (translations.faqs && translations.faqs.length > 0 && tourObj.faqs) {
+    tourObj.faqs = tourObj.faqs.map((faq, index) => {
       if (index < translations.faqs.length) {
         const translatedFaq = translations.faqs[index];
         return {
@@ -67,7 +68,10 @@ const translateTour = (tour, lang) => {
     });
   }
 
-  return translatedTour;
+  // Keep translations object in response for frontend use
+  tourObj.translations = translations;
+
+  return tourObj;
 };
 
 // Helper function to translate multiple tours
