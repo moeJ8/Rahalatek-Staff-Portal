@@ -10,10 +10,13 @@ class BookingPdfService {
   /**
    * Generate booking PDF
    */
-  static async generateBookingPDF(bookingId, user) {
+  static async generateBookingPDF(bookingId, user, options = {}) {
     let browser;
     try {
       console.log("🖨️ Starting PDF generation for booking...");
+
+      // Extract options
+      const { hideHeader = false, hidePrice = false } = options;
 
       // Ensure Chrome is installed
       await ensureChrome();
@@ -24,6 +27,10 @@ class BookingPdfService {
           "selectedTours",
           "name city images duration tourType description highlights"
         )
+        .populate({
+          path: "dailyItinerary.tourInfo.tourId",
+          select: "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images",
+        })
         .populate("createdBy", "username")
         .lean();
 
@@ -125,7 +132,7 @@ class BookingPdfService {
       const page = await browser.newPage();
 
       // Generate HTML content
-      const htmlContent = this.getBookingHtmlTemplate(booking, user);
+      const htmlContent = this.getBookingHtmlTemplate(booking, user, { hideHeader, hidePrice });
 
       // Set content
       await page.setContent(htmlContent, {
@@ -173,7 +180,8 @@ class BookingPdfService {
   /**
    * Get HTML template for booking PDF
    */
-  static getBookingHtmlTemplate(booking, user) {
+  static getBookingHtmlTemplate(booking, user, options = {}) {
+    const { hideHeader = false, hidePrice = false } = options;
     // Load and convert logo to base64
     let logoBase64 = "";
     try {
@@ -315,114 +323,44 @@ class BookingPdfService {
     const generateTransportationText = () => {
       if (!booking.hotelEntries || booking.hotelEntries.length === 0) return "";
 
-      let transportationLines = [];
+      const transportationLines = [];
 
       booking.hotelEntries.forEach((entry) => {
         const hotelData = entry.hotelData;
         if (!hotelData) return;
 
         const hotelName = hotelData.name || "Hotel";
-        const includeReception = entry.includeReception !== false;
-        const includeFarewell = entry.includeFarewell !== false;
+        const includeReception =
+          typeof entry.includeReception === "boolean"
+            ? entry.includeReception
+            : entry.includeReception !== false;
+        const includeFarewell =
+          typeof entry.includeFarewell === "boolean"
+            ? entry.includeFarewell
+            : entry.includeFarewell !== false;
         const vehicleType = entry.transportVehicleType || "Vito";
         const airport = entry.selectedAirport || hotelData.airport || "Airport";
+        const vehicleText =
+          vehicleType === "Bus"
+            ? `Private ${vehicleType}`
+            : `Private ${vehicleType} car`;
 
-        if (includeReception) {
-          if (
-            hotelData.airportTransportation &&
-            hotelData.airportTransportation.length > 0
-          ) {
-            const selectedAirportObj = hotelData.airportTransportation.find(
-              (item) =>
-                item.airport === entry.selectedAirport || hotelData.airport
-            );
-
-            const airportObj =
-              selectedAirportObj || hotelData.airportTransportation[0];
-
-            if (
-              airportObj &&
-              ((vehicleType === "Vito" &&
-                airportObj.transportation?.vitoReceptionPrice > 0) ||
-                (vehicleType === "Sprinter" &&
-                  airportObj.transportation?.sprinterReceptionPrice > 0) ||
-                (vehicleType === "Bus" &&
-                  airportObj.transportation?.busReceptionPrice > 0))
-            ) {
-              transportationLines.push(
-                `Reception from ${airport} to ${hotelName} by Private ${vehicleType} car`
-              );
-            }
-          } else if (
-            hotelData.transportation &&
-            ((vehicleType === "Vito" &&
-              hotelData.transportation.vitoReceptionPrice > 0) ||
-              (vehicleType === "Sprinter" &&
-                hotelData.transportation.sprinterReceptionPrice > 0) ||
-              (vehicleType === "Bus" &&
-                hotelData.transportation.busReceptionPrice > 0))
-          ) {
-            transportationLines.push(
-              `Reception from ${airport} to ${hotelName} by Private ${vehicleType} car`
-            );
-          }
-        }
-
-        if (includeFarewell) {
-          if (
-            hotelData.airportTransportation &&
-            hotelData.airportTransportation.length > 0
-          ) {
-            const selectedAirportObj = hotelData.airportTransportation.find(
-              (item) =>
-                item.airport === entry.selectedAirport || hotelData.airport
-            );
-
-            const airportObj =
-              selectedAirportObj || hotelData.airportTransportation[0];
-
-            if (
-              airportObj &&
-              ((vehicleType === "Vito" &&
-                airportObj.transportation?.vitoFarewellPrice > 0) ||
-                (vehicleType === "Sprinter" &&
-                  airportObj.transportation?.sprinterFarewellPrice > 0) ||
-                (vehicleType === "Bus" &&
-                  airportObj.transportation?.busFarewellPrice > 0))
-            ) {
-              transportationLines.push(
-                `Farewell from ${hotelName} to ${airport} by Private ${vehicleType} car`
-              );
-            }
-          } else if (
-            hotelData.transportation &&
-            ((vehicleType === "Vito" &&
-              hotelData.transportation.vitoFarewellPrice > 0) ||
-              (vehicleType === "Sprinter" &&
-                hotelData.transportation.sprinterFarewellPrice > 0) ||
-              (vehicleType === "Bus" &&
-                hotelData.transportation.busFarewellPrice > 0))
-          ) {
-            transportationLines.push(
-              `Farewell from ${hotelName} to ${airport} by Private ${vehicleType} car`
-            );
-          }
-        }
-
-        if (
-          includeReception &&
-          includeFarewell &&
-          hotelData.airport === entry.selectedAirport
-        ) {
-          transportationLines = transportationLines.filter(
-            (line) =>
-              !line.includes(`Reception from ${airport}`) &&
-              !line.includes(`Farewell from ${hotelName} to ${airport}`)
-          );
-
+        if (includeReception && includeFarewell) {
           transportationLines.push(
-            `Reception & Farewell between ${airport} and ${hotelName} by Private ${vehicleType} car`
+            `Reception & Farewell between ${airport} and ${hotelName} by ${vehicleText}`
           );
+        } else {
+          if (includeReception) {
+            transportationLines.push(
+              `Reception from ${airport} to ${hotelName} by ${vehicleText}`
+            );
+          }
+
+          if (includeFarewell) {
+            transportationLines.push(
+              `Farewell from ${hotelName} to ${airport} by ${vehicleText}`
+            );
+          }
         }
       });
 
@@ -448,14 +386,38 @@ class BookingPdfService {
       return primary || roomType.images[0] || null;
     };
 
-    // Organize tours by day (based on selectedTours array order)
-    const toursByDay = [];
-    if (booking.selectedTours && Array.isArray(booking.selectedTours)) {
+    // Organize itinerary by day (using dailyItinerary if available, fallback to selectedTours)
+    const itineraryDays = [];
+    
+    if (booking.dailyItinerary && Array.isArray(booking.dailyItinerary) && booking.dailyItinerary.length > 0) {
+      // Use new dailyItinerary structure
+      booking.dailyItinerary.forEach((day) => {
+        itineraryDays.push({
+          day: day.day,
+          title: day.title || `Day ${day.day}`,
+          description: day.description || "",
+          activities: day.activities || [],
+          isArrivalDay: day.isArrivalDay || false,
+          isDepartureDay: day.isDepartureDay || false,
+          isRestDay: day.isRestDay || false,
+          tourInfo: day.tourInfo,
+          images: day.images || [],
+        });
+      });
+    } else if (booking.selectedTours && Array.isArray(booking.selectedTours)) {
+      // Fallback to old selectedTours structure
       booking.selectedTours.forEach((tour, index) => {
         const dayNumber = index + 1;
-        toursByDay.push({
+        itineraryDays.push({
           day: dayNumber,
-          tour: tour,
+          title: `Day ${dayNumber}: ${tour.name}`,
+          description: tour.description || "",
+          activities: [],
+          isArrivalDay: false,
+          isDepartureDay: false,
+          isRestDay: false,
+          tourInfo: { tourId: tour },
+          images: tour.images || [],
         });
       });
     }
@@ -897,12 +859,14 @@ class BookingPdfService {
 </head>
 <body>
     ${
-      logoBase64
+      !hideHeader && logoBase64
         ? `<img src="${logoBase64}" class="watermark" alt="Watermark" />`
         : ""
     }
     
-    <div class="header">
+    ${
+      !hideHeader
+        ? `<div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
             <div class="report-title">Booking Details</div>
@@ -912,7 +876,9 @@ class BookingPdfService {
             ? `<img src="${logoBase64}" class="logo-img" alt="Rahalatek Logo" />`
             : ""
         }
-    </div>
+    </div>`
+        : ""
+    }
     
     <!-- Booking Overview Section -->
     <div class="booking-overview">
@@ -1025,12 +991,16 @@ class BookingPdfService {
                     `
                         : ""
                     }
-                    <div class="overview-detail-row" style="margin-top: 8px;">
+                    ${
+                      !hidePrice
+                        ? `<div class="overview-detail-row" style="margin-top: 8px;">
                         <span class="overview-icon">💵</span>
                         <span class="overview-text"><strong>Package Price: $${
                           booking.finalPrice?.toFixed(2) || "0.00"
                         }</strong></span>
-                    </div>
+                    </div>`
+                        : ""
+                    }
                 </div>
             </div>
         </div>
@@ -1191,66 +1161,105 @@ class BookingPdfService {
         : ""
     }
 
-    <!-- Tours Section -->
+    <!-- Daily Itinerary Section -->
     ${
-      toursByDay.length > 0
+      itineraryDays.length > 0
         ? `
-    <div class="tours-section-title">Tours by Day</div>
-    ${toursByDay
-      .map((dayTour) => {
-        const tour = dayTour.tour;
-        if (!tour) return "";
+    <div class="tours-section-title">Daily Itinerary</div>
+    ${itineraryDays
+      .map((dayItem) => {
+        // Get the primary image for this day
+        let dayImageUrl = "";
+        if (dayItem.images && dayItem.images.length > 0) {
+          const primaryImage = dayItem.images.find(img => img.url);
+          dayImageUrl = primaryImage?.url || dayItem.images[0]?.url || "";
+        }
+        
+        // For tour days, get tour data
+        let tour = null;
+        if (dayItem.tourInfo && dayItem.tourInfo.tourId) {
+          tour = typeof dayItem.tourInfo.tourId === 'object' 
+            ? dayItem.tourInfo.tourId 
+            : null;
+          
+          // If tour exists, use tour image if no day image
+          if (tour && !dayImageUrl && tour.images && tour.images.length > 0) {
+            const tourPrimaryImage = getPrimaryImage(tour.images);
+            dayImageUrl = tourPrimaryImage?.url || "";
+          }
+        }
 
-        const tourPrimaryImage = getPrimaryImage(tour.images);
-        const tourImageUrl = tourPrimaryImage?.url || "";
+        // Get highlights for tour days
+        const highlights = tour && tour.highlights && Array.isArray(tour.highlights)
+          ? tour.highlights.slice(0, 4)
+          : [];
 
-        // Get highlights (max 4)
-        const highlights =
-          tour.highlights && Array.isArray(tour.highlights)
-            ? tour.highlights.slice(0, 4)
-            : [];
-
+        // Remove "Day X:" prefix from title if it exists
+        const cleanTitle = (dayItem.title || `Day ${dayItem.day}`).replace(/^Day\s*\d+\s*:?\s*/i, '').trim();
+        
         return `
         <div class="tour-section">
-            <div class="tour-day-badge">Day ${dayTour.day}</div>
+            <div class="tour-day-badge">Day ${dayItem.day}</div>
             <div class="tour-header">
                 <div class="tour-details">
-                    <div class="tour-name">${tour.name || "N/A"}</div>
-                    <div class="tour-summary">
-                        <span>📍 ${tour.city || "N/A"}</span>
-                        ${
-                          tour.tourType
-                            ? `<span>
+                    <div class="tour-name">${cleanTitle}</div>
+                    ${
+                      tour
+                        ? `<div class="tour-summary">
+                            <span>📍 ${tour.city || "N/A"}</span>
+                            ${
+                              tour.tourType
+                                ? `<span>
+                                    <span class="tour-summary-icon">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
+                                            <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
+                                            <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
+                                            <path d="M7 9h2M7 11h2M7 13h2M7 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                            <path d="M15 9h2M15 11h2M15 13h2M15 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    ${tour.tourType}
+                                </span>`
+                                : ""
+                            }
+                            <span>
                                 <span class="tour-summary-icon">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
-                                        <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
-                                        <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
-                                        <path d="M7 9h2M7 11h2M7 13h2M7 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
-                                        <path d="M15 9h2M15 11h2M15 13h2M15 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                    <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
+                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
                                     </svg>
                                 </span>
-                                ${tour.tourType}
-                            </span>`
-                            : ""
-                        }
-                        <span>
-                            <span class="tour-summary-icon">
-                                <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
-                                    <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
-                                </svg>
+                                ${tour.duration || "N/A"} hrs
                             </span>
-                            ${tour.duration || "N/A"} hrs
-                        </span>
-                    </div>
-                    ${
-                      tour.description
-                        ? `<div class="tour-description">${tour.description}</div>`
+                        </div>`
                         : ""
                     }
                     ${
-                      highlights.length > 0
+                      dayItem.description || (tour && tour.description)
+                        ? `<div class="tour-description">${dayItem.description || tour.description}</div>`
+                        : ""
+                    }
+                    ${
+                      dayItem.activities && dayItem.activities.length > 0
+                        ? `
+                    <div class="tour-highlights">
+                        <div class="highlights-title">Activities</div>
+                        <div class="highlights-list">
+                            ${dayItem.activities
+                              .map(
+                                (activity) => `
+                            <div class="highlight-item">
+                                <span class="highlight-icon">★</span>
+                                <span>${activity}</span>
+                            </div>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                    </div>
+                    `
+                        : highlights.length > 0
                         ? `
                     <div class="tour-highlights">
                         <div class="highlights-title">Highlights</div>
@@ -1272,10 +1281,8 @@ class BookingPdfService {
                     }
                 </div>
                 ${
-                  tourImageUrl
-                    ? `<img src="${tourImageUrl}" class="tour-image" alt="${
-                        tour.name || "Tour"
-                      }" />`
+                  dayImageUrl
+                    ? `<img src="${dayImageUrl}" class="tour-image" alt="${dayItem.title}" />`
                     : ""
                 }
             </div>

@@ -46,7 +46,7 @@ const getTourTranslation = (tour, field) => {
       }
     } else {
       // Handle string fields (name, description, detailedDescription)
-      const translation = tour.translations[field].ar;
+      const translation = tour.translations[field]?.ar;
       if (
         translation &&
         typeof translation === "string" &&
@@ -390,6 +390,7 @@ export const generateBookingMessage = ({
   calculatedPrice,
   selectedTours,
   tours,
+  dailyItinerary = [],
   getAirportArabicName,
 }) => {
   const totalNights = calculateDuration(startDate, endDate);
@@ -417,7 +418,7 @@ export const generateBookingMessage = ({
   const formattedEndDate = formatDateDDMMYYYY(endDate);
 
   // Generate transportation text for each hotel with reception/farewell
-  let transportationLines = [];
+  const transportationLines = [];
 
   hotelEntries.forEach((entry) => {
     const hotelData = entry.hotelData;
@@ -435,138 +436,31 @@ export const generateBookingMessage = ({
         : false;
     const transportVehicleType = entry.transportVehicleType || "Vito"; // Default to Vito if not specified
 
-    // Handle reception for this hotel
-    if (includeReception) {
-      // Use hotel-specific airport
-      const airportName = getAirportArabicName(
-        entry.selectedAirport || hotelData.airport || "المطار"
+    const airportName = getAirportArabicName(
+      entry.selectedAirport || hotelData.airport || "المطار"
+    );
+
+    const vehicleText =
+      transportVehicleType === "Bus"
+        ? `${transportVehicleType} خاص`
+        : `بسيارة ${transportVehicleType} خاصة`;
+
+    if (includeReception && includeFarewell) {
+      transportationLines.push(
+        `${RLM}استقبال وتوديع بين ${airportName} وفندق ${hotelName} ${vehicleText}`
       );
-
-      if (
-        hotelData.airportTransportation &&
-        hotelData.airportTransportation.length > 0
-      ) {
-        const selectedAirportObj = hotelData.airportTransportation.find(
-          (item) => item.airport === entry.selectedAirport || hotelData.airport
-        );
-
-        const airportObj =
-          selectedAirportObj || hotelData.airportTransportation[0];
-
-        if (
-          airportObj &&
-          ((transportVehicleType === "Vito" &&
-            airportObj.transportation.vitoReceptionPrice > 0) ||
-            (transportVehicleType === "Sprinter" &&
-              airportObj.transportation.sprinterReceptionPrice > 0) ||
-            (transportVehicleType === "Bus" &&
-              airportObj.transportation.busReceptionPrice > 0))
-        ) {
-          const vehicleText =
-            transportVehicleType === "Bus"
-              ? `${transportVehicleType} خاص`
-              : `بسيارة ${transportVehicleType} خاصة`;
-          transportationLines.push(
-            `${RLM}الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
-          );
-        }
-      } else if (
-        hotelData.transportation &&
-        ((transportVehicleType === "Vito" &&
-          hotelData.transportation.vitoReceptionPrice > 0) ||
-          (transportVehicleType === "Sprinter" &&
-            hotelData.transportation.sprinterReceptionPrice > 0) ||
-          (transportVehicleType === "Bus" &&
-            hotelData.transportation.busReceptionPrice > 0))
-      ) {
-        const vehicleText =
-          transportVehicleType === "Bus"
-            ? `${transportVehicleType} خاص`
-            : `بسيارة ${transportVehicleType} خاصة`;
+    } else {
+      if (includeReception) {
         transportationLines.push(
           `${RLM}الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
         );
       }
-    }
 
-    // Handle farewell for this hotel
-    if (includeFarewell) {
-      // Use hotel-specific airport
-      const airportName = getAirportArabicName(
-        entry.selectedAirport || hotelData.airport || "المطار"
-      );
-
-      if (
-        hotelData.airportTransportation &&
-        hotelData.airportTransportation.length > 0
-      ) {
-        const selectedAirportObj = hotelData.airportTransportation.find(
-          (item) => item.airport === entry.selectedAirport || hotelData.airport
-        );
-
-        const airportObj =
-          selectedAirportObj || hotelData.airportTransportation[0];
-
-        if (
-          airportObj &&
-          ((transportVehicleType === "Vito" &&
-            airportObj.transportation.vitoFarewellPrice > 0) ||
-            (transportVehicleType === "Sprinter" &&
-              airportObj.transportation.sprinterFarewellPrice > 0) ||
-            (transportVehicleType === "Bus" &&
-              airportObj.transportation.busFarewellPrice > 0))
-        ) {
-          const vehicleText =
-            transportVehicleType === "Bus"
-              ? `${transportVehicleType} خاص`
-              : `بسيارة ${transportVehicleType} خاصة`;
-          transportationLines.push(
-            `${RLM}التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
-          );
-        }
-      } else if (
-        hotelData.transportation &&
-        ((transportVehicleType === "Vito" &&
-          hotelData.transportation.vitoFarewellPrice > 0) ||
-          (transportVehicleType === "Sprinter" &&
-            hotelData.transportation.sprinterFarewellPrice > 0) ||
-          (transportVehicleType === "Bus" &&
-            hotelData.transportation.busFarewellPrice > 0))
-      ) {
-        const vehicleText =
-          transportVehicleType === "Bus"
-            ? `${transportVehicleType} خاص`
-            : `بسيارة ${transportVehicleType} خاصة`;
+      if (includeFarewell) {
         transportationLines.push(
           `${RLM}التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
         );
       }
-    }
-
-    // Special case: If both reception and farewell are at the same hotel with the same airport
-    if (
-      includeReception &&
-      includeFarewell &&
-      hotelData.airport === entry.selectedAirport
-    ) {
-      const airportName = getAirportArabicName(
-        entry.selectedAirport || hotelData.airport || "المطار"
-      );
-
-      // Remove the individual lines for this hotel and create a combined line
-      transportationLines = transportationLines.filter(
-        (line) =>
-          !line.includes(`الاستقبال من ${airportName}`) &&
-          !line.includes(`التوديع إلى ${airportName}`)
-      );
-
-      const vehicleText =
-        transportVehicleType === "Bus"
-          ? `${transportVehicleType} خاص`
-          : `بسيارة ${transportVehicleType} خاصة`;
-      transportationLines.push(
-        `${RLM}استقبال وتوديع من وإلى ${airportName} وفندق ${hotelName} ${vehicleText}`
-      );
     }
   });
 
@@ -712,9 +606,113 @@ ${hotelDescription ? `${RLM}${hotelDescription}` : ""}
     }
   }
 
-  const orderedTourData = selectedTours
-    .map((tourId) => tours.find((tour) => tour._id === tourId))
-    .filter(Boolean);
+  // Use dailyItinerary if available, otherwise fall back to selectedTours
+  const sortedDays =
+    dailyItinerary && dailyItinerary.length > 0
+      ? [...dailyItinerary].sort((a, b) => a.day - b.day)
+      : [];
+
+  const tourDays = sortedDays.filter(
+    (day) => day.tourInfo && day.tourInfo.tourId
+  );
+  const tourCount = tourDays.length;
+
+  // Generate itinerary text from daily itinerary
+  let itineraryDetails = "";
+  if (sortedDays.length > 0) {
+    itineraryDetails = sortedDays
+      .map((day) => {
+        const dayTitle =
+          day.translations?.title?.ar || day.title || `اليوم ${day.day}`;
+        const dayDescription =
+          day.translations?.description?.ar || day.description || "";
+
+        // For tour days, get tour information
+        if (day.tourInfo && day.tourInfo.tourId) {
+          const tourId =
+            typeof day.tourInfo.tourId === "object"
+              ? day.tourInfo.tourId._id || day.tourInfo.tourId.id
+              : day.tourInfo.tourId;
+
+          const tour = tours.find((t) => t._id === tourId);
+
+          if (tour) {
+            const tourName = getTourTranslation(tour, "name");
+            const tourDescription = getTourTranslation(tour, "description");
+            const tourDetailedDescription = getTourTranslation(
+              tour,
+              "detailedDescription"
+            );
+            const tourHighlights = getTourTranslation(tour, "highlights");
+
+            let vipCarInfo = "";
+            if (tour.tourType === "VIP") {
+              vipCarInfo = `${RLM}جولة VIP خاصة مع سيارة ${tour.vipCarType}`;
+            }
+
+            // For tour days, show day number + Arabic tour name
+            return `${RLM}اليوم ${day.day}: ${tourName}
+${tourDescription ? `${RLM}${tourDescription}\n` : ""}${
+              vipCarInfo ? `${vipCarInfo}\n` : ""
+            }${
+              tourDetailedDescription
+                ? `${RLM}${tourDetailedDescription}\n`
+                : ""
+            }${
+              tourHighlights && tourHighlights.length > 0
+                ? tourHighlights
+                    .map((highlight) => `${RLM}• ${highlight}`)
+                    .join("\n")
+                : ""
+            }`;
+          } else {
+            console.warn(`Tour not found for tourId: ${tourId}`, {
+              day,
+              tours: tours.map((t) => t._id),
+            });
+          }
+        }
+
+        // For non-tour days (arrival, departure, rest)
+        return `${RLM}${dayTitle}
+${dayDescription ? `${RLM}${dayDescription}` : ""}`;
+      })
+      .join("\n\n");
+  } else {
+    // Fallback to old selectedTours method
+    const orderedTourData = selectedTours
+      .map((tourId) => tours.find((tour) => tour._id === tourId))
+      .filter(Boolean);
+
+    itineraryDetails = orderedTourData
+      .map((tour, index) => {
+        const tourName = getTourTranslation(tour, "name");
+        const tourDescription = getTourTranslation(tour, "description");
+        const tourDetailedDescription = getTourTranslation(
+          tour,
+          "detailedDescription"
+        );
+        const tourHighlights = getTourTranslation(tour, "highlights");
+
+        let vipCarInfo = "";
+        if (tour.tourType === "VIP") {
+          vipCarInfo = `${RLM}جولة VIP خاصة مع سيارة ${tour.vipCarType}`;
+        }
+
+        return `${RLM}اليوم ${arabicDayOrdinals[index]}:
+${RLM}${tourName}${tourDescription ? `\n${RLM}${tourDescription}` : ""}${
+          vipCarInfo ? `\n${vipCarInfo}` : ""
+        }
+${tourDetailedDescription ? `${RLM}${tourDetailedDescription}\n` : ""}${
+          tourHighlights && tourHighlights.length > 0
+            ? tourHighlights
+                .map((highlight) => `${RLM}• ${highlight}`)
+                .join("\n")
+            : ""
+        }`;
+      })
+      .join("\n\n");
+  }
 
   const itinerary = `${RLM}${flagsString} بكج ${formattedCities} ${flagsString}
 ${RLM}🗓 من ${formattedStartDate} لغاية ${formattedEndDate}
@@ -727,38 +725,9 @@ ${RLM}يشمل:
 ${transportationText ? `${transportationText}\n\n` : ""}
 ${hotelInfoText}
 
-${RLM}• عدد الجولات: ${orderedTourData.length}
-
-${
-  orderedTourData.length > 0 ? `${RLM}• تفاصيل الجولات:\n` : ""
-}${orderedTourData
-    .map((tour, index) => {
-      // Get Arabic translations for tour
-      const tourName = getTourTranslation(tour, "name");
-      const tourDescription = getTourTranslation(tour, "description");
-      const tourDetailedDescription = getTourTranslation(
-        tour,
-        "detailedDescription"
-      );
-      const tourHighlights = getTourTranslation(tour, "highlights");
-
-      // Create VIP car capacity text with null checks
-      let vipCarInfo = "";
-      if (tour.tourType === "VIP") {
-        vipCarInfo = `${RLM}جولة VIP خاصة مع سيارة ${tour.vipCarType}`;
-      }
-
-      return `${RLM}اليوم ${arabicDayOrdinals[index]}:
-${RLM}${tourName}${tourDescription ? `\n${RLM}${tourDescription}` : ""}${
-        vipCarInfo ? `\n${vipCarInfo}` : ""
-      }
-${tourDetailedDescription ? `${RLM}${tourDetailedDescription}\n` : ""}${
-        tourHighlights && tourHighlights.length > 0
-          ? tourHighlights.map((highlight) => `${RLM}• ${highlight}`).join("\n")
-          : ""
-      }`;
-    })
-    .join("\n\n")}`;
+${tourCount > 0 ? `${RLM}• عدد الجولات: ${tourCount}\n\n` : ""}${
+    itineraryDetails ? `${RLM}• تفاصيل الرحلة:\n${itineraryDetails}` : ""
+  }`;
 
   return itinerary;
 };
@@ -821,6 +790,7 @@ export const generateBookingMessageEnglish = ({
   calculatedPrice,
   selectedTours,
   tours,
+  dailyItinerary = [],
 }) => {
   const totalNights = calculateDuration(startDate, endDate);
   const finalPrice = tripPrice || calculatedPrice;
@@ -845,7 +815,7 @@ export const generateBookingMessageEnglish = ({
   const formattedEndDate = formatDateDDMMYYYY(endDate);
 
   // Generate transportation text for each hotel with reception/farewell
-  let transportationLines = [];
+  const transportationLines = [];
 
   hotelEntries.forEach((entry) => {
     const hotelData = entry.hotelData;
@@ -863,133 +833,29 @@ export const generateBookingMessageEnglish = ({
         : false;
     const transportVehicleType = entry.transportVehicleType || "Vito";
 
-    // Handle reception for this hotel
-    if (includeReception) {
-      const airportName =
-        entry.selectedAirport || hotelData.airport || "Airport";
+    const airportName = entry.selectedAirport || hotelData.airport || "Airport";
 
-      if (
-        hotelData.airportTransportation &&
-        hotelData.airportTransportation.length > 0
-      ) {
-        const selectedAirportObj = hotelData.airportTransportation.find(
-          (item) => item.airport === entry.selectedAirport || hotelData.airport
-        );
+    const vehicleText =
+      transportVehicleType === "Bus"
+        ? `Private ${transportVehicleType}`
+        : `Private ${transportVehicleType} car`;
 
-        const airportObj =
-          selectedAirportObj || hotelData.airportTransportation[0];
-
-        if (
-          airportObj &&
-          ((transportVehicleType === "Vito" &&
-            airportObj.transportation.vitoReceptionPrice > 0) ||
-            (transportVehicleType === "Sprinter" &&
-              airportObj.transportation.sprinterReceptionPrice > 0) ||
-            (transportVehicleType === "Bus" &&
-              airportObj.transportation.busReceptionPrice > 0))
-        ) {
-          const vehicleText =
-            transportVehicleType === "Bus"
-              ? `Private ${transportVehicleType}`
-              : `Private ${transportVehicleType} car`;
-          transportationLines.push(
-            `Reception from ${airportName} to ${hotelName} by ${vehicleText}`
-          );
-        }
-      } else if (
-        hotelData.transportation &&
-        ((transportVehicleType === "Vito" &&
-          hotelData.transportation.vitoReceptionPrice > 0) ||
-          (transportVehicleType === "Sprinter" &&
-            hotelData.transportation.sprinterReceptionPrice > 0) ||
-          (transportVehicleType === "Bus" &&
-            hotelData.transportation.busReceptionPrice > 0))
-      ) {
-        const vehicleText =
-          transportVehicleType === "Bus"
-            ? `Private ${transportVehicleType}`
-            : `Private ${transportVehicleType} car`;
+    if (includeReception && includeFarewell) {
+      transportationLines.push(
+        `Reception & Farewell between ${airportName} and ${hotelName} by ${vehicleText}`
+      );
+    } else {
+      if (includeReception) {
         transportationLines.push(
           `Reception from ${airportName} to ${hotelName} by ${vehicleText}`
         );
       }
-    }
 
-    // Handle farewell for this hotel
-    if (includeFarewell) {
-      const airportName =
-        entry.selectedAirport || hotelData.airport || "Airport";
-
-      if (
-        hotelData.airportTransportation &&
-        hotelData.airportTransportation.length > 0
-      ) {
-        const selectedAirportObj = hotelData.airportTransportation.find(
-          (item) => item.airport === entry.selectedAirport || hotelData.airport
-        );
-
-        const airportObj =
-          selectedAirportObj || hotelData.airportTransportation[0];
-
-        if (
-          airportObj &&
-          ((transportVehicleType === "Vito" &&
-            airportObj.transportation.vitoFarewellPrice > 0) ||
-            (transportVehicleType === "Sprinter" &&
-              airportObj.transportation.sprinterFarewellPrice > 0) ||
-            (transportVehicleType === "Bus" &&
-              airportObj.transportation.busFarewellPrice > 0))
-        ) {
-          const vehicleText =
-            transportVehicleType === "Bus"
-              ? `Private ${transportVehicleType}`
-              : `Private ${transportVehicleType} car`;
-          transportationLines.push(
-            `Farewell from ${hotelName} to ${airportName} by ${vehicleText}`
-          );
-        }
-      } else if (
-        hotelData.transportation &&
-        ((transportVehicleType === "Vito" &&
-          hotelData.transportation.vitoFarewellPrice > 0) ||
-          (transportVehicleType === "Sprinter" &&
-            hotelData.transportation.sprinterFarewellPrice > 0) ||
-          (transportVehicleType === "Bus" &&
-            hotelData.transportation.busFarewellPrice > 0))
-      ) {
-        const vehicleText =
-          transportVehicleType === "Bus"
-            ? `Private ${transportVehicleType}`
-            : `Private ${transportVehicleType} car`;
+      if (includeFarewell) {
         transportationLines.push(
           `Farewell from ${hotelName} to ${airportName} by ${vehicleText}`
         );
       }
-    }
-
-    // Special case: If both reception and farewell are at the same hotel with the same airport
-    if (
-      includeReception &&
-      includeFarewell &&
-      hotelData.airport === entry.selectedAirport
-    ) {
-      const airportName =
-        entry.selectedAirport || hotelData.airport || "Airport";
-
-      // Remove the individual lines for this hotel and create a combined line
-      transportationLines = transportationLines.filter(
-        (line) =>
-          !line.includes(`Reception from ${airportName}`) &&
-          !line.includes(`Farewell from ${hotelName}`)
-      );
-
-      const vehicleText =
-        transportVehicleType === "Bus"
-          ? `Private ${transportVehicleType}`
-          : `Private ${transportVehicleType} car`;
-      transportationLines.push(
-        `Reception & Farewell between ${airportName} and ${hotelName} by ${vehicleText}`
-      );
     }
   });
 
@@ -1130,9 +996,94 @@ ${hotelDescription ? hotelDescription : ""}
     }
   }
 
-  const orderedTourData = selectedTours
-    .map((tourId) => tours.find((tour) => tour._id === tourId))
-    .filter(Boolean);
+  // Use dailyItinerary if available, otherwise fall back to selectedTours
+  const sortedDays =
+    dailyItinerary && dailyItinerary.length > 0
+      ? [...dailyItinerary].sort((a, b) => a.day - b.day)
+      : [];
+
+  const tourDays = sortedDays.filter(
+    (day) => day.tourInfo && day.tourInfo.tourId
+  );
+  const tourCount = tourDays.length;
+
+  // Generate itinerary text from daily itinerary
+  let itineraryDetails = "";
+  if (sortedDays.length > 0) {
+    itineraryDetails = sortedDays
+      .map((day) => {
+        const dayTitle = day.title || `Day ${day.day}`;
+        const dayDescription = day.description || "";
+
+        // For tour days, get tour information
+        if (day.tourInfo && day.tourInfo.tourId) {
+          const tourId =
+            typeof day.tourInfo.tourId === "object"
+              ? day.tourInfo.tourId._id || day.tourInfo.tourId.id
+              : day.tourInfo.tourId;
+
+          const tour = tours.find((t) => t._id === tourId);
+
+          if (tour) {
+            const tourName = tour.name || "";
+            const tourDescription = tour.description || "";
+            const tourDetailedDescription = tour.detailedDescription || "";
+            const tourHighlights = tour.highlights || [];
+
+            let vipCarInfo = "";
+            if (tour.tourType === "VIP") {
+              vipCarInfo = `VIP private tour with ${tour.vipCarType} car`;
+            }
+
+            // For tour days, show day number + English tour name
+            return `Day ${day.day}: ${tourName}
+${tourDescription ? `${tourDescription}\n` : ""}${
+              vipCarInfo ? `${vipCarInfo}\n` : ""
+            }${tourDetailedDescription ? `${tourDetailedDescription}\n` : ""}${
+              tourHighlights && tourHighlights.length > 0
+                ? tourHighlights.map((highlight) => `• ${highlight}`).join("\n")
+                : ""
+            }`;
+          } else {
+            console.warn(`Tour not found for tourId: ${tourId} (English)`);
+          }
+        }
+
+        // For non-tour days (arrival, departure, rest)
+        return `${dayTitle}
+${dayDescription || ""}`;
+      })
+      .join("\n\n");
+  } else {
+    // Fallback to old selectedTours method
+    const orderedTourData = selectedTours
+      .map((tourId) => tours.find((tour) => tour._id === tourId))
+      .filter(Boolean);
+
+    itineraryDetails = orderedTourData
+      .map((tour, index) => {
+        const tourName = tour.name || "";
+        const tourDescription = tour.description || "";
+        const tourDetailedDescription = tour.detailedDescription || "";
+        const tourHighlights = tour.highlights || [];
+
+        let vipCarInfo = "";
+        if (tour.tourType === "VIP") {
+          vipCarInfo = `VIP private tour with ${tour.vipCarType} car`;
+        }
+
+        return `Day ${englishDayOrdinals[index]}:
+${tourName}${tourDescription ? `\n${tourDescription}` : ""}${
+          vipCarInfo ? `\n${vipCarInfo}` : ""
+        }
+${tourDetailedDescription ? `${tourDetailedDescription}\n` : ""}${
+          tourHighlights && tourHighlights.length > 0
+            ? tourHighlights.map((highlight) => `• ${highlight}`).join("\n")
+            : ""
+        }`;
+      })
+      .join("\n\n");
+  }
 
   const itinerary = `${flagsString} ${formattedCities} Package ${flagsString}
 🗓 From ${formattedStartDate} to ${formattedEndDate}
@@ -1145,33 +1096,9 @@ Includes:
 ${transportationText ? `${transportationText}\n\n` : ""}
 ${hotelInfoText}
 
-• Number of Tours: ${orderedTourData.length}
-
-${orderedTourData.length > 0 ? `• Tour Details:\n` : ""}${orderedTourData
-    .map((tour, index) => {
-      // Use English tour name and description (original, not translated)
-      const tourName = tour.name || "";
-      const tourDescription = tour.description || "";
-      const tourDetailedDescription = tour.detailedDescription || "";
-      const tourHighlights = tour.highlights || [];
-
-      // Create VIP car capacity text
-      let vipCarInfo = "";
-      if (tour.tourType === "VIP") {
-        vipCarInfo = `VIP private tour with ${tour.vipCarType} car`;
-      }
-
-      return `Day ${englishDayOrdinals[index]}:
-${tourName}${tourDescription ? `\n${tourDescription}` : ""}${
-        vipCarInfo ? `\n${vipCarInfo}` : ""
-      }
-${tourDetailedDescription ? `${tourDetailedDescription}\n` : ""}${
-        tourHighlights && tourHighlights.length > 0
-          ? tourHighlights.map((highlight) => `• ${highlight}`).join("\n")
-          : ""
-      }`;
-    })
-    .join("\n\n")}`;
+${tourCount > 0 ? `• Number of Tours: ${tourCount}\n\n` : ""}${
+    itineraryDetails ? `• Itinerary Details:\n${itineraryDetails}` : ""
+  }`;
 
   return itinerary;
 };

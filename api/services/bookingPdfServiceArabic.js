@@ -39,10 +39,13 @@ class BookingPdfServiceArabic {
   /**
    * Generate booking PDF
    */
-  static async generateBookingPDF(bookingId, user) {
+  static async generateBookingPDF(bookingId, user, options = {}) {
     let browser;
     try {
       console.log("🖨️ Starting PDF generation for booking...");
+
+      // Extract options
+      const { hideHeader = false, hidePrice = false } = options;
 
       // Ensure Chrome is installed
       await ensureChrome();
@@ -53,6 +56,10 @@ class BookingPdfServiceArabic {
           "selectedTours",
           "name city images duration tourType description highlights translations"
         )
+        .populate({
+          path: "dailyItinerary.tourInfo.tourId",
+          select: "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images translations",
+        })
         .populate("createdBy", "username")
         .lean();
 
@@ -171,7 +178,8 @@ class BookingPdfServiceArabic {
       const htmlContent = this.getBookingHtmlTemplate(
         booking,
         user,
-        airportArabicMap
+        airportArabicMap,
+        { hideHeader, hidePrice }
       );
 
       // Set content
@@ -220,7 +228,8 @@ class BookingPdfServiceArabic {
   /**
    * Get HTML template for booking PDF
    */
-  static getBookingHtmlTemplate(booking, user, airportArabicMap = new Map()) {
+  static getBookingHtmlTemplate(booking, user, airportArabicMap = new Map(), options = {}) {
+    const { hideHeader = false, hidePrice = false } = options;
     // Load and convert logo to base64
     let logoBase64 = "";
     try {
@@ -443,7 +452,7 @@ class BookingPdfServiceArabic {
     const generateTransportationText = () => {
       if (!booking.hotelEntries || booking.hotelEntries.length === 0) return "";
 
-      let transportationLines = [];
+      const transportationLines = [];
 
       booking.hotelEntries.forEach((entry) => {
         const hotelData = entry.hotelData;
@@ -465,102 +474,22 @@ class BookingPdfServiceArabic {
 
         const vehicleText = getVehicleTextArabic(transportVehicleType);
 
-        if (includeReception) {
-          if (
-            hotelData.airportTransportation &&
-            hotelData.airportTransportation.length > 0
-          ) {
-            const selectedAirportObj = hotelData.airportTransportation.find(
-              (item) =>
-                item.airport === entry.selectedAirport || hotelData.airport
-            );
-
-            const airportObj =
-              selectedAirportObj || hotelData.airportTransportation[0];
-
-            if (
-              airportObj &&
-              ((transportVehicleType === "Vito" &&
-                airportObj.transportation?.vitoReceptionPrice > 0) ||
-                (transportVehicleType === "Sprinter" &&
-                  airportObj.transportation?.sprinterReceptionPrice > 0) ||
-                (transportVehicleType === "Bus" &&
-                  airportObj.transportation?.busReceptionPrice > 0))
-            ) {
-              transportationLines.push(
-                `الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
-              );
-            }
-          } else if (
-            hotelData.transportation &&
-            ((transportVehicleType === "Vito" &&
-              hotelData.transportation.vitoReceptionPrice > 0) ||
-              (transportVehicleType === "Sprinter" &&
-                hotelData.transportation.sprinterReceptionPrice > 0) ||
-              (transportVehicleType === "Bus" &&
-                hotelData.transportation.busReceptionPrice > 0))
-          ) {
+        if (includeReception && includeFarewell) {
+          transportationLines.push(
+            `استقبال وتوديع بين ${airportName} وفندق ${hotelName} ${vehicleText}`
+          );
+        } else {
+          if (includeReception) {
             transportationLines.push(
               `الاستقبال من ${airportName} إلى فندق ${hotelName} ${vehicleText}`
             );
           }
-        }
 
-        if (includeFarewell) {
-          if (
-            hotelData.airportTransportation &&
-            hotelData.airportTransportation.length > 0
-          ) {
-            const selectedAirportObj = hotelData.airportTransportation.find(
-              (item) =>
-                item.airport === entry.selectedAirport || hotelData.airport
-            );
-
-            const airportObj =
-              selectedAirportObj || hotelData.airportTransportation[0];
-
-            if (
-              airportObj &&
-              ((transportVehicleType === "Vito" &&
-                airportObj.transportation?.vitoFarewellPrice > 0) ||
-                (transportVehicleType === "Sprinter" &&
-                  airportObj.transportation?.sprinterFarewellPrice > 0) ||
-                (transportVehicleType === "Bus" &&
-                  airportObj.transportation?.busFarewellPrice > 0))
-            ) {
-              transportationLines.push(
-                `التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
-              );
-            }
-          } else if (
-            hotelData.transportation &&
-            ((transportVehicleType === "Vito" &&
-              hotelData.transportation.vitoFarewellPrice > 0) ||
-              (transportVehicleType === "Sprinter" &&
-                hotelData.transportation.sprinterFarewellPrice > 0) ||
-              (transportVehicleType === "Bus" &&
-                hotelData.transportation.busFarewellPrice > 0))
-          ) {
+          if (includeFarewell) {
             transportationLines.push(
               `التوديع إلى ${airportName} من فندق ${hotelName} ${vehicleText}`
             );
           }
-        }
-
-        if (
-          includeReception &&
-          includeFarewell &&
-          hotelData.airport === entry.selectedAirport
-        ) {
-          transportationLines = transportationLines.filter(
-            (line) =>
-              !line.includes(`الاستقبال من ${airportName}`) &&
-              !line.includes(`التوديع إلى ${airportName}`)
-          );
-
-          transportationLines.push(
-            `استقبال وتوديع من وإلى ${airportName} وفندق ${hotelName} ${vehicleText}`
-          );
         }
       });
 
@@ -599,17 +528,46 @@ class BookingPdfServiceArabic {
       return roomType;
     };
 
-    // Organize tours by day (based on selectedTours array order)
-    const toursByDay = [];
-    if (booking.selectedTours && Array.isArray(booking.selectedTours)) {
+    // Organize itinerary by day (using dailyItinerary if available, fallback to selectedTours)
+    const itineraryDays = [];
+    
+    if (booking.dailyItinerary && Array.isArray(booking.dailyItinerary) && booking.dailyItinerary.length > 0) {
+      // Use new dailyItinerary structure
+      booking.dailyItinerary.forEach((day) => {
+        itineraryDays.push({
+          day: day.day,
+          title: day.title || `اليوم ${day.day}`,
+          description: day.description || "",
+          activities: day.activities || [],
+          isArrivalDay: day.isArrivalDay || false,
+          isDepartureDay: day.isDepartureDay || false,
+          isRestDay: day.isRestDay || false,
+          tourInfo: day.tourInfo,
+          images: day.images || [],
+          translations: day.translations || {},
+        });
+      });
+    } else if (booking.selectedTours && Array.isArray(booking.selectedTours)) {
+      // Fallback to old selectedTours structure
       booking.selectedTours.forEach((tour, index) => {
         const dayNumber = index + 1;
-        toursByDay.push({
+        itineraryDays.push({
           day: dayNumber,
-          tour: tour,
+          title: getLocalizedTourName(tour) || `اليوم ${dayNumber}`,
+          description: getLocalizedTourDescription(tour) || "",
+          activities: [],
+          isArrivalDay: false,
+          isDepartureDay: false,
+          isRestDay: false,
+          tourInfo: { tourId: tour },
+          images: tour.images || [],
+          translations: {},
         });
       });
     }
+    
+    // Keep toursByDay for backward compatibility (will be removed in HTML generation)
+    const toursByDay = itineraryDays;
 
     // Calculate total children
     const totalChildren =
@@ -1069,12 +1027,14 @@ class BookingPdfServiceArabic {
 </head>
 <body>
     ${
-      logoBase64
+      !hideHeader && logoBase64
         ? `<img src="${logoBase64}" class="watermark" alt="Watermark" />`
         : ""
     }
     
-    <div class="header">
+    ${
+      !hideHeader
+        ? `<div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
             <div class="report-title">تفاصيل الحجز</div>
@@ -1084,7 +1044,9 @@ class BookingPdfServiceArabic {
             ? `<img src="${logoBase64}" class="logo-img" alt="Rahalatek Logo" />`
             : ""
         }
-    </div>
+    </div>`
+        : ""
+    }
     
     <!-- Booking Overview Section -->
     <div class="booking-overview">
@@ -1191,12 +1153,16 @@ class BookingPdfServiceArabic {
                     `
                         : ""
                     }
-                    <div class="overview-detail-row" style="margin-top: 8px;">
+                    ${
+                      !hidePrice
+                        ? `<div class="overview-detail-row" style="margin-top: 8px;">
                         <span class="overview-icon">💵</span>
                         <span class="overview-text"><strong>سعر الباقة: $${
                           booking.finalPrice?.toFixed(2) || "0.00"
                         }</strong></span>
-                    </div>
+                    </div>`
+                        : ""
+                    }
                 </div>
             </div>
         </div>
@@ -1348,77 +1314,124 @@ class BookingPdfServiceArabic {
         : ""
     }
 
-    <!-- Tours Section -->
+    <!-- Daily Itinerary Section -->
     ${
-      toursByDay.length > 0
+      itineraryDays.length > 0
         ? `
-    <div class="tours-section-title">الجولات حسب الأيام</div>
-    ${toursByDay
-      .map((dayTour) => {
-        const tour = dayTour.tour;
-        if (!tour) return "";
+    <div class="tours-section-title">البرنامج اليومي</div>
+    ${itineraryDays
+      .map((dayItem) => {
+        // Get the primary image for this day
+        let dayImageUrl = "";
+        if (dayItem.images && dayItem.images.length > 0) {
+          const primaryImage = dayItem.images.find(img => img.url);
+          dayImageUrl = primaryImage?.url || dayItem.images[0]?.url || "";
+        }
+        
+        // For tour days, get tour data
+        let tour = null;
+        if (dayItem.tourInfo && dayItem.tourInfo.tourId) {
+          tour = typeof dayItem.tourInfo.tourId === 'object' 
+            ? dayItem.tourInfo.tourId 
+            : null;
+          
+          // If tour exists, use tour image if no day image
+          if (tour && !dayImageUrl && tour.images && tour.images.length > 0) {
+            const tourPrimaryImage = getPrimaryImage(tour.images);
+            dayImageUrl = tourPrimaryImage?.url || "";
+          }
+        }
 
-        const tourPrimaryImage = getPrimaryImage(tour.images);
-        const tourImageUrl = tourPrimaryImage?.url || "";
-        const translatedTourCity = translateCityName(tour.city);
-        const translatedTourType = translateTourType(tour.tourType);
-
-        // Get highlights (max 4)
-        const highlights = getLocalizedTourHighlights(tour);
+        // Get title and description with Arabic translations
+        let dayTitle = (dayItem.translations?.title?.ar && dayItem.translations.title.ar.trim()) 
+          ? dayItem.translations.title.ar 
+          : dayItem.title || `اليوم ${dayItem.day}`;
+        
+        // Remove "Day X:" or "اليوم X:" prefix from title if it exists
+        dayTitle = dayTitle.replace(/^(Day\s*\d+\s*:?\s*|اليوم\s*\d+\s*:?\s*)/i, '').trim();
+        
+        // For tour days, prioritize tour's Arabic description and highlights
+        // For static days, use day's Arabic translations
+        let finalDescription = "";
+        let finalActivities = [];
+        
+        if (tour) {
+          // Tour day - use tour's Arabic translations
+          finalDescription = getLocalizedTourDescription(tour);
+          finalActivities = getLocalizedTourHighlights(tour).slice(0, 4);
+        } else {
+          // Static day (arrival, departure, rest) - use day's Arabic translations
+          finalDescription = (dayItem.translations?.description?.ar && dayItem.translations.description.ar.trim())
+            ? dayItem.translations.description.ar
+            : dayItem.description || "";
+          
+          finalActivities = dayItem.activities && dayItem.activities.length > 0
+            ? dayItem.activities.slice(0, 4).map((activity, index) => {
+                if (dayItem.translations?.activities && dayItem.translations.activities[index]?.ar) {
+                  return dayItem.translations.activities[index].ar;
+                }
+                return activity;
+              })
+            : [];
+        }
+        const translatedTourCity = tour ? translateCityName(tour.city) : "";
+        const translatedTourType = tour ? translateTourType(tour.tourType) : "";
 
         return `
         <div class="tour-section">
-            <div class="tour-day-badge">اليوم ${dayTour.day}</div>
+            <div class="tour-day-badge">اليوم ${dayItem.day}</div>
             <div class="tour-header">
                 <div class="tour-details">
-                    <div class="tour-name">${getLocalizedTourName(tour)}</div>
-                    <div class="tour-summary">
-                        <span>📍 ${translatedTourCity || "N/A"}</span>
-                        ${
-                          translatedTourType
-                            ? `<span>
+                    <div class="tour-name">${tour ? getLocalizedTourName(tour) : dayTitle}</div>
+                    ${
+                      tour
+                        ? `<div class="tour-summary">
+                            <span>📍 ${translatedTourCity || "N/A"}</span>
+                            ${
+                              translatedTourType
+                                ? `<span>
+                                    <span class="tour-summary-icon">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
+                                            <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
+                                            <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
+                                            <path d="M7 9h2M7 11h2M7 13h2M7 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                            <path d="M15 9h2M15 11h2M15 13h2M15 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    ${translatedTourType}
+                                </span>`
+                                : ""
+                            }
+                            <span>
                                 <span class="tour-summary-icon">
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
-                                        <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
-                                        <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
-                                        <path d="M7 9h2M7 11h2M7 13h2M7 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
-                                        <path d="M15 9h2M15 11h2M15 13h2M15 15h2" stroke="#2563eb" stroke-width="1.2" stroke-linecap="round"/>
+                                    <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
+                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
                                     </svg>
                                 </span>
-                                ${translatedTourType}
-                            </span>`
-                            : ""
-                        }
-                        <span>
-                            <span class="tour-summary-icon">
-                                <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
-                                    <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
-                                </svg>
+                                ${tour.duration || "N/A"} ساعات
                             </span>
-                            ${tour.duration || "N/A"} ساعات
-                        </span>
-                    </div>
-                    ${
-                      getLocalizedTourDescription(tour)
-                        ? `<div class="tour-description">${getLocalizedTourDescription(
-                            tour
-                          )}</div>`
+                        </div>`
                         : ""
                     }
                     ${
-                      highlights.length > 0
+                      finalDescription
+                        ? `<div class="tour-description">${finalDescription}</div>`
+                        : ""
+                    }
+                    ${
+                      finalActivities.length > 0
                         ? `
                     <div class="tour-highlights">
-                        <div class="highlights-title">أبرز المميزات</div>
+                        <div class="highlights-title">${tour ? 'أبرز المميزات' : 'الأنشطة'}</div>
                         <div class="highlights-list">
-                            ${highlights
+                            ${finalActivities
                               .map(
-                                (highlight) => `
+                                (activity) => `
                             <div class="highlight-item">
                                 <span class="highlight-icon">★</span>
-                                <span>${highlight}</span>
+                                <span>${activity}</span>
                             </div>
                             `
                               )
@@ -1430,10 +1443,8 @@ class BookingPdfServiceArabic {
                     }
                 </div>
                 ${
-                  tourImageUrl
-                    ? `<img src="${tourImageUrl}" class="tour-image" alt="${
-                        getLocalizedTourName(tour) || "Tour"
-                      }" />`
+                  dayImageUrl
+                    ? `<img src="${dayImageUrl}" class="tour-image" alt="${dayTitle}" />`
                     : ""
                 }
             </div>

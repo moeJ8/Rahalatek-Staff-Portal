@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { Label, Card, Checkbox, Alert } from "flowbite-react";
@@ -55,6 +55,7 @@ export default function BookingForm({
     return null;
   };
   const savedState = getSavedState();
+  const hasHydratedHotelsRef = useRef(false);
 
   // Helper to get initial value from initialData or savedState
   const getInitialValue = (key, defaultValue) => {
@@ -116,19 +117,27 @@ export default function BookingForm({
     initialData?.generatedMessageEnglish || ""
   );
   const [availableTours, setAvailableTours] = useState([]);
-  const [selectedTours, setSelectedTours] = useState(() => {
-    if (initialData?.selectedTours) {
-      // Convert tour IDs to strings if they're objects
-      return initialData.selectedTours.map((tour) =>
-        typeof tour === "object" ? tour._id || tour : tour
-      );
+  const [dailyItinerary, setDailyItinerary] = useState(() => {
+    if (initialData?.dailyItinerary) {
+      return initialData.dailyItinerary;
     }
-    return savedState?.selectedTours || [];
+    return savedState?.dailyItinerary || [];
   });
+
+  // Derive selectedTours from dailyItinerary for pricing calculations
+  const selectedTours = dailyItinerary
+    .filter((day) => day?.tourInfo?.tourId)
+    .map((day) => {
+      const tourId = day.tourInfo?.tourId;
+      if (typeof tourId === "object") {
+        return tourId._id || tourId.id || null;
+      }
+      return tourId;
+    })
+    .filter(Boolean);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [messageRegenerated, setMessageRegenerated] = useState(false);
 
   // For hotel detail modal
   const [selectedHotelForModal, setSelectedHotelForModal] = useState(null);
@@ -221,7 +230,7 @@ export default function BookingForm({
     setSelectedCountries([]);
     setSelectedCities([]);
     setMessage("");
-    setSelectedTours([]);
+    setDailyItinerary([]);
     setStartDate("");
     setEndDate("");
     setDisplayStartDate("");
@@ -264,7 +273,7 @@ export default function BookingForm({
           childrenUnder3,
           children3to6,
           children6to12,
-          selectedTours,
+          dailyItinerary,
           includeReception,
           includeFarewell,
           transportVehicleType,
@@ -296,88 +305,13 @@ export default function BookingForm({
     childrenUnder3,
     children3to6,
     children6to12,
-    selectedTours,
+    dailyItinerary,
     includeReception,
     includeFarewell,
     transportVehicleType,
     tripPrice,
     selectedAirport,
   ]);
-
-  // Check if form data has changed from initial data (for edit mode)
-  const hasFormChanged = useCallback(() => {
-    if (!initialData || !bookingId) return false;
-
-    // Compare key fields that would affect the message
-    const initialStartDate = initialData.startDate
-      ? new Date(initialData.startDate).toISOString().split("T")[0]
-      : "";
-    const initialEndDate = initialData.endDate
-      ? new Date(initialData.endDate).toISOString().split("T")[0]
-      : "";
-
-    if (startDate !== initialStartDate || endDate !== initialEndDate)
-      return true;
-    if (numGuests !== initialData.numGuests) return true;
-    if (includeChildren !== initialData.includeChildren) return true;
-    if (childrenUnder3 !== initialData.childrenUnder3) return true;
-    if (children3to6 !== initialData.children3to6) return true;
-    if (children6to12 !== initialData.children6to12) return true;
-
-    // Compare cities
-    const initialCities = (initialData.selectedCities || []).sort().join(",");
-    const currentCities = (selectedCities || []).sort().join(",");
-    if (initialCities !== currentCities) return true;
-
-    // Compare hotel entries (simplified check - compare count and IDs)
-    const initialHotelIds = (initialData.hotelEntries || [])
-      .map((e) => e.hotelId || e.hotelData?._id)
-      .sort()
-      .join(",");
-    const currentHotelIds = hotelEntries
-      .map((e) => e.hotelId || e.hotelData?._id)
-      .sort()
-      .join(",");
-    if (initialHotelIds !== currentHotelIds) return true;
-
-    // Compare tours
-    const initialTourIds = (initialData.selectedTours || [])
-      .map((t) => (typeof t === "object" ? t._id : t))
-      .sort()
-      .join(",");
-    const currentTourIds = (selectedTours || []).sort().join(",");
-    if (initialTourIds !== currentTourIds) return true;
-
-    // Compare trip price (if manual price was set)
-    if (initialData.manualPrice) {
-      const initialPrice = initialData.manualPrice.toString();
-      const currentPrice = tripPrice || "";
-      if (initialPrice !== currentPrice) return true;
-    }
-
-    return false;
-  }, [
-    initialData,
-    bookingId,
-    startDate,
-    endDate,
-    numGuests,
-    includeChildren,
-    childrenUnder3,
-    children3to6,
-    children6to12,
-    selectedCities,
-    hotelEntries,
-    selectedTours,
-    tripPrice,
-  ]);
-
-  // Reset messageRegenerated flag when form changes in edit mode
-  useEffect(() => {
-    if (bookingId && initialData && hasFormChanged()) {
-      setMessageRegenerated(false);
-    }
-  }, [bookingId, initialData, hasFormChanged]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -403,6 +337,31 @@ export default function BookingForm({
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!initialData || hotels.length === 0 || hasHydratedHotelsRef.current) {
+      return;
+    }
+
+    setHotelEntries((prevEntries) =>
+      prevEntries.map((entry) => {
+        const hotelId = entry.hotelId || entry.hotelData?._id;
+        if (!hotelId) return entry;
+        const freshHotel = hotels.find((hotel) => hotel._id === hotelId);
+        if (!freshHotel) return entry;
+        return {
+          ...entry,
+          hotelId,
+          hotelData: {
+            ...freshHotel,
+            ...entry.hotelData,
+          },
+        };
+      })
+    );
+
+    hasHydratedHotelsRef.current = true;
+  }, [initialData, hotels]);
 
   const getAirportArabicName = (airportName) => {
     if (!airportName || !airports || airports.length === 0) {
@@ -457,16 +416,16 @@ export default function BookingForm({
 
   const handleCountrySelection = (countries) => {
     setSelectedCountries(countries);
-    // Clear hotel entries and tours when countries change
+    // Clear hotel entries and itinerary when countries change
     setHotelEntries([]);
-    setSelectedTours([]);
+    setDailyItinerary([]);
   };
 
   const handleCitySelection = (cities) => {
     setSelectedCities(cities);
-    // Clear hotel entries and tours when cities change
+    // Clear hotel entries and itinerary when cities change
     setHotelEntries([]);
-    setSelectedTours([]);
+    setDailyItinerary([]);
   };
 
   const handleNumGuestsChange = (e) => {
@@ -770,6 +729,7 @@ export default function BookingForm({
       transportVehicleType,
       selectedTours,
       tours,
+      dailyItinerary,
       getAirportArabicName,
     });
 
@@ -792,6 +752,7 @@ export default function BookingForm({
       transportVehicleType,
       selectedTours,
       tours,
+      dailyItinerary,
     });
 
     setMessage(message);
@@ -836,10 +797,6 @@ export default function BookingForm({
     const result = await generateAndSetMessage();
     if (result) {
       localStorage.removeItem("bookingFormData");
-      // Mark message as regenerated when in edit mode
-      if (bookingId && initialData) {
-        setMessageRegenerated(true);
-      }
     }
   };
 
@@ -863,7 +820,8 @@ export default function BookingForm({
 
       const bookingData = {
         clientName: clientName && clientName.trim() ? clientName.trim() : null,
-        nationality: nationality && nationality.trim() ? nationality.trim() : null,
+        nationality:
+          nationality && nationality.trim() ? nationality.trim() : null,
         startDate,
         endDate,
         nights: calculateDuration(startDate, endDate),
@@ -889,6 +847,7 @@ export default function BookingForm({
           transportVehicleType: entry.transportVehicleType,
         })),
         selectedTours,
+        dailyItinerary,
         calculatedPrice: getTotalPrice(),
         manualPrice:
           tripPrice &&
@@ -1036,64 +995,9 @@ export default function BookingForm({
     }
   }, [startDate, endDate]);
 
-  // Add the missing tour selection functions
-  const handleTourSelection = (tourId) => {
-    setSelectedTours((prevSelected) => {
-      if (prevSelected.includes(tourId)) {
-        return prevSelected.filter((id) => id !== tourId);
-      } else {
-        return [...prevSelected, tourId];
-      }
-    });
-  };
-
-  const handleTourDayAssignment = (tourId, dayIndex) => {
-    setSelectedTours((prevSelected) => {
-      // Create a copy of the current array
-      const newSelected = [...prevSelected];
-
-      // Remove the tour from its current position
-      const currentIndex = newSelected.indexOf(tourId);
-      if (currentIndex !== -1) {
-        newSelected.splice(currentIndex, 1);
-      }
-
-      // Insert the tour at the new position (dayIndex)
-      // Ensure dayIndex is at most the current length of the array (after removal)
-      const insertIndex = Math.min(dayIndex, newSelected.length);
-      newSelected.splice(insertIndex, 0, tourId);
-
-      return newSelected;
-    });
-  };
-
-  // Keep these functions for backward compatibility and alternative method
-  const moveTourUp = (tourId) => {
-    setSelectedTours((prevSelected) => {
-      const index = prevSelected.indexOf(tourId);
-      if (index <= 0) return prevSelected;
-
-      const newSelected = [...prevSelected];
-      [newSelected[index], newSelected[index - 1]] = [
-        newSelected[index - 1],
-        newSelected[index],
-      ];
-      return newSelected;
-    });
-  };
-
-  const moveTourDown = (tourId) => {
-    setSelectedTours((prevSelected) => {
-      const index = prevSelected.indexOf(tourId);
-      if (index < 0 || index >= prevSelected.length - 1) return prevSelected;
-
-      const newSelected = [...prevSelected];
-      [newSelected[index], newSelected[index + 1]] = [
-        newSelected[index + 1],
-        newSelected[index],
-      ];
-      return newSelected;
-    });
+  // Handle daily itinerary changes
+  const handleDailyItineraryChange = (newItinerary) => {
+    setDailyItinerary(newItinerary);
   };
 
   // Functions for hotel detail modal
@@ -1711,11 +1615,10 @@ export default function BookingForm({
 
           <TourSelector
             availableTours={availableTours}
-            selectedTours={selectedTours}
-            onTourSelection={handleTourSelection}
-            onTourDayAssignment={handleTourDayAssignment}
-            onMoveTourUp={moveTourUp}
-            onMoveTourDown={moveTourDown}
+            dailyItinerary={dailyItinerary}
+            onDailyItineraryChange={handleDailyItineraryChange}
+            startDate={startDate}
+            endDate={endDate}
           />
 
           <div>
@@ -1766,10 +1669,13 @@ export default function BookingForm({
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-2">
               <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
                 <span className="font-semibold">⚠️ Remember:</span>
-                <span>Please regenerate the message after making any changes to the booking details.</span>
+                <span>
+                  Please regenerate the message after making any changes to the
+                  booking details.
+                </span>
               </p>
             </div>
-            
+
             <CustomButton
               onClick={handleGenerateMessage}
               variant="purpleToPink"
@@ -1785,22 +1691,7 @@ export default function BookingForm({
               variant="blueToTeal"
               size="lg"
               className="w-full"
-              disabled={
-                !message ||
-                saving ||
-                (bookingId &&
-                  initialData &&
-                  hasFormChanged() &&
-                  !messageRegenerated)
-              }
-              title={
-                bookingId &&
-                initialData &&
-                hasFormChanged() &&
-                !messageRegenerated
-                  ? "Please generate a new message after making changes"
-                  : ""
-              }
+              disabled={!message || saving}
             >
               {saving ? "Saving Booking..." : "Save Booking"}
             </CustomButton>

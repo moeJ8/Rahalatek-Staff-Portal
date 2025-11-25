@@ -146,6 +146,7 @@ export default function EditBookingPage() {
       checkOut: formatDateForInput(entry.checkOut),
     })),
     selectedTours: booking.selectedTours || [],
+    dailyItinerary: booking.dailyItinerary || [],
     calculatedPrice: booking.calculatedPrice,
     manualPrice: booking.manualPrice ?? null,
     finalPrice: booking.finalPrice,

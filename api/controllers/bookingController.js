@@ -1,12 +1,35 @@
 const Booking = require("../models/Booking");
-const Tour = require("../models/Tour");
 const User = require("../models/User");
-const { invalidateDashboardCache } = require("../utils/redis");
 const BookingPdfService = require("../services/bookingPdfService");
 const BookingPdfServiceArabic = require("../services/bookingPdfServiceArabic");
 
+const denyIfPublisher = (req, res) => {
+  if (req.user?.isPublisher) {
+    res.status(403).json({
+      success: false,
+      message: "Publishers are not authorized to access bookings",
+    });
+    return true;
+  }
+  return false;
+};
+
+const getBookingOwnerId = (booking) => {
+  if (!booking || !booking.createdBy) return null;
+  if (typeof booking.createdBy === "object" && booking.createdBy._id) {
+    return booking.createdBy._id.toString();
+  }
+  return booking.createdBy.toString();
+};
+
+const isOwner = (booking, userId) => {
+  const ownerId = getBookingOwnerId(booking);
+  return ownerId ? ownerId === userId : false;
+};
+
 // Create a new booking
 exports.createBooking = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const {
       clientName,
@@ -23,6 +46,7 @@ exports.createBooking = async (req, res) => {
       selectedCities,
       hotelEntries,
       selectedTours,
+      dailyItinerary,
       calculatedPrice,
       manualPrice,
       finalPrice,
@@ -76,6 +100,7 @@ exports.createBooking = async (req, res) => {
       selectedCities,
       hotelEntries,
       selectedTours: selectedTours || [],
+      dailyItinerary: dailyItinerary || [],
       calculatedPrice: calculatedPrice || 0,
       manualPrice: manualPrice || null,
       finalPrice: finalPrice || calculatedPrice || 0,
@@ -111,6 +136,7 @@ exports.createBooking = async (req, res) => {
 
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const { userId, isAdmin, isAccountant } = req.user;
     const {
@@ -132,7 +158,6 @@ exports.getAllBookings = async (req, res) => {
     if (!isAdmin && !isAccountant) {
       query.createdBy = userId;
     } else if (createdBy) {
-      // If admin/accountant and createdBy filter is provided, use it
       query.createdBy = createdBy;
     }
 
@@ -219,6 +244,7 @@ exports.getAllBookings = async (req, res) => {
 
 // Get booking by ID
 exports.getBookingById = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const { userId, isAdmin, isAccountant } = req.user;
     const booking = await Booking.findById(req.params.id)
@@ -226,8 +252,13 @@ exports.getBookingById = async (req, res) => {
       .populate("updatedBy", "username")
       .populate(
         "selectedTours",
-        "name city tourType price vipCarType carCapacity duration highlights"
+        "name city tourType price vipCarType carCapacity duration highlights translations"
       )
+      .populate({
+        path: "dailyItinerary.tourInfo.tourId",
+        select:
+          "name city tourType price vipCarType carCapacity duration highlights translations description detailedDescription policies",
+      })
       .populate(
         "relatedVoucher",
         "voucherNumber clientName totalAmount currency"
@@ -247,8 +278,8 @@ exports.getBookingById = async (req, res) => {
       });
     }
 
-    // Check permissions
-    if (!isAdmin && !isAccountant && booking.createdBy.toString() !== userId) {
+    const canViewAll = isAdmin || isAccountant;
+    if (!canViewAll && !isOwner(booking, userId)) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to view this booking",
@@ -271,8 +302,9 @@ exports.getBookingById = async (req, res) => {
 
 // Update booking
 exports.updateBooking = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
-    const { userId, isAdmin, isAccountant } = req.user;
+    const { userId, isAdmin } = req.user;
     const bookingId = req.params.id;
 
     // Check if booking exists
@@ -291,12 +323,7 @@ exports.updateBooking = async (req, res) => {
       });
     }
 
-    // Check permissions
-    if (
-      !isAdmin &&
-      !isAccountant &&
-      existingBooking.createdBy.toString() !== userId
-    ) {
+    if (!isAdmin && !isOwner(existingBooking, userId)) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to update this booking",
@@ -318,6 +345,7 @@ exports.updateBooking = async (req, res) => {
       selectedCities,
       hotelEntries,
       selectedTours,
+      dailyItinerary,
       calculatedPrice,
       manualPrice,
       finalPrice,
@@ -349,6 +377,8 @@ exports.updateBooking = async (req, res) => {
       updateData.selectedCities = selectedCities;
     if (hotelEntries !== undefined) updateData.hotelEntries = hotelEntries;
     if (selectedTours !== undefined) updateData.selectedTours = selectedTours;
+    if (dailyItinerary !== undefined)
+      updateData.dailyItinerary = dailyItinerary;
     if (calculatedPrice !== undefined)
       updateData.calculatedPrice = calculatedPrice;
     if (manualPrice !== undefined) updateData.manualPrice = manualPrice;
@@ -395,8 +425,9 @@ exports.updateBooking = async (req, res) => {
 
 // Delete booking (soft delete)
 exports.deleteBooking = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
-    const { userId, isAdmin, isAccountant } = req.user;
+    const { userId, isAdmin } = req.user;
     const bookingId = req.params.id;
 
     const booking = await Booking.findById(bookingId);
@@ -414,22 +445,7 @@ exports.deleteBooking = async (req, res) => {
       });
     }
 
-    const { isContentManager } = req.user;
-
-    // Full admins can delete any booking
-    if (isAdmin && !isAccountant) {
-      // Allow deletion
-    }
-    // Content managers can delete their own bookings
-    else if (isContentManager && booking.createdBy.toString() === userId) {
-      // Allow deletion
-    }
-    // Accountants can delete their own bookings
-    else if (isAccountant && booking.createdBy.toString() === userId) {
-      // Allow deletion
-    }
-    // Regular users cannot delete bookings
-    else {
+    if (!isAdmin && !isOwner(booking, userId)) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to delete this booking",
@@ -459,23 +475,15 @@ exports.deleteBooking = async (req, res) => {
 
 // Restore booking from trash
 exports.restoreBooking = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
-    const { isAdmin, isAccountant } = req.user;
+    const { isAdmin } = req.user;
     const bookingId = req.params.id;
 
-    // Only full admins can restore bookings (not accountants or regular users)
     if (!isAdmin) {
       return res.status(403).json({
         success: false,
         message: "Only administrators are authorized to restore bookings",
-      });
-    }
-
-    // Accountants cannot restore bookings
-    if (isAccountant && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: "Accountants are not authorized to restore bookings",
       });
     }
 
@@ -516,25 +524,16 @@ exports.restoreBooking = async (req, res) => {
 
 // Permanently delete booking
 exports.permanentlyDeleteBooking = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
-    const { isAdmin, isAccountant } = req.user;
+    const { isAdmin } = req.user;
     const bookingId = req.params.id;
 
-    // Only full admins can permanently delete bookings (not accountants or regular users)
     if (!isAdmin) {
       return res.status(403).json({
         success: false,
         message:
           "Only administrators are authorized to permanently delete bookings",
-      });
-    }
-
-    // Accountants cannot permanently delete bookings
-    if (isAccountant && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Accountants are not authorized to permanently delete bookings",
       });
     }
 
@@ -571,6 +570,7 @@ exports.permanentlyDeleteBooking = async (req, res) => {
 
 // Get bookings metadata (for filter dropdowns)
 exports.getBookingsMetadata = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const { userId, isAdmin, isAccountant } = req.user;
 
@@ -599,15 +599,17 @@ exports.getBookingsMetadata = async (req, res) => {
       // Unique users
       Booking.find(query)
         .distinct("createdBy")
-        .then((userIds) => userIds),
+        .then((userIds) => userIds || []),
     ]);
 
     // Populate user details
-    const User = require("../models/User");
-    const uniqueUsers = await User.find({ _id: { $in: uniqueUserIds } })
-      .select("_id username")
-      .sort({ username: 1 })
-      .lean();
+    const uniqueUsers =
+      uniqueUserIds && uniqueUserIds.length > 0
+        ? await User.find({ _id: { $in: uniqueUserIds } })
+            .select("_id username")
+            .sort({ username: 1 })
+            .lean()
+        : [];
 
     res.json({
       success: true,
@@ -628,6 +630,7 @@ exports.getBookingsMetadata = async (req, res) => {
 
 // Get trashed bookings
 exports.getTrashedBookings = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const { userId, isAdmin, isAccountant } = req.user;
 
@@ -674,6 +677,7 @@ exports.getTrashedBookings = async (req, res) => {
 
 // Download booking as PDF
 exports.downloadBookingPDF = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
   try {
     const { id } = req.params;
 
@@ -684,7 +688,25 @@ exports.downloadBookingPDF = async (req, res) => {
       });
     }
 
-    // Get full user object
+    const booking = await Booking.findById(id)
+      .select("clientName selectedCities createdBy isDeleted")
+      .lean();
+
+    if (!booking || booking.isDeleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    const canViewAll = req.user.isAdmin || req.user.isAccountant;
+    if (!canViewAll && getBookingOwnerId(booking) !== req.user.userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to download this booking",
+      });
+    }
+
     const fullUser = await User.findById(req.user.userId).select(
       "username email isAdmin isAccountant"
     );
@@ -697,14 +719,17 @@ exports.downloadBookingPDF = async (req, res) => {
     }
 
     const language = req.query.lang === "ar" ? "ar" : "en";
+    const pdfOptions = {
+      hideHeader: req.query.hideHeader === "true",
+      hidePrice: req.query.hidePrice === "true",
+    };
     const pdfService =
       language === "ar" ? BookingPdfServiceArabic : BookingPdfService;
-    const pdfBuffer = await pdfService.generateBookingPDF(id, fullUser);
-
-    // Get booking for filename
-    const booking = await Booking.findById(id)
-      .select("clientName selectedCities")
-      .lean();
+    const pdfBuffer = await pdfService.generateBookingPDF(
+      id,
+      fullUser,
+      pdfOptions
+    );
 
     const clientName = booking?.clientName
       ? booking.clientName.replace(/[^a-z0-9]/gi, "-")

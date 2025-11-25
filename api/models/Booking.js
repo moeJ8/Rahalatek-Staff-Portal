@@ -75,6 +75,54 @@ const bookingSchema = new mongoose.Schema(
     // Tours
     selectedTours: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tour" }],
 
+    // Daily Itinerary (day-by-day plan)
+    dailyItinerary: [
+      {
+        day: { type: Number, required: true },
+        title: { type: String, default: "" },
+        description: { type: String, default: "" },
+        activities: [{ type: String }],
+        meals: {
+          breakfast: { type: Boolean, default: false },
+          lunch: { type: Boolean, default: false },
+          dinner: { type: Boolean, default: false },
+        },
+        isArrivalDay: { type: Boolean, default: false },
+        isDepartureDay: { type: Boolean, default: false },
+        isRestDay: { type: Boolean, default: false },
+        tourInfo: {
+          tourId: { type: mongoose.Schema.Types.ObjectId, ref: "Tour" },
+          name: { type: String, default: "" },
+          city: { type: String, default: "" },
+          duration: { type: String, default: "" },
+          price: { type: Number, default: 0 },
+          tourType: { type: String, default: "" },
+        },
+        images: [
+          {
+            url: { type: String, default: "" },
+            altText: { type: String, default: "" },
+          },
+        ],
+        translations: {
+          title: {
+            ar: { type: String, default: "" },
+            fr: { type: String, default: "" },
+          },
+          description: {
+            ar: { type: String, default: "" },
+            fr: { type: String, default: "" },
+          },
+          activities: [
+            {
+              ar: { type: String, default: "" },
+              fr: { type: String, default: "" },
+            },
+          ],
+        },
+      },
+    ],
+
     // Pricing
     calculatedPrice: { type: Number, default: 0 },
     manualPrice: { type: Number, default: null }, // null means use calculated price

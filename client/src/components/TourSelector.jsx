@@ -1,365 +1,346 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, Label, Checkbox, Select } from 'flowbite-react';
-import { FaCrown, FaUsers, FaCar, FaSearch, FaCheck, FaCalendarDay, FaGripLines, FaArrowsAltV, FaMapMarkerAlt, FaGlobeAmericas } from 'react-icons/fa';
-import CustomScrollbar from './CustomScrollbar';
-import Search from './Search';
-import { inferCountryFromCity } from '../utils/countryCities';
+import React, { useState, useEffect } from "react";
+import { Card, Label, Alert } from "flowbite-react";
+import { FaCalendarAlt, FaSyncAlt, FaPlus } from "react-icons/fa";
+import CustomButton from "./CustomButton";
+import PackageDayBlock from "./PackageDayBlock";
+import { calculateDuration } from "../utils/pricingUtils";
 
-// Country flag-based color schemes
-const countryColors = {
-  'Turkey': 'bg-red-600', // Turkish flag red
-  'Malaysia': 'bg-blue-800', // Malaysian flag blue
-  'Thailand': 'bg-red-700', // Thai flag red
-  'Indonesia': 'bg-red-600', // Indonesian flag red
-  'Saudi Arabia': 'bg-green-700', // Saudi flag green
-  'Morocco': 'bg-red-600', // Moroccan flag red
-  'Egypt': 'bg-red-600', // Egyptian flag red
-  'Azerbaijan': 'bg-blue-700', // Azerbaijani flag blue
-  'Georgia': 'bg-red-600', // Georgian flag red
-  'Albania': 'bg-red-700' // Albanian flag red
+// Pre-defined templates for special days
+const getArrivalDayTemplate = (dayNumber) => ({
+  day: dayNumber,
+  title: `Day ${dayNumber}: Arrival & Hotel Check-in`,
+  description:
+    "Welcome to your journey! Upon arrival, you will be greeted by our representative who will assist you with the transfer to your hotel. After checking in, take time to rest and prepare for the exciting adventures ahead.",
+  activities: [
+    "Airport reception service",
+    "Meet & greet with tour representative",
+    "Transfer to hotel",
+    "Hotel check-in assistance",
+    "Welcome briefing",
+    "Rest and prepare for upcoming tours",
+  ],
+  meals: { breakfast: false, lunch: false, dinner: false },
+  isArrivalDay: true,
+  isDepartureDay: false,
+  isRestDay: false,
+  tourInfo: null,
+  translations: {
+    title: { ar: `اليوم ${dayNumber}: الوصول وتسجيل الدخول في الفندق`, fr: "" },
+    description: {
+      ar: "مرحباً بك في رحلتك! عند الوصول، سيستقبلك ممثلنا الذي سيساعدك في الانتقال إلى فندقك. بعد تسجيل الدخول، خذ بعض الوقت للراحة والاستعداد للمغامرات المثيرة القادمة.",
+      fr: "",
+    },
+    activities: [
+      { ar: "خدمة الاستقبال في المطار", fr: "" },
+      { ar: "الترحيب والاستقبال مع ممثل الجولة", fr: "" },
+      { ar: "النقل إلى الفندق", fr: "" },
+      { ar: "المساعدة في تسجيل الدخول بالفندق", fr: "" },
+      { ar: "إحاطة ترحيبية", fr: "" },
+      { ar: "الراحة والاستعداد للجولات القادمة", fr: "" },
+    ],
+  },
+  images: [
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1759851638/merc_wtaghb.jpg",
+      altText: "Airport arrival and welcome",
+    },
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087383/675014510_aul2zd.jpg",
+      altText: "Hotel check-in",
+    },
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1759855915/492475786-960x630_kjybmn.jpg",
+      altText: "Hotel room",
+    },
+  ],
+});
+
+const getDepartureDayTemplate = (dayNumber) => ({
+  day: dayNumber,
+  title: `Day ${dayNumber}: Departure & Airport Transfer`,
+  description:
+    "Time to say goodbye! After breakfast and hotel check-out, you will be transferred to the airport for your departure flight. We hope you had an amazing journey and look forward to welcoming you again.",
+  activities: [
+    "Hotel check-out",
+    "Transfer to airport",
+    "Departure assistance",
+  ],
+  meals: { breakfast: false, lunch: false, dinner: false },
+  isArrivalDay: false,
+  isDepartureDay: true,
+  isRestDay: false,
+  tourInfo: null,
+  translations: {
+    title: { ar: `اليوم ${dayNumber}: المغادرة والانتقال إلى المطار`, fr: "" },
+    description: {
+      ar: "حان وقت الوداع! بعد الإفطار وتسجيل المغادرة من الفندق، سيتم نقلك إلى المطار لرحلة العودة. نأمل أن تكون قد قضيت رحلة رائعة ونتطلع للترحيب بك مرة أخرى.",
+      fr: "",
+    },
+    activities: [
+      { ar: "تسجيل المغادرة من الفندق", fr: "" },
+      { ar: "النقل إلى المطار", fr: "" },
+      { ar: "المساعدة في إجراءات المغادرة", fr: "" },
+    ],
+  },
+  images: [
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087700/Istanbul-Airport-Transfer-By-VIP-Turkey-Transfer_sr0poy.jpg",
+      altText: "Airport transfer",
+    },
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762087383/675014510_aul2zd.jpg",
+      altText: "Hotel checkout",
+    },
+  ],
+});
+
+const _getRestDayTemplate = (dayNumber) => ({
+  day: dayNumber,
+  title: `Day ${dayNumber}: Free Time / Rest Day`,
+  description:
+    "Enjoy a relaxing day at your own pace. This is your time to explore independently, unwind at the hotel, or join optional activities.",
+  activities: ["Free time", "Optional excursions", "Hotel amenities"],
+  meals: { breakfast: false, lunch: false, dinner: false },
+  isArrivalDay: false,
+  isDepartureDay: false,
+  isRestDay: true,
+  tourInfo: null,
+  translations: {
+    title: { ar: `اليوم ${dayNumber}: يوم حر / يوم راحة`, fr: "" },
+    description: {
+      ar: "استمتع بيوم مريح وفق وتيرتك الخاصة. يمكنك استكشاف المنطقة بشكل مستقل، أو الاسترخاء في الفندق، أو المشاركة في أنشطة اختيارية.",
+      fr: "",
+    },
+    activities: [
+      { ar: "وقت حر", fr: "" },
+      { ar: "رحلات اختيارية", fr: "" },
+      { ar: "الاستمتاع بمرافق الفندق", fr: "" },
+    ],
+  },
+  images: [
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762095180/istockphoto-1160947136-612x612_xpapqb.jpg",
+      altText: "Beach relaxation",
+    },
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762095180/48a81561f429a6047d512eacff03ddd34a4d0441_ojuyyd.jpg",
+      altText: "Spa and wellness",
+    },
+    {
+      url: "https://res.cloudinary.com/dnzqnr6js/image/upload/v1762095180/high-angle-view-of-shirtless-man-relaxing-while-sitting-in-pool-at-tourist-resort-CAVF48773_zgsjzo.jpg",
+      altText: "Relaxing by the pool",
+    },
+  ],
+});
+
+const createDefaultDay = (dayNumber, totalDays) => {
+  const baseDay = {
+    day: dayNumber,
+    title: `Day ${dayNumber}`,
+    description: "",
+    activities: [],
+    meals: { breakfast: false, lunch: false, dinner: false },
+    isArrivalDay: false,
+    isDepartureDay: false,
+    isRestDay: false,
+    tourInfo: null,
+    translations: {
+      title: { ar: "", fr: "" },
+      description: { ar: "", fr: "" },
+      activities: [],
+    },
+  };
+
+  if (dayNumber === 1) {
+    return {
+      ...baseDay,
+      ...getArrivalDayTemplate(dayNumber),
+      isArrivalDay: true,
+    };
+  }
+
+  if (dayNumber === totalDays && totalDays > 1) {
+    return {
+      ...baseDay,
+      ...getDepartureDayTemplate(dayNumber),
+      isDepartureDay: true,
+    };
+  }
+
+  return baseDay;
 };
 
-const TourSelector = ({ 
-  availableTours, 
-  selectedTours, 
-  onTourSelection, 
-  onTourDayAssignment,
-  hideDayAssignment = false
+const TourSelector = ({
+  availableTours = [],
+  dailyItinerary = [],
+  onDailyItineraryChange,
+  startDate,
+  endDate,
 }) => {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredTours, setFilteredTours] = useState([]);
-  const [containerHeight, setContainerHeight] = useState(256);
-  const resizableRef = useRef(null);
+  const [localItinerary, setLocalItinerary] = useState(dailyItinerary);
 
+  const totalDays =
+    startDate && endDate ? calculateDuration(startDate, endDate) : 0;
+
+  // Sync with parent dailyItinerary prop (for edit mode)
   useEffect(() => {
-    if (!availableTours || availableTours.length === 0) {
-      setFilteredTours([]);
+    if (dailyItinerary && dailyItinerary.length > 0) {
+      setLocalItinerary(dailyItinerary);
+    }
+  }, [dailyItinerary]);
+
+  // Generate day blocks when dates change
+  useEffect(() => {
+    if (!totalDays || totalDays <= 0) {
+      setLocalItinerary([]);
       return;
     }
 
-    let filtered = availableTours;
-
-    if (activeTab === 'vip') {
-      filtered = filtered.filter(tour => tour.tourType === 'VIP');
-    } else if (activeTab === 'group') {
-      filtered = filtered.filter(tour => tour.tourType === 'Group');
-    } else if (activeTab === 'selected') {
-      filtered = filtered.filter(tour => selectedTours.includes(tour._id));
+    // If we already have the right number of days with data, keep them
+    if (localItinerary.length === totalDays && localItinerary.length > 0) {
+      return;
     }
 
-    if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(tour => {
-        const country = inferCountryFromCity(tour.city) || '';
-        return (
-          tour.name.toLowerCase().includes(searchLower) || 
-          (tour.description && tour.description.toLowerCase().includes(searchLower)) ||
-          (tour.city && tour.city.toLowerCase().includes(searchLower)) ||
-          country.toLowerCase().includes(searchLower)
-        );
-      });
+    // Generate new itinerary
+    const newItinerary = [];
+    for (let i = 1; i <= totalDays; i++) {
+      const existingDay = localItinerary.find((d) => d.day === i);
+      if (existingDay) {
+        newItinerary.push({ ...existingDay, day: i });
+      } else {
+        newItinerary.push(createDefaultDay(i, totalDays));
+      }
     }
-    
-    setFilteredTours(filtered);
-  }, [availableTours, searchTerm, activeTab, selectedTours]);
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    const startY = e.clientY;
-    const startHeight = containerHeight;
-    
-    const handleMouseMove = (moveEvent) => {
-      const deltaY = moveEvent.clientY - startY;
-      const newHeight = Math.max(128, Math.min(600, startHeight + deltaY));
-      setContainerHeight(newHeight);
-    };
-    
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
 
-  const handleTouchStart = (e) => {
-    // Get initial touch position without preventDefault
-    const touch = e.touches[0];
-    const startY = touch.clientY;
-    const startHeight = containerHeight;
-    
-    const handleTouchMove = (moveEvent) => {
-      // Don't call preventDefault to avoid passive listener warning
-      const touch = moveEvent.touches[0];
-      const deltaY = touch.clientY - startY;
-      const newHeight = Math.max(128, Math.min(600, startHeight + deltaY));
-      setContainerHeight(newHeight);
-    };
-    
-    const handleTouchEnd = () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-    
-    // Don't use { passive: false } which causes the warning
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleTouchEnd);
-  };
+    setLocalItinerary(newItinerary);
+    if (onDailyItineraryChange) {
+      onDailyItineraryChange(newItinerary);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalDays, startDate, endDate]);
 
+  // Sync with parent when localItinerary changes
   useEffect(() => {
-    return () => {
-      // Use null instead of empty functions
-      document.removeEventListener('mousemove', null);
-      document.removeEventListener('mouseup', null);
-      document.removeEventListener('touchmove', null);
-      document.removeEventListener('touchend', null);
-    };
-  }, []);
+    if (localItinerary.length > 0 && onDailyItineraryChange) {
+      onDailyItineraryChange(localItinerary);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localItinerary]);
 
-  if (!availableTours || availableTours.length === 0) {
-    return null;
-  }
-  
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const handleDayChange = (updatedDay) => {
+    const newItinerary = localItinerary.map((day) =>
+      day.day === updatedDay.day ? updatedDay : day
+    );
+    setLocalItinerary(newItinerary);
   };
 
-  const vipCount = availableTours.filter(tour => tour.tourType === 'VIP').length;
-  const groupCount = availableTours.filter(tour => tour.tourType === 'Group').length;
-  const selectedCount = selectedTours.length;
+  const regenerateItinerary = () => {
+    if (!totalDays) return;
+
+    const newItinerary = Array.from({ length: totalDays }, (_, i) =>
+      createDefaultDay(i + 1, totalDays)
+    );
+
+    setLocalItinerary(newItinerary);
+    if (onDailyItineraryChange) {
+      onDailyItineraryChange(newItinerary);
+    }
+  };
+
+  if (!startDate || !endDate) {
+    return (
+      <div>
+        <div className="mb-2 block">
+          <Label value="Daily Itinerary" className="dark:text-white" />
+        </div>
+        <Card className="dark:bg-slate-900">
+          <Alert color="warning">
+            Please select the start and end dates to generate the itinerary.
+          </Alert>
+        </Card>
+      </div>
+    );
+  }
+
+  if (totalDays <= 0) {
+    return (
+      <div>
+        <div className="mb-2 block">
+          <Label value="Daily Itinerary" className="dark:text-white" />
+        </div>
+        <Card className="dark:bg-slate-900">
+          <Alert color="failure">
+            Invalid date range. Please ensure the end date is after the start
+            date.
+          </Alert>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-2 block">
-        <Label value={hideDayAssignment ? "Select Tours" : "Select Tours (Order determines day assignment)"} className="dark:text-white" />
+        <Label value="Daily Itinerary" className="dark:text-white" />
       </div>
-      
+
       <Card className="dark:bg-slate-900">
-        <div className="space-y-3">
-          {/* Search Bar */}
-          <div>
-            <Search
-              placeholder="Search tours by name, city, or country..."
-              value={searchTerm}
-              onChange={handleSearch}
-              showClearButton={true}
-              className="w-full"
-            />
-          </div>
-          
-          {/* Custom Tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:-mb-px sm:justify-center sm:gap-0">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
-                  activeTab === 'all' 
-                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <span>All</span>
-                <span className="ml-1 sm:ml-2 bg-gray-200 dark:bg-slate-900 text-gray-800 dark:text-gray-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
-                  {availableTours.length}
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab('vip')}
-                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
-                  activeTab === 'vip' 
-                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FaCrown className="mr-1 sm:mr-2 text-amber-500" />
-                <span>VIP</span>
-                <span className="ml-1 sm:ml-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
-                  {vipCount}
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab('group')}
-                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
-                  activeTab === 'group' 
-                    ? 'text-blue-600 border-b-2 border-blue-600 active dark:text-blue-500 dark:border-blue-500' 
-                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FaUsers className="mr-1 sm:mr-2 text-blue-500" />
-                <span>Group</span>
-                <span className="ml-1 sm:ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
-                  {groupCount}
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab('selected')}
-                className={`inline-flex items-center justify-center px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-t-lg ${
-                  activeTab === 'selected' 
-                    ? 'text-green-600 border-b-2 border-green-600 active dark:text-green-500 dark:border-green-500' 
-                    : 'text-gray-500 hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FaCheck className="mr-1 sm:mr-2 text-green-500" />
-                <span>Selected</span>
-                <span className="ml-1 sm:ml-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded">
-                  {selectedCount}
-                </span>
-              </button>
-            </div>
-          </div>
-          
-          {/* No Results Message */}
-          {filteredTours.length === 0 && (
-            <div className="text-center py-4 text-gray-500 dark:text-gray-400">
-              {activeTab === 'selected' && selectedTours.length === 0 
-                ? "No tours selected yet" 
-                : "No tours match your search criteria"}
-            </div>
-          )}
-          
-          {/* Tours List - resizable container */}
-          <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg">
-            {/* Main content container with CustomScrollbar */}
-            <div 
-              ref={resizableRef}
-              style={{ 
-                height: `${containerHeight}px`, 
-                maxHeight: '600px',
-              }}
-            >
-              <CustomScrollbar maxHeight={`${containerHeight}px`}>
-                {filteredTours.map(tour => {
-                  const isSelected = selectedTours.includes(tour._id);
-                  const dayNumber = isSelected ? selectedTours.indexOf(tour._id) + 1 : null;
-                  
-                  return (
-                    <div key={tour._id} className="flex flex-col sm:flex-row sm:items-center pb-4 border-b dark:border-gray-700 last:border-b-0 last:pb-0 mb-2 space-y-2 sm:space-y-0">
-                      <div className="flex items-center flex-1">
-                        <Checkbox
-                          id={tour._id}
-                          checked={isSelected}
-                          onChange={() => onTourSelection(tour._id)}
-                          className="mr-2"
-                        />
-                        {isSelected && !hideDayAssignment && (
-                          <div className="flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full w-6 h-6 mr-2 text-xs font-bold">
-                            {dayNumber}
-                          </div>
-                        )}
-                        <Label htmlFor={tour._id} className="flex-1">
-                          <div className="font-medium dark:text-white flex flex-col sm:flex-row sm:items-center sm:flex-wrap">
-                            <span className="mr-2 mb-1 sm:mb-0">{tour.name}</span>
-                            <div className="flex flex-wrap gap-1 sm:gap-2">
-                              {tour.tourType === 'VIP' ? (
-                                <span 
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                  bg-gradient-to-r from-amber-500 to-yellow-300 border border-amber-600"
-                                  style={{ 
-                                    color: '#7B5804', 
-                                    fontWeight: 'bold',
-                                    fontSize: '0.65rem',
-                                    textShadow: '0 0 2px rgba(255,255,255,0.5)'
-                                  }}
-                                >
-                                  <FaCrown className="mr-1" style={{fontSize: '0.65rem'}} />VIP
-                                </span>
-                              ) : (
-                                <span 
-                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                  bg-blue-600 text-white"
-                                  style={{ 
-                                    fontSize: '0.65rem'
-                                  }}
-                                >
-                                  <FaUsers className="mr-1" style={{fontSize: '0.65rem'}} />Group
-                                </span>
-                              )}
-                              
-                              {/* Location Information */}
-                              {tour.city && (
-                                <>
-                                  {inferCountryFromCity(tour.city) && (
-                                    <span 
-                                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                      ${countryColors[inferCountryFromCity(tour.city)] || 'bg-gray-600'} text-white`}
-                                      style={{ 
-                                        fontSize: '0.65rem'
-                                      }}
-                                    >
-                                      <FaGlobeAmericas className="mr-1" style={{fontSize: '0.65rem'}} />
-                                      {inferCountryFromCity(tour.city)}
-                                    </span>
-                                  )}
-                                  <span 
-                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs 
-                                    bg-green-600 text-white"
-                                    style={{ 
-                                      fontSize: '0.65rem'
-                                    }}
-                                  >
-                                    <FaMapMarkerAlt className="mr-1" style={{fontSize: '0.65rem'}} />
-                                    {tour.city}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{tour.description}</div>
-                          <div className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 mt-1">
-                            ${tour.price} {tour.tourType === 'Group' ? 'per person' : 'per car'} • {tour.duration} hours
-                            {tour.tourType === 'VIP' && (
-                              <span className="ml-2">
-                                <FaCar className="inline mr-1" style={{fontSize: '0.7rem'}} />
-                                {tour.vipCarType} ({tour.carCapacity?.min || '?'}-{tour.carCapacity?.max || '?'})
-                              </span>
-                            )}
-                          </div>
-                        </Label>
-                      </div>
-                      {isSelected && !hideDayAssignment && (
-                        <div className="flex items-center justify-start sm:justify-end sm:ml-2">
-                          <div className="flex items-center">
-                            <FaCalendarDay className="text-blue-500 mr-2" />
-                            <Select
-                              size="sm"
-                              value={dayNumber}
-                              onChange={(e) => onTourDayAssignment(tour._id, parseInt(e.target.value))}
-                              className="!py-1"
-                              style={{ minWidth: '80px' }}
-                            >
-                              {Array.from({ length: selectedTours.length }, (_, i) => (
-                                <option key={i + 1} value={i + 1}>
-                                  Day {i + 1}{i + 1 === dayNumber ? ' (current)' : ''}
-                                </option>
-                              ))}
-                            </Select>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </CustomScrollbar>
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-yellow-500 dark:to-orange-500 rounded-lg flex items-center justify-center">
+                <FaCalendarAlt className="w-4 h-4 text-white dark:text-gray-900" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {totalDays}-Day Itinerary
+              </h3>
             </div>
 
-            <div 
-              className="flex items-center justify-center w-full h-10 bg-gray-200 dark:bg-slate-900 cursor-ns-resize hover:bg-gray-300 dark:hover:bg-slate-800 rounded-b-lg touch-manipulation"
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
-              style={{ touchAction: 'none' }}
-            >
-              <FaArrowsAltV className="text-gray-500 dark:text-gray-300 mr-1 sm:mr-2" size={14} />
-              <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300">Drag to resize</span>
-            </div>
+            {localItinerary.length > 0 && (
+              <CustomButton
+                onClick={regenerateItinerary}
+                variant="orange"
+                size="sm"
+                icon={FaSyncAlt}
+              >
+                Reset
+              </CustomButton>
+            )}
           </div>
 
-          {selectedTours.length > 0 && (
-            <div className="text-center pt-2">
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                {selectedTours.length} {selectedTours.length === 1 ? 'tour' : 'tours'} selected
-              </span>
+          {/* Day Blocks */}
+          {localItinerary.length === 0 ? (
+            <Card className="dark:bg-slate-900 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
+              <div className="text-center py-4">
+                <p className="text-yellow-800 dark:text-yellow-300 font-medium mb-3">
+                  Day blocks not generated yet for {totalDays} days
+                </p>
+                <CustomButton
+                  onClick={regenerateItinerary}
+                  variant="pinkToOrange"
+                  size="md"
+                  icon={FaPlus}
+                >
+                  Generate {totalDays} Day Blocks
+                </CustomButton>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {localItinerary
+                .sort((a, b) => a.day - b.day)
+                .map((day) => (
+                  <PackageDayBlock
+                    key={day.day}
+                    day={day}
+                    dayNumber={day.day}
+                    totalDays={totalDays}
+                    tours={availableTours}
+                    onChange={handleDayChange}
+                    enableTranslations={false}
+                  />
+                ))}
             </div>
           )}
         </div>
@@ -368,4 +349,4 @@ const TourSelector = ({
   );
 };
 
-export default TourSelector; 
+export default TourSelector;

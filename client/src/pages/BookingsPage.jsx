@@ -252,7 +252,22 @@ export default function BookingsPage() {
     };
 
     initializeUserAndFetchData();
-  }, [fetchBookings, fetchMetadata, fetchAllUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refetch bookings when filters or page change
+  useEffect(() => {
+    // Skip initial fetch (handled by initialization effect)
+    if (
+      isAdmin === false &&
+      isAccountant === false &&
+      isContentManager === false
+    ) {
+      return;
+    }
+    fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, yearFilter, dateFilter, userFilter]);
 
   // Clear selected bookings when filters change
   useEffect(() => {
@@ -288,7 +303,13 @@ export default function BookingsPage() {
 
   // Check if user can manage a specific booking (edit/view)
   const canManageBooking = (booking) => {
-    if (isAdmin || isAccountant) return true;
+    // Full admins can manage any booking
+    if (isAdmin && !isAccountant) return true;
+    // Accountants can only manage their own bookings
+    if (isAccountant) {
+      return booking.createdBy && booking.createdBy._id === currentUserId;
+    }
+    // Content managers and regular users can manage their own bookings
     return booking.createdBy && booking.createdBy._id === currentUserId;
   };
 
@@ -478,38 +499,47 @@ export default function BookingsPage() {
     setViewBookingToDownload(null);
   };
 
-  const handleDownloadEnglish = () => {
+  const handleDownloadEnglish = (options = {}) => {
     if (!bookingToDownload) return;
-    downloadBookingPDF(bookingToDownload._id, "en");
+    downloadBookingPDF(bookingToDownload._id, "en", options);
     setDownloadModalOpen(false);
   };
 
-  const handleDownloadArabic = () => {
+  const handleDownloadArabic = (options = {}) => {
     if (!bookingToDownload) return;
-    downloadBookingPDF(bookingToDownload._id, "ar");
+    downloadBookingPDF(bookingToDownload._id, "ar", options);
     setDownloadModalOpen(false);
   };
 
-  const handleViewDownloadEnglish = () => {
+  const handleViewDownloadEnglish = (options = {}) => {
     if (!viewBookingToDownload) return;
-    downloadBookingPDF(viewBookingToDownload._id, "en");
+    downloadBookingPDF(viewBookingToDownload._id, "en", options);
     closeViewDownloadModal();
   };
 
-  const handleViewDownloadArabic = () => {
+  const handleViewDownloadArabic = (options = {}) => {
     if (!viewBookingToDownload) return;
-    downloadBookingPDF(viewBookingToDownload._id, "ar");
+    downloadBookingPDF(viewBookingToDownload._id, "ar", options);
     closeViewDownloadModal();
   };
 
   // Download booking as PDF
-  const downloadBookingPDF = async (bookingId, language = "en") => {
+  const downloadBookingPDF = async (
+    bookingId,
+    language = "en",
+    options = {}
+  ) => {
     setPdfDownloading(bookingId);
     try {
       const token = localStorage.getItem("token");
 
+      // Build query parameters
+      const params = new URLSearchParams({ lang: language });
+      if (options.hideHeader) params.append("hideHeader", "true");
+      if (options.hidePrice) params.append("hidePrice", "true");
+
       const response = await axios.get(
-        `/api/bookings/${bookingId}/download-pdf?lang=${language}`,
+        `/api/bookings/${bookingId}/download-pdf?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: "blob",
@@ -646,7 +676,7 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="max-w-[105rem] mx-auto px-4 py-8">
+    <div className="max-w-[110rem] mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Bookings
@@ -823,8 +853,8 @@ export default function BookingsPage() {
               {filteredBookings.length !== 1 ? "s" : ""}
             </div>
 
-            {/* Desktop Table View (visible on sm screens and up) */}
-            <div className="hidden sm:block">
+            {/* Desktop Table View (visible on lg screens and up) */}
+            <div className="hidden lg:block">
               <CustomScrollbar>
                 <CustomTable
                   headers={[
@@ -840,27 +870,26 @@ export default function BookingsPage() {
                                 />
                               </div>
                             ),
-                            className: "w-12 min-w-[3rem]",
+                            className: "w-10 min-w-[40px] max-w-[40px]",
                           },
                         ]
                       : []),
-                    { label: "Date Range", className: "w-40 min-w-[10rem]" },
-                    { label: "Client Name", className: "w-40 min-w-[10rem]" },
-                    { label: "Cities", className: "w-40 min-w-[10rem]" },
-                    { label: "Hotels", className: "w-36 min-w-[9rem]" },
-                    { label: "Tours", className: "w-32 min-w-[8rem]" },
-                    { label: "Guests", className: "w-40 min-w-[10rem]" },
-                    { label: "Price", className: "w-28 min-w-[7rem]" },
-                    { label: "Created", className: "w-32 min-w-[8rem]" },
+                    { label: "Date Range" },
+                    { label: "Client Name" },
+                    { label: "Cities" },
+                    { label: "Hotels" },
+                    { label: "Tours" },
+                    { label: "Guests" },
+                    { label: "Price" },
+                    { label: "Created" },
                     ...(isAdmin || isAccountant
                       ? [
                           {
                             label: "Created By",
-                            className: "w-40 min-w-[10rem]",
                           },
                         ]
                       : []),
-                    { label: "Actions", className: "w-44 min-w-[11rem]" },
+                    { label: "Actions" },
                   ]}
                   data={filteredBookings}
                   renderRow={(booking) => {
@@ -870,7 +899,7 @@ export default function BookingsPage() {
                       <>
                         {/* Checkbox column */}
                         {canDoBulkOperations() && (
-                          <Table.Cell className="px-2 py-3 w-12 min-w-[3rem]">
+                          <Table.Cell className="px-2 py-3 w-10 min-w-[40px] max-w-[40px]">
                             <div className="flex items-center justify-center">
                               <CustomCheckbox
                                 id={`booking-checkbox-${booking._id}`}
@@ -882,7 +911,7 @@ export default function BookingsPage() {
                             </div>
                           </Table.Cell>
                         )}
-                        <Table.Cell className="px-4 py-3 w-40 min-w-[10rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <FaCalendarAlt className="text-gray-400" />
                             <div>
@@ -898,7 +927,7 @@ export default function BookingsPage() {
                             </div>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="px-3 py-3 w-40 min-w-[10rem]">
+                        <Table.Cell className="px-3 py-3">
                           <CustomTooltip
                             disabled={!booking.nationality}
                             title={booking.clientName || "N/A"}
@@ -913,7 +942,7 @@ export default function BookingsPage() {
                             </span>
                           </CustomTooltip>
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3 w-40 min-w-[10rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-1 flex-wrap">
                             <FaMapMarkerAlt className="text-gray-400" />
                             <span className="text-sm text-gray-900 dark:text-white">
@@ -923,7 +952,7 @@ export default function BookingsPage() {
                             </span>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3 w-36 min-w-[9rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <FaHotel className="text-gray-400" />
                             <span
@@ -938,7 +967,7 @@ export default function BookingsPage() {
                             </span>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3 w-32 min-w-[8rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <FaRoute className="text-gray-400" />
                             <span
@@ -953,7 +982,7 @@ export default function BookingsPage() {
                             </span>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3 w-40 min-w-[10rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <FaUsers className="text-gray-400" />
                             <span className="text-sm text-gray-900 dark:text-white">
@@ -972,16 +1001,16 @@ export default function BookingsPage() {
                             </span>
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="px-4 py-3 w-28 min-w-[7rem]">
+                        <Table.Cell className="px-4 py-3">
                           <div className="font-semibold text-green-600 dark:text-green-400">
                             ${booking.finalPrice?.toFixed(2) || "0.00"}
                           </div>
                         </Table.Cell>
-                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3 w-32 min-w-[8rem]">
+                        <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
                           {formatDate(booking.createdAt)}
                         </Table.Cell>
                         {(isAdmin || isAccountant) && (
-                          <Table.Cell className="px-4 py-3 w-40 min-w-[10rem]">
+                          <Table.Cell className="px-4 py-3">
                             <div className="flex items-center gap-1">
                               <FaUser className="text-gray-400" />
                               {booking.createdBy?._id ? (
@@ -999,8 +1028,8 @@ export default function BookingsPage() {
                             </div>
                           </Table.Cell>
                         )}
-                        <Table.Cell className="px-4 py-3 w-44 min-w-[11rem]">
-                          <div className="flex items-center gap-2">
+                        <Table.Cell className="px-4 py-3">
+                          <div className="flex items-center gap-1">
                             <CustomButton
                               variant="gray"
                               size="xs"
@@ -1051,10 +1080,10 @@ export default function BookingsPage() {
               </CustomScrollbar>
             </div>
 
-            {/* Mobile Card View (visible on xs screens) */}
-            <div className="sm:hidden">
+            {/* Mobile/Tablet Card View (visible on screens smaller than lg) */}
+            <div className="lg:hidden">
               <CustomScrollbar className="pr-1">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredBookings.map((booking) => {
                     const isSelected = selectedBookings.has(booking._id);
 
