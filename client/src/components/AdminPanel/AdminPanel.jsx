@@ -48,6 +48,7 @@ import CustomModal from "../CustomModal";
 import TextInput from "../TextInput";
 import CustomReminderManager from "../CustomReminderManager";
 import FinancialFloatingTotalsPanel from "../FinancialFloatingTotalsPanel";
+import CustomTooltip from "../CustomTooltip";
 import {
   generateArrivalReminders,
   generateDepartureReminders,
@@ -1657,6 +1658,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1696,6 +1698,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1735,6 +1738,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1774,6 +1778,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1813,6 +1818,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1852,6 +1858,7 @@ export default function AdminPanel() {
               // Track unique vouchers
               if (!voucherTracker[key].has(voucher._id)) {
                 voucherTracker[key].add(voucher._id);
+                aggregatedData[key].voucherIds.add(voucher._id);
                 aggregatedData[key].voucherCount++;
               }
             }
@@ -1859,12 +1866,14 @@ export default function AdminPanel() {
         }
       });
 
-      // Convert to array, clean up, and sort
+      // Convert to array, keep voucherIds for payment filtering, and sort
       const financialArray = Object.values(aggregatedData)
         .map((item) => {
-          // Remove the voucherIds set that was used for tracking
-          const { voucherIds: _voucherIds, ...cleanItem } = item;
-          return cleanItem;
+          // Convert voucherIds Set to Array for payment filtering
+          return {
+            ...item,
+            voucherIds: Array.from(item.voucherIds || []),
+          };
         })
         .sort((a, b) => {
           if (a.year !== b.year) return b.year - a.year;
@@ -2286,19 +2295,89 @@ export default function AdminPanel() {
     }
   };
 
-  // Calculate remaining amount for an office in the financial table
-  const calculateOfficeRemaining = (officeName, total) => {
+  // Get payment details for an office in the financial table
+  const getOfficePaymentDetails = (officeName, voucherIds = null) => {
     const payments = officePayments[officeName] || [];
 
-    // Only count approved OUTGOING payments (payments made to the office)
-    const totalPaid = payments.reduce((sum, payment) => {
-      if (payment.status === "approved" && payment.type === "OUTGOING") {
-        return sum + payment.amount;
-      }
-      return sum;
-    }, 0);
+    // Filter payments by voucherIds if provided
+    const relevantPayments =
+      voucherIds && voucherIds.length > 0
+        ? payments.filter((payment) => {
+            const relatedVoucherId =
+              payment.relatedVoucher?._id || payment.relatedVoucher;
+            return relatedVoucherId && voucherIds.includes(relatedVoucherId);
+          })
+        : payments;
 
-    return total - totalPaid;
+    // Get approved payments (include auto-generated)
+    const approvedPayments = relevantPayments.filter(
+      (p) => p.status === "approved"
+    );
+
+    const outgoingPayments = approvedPayments.filter(
+      (p) => p.type === "OUTGOING"
+    );
+    const incomingPayments = approvedPayments.filter(
+      (p) => p.type === "INCOMING"
+    );
+
+    const outgoingTotal = outgoingPayments.reduce(
+      (sum, p) => sum + p.amount,
+      0
+    );
+    const incomingTotal = incomingPayments.reduce(
+      (sum, p) => sum + p.amount,
+      0
+    );
+
+    return {
+      outgoingPayments,
+      incomingPayments,
+      outgoingTotal,
+      incomingTotal,
+      netPaid: outgoingTotal - incomingTotal,
+    };
+  };
+
+  // Helper to extract voucher number from payment
+  const getVoucherNumber = (payment) => {
+    if (payment.relatedVoucher?.voucherNumber) {
+      return payment.relatedVoucher.voucherNumber;
+    }
+    // Try to extract from notes if not populated
+    const voucherMatch = payment.notes?.match(/#(\d+)/);
+    return voucherMatch ? voucherMatch[1] : null;
+  };
+
+  // Get client payment details (INCOMING payments from clients)
+  const getClientPaymentDetails = (officeName, vouchers) => {
+    const allPayments = Object.values(officePayments).flat();
+    const voucherIds = vouchers.map((v) => v._id);
+
+    // Filter payments related to this client's vouchers
+    const relevantPayments = allPayments.filter((payment) => {
+      const relatedVoucherId =
+        payment.relatedVoucher?._id || payment.relatedVoucher;
+      return (
+        relatedVoucherId &&
+        voucherIds.includes(relatedVoucherId) &&
+        payment.status === "approved" &&
+        payment.type === "INCOMING"
+      );
+    });
+
+    return {
+      payments: relevantPayments,
+      total: relevantPayments.reduce((sum, p) => sum + p.amount, 0),
+    };
+  };
+
+  // Calculate remaining amount for an office in the financial table
+  // voucherIds: array of voucher IDs for the specific month/year period
+  const calculateOfficeRemaining = (officeName, total, voucherIds = null) => {
+    const details = getOfficePaymentDetails(officeName, voucherIds);
+    // Remaining = Total - What you paid + Additional charges from them
+    return total - details.outgoingTotal + details.incomingTotal;
   };
 
   // Helper functions for vouchers
@@ -2461,7 +2540,8 @@ export default function AdminPanel() {
       acc.total += item.total;
       acc.totalRemaining += calculateOfficeRemaining(
         item.officeName,
-        item.total
+        item.total,
+        item.voucherIds
       );
       acc.voucherCount += item.voucherCount;
       return acc;
@@ -4808,75 +4888,171 @@ export default function AdminPanel() {
                               className: "text-gray-900 dark:text-white",
                             },
                             {
+                              label: "Paid",
+                              className: "text-green-600 dark:text-green-400",
+                            },
+                            {
                               label: "Remaining",
                               className: "text-red-600 dark:text-red-400",
                             },
                             { label: "Vouchers", className: "" },
                           ]}
                           data={filteredFinancialData}
-                          renderRow={(item, index) => (
-                            <>
-                              <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
-                                {index + 1}
-                              </Table.Cell>
-                              <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
-                                <Link
-                                  to={`/office/${encodeURIComponent(
-                                    item.officeName
-                                  )}`}
-                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                          renderRow={(item, index) => {
+                            const paymentDetails = getOfficePaymentDetails(
+                              item.officeName,
+                              item.voucherIds
+                            );
+                            const remaining = calculateOfficeRemaining(
+                              item.officeName,
+                              item.total,
+                              item.voucherIds
+                            );
+                            const paid = item.total - remaining;
+
+                            // Build tooltip content
+                            const tooltipContent = (
+                              <div className="text-left space-y-1">
+                                {paymentDetails.outgoingPayments.length > 0 && (
+                                  <div>
+                                    <div className="font-semibold text-green-600 dark:text-green-400 mb-1">
+                                      Outgoing Payments (
+                                      {paymentDetails.outgoingPayments.length}):
+                                    </div>
+                                    {paymentDetails.outgoingPayments.map(
+                                      (p, idx) => {
+                                        const voucherNum = getVoucherNumber(p);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="text-xs ml-2"
+                                          >
+                                            • {getCurrencySymbol(p.currency)}
+                                            {p.amount.toFixed(2)}
+                                            {voucherNum &&
+                                              ` (Voucher #${voucherNum})`}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                    <div className="text-xs font-medium ml-2 mt-1">
+                                      Total:{" "}
+                                      {getCurrencySymbol(
+                                        financialFilters.currency
+                                      )}
+                                      {paymentDetails.outgoingTotal.toFixed(2)}
+                                    </div>
+                                  </div>
+                                )}
+                                {paymentDetails.incomingPayments.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="font-semibold text-red-600 dark:text-red-400 mb-1">
+                                      Incoming Charges (
+                                      {paymentDetails.incomingPayments.length}):
+                                    </div>
+                                    {paymentDetails.incomingPayments.map(
+                                      (p, idx) => {
+                                        const voucherNum = getVoucherNumber(p);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="text-xs ml-2"
+                                          >
+                                            • {getCurrencySymbol(p.currency)}
+                                            {p.amount.toFixed(2)}
+                                            {voucherNum &&
+                                              ` (Voucher #${voucherNum})`}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                    <div className="text-xs font-medium ml-2 mt-1">
+                                      Total:{" "}
+                                      {getCurrencySymbol(
+                                        financialFilters.currency
+                                      )}
+                                      {paymentDetails.incomingTotal.toFixed(2)}
+                                    </div>
+                                  </div>
+                                )}
+                                {paymentDetails.outgoingPayments.length === 0 &&
+                                  paymentDetails.incomingPayments.length ===
+                                    0 && (
+                                    <div className="text-xs text-gray-500">
+                                      No payments recorded
+                                    </div>
+                                  )}
+                              </div>
+                            );
+
+                            return (
+                              <>
+                                <Table.Cell className="text-sm text-gray-600 dark:text-gray-300 px-4 py-3 text-center">
+                                  {index + 1}
+                                </Table.Cell>
+                                <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
+                                  <Link
+                                    to={`/office/${encodeURIComponent(
+                                      item.officeName
+                                    )}`}
+                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:underline transition-colors duration-200"
+                                  >
+                                    {item.officeName}
+                                  </Link>
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
+                                  {item.monthName} {item.year}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {item.hotels.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {item.transfers.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {item.trips.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {item.flights.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-pink-600 dark:text-pink-400 font-medium px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {(item.others || 0).toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {item.total.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                  <CustomTooltip content={tooltipContent}>
+                                    <span className="cursor-help">
+                                      {getCurrencySymbol(
+                                        financialFilters.currency
+                                      )}
+                                      {paid.toFixed(2)}
+                                    </span>
+                                  </CustomTooltip>
+                                </Table.Cell>
+                                <Table.Cell
+                                  className={`text-sm font-bold px-4 py-3 ${
+                                    remaining <= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  }`}
                                 >
-                                  {item.officeName}
-                                </Link>
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-gray-900 dark:text-white px-4 py-3">
-                                {item.monthName} {item.year}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-blue-600 dark:text-blue-400 font-medium px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {item.hotels.toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {item.transfers.toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-purple-600 dark:text-purple-400 font-medium px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {item.trips.toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-orange-600 dark:text-orange-400 font-medium px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {item.flights.toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-pink-600 dark:text-pink-400 font-medium px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {(item.others || 0).toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm font-bold text-gray-900 dark:text-white px-4 py-3">
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {item.total.toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell
-                                className={`text-sm font-bold px-4 py-3 ${
-                                  calculateOfficeRemaining(
-                                    item.officeName,
-                                    item.total
-                                  ) <= 0
-                                    ? "text-green-600 dark:text-green-400"
-                                    : "text-red-600 dark:text-red-400"
-                                }`}
-                              >
-                                {getCurrencySymbol(financialFilters.currency)}
-                                {calculateOfficeRemaining(
-                                  item.officeName,
-                                  item.total
-                                ).toFixed(2)}
-                              </Table.Cell>
-                              <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
-                                {item.voucherCount}
-                              </Table.Cell>
-                            </>
-                          )}
+                                  {getCurrencySymbol(financialFilters.currency)}
+                                  {remaining.toFixed(2)}
+                                </Table.Cell>
+                                <Table.Cell className="text-sm text-gray-600 dark:text-gray-400 px-4 py-3">
+                                  {item.voucherCount}
+                                </Table.Cell>
+                              </>
+                            );
+                          }}
                           emptyMessage="No financial data found for the selected period"
                           emptyIcon={() => (
                             <svg
@@ -4919,35 +5095,54 @@ export default function AdminPanel() {
                           ]}
                           data={clientOfficeData}
                           renderRow={(office, index) => {
-                            const totalPaid = (office.vouchers || []).reduce(
-                              (sum, voucher) => {
-                                const voucherSpecificPayments = Object.values(
-                                  officePayments
-                                )
-                                  .flat()
-                                  .filter((payment) => {
-                                    const relatedVoucherId =
-                                      payment.relatedVoucher?._id ||
-                                      payment.relatedVoucher;
-                                    return (
-                                      relatedVoucherId === voucher._id &&
-                                      payment.status === "approved" &&
-                                      payment.type === "INCOMING"
-                                    );
-                                  });
-                                return (
-                                  sum +
-                                  voucherSpecificPayments.reduce(
-                                    (paidSum, payment) =>
-                                      paidSum + payment.amount,
-                                    0
-                                  )
-                                );
-                              },
-                              0
-                            );
-
+                            const clientPaymentDetails =
+                              getClientPaymentDetails(
+                                office.officeName,
+                                office.vouchers || []
+                              );
+                            const totalPaid = clientPaymentDetails.total;
                             const remaining = office.totalAmount - totalPaid;
+
+                            // Build tooltip content for client payments
+                            const clientTooltipContent = (
+                              <div className="text-left space-y-1">
+                                {clientPaymentDetails.payments.length > 0 ? (
+                                  <div>
+                                    <div className="font-semibold text-green-600 dark:text-green-400 mb-1">
+                                      Incoming Payments (
+                                      {clientPaymentDetails.payments.length}):
+                                    </div>
+                                    {clientPaymentDetails.payments.map(
+                                      (p, idx) => {
+                                        const voucherNum = getVoucherNumber(p);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="text-xs ml-2"
+                                          >
+                                            • {getCurrencySymbol(p.currency)}
+                                            {p.amount.toFixed(2)}
+                                            {voucherNum &&
+                                              ` (Voucher #${voucherNum})`}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                    <div className="text-xs font-medium ml-2 mt-1">
+                                      Total:{" "}
+                                      {getCurrencySymbol(
+                                        financialFilters.currency
+                                      )}
+                                      {totalPaid.toFixed(2)}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-xs text-gray-500">
+                                    No payments recorded
+                                  </div>
+                                )}
+                              </div>
+                            );
 
                             return (
                               <>
@@ -4986,8 +5181,14 @@ export default function AdminPanel() {
                                   {office.totalAmount.toFixed(2)}
                                 </Table.Cell>
                                 <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
-                                  {getCurrencySymbol(financialFilters.currency)}
-                                  {totalPaid.toFixed(2)}
+                                  <CustomTooltip content={clientTooltipContent}>
+                                    <span className="cursor-help">
+                                      {getCurrencySymbol(
+                                        financialFilters.currency
+                                      )}
+                                      {totalPaid.toFixed(2)}
+                                    </span>
+                                  </CustomTooltip>
                                 </Table.Cell>
                                 <Table.Cell
                                   className={`text-sm font-bold px-4 py-3 ${
@@ -5148,8 +5349,134 @@ export default function AdminPanel() {
                                     </div>
                                   </div>
 
-                                  {/* Remaining Amount */}
-                                  <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
+                                  {/* Payment Status */}
+                                  <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                                        Paid Amount
+                                      </div>
+                                      <CustomTooltip
+                                        content={(() => {
+                                          const paymentDetails =
+                                            getOfficePaymentDetails(
+                                              item.officeName,
+                                              item.voucherIds
+                                            );
+                                          return (
+                                            <div className="text-left space-y-1">
+                                              {paymentDetails.outgoingPayments
+                                                .length > 0 && (
+                                                <div>
+                                                  <div className="font-semibold text-green-600 dark:text-green-400 mb-1">
+                                                    Outgoing (
+                                                    {
+                                                      paymentDetails
+                                                        .outgoingPayments.length
+                                                    }
+                                                    ):
+                                                  </div>
+                                                  {paymentDetails.outgoingPayments.map(
+                                                    (p, idx) => {
+                                                      const voucherNum =
+                                                        getVoucherNumber(p);
+                                                      return (
+                                                        <div
+                                                          key={idx}
+                                                          className="text-xs ml-2"
+                                                        >
+                                                          •{" "}
+                                                          {getCurrencySymbol(
+                                                            p.currency
+                                                          )}
+                                                          {p.amount.toFixed(2)}
+                                                          {voucherNum &&
+                                                            ` (#${voucherNum})`}
+                                                        </div>
+                                                      );
+                                                    }
+                                                  )}
+                                                  <div className="text-xs font-medium ml-2 mt-1">
+                                                    Total:{" "}
+                                                    {getCurrencySymbol(
+                                                      financialFilters.currency
+                                                    )}
+                                                    {paymentDetails.outgoingTotal.toFixed(
+                                                      2
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+                                              {paymentDetails.incomingPayments
+                                                .length > 0 && (
+                                                <div className="mt-2">
+                                                  <div className="font-semibold text-red-600 dark:text-red-400 mb-1">
+                                                    Incoming (
+                                                    {
+                                                      paymentDetails
+                                                        .incomingPayments.length
+                                                    }
+                                                    ):
+                                                  </div>
+                                                  {paymentDetails.incomingPayments.map(
+                                                    (p, idx) => {
+                                                      const voucherNum =
+                                                        getVoucherNumber(p);
+                                                      return (
+                                                        <div
+                                                          key={idx}
+                                                          className="text-xs ml-2"
+                                                        >
+                                                          •{" "}
+                                                          {getCurrencySymbol(
+                                                            p.currency
+                                                          )}
+                                                          {p.amount.toFixed(2)}
+                                                          {voucherNum &&
+                                                            ` (#${voucherNum})`}
+                                                        </div>
+                                                      );
+                                                    }
+                                                  )}
+                                                  <div className="text-xs font-medium ml-2 mt-1">
+                                                    Total:{" "}
+                                                    {getCurrencySymbol(
+                                                      financialFilters.currency
+                                                    )}
+                                                    {paymentDetails.incomingTotal.toFixed(
+                                                      2
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+                                              {paymentDetails.outgoingPayments
+                                                .length === 0 &&
+                                                paymentDetails.incomingPayments
+                                                  .length === 0 && (
+                                                  <div className="text-xs text-gray-500">
+                                                    No payments
+                                                  </div>
+                                                )}
+                                            </div>
+                                          );
+                                        })()}
+                                      >
+                                        <div className="text-sm font-medium text-green-600 dark:text-green-400 cursor-help">
+                                          {getCurrencySymbol(
+                                            financialFilters.currency
+                                          )}
+                                          {(() => {
+                                            const remaining =
+                                              calculateOfficeRemaining(
+                                                item.officeName,
+                                                item.total,
+                                                item.voucherIds
+                                              );
+                                            const paid = item.total - remaining;
+                                            return paid.toFixed(2);
+                                          })()}
+                                        </div>
+                                      </CustomTooltip>
+                                    </div>
                                     <div className="flex justify-between items-center">
                                       <div className="text-xs text-gray-600 dark:text-gray-400">
                                         Remaining Amount
@@ -5158,7 +5485,8 @@ export default function AdminPanel() {
                                         className={`text-sm font-bold ${
                                           calculateOfficeRemaining(
                                             item.officeName,
-                                            item.total
+                                            item.total,
+                                            item.voucherIds
                                           ) <= 0
                                             ? "text-green-600 dark:text-green-400"
                                             : "text-red-600 dark:text-red-400"
@@ -5169,7 +5497,8 @@ export default function AdminPanel() {
                                         )}
                                         {calculateOfficeRemaining(
                                           item.officeName,
-                                          item.total
+                                          item.total,
+                                          item.voucherIds
                                         ).toFixed(2)}
                                       </div>
                                     </div>
@@ -5202,35 +5531,55 @@ export default function AdminPanel() {
                             </div>
                           ) : (
                             clientOfficeData.map((office, index) => {
-                              const totalPaid = office.vouchers.reduce(
-                                (sum, voucher) => {
-                                  const voucherSpecificPayments = Object.values(
-                                    officePayments
-                                  )
-                                    .flat()
-                                    .filter((payment) => {
-                                      const relatedVoucherId =
-                                        payment.relatedVoucher?._id ||
-                                        payment.relatedVoucher;
-                                      return (
-                                        relatedVoucherId === voucher._id &&
-                                        payment.status === "approved" &&
-                                        payment.type === "INCOMING"
-                                      );
-                                    });
-                                  return (
-                                    sum +
-                                    voucherSpecificPayments.reduce(
-                                      (paidSum, payment) =>
-                                        paidSum + payment.amount,
-                                      0
-                                    )
-                                  );
-                                },
-                                0
-                              );
-
+                              const clientPaymentDetails =
+                                getClientPaymentDetails(
+                                  office.officeName,
+                                  office.vouchers || []
+                                );
+                              const totalPaid = clientPaymentDetails.total;
                               const remaining = office.totalAmount - totalPaid;
+
+                              // Build tooltip content for client payments
+                              const clientTooltipContent = (
+                                <div className="text-left space-y-1">
+                                  {clientPaymentDetails.payments.length > 0 ? (
+                                    <div>
+                                      <div className="font-semibold text-green-600 dark:text-green-400 mb-1">
+                                        Incoming (
+                                        {clientPaymentDetails.payments.length}):
+                                      </div>
+                                      {clientPaymentDetails.payments.map(
+                                        (p, idx) => {
+                                          const voucherNum =
+                                            getVoucherNumber(p);
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className="text-xs ml-2"
+                                            >
+                                              • {getCurrencySymbol(p.currency)}
+                                              {p.amount.toFixed(2)}
+                                              {voucherNum &&
+                                                ` (#${voucherNum})`}
+                                            </div>
+                                          );
+                                        }
+                                      )}
+                                      <div className="text-xs font-medium ml-2 mt-1">
+                                        Total:{" "}
+                                        {getCurrencySymbol(
+                                          financialFilters.currency
+                                        )}
+                                        {totalPaid.toFixed(2)}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-500">
+                                      No payments
+                                    </div>
+                                  )}
+                                </div>
+                              );
 
                               return (
                                 <div
@@ -5294,12 +5643,16 @@ export default function AdminPanel() {
                                         <div className="text-xs text-green-600 dark:text-green-400 mb-1">
                                           Paid
                                         </div>
-                                        <div className="text-sm font-medium text-green-600 dark:text-green-400">
-                                          {getCurrencySymbol(
-                                            financialFilters.currency
-                                          )}
-                                          {totalPaid.toFixed(2)}
-                                        </div>
+                                        <CustomTooltip
+                                          content={clientTooltipContent}
+                                        >
+                                          <div className="text-sm font-medium text-green-600 dark:text-green-400 cursor-help">
+                                            {getCurrencySymbol(
+                                              financialFilters.currency
+                                            )}
+                                            {totalPaid.toFixed(2)}
+                                          </div>
+                                        </CustomTooltip>
                                       </div>
                                       <div>
                                         <div className="text-xs text-red-600 dark:text-red-400 mb-1">

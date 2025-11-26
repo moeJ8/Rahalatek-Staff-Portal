@@ -17,19 +17,23 @@ export default function DownloadPdfModal({
 }) {
   const [hideHeader, setHideHeader] = useState(false);
   const [hidePrice, setHidePrice] = useState(false);
+  const [hideContact, setHideContact] = useState(false);
+  const [hidePackageMessage, setHidePackageMessage] = useState(false);
 
   const handleDownloadEnglish = () => {
-    onDownloadEnglish({ hideHeader, hidePrice });
+    onDownloadEnglish({ hideHeader, hidePrice, hideContact, hidePackageMessage });
   };
 
   const handleDownloadArabic = () => {
-    onDownloadArabic({ hideHeader, hidePrice });
+    onDownloadArabic({ hideHeader, hidePrice, hideContact, hidePackageMessage });
   };
 
   const handleClose = () => {
     // Reset options when closing
     setHideHeader(false);
     setHidePrice(false);
+    setHideContact(false);
+    setHidePackageMessage(false);
     onClose();
   };
 
@@ -68,6 +72,18 @@ export default function DownloadPdfModal({
               label="Hide price information"
               checked={hidePrice}
               onChange={setHidePrice}
+            />
+            <CustomCheckbox
+              id="hideContact"
+              label="Hide contact info in footer (website & phone)"
+              checked={hideContact}
+              onChange={setHideContact}
+            />
+            <CustomCheckbox
+              id="hidePackageMessage"
+              label="Hide package message"
+              checked={hidePackageMessage}
+              onChange={setHidePackageMessage}
             />
           </div>
         </div>

@@ -722,6 +722,8 @@ exports.downloadBookingPDF = async (req, res) => {
     const pdfOptions = {
       hideHeader: req.query.hideHeader === "true",
       hidePrice: req.query.hidePrice === "true",
+      hideContact: req.query.hideContact === "true",
+      hidePackageMessage: req.query.hidePackageMessage === "true",
     };
     const pdfService =
       language === "ar" ? BookingPdfServiceArabic : BookingPdfService;

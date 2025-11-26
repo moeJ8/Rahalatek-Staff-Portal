@@ -45,7 +45,12 @@ class BookingPdfServiceArabic {
       console.log("🖨️ Starting PDF generation for booking...");
 
       // Extract options
-      const { hideHeader = false, hidePrice = false } = options;
+      const {
+        hideHeader = false,
+        hidePrice = false,
+        hideContact = false,
+        hidePackageMessage = false,
+      } = options;
 
       // Ensure Chrome is installed
       await ensureChrome();
@@ -58,7 +63,8 @@ class BookingPdfServiceArabic {
         )
         .populate({
           path: "dailyItinerary.tourInfo.tourId",
-          select: "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images translations",
+          select:
+            "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images translations",
         })
         .populate("createdBy", "username")
         .lean();
@@ -179,7 +185,7 @@ class BookingPdfServiceArabic {
         booking,
         user,
         airportArabicMap,
-        { hideHeader, hidePrice }
+        { hideHeader, hidePrice, hideContact, hidePackageMessage }
       );
 
       // Set content
@@ -202,8 +208,14 @@ class BookingPdfServiceArabic {
         displayHeaderFooter: true,
         headerTemplate: `<div></div>`,
         footerTemplate: `
-                    <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0; padding: 0;">
-                        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+                    <div style="font-size: 10px; color: #666; width: 100%; margin: 0; padding: 10px 40px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; direction: rtl;">
+                         ${
+                           hideContact
+                             ? '<span style="grid-column: 1;"></span>'
+                             : '<span style="grid-column: 1; text-align: right; white-space: nowrap; direction: ltr;"><a href="https://rahalatek.com/" style="color: #666; text-decoration: none;">rahalatek.com</a> | <a href="https://wa.me/905010684657" style="color: #666; text-decoration: none;">+90 501 068 46 57</a></span>'
+                         }
+                        <span style="grid-column: 2; text-align: center; white-space: nowrap;">صفحة <span class="pageNumber"></span> من <span class="totalPages"></span></span>
+                        <span style="grid-column: 3;"></span>
                     </div>
                 `,
         timeout: 90000,
@@ -228,8 +240,18 @@ class BookingPdfServiceArabic {
   /**
    * Get HTML template for booking PDF
    */
-  static getBookingHtmlTemplate(booking, user, airportArabicMap = new Map(), options = {}) {
-    const { hideHeader = false, hidePrice = false } = options;
+  static getBookingHtmlTemplate(
+    booking,
+    user,
+    airportArabicMap = new Map(),
+    options = {}
+  ) {
+    const {
+      hideHeader = false,
+      hidePrice = false,
+      hideContact = false,
+      hidePackageMessage = false,
+    } = options;
     // Load and convert logo to base64
     let logoBase64 = "";
     try {
@@ -530,8 +552,12 @@ class BookingPdfServiceArabic {
 
     // Organize itinerary by day (using dailyItinerary if available, fallback to selectedTours)
     const itineraryDays = [];
-    
-    if (booking.dailyItinerary && Array.isArray(booking.dailyItinerary) && booking.dailyItinerary.length > 0) {
+
+    if (
+      booking.dailyItinerary &&
+      Array.isArray(booking.dailyItinerary) &&
+      booking.dailyItinerary.length > 0
+    ) {
       // Use new dailyItinerary structure
       booking.dailyItinerary.forEach((day) => {
         itineraryDays.push({
@@ -565,7 +591,7 @@ class BookingPdfServiceArabic {
         });
       });
     }
-    
+
     // Keep toursByDay for backward compatibility (will be removed in HTML generation)
     const toursByDay = itineraryDays;
 
@@ -962,9 +988,10 @@ class BookingPdfServiceArabic {
             gap: 4px;
         }
         .tour-summary-icon {
-            width: 10px;
-            height: 10px;
-            display: inline-block;
+            width: 12px;
+            height: 12px;
+            display: inline-flex;
+            align-items: center;
         }
         .tour-description {
             font-size: 12px;
@@ -1037,7 +1064,7 @@ class BookingPdfServiceArabic {
         ? `<div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
-            <div class="report-title">تفاصيل الحجز</div>
+            <div class="report-title">تفاصيل الباقة</div>
         </div>
         ${
           logoBase64
@@ -1099,13 +1126,13 @@ class BookingPdfServiceArabic {
                 <div class="overview-section-title">تفاصيل الرحلة</div>
                 <div class="overview-section-content">
                     <div class="overview-detail-row">
-                        <span class="overview-icon">🗓</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
                         <span class="overview-text">من ${formatDateDDMMYYYY(
                           booking.startDate
                         )} إلى ${formatDateDDMMYYYY(booking.endDate)}</span>
                     </div>
                     <div class="overview-detail-row">
-                        <span class="overview-icon">⏰</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                         <span class="overview-text">المدة: ${
                           booking.nights || 0
                         } ليلة</span>
@@ -1120,7 +1147,7 @@ class BookingPdfServiceArabic {
                 <div class="overview-section-title">معلومات الضيوف</div>
                 <div class="overview-section-content">
                     <div class="overview-detail-row">
-                        <span class="overview-icon">👥</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
                         <span class="overview-text">
                             عدد البالغين: ${booking.numGuests || 0}
                             ${
@@ -1156,7 +1183,7 @@ class BookingPdfServiceArabic {
                     ${
                       !hidePrice
                         ? `<div class="overview-detail-row" style="margin-top: 8px;">
-                        <span class="overview-icon">💵</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
                         <span class="overview-text"><strong>سعر الباقة: $${
                           booking.finalPrice?.toFixed(2) || "0.00"
                         }</strong></span>
@@ -1190,11 +1217,15 @@ class BookingPdfServiceArabic {
     </div>
 
     <!-- Package Information Text -->
-    <div style="margin: 24px 0;">
+    ${
+      !hidePackageMessage
+        ? `<div style="margin: 24px 0;">
         <div style="font-size: 14px; color: #374151; line-height: 1.8; font-style: italic;">
-            تم إعداد هذه الباقة خصيصًا لكم. يمكن تعديل الجولات المختارة، كما سيتم إضافة أيام الراحة وخدمات الاستقبال والتوديع وفقًا لاحتياجاتكم. بمجرد الموافقة على هذه الباقة سيتم تأكيد الحجز وإرسال قسيمة تفصيلية لكم. نتطلع إلى تزويدكم بتجربة سفر لا تُنسى، وشكرًا لاختياركم رحلاتك.
+            تم إعداد هذه الباقة خصيصًا لكم. يمكن تعديل الجولات المختارة، كما يمكن تعديل ايام الراحة وخدمات الاستقبال والتوديع وفقًا لاحتياجاتكم. بمجرد الموافقة على هذه الباقة سيتم تأكيد الحجز وإرسال قسيمة تفصيلية لكم. نتطلع إلى تزويدكم بتجربة سفر لا تُنسى، وشكرًا لاختياركم رحلاتك.
         </div>
-    </div>
+    </div>`
+        : ""
+    }
 
     <!-- Hotels Section -->
     ${
@@ -1324,17 +1355,18 @@ class BookingPdfServiceArabic {
         // Get the primary image for this day
         let dayImageUrl = "";
         if (dayItem.images && dayItem.images.length > 0) {
-          const primaryImage = dayItem.images.find(img => img.url);
+          const primaryImage = dayItem.images.find((img) => img.url);
           dayImageUrl = primaryImage?.url || dayItem.images[0]?.url || "";
         }
-        
+
         // For tour days, get tour data
         let tour = null;
         if (dayItem.tourInfo && dayItem.tourInfo.tourId) {
-          tour = typeof dayItem.tourInfo.tourId === 'object' 
-            ? dayItem.tourInfo.tourId 
-            : null;
-          
+          tour =
+            typeof dayItem.tourInfo.tourId === "object"
+              ? dayItem.tourInfo.tourId
+              : null;
+
           // If tour exists, use tour image if no day image
           if (tour && !dayImageUrl && tour.images && tour.images.length > 0) {
             const tourPrimaryImage = getPrimaryImage(tour.images);
@@ -1343,36 +1375,46 @@ class BookingPdfServiceArabic {
         }
 
         // Get title and description with Arabic translations
-        let dayTitle = (dayItem.translations?.title?.ar && dayItem.translations.title.ar.trim()) 
-          ? dayItem.translations.title.ar 
-          : dayItem.title || `اليوم ${dayItem.day}`;
-        
+        let dayTitle =
+          dayItem.translations?.title?.ar &&
+          dayItem.translations.title.ar.trim()
+            ? dayItem.translations.title.ar
+            : dayItem.title || `اليوم ${dayItem.day}`;
+
         // Remove "Day X:" or "اليوم X:" prefix from title if it exists
-        dayTitle = dayTitle.replace(/^(Day\s*\d+\s*:?\s*|اليوم\s*\d+\s*:?\s*)/i, '').trim();
-        
+        dayTitle = dayTitle
+          .replace(/^(Day\s*\d+\s*:?\s*|اليوم\s*\d+\s*:?\s*)/i, "")
+          .trim();
+
         // For tour days, prioritize tour's Arabic description and highlights
         // For static days, use day's Arabic translations
         let finalDescription = "";
         let finalActivities = [];
-        
+
         if (tour) {
           // Tour day - use tour's Arabic translations
           finalDescription = getLocalizedTourDescription(tour);
           finalActivities = getLocalizedTourHighlights(tour).slice(0, 4);
         } else {
           // Static day (arrival, departure, rest) - use day's Arabic translations
-          finalDescription = (dayItem.translations?.description?.ar && dayItem.translations.description.ar.trim())
-            ? dayItem.translations.description.ar
-            : dayItem.description || "";
-          
-          finalActivities = dayItem.activities && dayItem.activities.length > 0
-            ? dayItem.activities.slice(0, 4).map((activity, index) => {
-                if (dayItem.translations?.activities && dayItem.translations.activities[index]?.ar) {
-                  return dayItem.translations.activities[index].ar;
-                }
-                return activity;
-              })
-            : [];
+          finalDescription =
+            dayItem.translations?.description?.ar &&
+            dayItem.translations.description.ar.trim()
+              ? dayItem.translations.description.ar
+              : dayItem.description || "";
+
+          finalActivities =
+            dayItem.activities && dayItem.activities.length > 0
+              ? dayItem.activities.slice(0, 4).map((activity, index) => {
+                  if (
+                    dayItem.translations?.activities &&
+                    dayItem.translations.activities[index]?.ar
+                  ) {
+                    return dayItem.translations.activities[index].ar;
+                  }
+                  return activity;
+                })
+              : [];
         }
         const translatedTourCity = tour ? translateCityName(tour.city) : "";
         const translatedTourType = tour ? translateTourType(tour.tourType) : "";
@@ -1382,16 +1424,20 @@ class BookingPdfServiceArabic {
             <div class="tour-day-badge">اليوم ${dayItem.day}</div>
             <div class="tour-header">
                 <div class="tour-details">
-                    <div class="tour-name">${tour ? getLocalizedTourName(tour) : dayTitle}</div>
+                    <div class="tour-name">${
+                      tour ? getLocalizedTourName(tour) : dayTitle
+                    }</div>
                     ${
                       tour
                         ? `<div class="tour-summary">
-                            <span>📍 ${translatedTourCity || "N/A"}</span>
+                            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="vertical-align: middle; margin-right: 4px; margin-bottom: 2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${
+                              translatedTourCity || "N/A"
+                            }</span>
                             ${
                               translatedTourType
                                 ? `<span>
                                     <span class="tour-summary-icon">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
                                             <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
                                             <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
@@ -1405,9 +1451,9 @@ class BookingPdfServiceArabic {
                             }
                             <span>
                                 <span class="tour-summary-icon">
-                                    <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
-                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
+                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#10b981"/>
+                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#10b981"/>
                                     </svg>
                                 </span>
                                 ${tour.duration || "N/A"} ساعات
@@ -1424,7 +1470,9 @@ class BookingPdfServiceArabic {
                       finalActivities.length > 0
                         ? `
                     <div class="tour-highlights">
-                        <div class="highlights-title">${tour ? 'أبرز المميزات' : 'الأنشطة'}</div>
+                        <div class="highlights-title">${
+                          tour ? "أبرز المميزات" : "الأنشطة"
+                        }</div>
                         <div class="highlights-list">
                             ${finalActivities
                               .map(

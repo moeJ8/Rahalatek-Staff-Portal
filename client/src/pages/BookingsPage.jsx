@@ -537,6 +537,9 @@ export default function BookingsPage() {
       const params = new URLSearchParams({ lang: language });
       if (options.hideHeader) params.append("hideHeader", "true");
       if (options.hidePrice) params.append("hidePrice", "true");
+      if (options.hideContact) params.append("hideContact", "true");
+      if (options.hidePackageMessage)
+        params.append("hidePackageMessage", "true");
 
       const response = await axios.get(
         `/api/bookings/${bookingId}/download-pdf?${params.toString()}`,

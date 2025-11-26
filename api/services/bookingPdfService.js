@@ -16,7 +16,12 @@ class BookingPdfService {
       console.log("🖨️ Starting PDF generation for booking...");
 
       // Extract options
-      const { hideHeader = false, hidePrice = false } = options;
+      const {
+        hideHeader = false,
+        hidePrice = false,
+        hideContact = false,
+        hidePackageMessage = false,
+      } = options;
 
       // Ensure Chrome is installed
       await ensureChrome();
@@ -29,7 +34,8 @@ class BookingPdfService {
         )
         .populate({
           path: "dailyItinerary.tourInfo.tourId",
-          select: "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images",
+          select:
+            "name city tourType price vipCarType carCapacity duration highlights description detailedDescription policies images",
         })
         .populate("createdBy", "username")
         .lean();
@@ -132,7 +138,12 @@ class BookingPdfService {
       const page = await browser.newPage();
 
       // Generate HTML content
-      const htmlContent = this.getBookingHtmlTemplate(booking, user, { hideHeader, hidePrice });
+      const htmlContent = this.getBookingHtmlTemplate(booking, user, {
+        hideHeader,
+        hidePrice,
+        hideContact,
+        hidePackageMessage,
+      });
 
       // Set content
       await page.setContent(htmlContent, {
@@ -154,8 +165,14 @@ class BookingPdfService {
         displayHeaderFooter: true,
         headerTemplate: `<div></div>`,
         footerTemplate: `
-                    <div style="font-size: 10px; color: #666; width: 100%; text-align: center; margin: 0; padding: 0;">
-                        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+                    <div style="font-size: 10px; color: #666; width: 100%; margin: 0; padding: 10px 40px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;">
+                         ${
+                           hideContact
+                             ? '<span style="grid-column: 1;"></span>'
+                             : '<span style="grid-column: 1; text-align: left; white-space: nowrap;"><a href="https://rahalatek.com/" style="color: #666; text-decoration: none;">rahalatek.com</a> | <a href="https://wa.me/905010684657" style="color: #666; text-decoration: none;">+90 501 068 46 57</a></span>'
+                         }
+                        <span style="grid-column: 2; text-align: center; white-space: nowrap;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+                        <span style="grid-column: 3;"></span>
                     </div>
                 `,
         timeout: 90000,
@@ -181,7 +198,12 @@ class BookingPdfService {
    * Get HTML template for booking PDF
    */
   static getBookingHtmlTemplate(booking, user, options = {}) {
-    const { hideHeader = false, hidePrice = false } = options;
+    const {
+      hideHeader = false,
+      hidePrice = false,
+      hideContact = false,
+      hidePackageMessage = false,
+    } = options;
     // Load and convert logo to base64
     let logoBase64 = "";
     try {
@@ -388,8 +410,12 @@ class BookingPdfService {
 
     // Organize itinerary by day (using dailyItinerary if available, fallback to selectedTours)
     const itineraryDays = [];
-    
-    if (booking.dailyItinerary && Array.isArray(booking.dailyItinerary) && booking.dailyItinerary.length > 0) {
+
+    if (
+      booking.dailyItinerary &&
+      Array.isArray(booking.dailyItinerary) &&
+      booking.dailyItinerary.length > 0
+    ) {
       // Use new dailyItinerary structure
       booking.dailyItinerary.forEach((day) => {
         itineraryDays.push({
@@ -433,7 +459,7 @@ class BookingPdfService {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Booking Details - ${booking.clientName || "Booking"}</title>
+    <title>Package Details - ${booking.clientName || "Booking"}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -794,9 +820,10 @@ class BookingPdfService {
             gap: 4px;
         }
         .tour-summary-icon {
-            width: 10px;
-            height: 10px;
-            display: inline-block;
+            width: 12px;
+            height: 12px;
+            display: inline-flex;
+            align-items: center;
         }
         .tour-description {
             font-size: 12px;
@@ -869,7 +896,7 @@ class BookingPdfService {
         ? `<div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
-            <div class="report-title">Booking Details</div>
+            <div class="report-title">PACKAGE DETAILS</div>
         </div>
         ${
           logoBase64
@@ -929,13 +956,13 @@ class BookingPdfService {
                 <div class="overview-section-title">Travel Details</div>
                 <div class="overview-section-content">
                     <div class="overview-detail-row">
-                        <span class="overview-icon">🗓</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
                         <span class="overview-text">From ${formatDateDDMMYYYY(
                           booking.startDate
                         )} to ${formatDateDDMMYYYY(booking.endDate)}</span>
                     </div>
                     <div class="overview-detail-row">
-                        <span class="overview-icon">⏰</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                         <span class="overview-text">Duration: ${
                           booking.nights || 0
                         } night${booking.nights !== 1 ? "s" : ""}</span>
@@ -950,7 +977,7 @@ class BookingPdfService {
                 <div class="overview-section-title">Guest Information</div>
                 <div class="overview-section-content">
                     <div class="overview-detail-row">
-                        <span class="overview-icon">👥</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
                         <span class="overview-text">
                             ${booking.numGuests || 0} adult${
       booking.numGuests !== 1 ? "s" : ""
@@ -994,7 +1021,7 @@ class BookingPdfService {
                     ${
                       !hidePrice
                         ? `<div class="overview-detail-row" style="margin-top: 8px;">
-                        <span class="overview-icon">💵</span>
+                        <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
                         <span class="overview-text"><strong>Package Price: $${
                           booking.finalPrice?.toFixed(2) || "0.00"
                         }</strong></span>
@@ -1028,11 +1055,15 @@ class BookingPdfService {
     </div>
 
     <!-- Package Information Text -->
-    <div style="margin: 24px 0;">
+    ${
+      !hidePackageMessage
+        ? `<div style="margin: 24px 0;">
         <div style="font-size: 14px; color: #374151; line-height: 1.8; font-style: italic;">
-            This package has been specially crafted for you. The selected tours can be modified, and rest days, reception, and farewell services will be added based on your preferences and requests. Once you approve this package, your booking will be confirmed, and a detailed voucher will be sent to you. We look forward to providing you with an unforgettable travel experience. Thank you for choosing Rahalatek!
+            This package has been specially crafted for you. The selected tours can be modified, and rest days, reception, and farewell services can be adjusted based on your preferences and requests. Once you approve this package, your booking will be confirmed, and a detailed voucher will be sent to you. We look forward to providing you with an unforgettable travel experience. Thank you for choosing Rahalatek!
         </div>
-    </div>
+    </div>`
+        : ""
+    }
 
     <!-- Hotels Section -->
     ${
@@ -1171,17 +1202,18 @@ class BookingPdfService {
         // Get the primary image for this day
         let dayImageUrl = "";
         if (dayItem.images && dayItem.images.length > 0) {
-          const primaryImage = dayItem.images.find(img => img.url);
+          const primaryImage = dayItem.images.find((img) => img.url);
           dayImageUrl = primaryImage?.url || dayItem.images[0]?.url || "";
         }
-        
+
         // For tour days, get tour data
         let tour = null;
         if (dayItem.tourInfo && dayItem.tourInfo.tourId) {
-          tour = typeof dayItem.tourInfo.tourId === 'object' 
-            ? dayItem.tourInfo.tourId 
-            : null;
-          
+          tour =
+            typeof dayItem.tourInfo.tourId === "object"
+              ? dayItem.tourInfo.tourId
+              : null;
+
           // If tour exists, use tour image if no day image
           if (tour && !dayImageUrl && tour.images && tour.images.length > 0) {
             const tourPrimaryImage = getPrimaryImage(tour.images);
@@ -1190,13 +1222,16 @@ class BookingPdfService {
         }
 
         // Get highlights for tour days
-        const highlights = tour && tour.highlights && Array.isArray(tour.highlights)
-          ? tour.highlights.slice(0, 4)
-          : [];
+        const highlights =
+          tour && tour.highlights && Array.isArray(tour.highlights)
+            ? tour.highlights.slice(0, 4)
+            : [];
 
         // Remove "Day X:" prefix from title if it exists
-        const cleanTitle = (dayItem.title || `Day ${dayItem.day}`).replace(/^Day\s*\d+\s*:?\s*/i, '').trim();
-        
+        const cleanTitle = (dayItem.title || `Day ${dayItem.day}`)
+          .replace(/^Day\s*\d+\s*:?\s*/i, "")
+          .trim();
+
         return `
         <div class="tour-section">
             <div class="tour-day-badge">Day ${dayItem.day}</div>
@@ -1206,12 +1241,14 @@ class BookingPdfService {
                     ${
                       tour
                         ? `<div class="tour-summary">
-                            <span>📍 ${tour.city || "N/A"}</span>
+                            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="vertical-align: middle; margin-right: 4px; margin-bottom: 2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${
+                              tour.city || "N/A"
+                            }</span>
                             ${
                               tour.tourType
                                 ? `<span>
                                     <span class="tour-summary-icon">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M4 7h16v10H4z" fill="#2563eb" opacity="0.12"/>
                                             <path d="M4 7h16v10H4z" stroke="#2563eb" stroke-width="1.2" stroke-linejoin="round"/>
                                             <path d="M8 7v10M16 7v10" stroke="#2563eb" stroke-width="1.2"/>
@@ -1225,9 +1262,9 @@ class BookingPdfService {
                             }
                             <span>
                                 <span class="tour-summary-icon">
-                                    <svg width="10" height="10" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#f59e0b"/>
-                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#f59e0b"/>
+                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14.4c-3.53 0-6.4-2.87-6.4-6.4S6.47 3.6 10 3.6s6.4 2.87 6.4 6.4-2.87 6.4-6.4 6.4z" fill="#10b981"/>
+                                        <path d="M10.8 6H9.2v5.2l4.55 2.73.8-1.31-3.75-2.22V6z" fill="#10b981"/>
                                     </svg>
                                 </span>
                                 ${tour.duration || "N/A"} hrs
@@ -1237,7 +1274,9 @@ class BookingPdfService {
                     }
                     ${
                       dayItem.description || (tour && tour.description)
-                        ? `<div class="tour-description">${dayItem.description || tour.description}</div>`
+                        ? `<div class="tour-description">${
+                            dayItem.description || tour.description
+                          }</div>`
                         : ""
                     }
                     ${

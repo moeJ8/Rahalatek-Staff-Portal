@@ -1075,6 +1075,10 @@ const OfficeDetailPage = () => {
                                 className: "text-gray-900 dark:text-white",
                               },
                               {
+                                label: "Paid",
+                                className: "text-green-600 dark:text-green-400",
+                              },
+                              {
                                 label: "Remaining",
                                 className: "text-red-600 dark:text-red-400",
                               },
@@ -1087,6 +1091,7 @@ const OfficeDetailPage = () => {
                                 voucher._id,
                                 services.total
                               );
+                              const paid = services.total - remaining;
                               return (
                                 <>
                                   <Table.Cell className="font-medium text-sm text-gray-900 dark:text-white px-4 py-3">
@@ -1138,6 +1143,10 @@ const OfficeDetailPage = () => {
                                     {getCurrencySymbol(voucher.currency)}
                                     {services.total.toFixed(2)}
                                   </Table.Cell>
+                                  <Table.Cell className="text-sm text-green-600 dark:text-green-400 font-medium px-4 py-3">
+                                    {getCurrencySymbol(voucher.currency)}
+                                    {paid.toFixed(2)}
+                                  </Table.Cell>
                                   <Table.Cell
                                     className={`text-sm font-bold px-4 py-3 ${
                                       remaining <= 0
@@ -1163,6 +1172,7 @@ const OfficeDetailPage = () => {
                             voucher._id,
                             services.total
                           );
+                          const paid = services.total - remaining;
                           return (
                             <div
                               key={voucher._id}
@@ -1258,15 +1268,39 @@ const OfficeDetailPage = () => {
                                   </p>
                                 </div>
                               </div>
-                              <div
-                                className={`rounded-xl p-3 text-white font-semibold ${
-                                  remaining <= 0
-                                    ? "bg-green-500/20 text-green-300"
-                                    : "bg-red-500/20 text-red-300"
-                                }`}
-                              >
-                                Remaining: {getCurrencySymbol(voucher.currency)}
-                                {remaining.toFixed(2)}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-green-500/20 rounded-xl p-3">
+                                  <p className="text-green-300 text-xs uppercase tracking-wide">
+                                    Paid
+                                  </p>
+                                  <p className="text-green-300 font-semibold">
+                                    {getCurrencySymbol(voucher.currency)}
+                                    {paid.toFixed(2)}
+                                  </p>
+                                </div>
+                                <div
+                                  className={`rounded-xl p-3 ${
+                                    remaining <= 0
+                                      ? "bg-green-500/20"
+                                      : "bg-red-500/20"
+                                  }`}
+                                >
+                                  <p className={`text-xs uppercase tracking-wide ${
+                                    remaining <= 0
+                                      ? "text-green-300"
+                                      : "text-red-300"
+                                  }`}>
+                                    Remaining
+                                  </p>
+                                  <p className={`font-semibold ${
+                                    remaining <= 0
+                                      ? "text-green-300"
+                                      : "text-red-300"
+                                  }`}>
+                                    {getCurrencySymbol(voucher.currency)}
+                                    {remaining.toFixed(2)}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           );
