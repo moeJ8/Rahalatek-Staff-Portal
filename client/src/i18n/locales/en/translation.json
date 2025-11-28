@@ -59,7 +59,7 @@
       "tours": "Tours",
       "hotelBooking": "Hotel Booking",
       "luxurySuites": "Luxury Suites",
-      "airportService": "Airport Reception & Farewell"
+      "airportService": "Airport Pick up & Drop off"
     },
     "packages": {
       "title": "Discover Our Programs",
@@ -2438,7 +2438,7 @@
   "airportServicePage": {
     "hero": {
       "title": "Seamless Airport Transfers",
-      "subtitle": "Professional airport reception and farewell services with VIP treatment"
+      "subtitle": "Professional airport pick up and drop off services with VIP treatment"
     },
     "nav": {
       "overview": "Overview",
@@ -2451,12 +2451,12 @@
     },
     "introduction": {
       "title": "Your Journey Starts with Comfort",
-      "paragraph1": "Experience the ultimate convenience with our premium airport transfer service across Türkiye. From the moment you land until your departure, we ensure a smooth, comfortable, and stress-free journey. Our VIP reception service includes personalized meet and greet, luggage assistance, and direct transfer to your hotel or destination.",
+      "paragraph1": "Experience the ultimate convenience with our premium airport transfer service across Türkiye. From the moment you land until your departure, we ensure a smooth, comfortable, and stress-free journey. Our VIP pick up service includes personalized meet and greet, luggage assistance, and direct transfer to your hotel or destination.",
       "paragraph2": "Whether arriving at Istanbul, Antalya, Trabzon, or any major Turkish airport, our professional team is ready to welcome you. We serve all cities and provide door-to-door service with modern vehicles, experienced drivers, and 24/7 customer support to make your travel experience exceptional."
     },
     "serviceSection": {
       "title": "What is Our Airport Transfer Service?",
-      "description": "Our airport transfer service from Rahalatek provides complete airport reception and farewell solutions, ensuring hassle-free arrivals and departures. We handle all aspects of your airport transfer, from flight monitoring to luggage handling, delivering a premium experience from touchdown to takeoff.",
+      "description": "Our airport transfer service from Rahalatek provides complete airport pick up and drop off solutions, ensuring hassle-free arrivals and departures. We handle all aspects of your airport transfer, from flight monitoring to luggage handling, delivering a premium experience from touchdown to takeoff.",
       "whatWeProvide": "What we provide:",
       "items": {
         "item1": "Personalized meet and greet at arrival gate with name sign",
@@ -2539,7 +2539,7 @@
       "title": "What's Included in Your Airport Transfer?",
       "intro": "Our comprehensive airport transfer service covers every aspect of your journey from touchdown to hotel check-in and hotel to departure gate.",
       "arrival": {
-        "title": "1. Airport Reception (Arrival)",
+        "title": "1. Airport Pick up (Arrival)",
         "item1": "Meet and greet at arrival gate with personalized name sign",
         "item2": "Assistance with baggage claim and luggage handling",
         "item3": "Help with customs and immigration procedures if needed",
@@ -2554,7 +2554,7 @@
         "item5": "GPS tracking for safety and real-time updates"
       },
       "departure": {
-        "title": "3. Airport Farewell (Departure)",
+        "title": "3. Airport Drop off (Departure)",
         "item1": "Hotel pickup at scheduled time with flight monitoring",
         "item2": "Luggage loading and assistance to check-in counter",
         "item3": "Terminal drop-off at departure gate area",
@@ -2571,7 +2571,7 @@
     },
     "contact": {
       "title": "Book Your Airport Transfer Now",
-      "description": "Experience hassle-free airport transfers with professional service and comfortable vehicles. Contact us now to arrange your VIP reception or farewell service.",
+      "description": "Experience hassle-free airport transfers with professional service and comfortable vehicles. Contact us now to arrange your VIP pick up or drop off service.",
       "email": "Email",
       "contactUsNow": "Contact Us Now",
       "whatsapp": "WhatsApp",
@@ -2592,7 +2592,7 @@
         },
         "faq2": {
           "question": "Is the service available 24/7?",
-          "answer": "Yes, we provide airport reception service 24 hours a day, 7 days a week, including weekends, holidays, and during peak travel times. Our team is always ready to welcome you whenever you arrive."
+          "answer": "Yes, we provide airport pick up service 24 hours a day, 7 days a week, including weekends, holidays, and during peak travel times. Our team is always ready to welcome you whenever you arrive."
         },
         "faq3": {
           "question": "What if my flight is delayed?",
@@ -2706,8 +2706,8 @@
       "vitoCapacity": "2-8 passengers",
       "sprinterCapacity": "9-16 passengers",
       "busCapacity": "17+ passengers",
-      "airportReception": "Airport Reception",
-      "airportFarewell": "Airport Farewell"
+      "airportReception": "Airport Pick up",
+      "airportFarewell": "Airport Drop off"
     },
     "location": {
       "title": "Location"
@@ -3106,8 +3106,8 @@
       "checkIn": "Check-in",
       "checkOut": "Check-out",
       "breakfast": "Breakfast",
-      "airportReception": "Airport Reception",
-      "airportFarewell": "Airport Farewell"
+      "airportReception": "Airport Pick up",
+      "airportFarewell": "Airport Drop off"
     },
     "included": {
       "title": "Included in Package"
@@ -3123,7 +3123,7 @@
       "dinner": "Dinner",
       "arrivalTransfer": "Arrival & Transfer",
       "arrivalDescription": "Arrival at airport, meet & greet service, transfer to hotel, check-in and rest.",
-      "airportReceptionService": "Airport reception service",
+      "airportReceptionService": "Airport pick up service",
       "meetGreetRepresentative": "Meet & greet with tour representative",
       "transferToHotel": "Transfer to hotel",
       "hotelCheckinAssistance": "Hotel check-in assistance",

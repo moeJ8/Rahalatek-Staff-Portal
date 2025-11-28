@@ -137,6 +137,21 @@ class BookingPdfService {
 
       const page = await browser.newPage();
 
+      // Load logo for footer
+      let logoBase64 = "";
+      try {
+        const logoPath = path.join(
+          __dirname,
+          "../../client/dist/Logolight.png"
+        );
+        if (fs.existsSync(logoPath)) {
+          const logoBuffer = fs.readFileSync(logoPath);
+          logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+        }
+      } catch (err) {
+        console.error("Error loading logo for footer:", err);
+      }
+
       // Generate HTML content
       const htmlContent = this.getBookingHtmlTemplate(booking, user, {
         hideHeader,
@@ -150,6 +165,22 @@ class BookingPdfService {
         waitUntil: ["domcontentloaded", "networkidle2"],
         timeout: 90000,
       });
+
+      // Build footer template with logo
+      const footerContactSection = hideContact
+        ? '<span style="grid-column: 1;"></span>'
+        : `<span style="grid-column: 1; text-align: left; white-space: nowrap;">
+            ${
+              logoBase64
+                ? `<img src="${logoBase64}" alt="Rahalatek" style="height: 12px; width: auto; vertical-align: middle; margin-right: 4px;" />`
+                : ""
+            }
+            <a href="https://rahalatek.com/" style="color: #666; text-decoration: none; font-size: 11px;">rahalatek.com</a> | 
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="#ef4444" style="vertical-align: middle; margin-right: 2px; display: inline-block;">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+            </svg>
+            <a href="https://wa.me/905010684657" style="color: #666; text-decoration: none; font-size: 11px;">+90 501 068 46 57</a>
+          </span>`;
 
       // Generate PDF
       const pdf = await page.pdf({
@@ -166,11 +197,7 @@ class BookingPdfService {
         headerTemplate: `<div></div>`,
         footerTemplate: `
                     <div style="font-size: 10px; color: #666; width: 100%; margin: 0; padding: 10px 40px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;">
-                         ${
-                           hideContact
-                             ? '<span style="grid-column: 1;"></span>'
-                             : '<span style="grid-column: 1; text-align: left; white-space: nowrap;"><a href="https://rahalatek.com/" style="color: #666; text-decoration: none;">rahalatek.com</a> | <a href="https://wa.me/905010684657" style="color: #666; text-decoration: none;">+90 501 068 46 57</a></span>'
-                         }
+                         ${footerContactSection}
                         <span style="grid-column: 2; text-align: center; white-space: nowrap;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
                         <span style="grid-column: 3;"></span>
                     </div>
@@ -369,25 +396,25 @@ class BookingPdfService {
 
         if (includeReception && includeFarewell) {
           transportationLines.push(
-            `Reception & Farewell between ${airport} and ${hotelName} by ${vehicleText}`
+            `Pick up & Drop off between ${airport} and ${hotelName} by ${vehicleText}`
           );
         } else {
           if (includeReception) {
             transportationLines.push(
-              `Reception from ${airport} to ${hotelName} by ${vehicleText}`
+              `Pick up from ${airport} to ${hotelName} by ${vehicleText}`
             );
           }
 
           if (includeFarewell) {
             transportationLines.push(
-              `Farewell from ${hotelName} to ${airport} by ${vehicleText}`
+              `Drop off from ${hotelName} to ${airport} by ${vehicleText}`
             );
           }
         }
       });
 
       return transportationLines.length > 0
-        ? transportationLines.map((line) => `• ${line}`).join("<br>")
+        ? transportationLines.join("<br>")
         : "";
     };
 
@@ -620,6 +647,18 @@ class BookingPdfService {
         }
         .overview-includes-item {
             margin-bottom: 4px;
+            padding-left: 16px;
+            position: relative;
+        }
+        .overview-includes-item::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            background-color: #f97316;
+            border-radius: 50%;
+            position: absolute;
+            left: 0;
+            top: 0.55em;
         }
         .section-title {
             font-size: 22px;
@@ -896,7 +935,9 @@ class BookingPdfService {
         ? `<div class="header">
         <div class="header-left">
             <div class="brand-name">Rahalatek Travel</div>
-            <div class="report-title">PACKAGE DETAILS</div>
+            <div class="report-title">PACKAGE DETAILS ${
+              booking.bookingNumber ? `#${booking.bookingNumber}` : ""
+            }</div>
         </div>
         ${
           logoBase64
@@ -964,8 +1005,10 @@ class BookingPdfService {
                     <div class="overview-detail-row">
                         <span class="overview-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="vertical-align: middle; margin-bottom: 2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                         <span class="overview-text">Duration: ${
-                          booking.nights || 0
-                        } night${booking.nights !== 1 ? "s" : ""}</span>
+                          (booking.nights || 0) + 1
+                        } Day${(booking.nights || 0) + 1 !== 1 ? "s" : ""} / ${
+      booking.nights || 0
+    } Night${booking.nights !== 1 ? "s" : ""}</span>
                     </div>
                 </div>
             </div>
@@ -1059,7 +1102,7 @@ class BookingPdfService {
       !hidePackageMessage
         ? `<div style="margin: 24px 0;">
         <div style="font-size: 14px; color: #374151; line-height: 1.8; font-style: italic;">
-            This package has been specially crafted for you. The selected tours can be modified, and rest days, reception, and farewell services can be adjusted based on your preferences and requests. Once you approve this package, your booking will be confirmed, and a detailed voucher will be sent to you. We look forward to providing you with an unforgettable travel experience. Thank you for choosing Rahalatek!
+            This package has been specially crafted for you. The selected tours can be modified, and rest days, pick up, and drop off services can be adjusted based on your preferences and requests. Once you approve this package, your booking will be confirmed, and a detailed voucher will be sent to you. We look forward to providing you with an unforgettable travel experience. Thank you for choosing Rahalatek!
         </div>
     </div>`
         : ""

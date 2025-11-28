@@ -1399,6 +1399,16 @@ export default function BookingForm({
                     </div>
                   </div>
 
+                  {/* Display number of nights */}
+                  {entry.checkIn && entry.checkOut && (
+                    <div className="text-sm font-semibold text-blue-600 dark:text-teal-400 mt-1 ml-1">
+                      {calculateDuration(entry.checkIn, entry.checkOut)} night
+                      {calculateDuration(entry.checkIn, entry.checkOut) !== 1
+                        ? "s"
+                        : ""}
+                    </div>
+                  )}
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id={`includeBreakfast-${hotelIndex}`}

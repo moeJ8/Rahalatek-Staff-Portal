@@ -10,6 +10,7 @@ router.use(verifyToken);
 // CRUD operations
 router.post('/', bookingController.createBooking);
 router.get('/metadata', bookingController.getBookingsMetadata);
+router.get('/next-number', bookingController.getNextBookingNumber);
 router.get('/', bookingController.getAllBookings);
 router.get('/trash', bookingController.getTrashedBookings);
 router.get('/:id/download-pdf', bookingController.downloadBookingPDF);

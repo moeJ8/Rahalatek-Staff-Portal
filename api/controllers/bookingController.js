@@ -85,7 +85,19 @@ exports.createBooking = async (req, res) => {
         (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
       );
 
+    // Get next booking number
+    const bookingNumber = await Booking.getNextBookingNumber();
+    
+    // Validate booking number
+    if (!bookingNumber || isNaN(bookingNumber)) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to generate booking number",
+      });
+    }
+
     const booking = new Booking({
+      bookingNumber,
       clientName: clientName || null,
       nationality: nationality || null,
       startDate,
@@ -563,6 +575,26 @@ exports.permanentlyDeleteBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to permanently delete booking",
+      error: error.message,
+    });
+  }
+};
+
+// Get next booking number
+exports.getNextBookingNumber = async (req, res) => {
+  if (denyIfPublisher(req, res)) return;
+  try {
+    const nextNumber = await Booking.getNextBookingNumber();
+
+    res.status(200).json({
+      success: true,
+      nextNumber,
+    });
+  } catch (error) {
+    console.error("Error getting next booking number:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get next booking number",
       error: error.message,
     });
   }

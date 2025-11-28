@@ -290,11 +290,13 @@ export default function BookingsPage() {
       const tours =
         booking.selectedTours?.map((t) => t.name || "").join(" ") || "";
       const clientName = booking.clientName || "";
+      const bookingNumber = booking.bookingNumber?.toString() || "";
       return (
         cities.toLowerCase().includes(query) ||
         hotels.toLowerCase().includes(query) ||
         tours.toLowerCase().includes(query) ||
         clientName.toLowerCase().includes(query) ||
+        bookingNumber.includes(query) ||
         booking.finalPrice?.toString().includes(query)
       );
     });
@@ -733,7 +735,7 @@ export default function BookingsPage() {
           <div className="mb-4">
             <Search
               id="booking-search"
-              placeholder="Search by cities, hotels, tours, client name, or price..."
+              placeholder="Search by booking #, cities, hotels, tours, client name, or price..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -877,6 +879,7 @@ export default function BookingsPage() {
                           },
                         ]
                       : []),
+                    { label: "Booking #" },
                     { label: "Date Range" },
                     { label: "Client Name" },
                     { label: "Cities" },
@@ -914,6 +917,12 @@ export default function BookingsPage() {
                             </div>
                           </Table.Cell>
                         )}
+                        {/* Booking Number */}
+                        <Table.Cell className="px-4 py-3">
+                          <div className="font-semibold text-blue-600 dark:text-teal-400">
+                            #{booking.bookingNumber || "N/A"}
+                          </div>
+                        </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <FaCalendarAlt className="text-gray-400" />
@@ -1115,7 +1124,7 @@ export default function BookingsPage() {
                         <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
                           <div>
                             <div className="text-lg font-medium text-gray-900 dark:text-white">
-                              Booking
+                              Booking #{booking.bookingNumber || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               {formatDate(booking.createdAt)}
@@ -1343,7 +1352,7 @@ export default function BookingsPage() {
           setViewModal(false);
           closeViewDownloadModal();
         }}
-        title="Booking Details"
+        title={`Booking Details ${selectedBooking ? `#${selectedBooking.bookingNumber || ""}` : ""}`}
         maxWidth="md:max-w-screen-2xl"
         maxHeight="max-h-[95vh]"
       >
@@ -1524,7 +1533,7 @@ export default function BookingsPage() {
         onConfirm={handleDeleteConfirm}
         isLoading={deleteLoading}
         itemType="booking (move to trash)"
-        itemName={`Booking from ${formatDate(bookingToDelete?.startDate)}`}
+        itemName={`Booking #${bookingToDelete?.bookingNumber || "N/A"} from ${formatDate(bookingToDelete?.startDate)}`}
       />
 
       {/* Bulk Delete Confirmation Modal */}

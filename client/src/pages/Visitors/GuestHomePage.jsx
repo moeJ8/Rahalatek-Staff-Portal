@@ -210,8 +210,8 @@ export default function GuestHomePage() {
             "@type": "Offer",
             "itemOffered": {
               "@type": "Service",
-              "name": "Airport Transfer Service",
-              "description": "Professional airport reception and transfer services"
+              "name": "Airport Pick up & Drop off Service",
+              "description": "Professional airport pick up and drop off transfer services"
             }
           }
         ]

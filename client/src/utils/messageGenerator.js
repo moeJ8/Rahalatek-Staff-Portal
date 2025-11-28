@@ -842,18 +842,18 @@ export const generateBookingMessageEnglish = ({
 
     if (includeReception && includeFarewell) {
       transportationLines.push(
-        `Reception & Farewell between ${airportName} and ${hotelName} by ${vehicleText}`
+        `Pick up & Drop off between ${airportName} and ${hotelName} by ${vehicleText}`
       );
     } else {
       if (includeReception) {
         transportationLines.push(
-          `Reception from ${airportName} to ${hotelName} by ${vehicleText}`
+          `Pick up from ${airportName} to ${hotelName} by ${vehicleText}`
         );
       }
 
       if (includeFarewell) {
         transportationLines.push(
-          `Farewell from ${hotelName} to ${airportName} by ${vehicleText}`
+          `Drop off from ${hotelName} to ${airportName} by ${vehicleText}`
         );
       }
     }

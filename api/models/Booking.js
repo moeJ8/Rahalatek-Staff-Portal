@@ -49,6 +49,13 @@ const hotelEntrySchema = new mongoose.Schema(
 
 const bookingSchema = new mongoose.Schema(
   {
+    // Booking Number
+    bookingNumber: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+
     // Client Information
     clientName: { type: String, default: null },
     nationality: { type: String, default: null },
@@ -183,5 +190,24 @@ const bookingSchema = new mongoose.Schema(
 // Index for efficient querying
 bookingSchema.index({ createdBy: 1, createdAt: -1 });
 bookingSchema.index({ isDeleted: 1 });
+bookingSchema.index({ bookingNumber: 1 });
+
+// Static method to get next booking number
+bookingSchema.statics.getNextBookingNumber = async function () {
+  try {
+    const lastBooking = await this.findOne({ bookingNumber: { $exists: true, $ne: null } })
+      .sort({ bookingNumber: -1 })
+      .select('bookingNumber');
+
+    if (lastBooking && typeof lastBooking.bookingNumber === 'number' && !isNaN(lastBooking.bookingNumber)) {
+      return lastBooking.bookingNumber + 1;
+    }
+    
+    return 20000;
+  } catch (error) {
+    console.error('Error getting next booking number:', error);
+    return 20000;
+  }
+};
 
 module.exports = mongoose.model("Booking", bookingSchema);

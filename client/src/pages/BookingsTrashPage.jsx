@@ -543,6 +543,7 @@ export default function BookingsTrashPage() {
                           },
                         ]
                       : []),
+                    { label: "Booking #" },
                     { label: "Date Range" },
                     { label: "Client Name" },
                     { label: "Nationality" },
@@ -575,6 +576,12 @@ export default function BookingsTrashPage() {
                             </div>
                           </Table.Cell>
                         )}
+                        {/* Booking Number */}
+                        <Table.Cell className="px-4 py-3">
+                          <div className="font-semibold text-blue-600 dark:text-teal-400">
+                            #{booking.bookingNumber || "N/A"}
+                          </div>
+                        </Table.Cell>
                         <Table.Cell className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <FaCalendarAlt className="text-gray-400" />
@@ -749,7 +756,7 @@ export default function BookingsTrashPage() {
                         <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-3">
                           <div>
                             <div className="text-lg font-medium text-gray-900 dark:text-white">
-                              Booking
+                              Booking #{booking.bookingNumber || "N/A"}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               Deleted {formatDate(booking.deletedAt)}

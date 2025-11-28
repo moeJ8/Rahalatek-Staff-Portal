@@ -50,7 +50,7 @@ export default function AirportServicePage() {
     if (currentLang === 'fr') {
       return 'Services de transfert aéroport professionnels en Turquie avec Rahalatek. Réception et adieu VIP avec véhicules confortables, accueil à l\'aéroport et service 24/7. Réservez votre transfert aéroport aujourd\'hui!';
     }
-    return 'Professional airport transfer services in Türkiye. VIP reception and farewell with comfortable vehicles, meet & greet, and 24/7 service. Book your seamless airport transfer today!';
+    return 'Professional airport transfer services in Türkiye. VIP pick up and drop off with comfortable vehicles, meet & greet, and 24/7 service. Book your seamless airport transfer today!';
   };
 
   const getLocalizedMetaKeywords = () => {
@@ -62,7 +62,7 @@ export default function AirportServicePage() {
     if (currentLang === 'fr') {
       return 'transfert aéroport Turquie, réception aéroport, adieu aéroport, transfert VIP, accueil aéroport, navette aéroport, transfert privé, service aéroport Turquie, transfert aéroport Istanbul, transfert aéroport Antalya, transfert aéroport Trabzon, transfert luxe aéroport, transfert Mercedes aéroport, Rahalatek';
     }
-    return 'airport transfer Turkey, airport reception, airport farewell, VIP transfer, meet and greet, airport shuttle, private transfer, Turkey airport service, Istanbul airport transfer, Antalya airport transfer, Trabzon airport transfer, luxury airport transfer, Mercedes airport transfer, Rahalatek';
+    return 'airport transfer Turkey, airport pick up, airport drop off, VIP transfer, meet and greet, airport shuttle, private transfer, Turkey airport service, Istanbul airport transfer, Antalya airport transfer, Trabzon airport transfer, luxury airport transfer, Mercedes airport transfer, Rahalatek';
   };
 
   // SEO Meta Tags and hreflang

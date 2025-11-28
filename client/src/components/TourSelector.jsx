@@ -179,8 +179,10 @@ const TourSelector = ({
 }) => {
   const [localItinerary, setLocalItinerary] = useState(dailyItinerary);
 
+  // Calculate total DAYS (nights + 1) for the itinerary
+  // For example: 7 days / 6 nights package should have 7 days in itinerary
   const totalDays =
-    startDate && endDate ? calculateDuration(startDate, endDate) : 0;
+    startDate && endDate ? calculateDuration(startDate, endDate) + 1 : 0;
 
   // Sync with parent dailyItinerary prop (for edit mode)
   useEffect(() => {
